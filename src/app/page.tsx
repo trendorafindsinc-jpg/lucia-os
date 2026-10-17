@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const capabilities = [
   {
     number: "01",
@@ -20,10 +22,10 @@ export default function HomePage() {
   return (
     <main className="shell">
       <header className="topbar">
-        <a className="wordmark" href="/" aria-label="LUCIA OS home">
+        <Link className="wordmark" href="/" aria-label="LUCIA OS home">
           <span className="brand-mark" aria-hidden="true">L</span>
           <span>LUCIA <span className="muted-word">OS</span></span>
-        </a>
+        </Link>
         <span className="status-pill"><span className="status-dot" /> Foundation in progress</span>
       </header>
 
