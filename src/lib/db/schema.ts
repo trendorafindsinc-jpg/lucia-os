@@ -112,3 +112,27 @@ export const websitePages = pgTable(
     index("website_pages_org_website_idx").on(table.organizationId, table.websiteId),
   ],
 );
+
+
+/**
+ * Product-local opaque sessions. Core remains the identity authority; this
+ * table only persists the product session created after a successful Core
+ * Consumer Contract exchange.
+ */
+export const sessions = pgTable(
+  "app_sessions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => appUsers.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    uniqueIndex("app_sessions_token_hash_uq").on(table.tokenHash),
+    index("app_sessions_user_id_idx").on(table.userId),
+    index("app_sessions_expires_at_idx").on(table.expiresAt),
+  ],
+);
