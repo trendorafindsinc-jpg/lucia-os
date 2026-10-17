@@ -2,8 +2,7 @@ name: Quality checks
 
 on:
   pull_request:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -23,7 +22,7 @@ jobs:
         with:
           node-version: 22
       - name: Install dependencies
-        run: npm install
+        run: npm install --no-audit --no-fund
       - name: Lint
         run: npm run lint
       - name: Type check
