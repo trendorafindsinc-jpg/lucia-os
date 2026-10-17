@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db/client";
+import { getDb } from "@/lib/db/client";
 import { getCurrentUser } from "@/lib/auth/session";
 import { memberships, organizations } from "@/lib/db/schema";
 import { normalizeOrganizationName, organizationSlugBase } from "@/lib/organizations/validation";
@@ -20,6 +20,7 @@ function isSameOrigin(request: Request): boolean {
 }
 
 export async function GET() {
+  const db = getDb();
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "UNAUTHENTICATED" }, { status: 401, headers: { "Cache-Control": "no-store" } });
 
@@ -39,6 +40,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const db = getDb();
   if (!isSameOrigin(request)) return NextResponse.json({ error: "ORIGIN_NOT_ALLOWED" }, { status: 403 });
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "UNAUTHENTICATED" }, { status: 401, headers: { "Cache-Control": "no-store" } });
