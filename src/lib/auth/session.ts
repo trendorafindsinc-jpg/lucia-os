@@ -3,7 +3,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { and, eq, gt } from "drizzle-orm";
 import { cookies } from "next/headers";
-import { db } from "@/lib/db/client";
+import { getDb } from "@/lib/db/client";
 import { appUsers, sessions } from "@/lib/db/schema";
 
 export async function getCurrentUser() {
@@ -11,6 +11,7 @@ export async function getCurrentUser() {
   if (!token || token.length < 40) return null;
 
   const tokenHash = createHash("sha256").update(token).digest("hex");
+  const db = getDb();
   const [user] = await db
     .select({ id: appUsers.id, displayName: appUsers.displayName })
     .from(sessions)
