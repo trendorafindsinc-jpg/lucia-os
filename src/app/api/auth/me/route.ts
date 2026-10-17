@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { and, eq, gt } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db/client";
+import { getDb } from "@/lib/db/client";
 import { appUsers, sessions } from "@/lib/db/schema";
 
 export const runtime = "nodejs";
@@ -15,6 +15,7 @@ export async function GET() {
   }
 
   const tokenHash = createHash("sha256").update(token).digest("hex");
+  const db = getDb();
   const [result] = await db
     .select({ id: appUsers.id, displayName: appUsers.displayName, coreSubjectId: appUsers.coreSubjectId })
     .from(sessions)
