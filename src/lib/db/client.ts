@@ -26,4 +26,6 @@ function createDatabase() {
   return globalForDb.luciaOsDb;
 }
 
-export const db = globalForDb.luciaOsDb ?? createDatabase();
+export function getDb() {
+  return globalForDb.luciaOsDb ?? createDatabase();
+}
