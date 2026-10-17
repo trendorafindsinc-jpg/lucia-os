@@ -36,6 +36,10 @@ export default function HomePage() {
           LUCIA OS is being built to help organisations create a professional online presence
           and grow into the tools they need — from one secure workspace.
         </p>
+        <div className="hero-actions">
+          <Link className="auth-link" href="/api/auth/login">Sign in with LUCIA ID <span aria-hidden="true">↗</span></Link>
+          <span className="auth-caption">Sign-in requires LUCIA Core access to be configured.</span>
+        </div>
         <div className="hero-note">
           <span className="note-icon" aria-hidden="true">✳</span>
           <p><strong>Starting with websites.</strong><br />Specialist portals will be introduced in later, carefully tested phases.</p>
