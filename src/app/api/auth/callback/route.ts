@@ -1,5 +1,4 @@
 import { createHash, randomBytes } from "node:crypto";
-import { and, eq, gt } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db/client";
 import { appUsers, sessions } from "@/lib/db/schema";
@@ -28,7 +27,7 @@ export async function GET(request: Request) {
   const response = safeFailure(request);
   response.cookies.set("lucia_os_oauth_state", "", {
     httpOnly: true,
-    secure: requestUrl.protocol === "https:",
+    secure: process.env.NODE_ENV === "production" || requestUrl.protocol === "https:",
     sameSite: "lax",
     path: "/api/auth/callback",
     maxAge: 0,
