@@ -1,20 +1,33 @@
 # Phase 4 — Organisation and workspace management
 
-This phase introduces authenticated organisation discovery and creation for a signed-in LUCIA ID user.
+## Core authority boundary
 
-## Included
+LUCIA Core owns tenant records, memberships, roles, permissions, product records, entitlements, and audit. LUCIA OS must not create local organization or membership rows and then treat them as authoritative. Phase 2's local organization tables are not proof of membership and must not be used to grant access.
 
-- Server-side lookup of the product session; the browser cannot choose its user ID.
-- List only active organisation memberships belonging to the authenticated user.
-- Create an organisation and its initial active Owner membership atomically.
-- Validate and normalize organisation names; generate non-sensitive URL slugs with random suffixes.
-- Reject cross-origin create requests when an Origin header is present.
-- No organisation identifiers are treated as proof of membership.
+## Implemented in this phase
 
-## Security contract
+- A server-only consumer adapter for the documented Core Consumer Contract v1 endpoints:
+  - `GET /api/v1/consumer/tenants/:tenantId/context`
+  - `POST /api/v1/consumer/authorization/check`
+  - `POST /api/v1/consumer/entitlements/check`
+- Validates tenant IDs, permission keys, and product keys before making requests.
+- Sends the Core assertion server-to-server only, disables caching and redirects, and fails closed on non-success responses.
+- A shared server-side helper for resolving the local product session.
 
-Every future operation accepting an organisation ID must query active membership for the current authenticated user and then enforce the required role/permission. A selected workspace, hostname, query parameter, or client-side state is not authorization. RLS context must be set transaction-locally after authorization when querying tenant-owned data.
+## Contract gap before a usable workspace picker
 
-## Not included yet
+The current contract exposes tenant context for a known tenant ID, but it does not document a consumer endpoint to list a user's tenants or create a tenant. It also issues Core assertions that expire after five minutes and documents no consumer refresh endpoint. Therefore a persistent workspace picker and tenant creation cannot safely be completed in LUCIA OS alone without inventing endpoints or copying Core authority.
 
-Invitation and member-management flows, role customization, ownership transfer, Core-side membership sync, workspace UI, production database migration, and end-to-end verification. These must be implemented and validated before calling the workspace feature production-ready.
+Before finishing the customer-facing workspace UI, Core needs a documented and tested tenant-discovery/onboarding contract and a secure strategy for renewing/reacquiring short-lived assertions. Any create/invite/role-change workflow must call Core's authoritative operation.
+
+## Security requirements
+
+- A tenant ID, selected workspace, hostname, query parameter, or local DB row never proves membership.
+- Every protected operation must call Core authorization for the required permission and check entitlement when relevant.
+- Any unavailable or ambiguous Core result denies the protected operation.
+- No local fallback role or entitlement grants access.
+- Never store Core assertions in plaintext at rest or expose them to browser JavaScript.
+
+## Not completed
+
+No customer-facing workspace selector, tenant creation, invitations, member management, role customization, ownership transfer, or Core tenant-discovery endpoint is included. No database has been provisioned or migrated, and no production secrets have been configured. These are blocked on the Core contract gap above and require an end-to-end test after Core supports the flow.
