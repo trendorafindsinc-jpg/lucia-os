@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db/client";
+import { getDb } from "@/lib/db/client";
 import { appUsers, sessions } from "@/lib/db/schema";
 import { getCoreIssuer, matchesOAuthState } from "@/lib/auth/oauth";
 
@@ -91,6 +91,7 @@ export async function GET(request: Request) {
       : identityRoot;
     if (identityUser.id !== coreUser.id) return response;
 
+    const db = getDb();
     const [user] = await db
       .insert(appUsers)
       .values({
