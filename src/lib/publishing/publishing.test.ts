@@ -22,6 +22,7 @@ describe("custom domain validation", () => {
   it("validates a complete set of site settings", () => {
     expect(publishSettingsSchema.safeParse(settings).success).toBe(true);
     expect(publishSettingsSchema.safeParse({ ...settings, siteSlug: "NO SPACES" }).success).toBe(false);
+    expect(publishSettingsSchema.safeParse({ ...settings, customDomain: "https://example.com" }).success).toBe(false);
   });
 });
 
