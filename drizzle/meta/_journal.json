@@ -2,7 +2,26 @@
   "version": "7",
   "dialect": "postgresql",
   "entries": [
-    {"idx":0,"version":"7","when":1792276000000,"tag":"0000_tenant_foundation","breakpoints":true},
-    {"idx":1,"version":"7","when":1792276500000,"tag":"0001_product_sessions","breakpoints":true}
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1792276000000,
+      "tag": "0000_tenant_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792276500000,
+      "tag": "0001_product_sessions",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792368000000,
+      "tag": "0002_tenant_billing_ledger",
+      "breakpoints": true
+    }
   ]
 }
