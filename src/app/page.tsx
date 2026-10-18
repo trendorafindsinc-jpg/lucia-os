@@ -40,7 +40,10 @@ export default function HomePage() {
           <Link className="auth-link" href="/api/auth/login">Sign in with LUCIA ID <span aria-hidden="true">↗</span></Link>
           <span className="auth-caption">Sign-in requires LUCIA Core access to be configured.</span>
         </div>
-        <div className="hero-actions"><Link className="auth-link" href="/templates">Explore website templates <span aria-hidden="true">↗</span></Link></div>
+        <div className="hero-actions">
+          <Link className="auth-link" href="/create">Start guided website setup <span aria-hidden="true">→</span></Link>
+          <Link className="auth-link" href="/templates">Explore website templates <span aria-hidden="true">↗</span></Link>
+        </div>
         <div className="hero-note">
           <span className="note-icon" aria-hidden="true">✳</span>
           <p><strong>Starting with websites.</strong><br />Specialist portals will be introduced in later, carefully tested phases.</p>

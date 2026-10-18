@@ -54,3 +54,9 @@
 @media (max-width: 940px) { .template-grid { grid-template-columns: repeat(2, minmax(0,1fr)); } }
 @media (max-width: 620px) { .template-page { width: calc(100% - 32px); } .template-topbar { min-height: 72px; } .template-back { font-size: 11px; } .template-intro { padding: 55px 0 30px; } .template-lede { font-size: 15px; } .template-controls { padding: 15px; } .template-grid { grid-template-columns: 1fr; gap: 15px; } .template-preview { min-height: 220px; } .template-description { min-height: 0; } .template-footer { flex-direction: column; } }
 @media (prefers-reduced-motion: reduce) { .template-card { transition: none; } .template-card:hover { transform: none; } }
+
+.template-start-link { margin-top: 22px; }
+.template-start-link a { display: inline-flex; align-items: center; gap: 10px; border-radius: 999px; padding: 12px 16px; background: var(--color-ink); color: white; font-size: 13px; font-weight: 700; text-decoration: none; }
+.template-start-link a:hover { background: #263957; }
+.template-action { text-decoration: none; cursor: pointer; }
+.template-action:hover { border-color: #c5cfe0; background: #f0f3fa; color: var(--color-ink); }
