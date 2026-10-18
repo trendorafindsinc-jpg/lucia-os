@@ -140,7 +140,7 @@ export default function HomePage() {
               <h3>{group.title}</h3>
               <p className="capability-card__description">{group.description}</p>
               <div className="capability-card__links">
-                {group.links.map((item) => <Link href={item.href} key={item.href}><span>{item.label}</span><span aria-hidden="true">↗</span></Link>)}
+                {group.links.map((item) => <a href={item.href} key={item.href}><span>{item.label}</span><span aria-hidden="true">↗</span></a>)}
               </div>
             </article>
           ))}
