@@ -158,6 +158,7 @@ export const billingInvoices = pgTable(
   },
   (table) => [
     uniqueIndex("billing_invoices_org_number_uq").on(table.organizationId, table.invoiceNumber),
+    uniqueIndex("billing_invoices_org_id_id_uq").on(table.organizationId, table.id),
     index("billing_invoices_org_status_created_idx").on(table.organizationId, table.status, table.createdAt),
   ],
 );
@@ -181,6 +182,11 @@ export const billingPaymentAttempts = pgTable(
     updatedAt: updatedAt(),
   },
   (table) => [
+    foreignKey({
+      name: "billing_payment_attempts_invoice_org_fk",
+      columns: [table.organizationId, table.invoiceId],
+      foreignColumns: [billingInvoices.organizationId, billingInvoices.id],
+    }).onDelete("restrict"),
     uniqueIndex("billing_payment_attempts_org_provider_reference_uq").on(table.organizationId, table.provider, table.providerReference),
     uniqueIndex("billing_payment_attempts_org_idempotency_uq").on(table.organizationId, table.idempotencyKey),
     uniqueIndex("billing_payment_attempts_org_id_id_uq").on(table.organizationId, table.id),
