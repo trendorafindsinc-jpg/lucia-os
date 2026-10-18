@@ -2,7 +2,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getCurrentOrganizationAccess } from "@/lib/access/guards";
 import { getDb } from "@/lib/db/client";
-import { websiteDomains, websites } from "@/lib/db/schema";
+import { platformAuditEvents, websiteDomains, websites } from "@/lib/db/schema";
 import { classifyWebsiteHostname } from "@/lib/domains/hostname";
 
 export const runtime = "nodejs";
@@ -93,6 +93,17 @@ export async function POST(request: Request, context: RouteContext) {
         type: websiteDomains.domainType,
         status: websiteDomains.status,
         isPrimary: websiteDomains.isPrimary,
+      });
+      await tx.insert(platformAuditEvents).values({
+        actorUserId: access.user.id,
+        actorKind: "user",
+        organizationId: access.membership.organizationId,
+        action: "website.domain.claimed",
+        targetType: "website_domain",
+        targetId: domain.id,
+        purpose: "website.domain.manage",
+        result: "success",
+        metadata: JSON.stringify({ hostname: domain.hostname, domainType: domain.type }),
       });
       return { domain };
     });
