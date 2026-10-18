@@ -12,8 +12,8 @@ export function BillingWorkspace(){
  const [showCodeResult,setShowCodeResult]=useState(false);
  const trial=trialEnd?getTrialState(trialEnd):null;
  function beginTrial(){
-  const window=createTrialWindow(new Date());
-  setTrialEnd(window.endsAt);
+  const trialWindow=createTrialWindow(new Date());
+  setTrialEnd(trialWindow.endsAt);
   setTrialStarted(true);
  }
  function checkCode(){
