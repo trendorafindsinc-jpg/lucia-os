@@ -20,7 +20,10 @@ export const publishSettingsSchema = z.object({
   headline: z.string().trim().min(2).max(100),
   description: z.string().trim().min(10).max(220),
   siteSlug: z.string().trim().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).min(3).max(48),
-  customDomain: z.string().trim().max(253),
+  customDomain: z.string().trim().max(253).refine(
+    (value) => value.length === 0 || customDomainSchema.safeParse(value).success,
+    "Enter a valid custom domain hostname.",
+  ),
 });
 
 export type PublishSettings = z.infer<typeof publishSettingsSchema>;
