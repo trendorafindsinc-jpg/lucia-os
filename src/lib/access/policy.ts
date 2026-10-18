@@ -28,7 +28,7 @@ export function hasStaffPermission(
   now: Date = new Date(),
 ): boolean {
   return grants.some((grant) => {
-    if (grant.status !== "active" || !(grant.role in staffPermissions)) return false;
+    if (grant.status !== "active" || !(Object.hasOwn(staffPermissions, grant.role))) return false;
     if (grant.expiresAt && grant.expiresAt.getTime() <= now.getTime()) return false;
     return staffPermissions[grant.role as StaffRole].has(permission);
   });
@@ -59,7 +59,7 @@ export function hasOrganizationPermission(
   membership: OrganizationMembership | null | undefined,
   permission: string,
 ): boolean {
-  if (!membership || membership.status !== "active" || !(membership.role in organizationPermissions)) return false;
+  if (!membership || membership.status !== "active" || !(Object.hasOwn(organizationPermissions, membership.role))) return false;
   return organizationPermissions[membership.role as OrganizationRole].has(permission);
 }
 
@@ -70,7 +70,7 @@ export function hasPlatformStaffAccess(
 ): boolean {
   return grants.some((grant) =>
     grant.status === "active" &&
-    grant.role in staffPermissions &&
+    Object.hasOwn(staffPermissions, grant.role) &&
     (!grant.expiresAt || grant.expiresAt.getTime() > now.getTime()),
   );
 }
