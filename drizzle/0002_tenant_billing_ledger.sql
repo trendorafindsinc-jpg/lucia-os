@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS "billing_invoices" (
   "created_at" timestamptz NOT NULL DEFAULT now(),
   "updated_at" timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT "billing_invoices_org_number_uq" UNIQUE ("organization_id", "invoice_number"),
+  CONSTRAINT "billing_invoices_org_id_id_uq" UNIQUE ("organization_id", "id"),
   CONSTRAINT "billing_invoices_paid_not_over_due" CHECK ("amount_paid_minor" <= "amount_due_minor")
 );
 --> statement-breakpoint
@@ -33,6 +34,7 @@ CREATE TABLE IF NOT EXISTS "billing_payment_attempts" (
   "verified_at" timestamptz,
   "created_at" timestamptz NOT NULL DEFAULT now(),
   "updated_at" timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT "billing_payment_attempts_invoice_org_fk" FOREIGN KEY ("organization_id", "invoice_id") REFERENCES "billing_invoices"("organization_id", "id") ON DELETE RESTRICT,
   CONSTRAINT "billing_payment_attempts_org_provider_reference_uq" UNIQUE ("organization_id", "provider", "provider_reference"),
   CONSTRAINT "billing_payment_attempts_org_idempotency_uq" UNIQUE ("organization_id", "idempotency_key"),
   CONSTRAINT "billing_payment_attempts_org_id_id_uq" UNIQUE ("organization_id", "id")
