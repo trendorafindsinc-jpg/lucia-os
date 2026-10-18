@@ -1,7 +1,6 @@
 import { domainToASCII } from "node:url";
 
 export const LUCIA_DOMAIN_ROOT = "lucia.name.ng";
-
 const RESERVED_SUBDOMAINS = new Set([
   "www", "os", "admin", "api", "auth", "core", "mail", "support", "status",
   "app", "login", "signup", "static", "assets", "cdn", "docs", "help",
@@ -13,12 +12,14 @@ export type WebsiteDomainStatus = "pending" | "verifying" | "verified" | "active
 
 export function normalizeHostname(input: unknown): string {
   if (typeof input !== "string" || input.length > 300) throw new Error("Enter a valid domain name.");
-  const trimmed = input.trim().replace(/\\.$/, "");
-  if (!trimmed || /[\\s/:@?#\\\\]/.test(trimmed) || trimmed.includes("*")) {
+  const raw = input.trim();
+  const hostname = raw.endsWith(".") ? raw.slice(0, -1) : raw;
+  if (!hostname || hostname.split("").some((c) => c.trim() === "" || ["/", ":", "@", "?", "#", "\\", "*"].includes(c))) {
     throw new Error("Enter a hostname only, without a URL, path, or wildcard.");
   }
-  const ascii = domainToASCII(trimmed).toLowerCase();
-  if (!ascii || ascii.length > 253 || ascii.split(".").some((label) =>
+  const ascii = domainToASCII(hostname).toLowerCase();
+  const labels = ascii.split(".");
+  if (!ascii || ascii.length > 253 || labels.some((label) =>
     label.length < 1 || label.length > 63 || !/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/.test(label))) {
     throw new Error("Enter a valid domain name.");
   }
@@ -28,7 +29,8 @@ export function normalizeHostname(input: unknown): string {
 export function classifyWebsiteHostname(input: unknown): { hostname: string; type: WebsiteDomainType; subdomain?: string } {
   const hostname = normalizeHostname(input);
   if (hostname === LUCIA_DOMAIN_ROOT || hostname.endsWith("." + LUCIA_DOMAIN_ROOT)) {
-    const prefix = hostname === LUCIA_DOMAIN_ROOT ? "" : hostname.slice(0, -(("." + LUCIA_DOMAIN_ROOT).length));
+    const suffix = "." + LUCIA_DOMAIN_ROOT;
+    const prefix = hostname === LUCIA_DOMAIN_ROOT ? "" : hostname.slice(0, -suffix.length);
     if (!prefix || prefix.includes(".")) throw new Error("Only one-level LUCIA subdomains are supported.");
     if (RESERVED_SUBDOMAINS.has(prefix)) throw new Error("That LUCIA subdomain is reserved.");
     if (!/^[a-z0-9](?:[a-z0-9-]{1,61}[a-z0-9])?$/.test(prefix)) {
@@ -54,12 +56,16 @@ export function canActivateDomain(input: {
 }): boolean {
   if (input.status === "removed" || input.status === "suspended") return false;
   if (!input.ownershipVerified || !input.pointsToExpectedDeployment || !input.httpsReady) return false;
-  if (input.type === "custom" && !input.premiumEntitled) return false;
+  if (input.type === "custom" && input.premiumEntitled !== true) return false;
   return true;
 }
 
-/** Never route unknown or non-active hostnames to a default tenant. */
+/** A hostname is routable only after the database lookup proves it is active and its site is published. */
 export function isRoutableWebsiteDomain(input: { hostname: unknown; status: WebsiteDomainStatus; websiteStatus: string }): boolean {
-  try { normalizeHostname(input.hostname); return input.status === "active" && input.websiteStatus === "published"; }
-  catch { return false; }
+  try {
+    normalizeHostname(input.hostname);
+    return input.status === "active" && input.websiteStatus === "published";
+  } catch {
+    return false;
+  }
 }
