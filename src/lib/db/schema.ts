@@ -85,6 +85,7 @@ export const websites = pgTable(
   },
   (table) => [
     uniqueIndex("websites_org_slug_uq").on(table.organizationId, table.slug),
+    uniqueIndex("websites_org_id_id_uq").on(table.organizationId, table.id),
     index("websites_org_status_idx").on(table.organizationId, table.status),
   ],
 );
