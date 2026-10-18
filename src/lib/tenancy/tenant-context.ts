@@ -4,7 +4,8 @@ const UUID_PATTERN =
 /**
  * Validate an organisation identifier before using it to establish a
  * database tenant scope. This is validation only, never authorization:
- * callers must verify the authenticated Core subject's active membership.
+ * callers must verify the user's active membership in LUCIA OS's own database.
+ * LUCIA Core authenticates identity only and is not consulted for membership.
  */
 export function assertOrganizationId(value: unknown): string {
   if (typeof value !== "string" || !UUID_PATTERN.test(value)) {
