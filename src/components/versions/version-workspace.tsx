@@ -7,7 +7,7 @@ import { makeInitialStructure } from "@/lib/site-structure/structure";
 import { defaultSeoSettings } from "@/lib/seo/seo-settings";
 import { addVersion, formatVersionDate, restoreVersion, type VersionHistory, type WebsiteSnapshot } from "@/lib/versions/version-history";
 
-const initialDraft = makeInitialDraft("business-studio");
+const initialDraft = makeInitialDraft("northstar-consulting");
 const initialStructure = makeInitialStructure();
 
 export function VersionWorkspace() {
@@ -32,7 +32,7 @@ export function VersionWorkspace() {
 
   function saveVersion() {
     try {
-      setHistory((current) => addVersion(current, { label, notes, snapshot }));
+      setHistory(addVersion(history, { label, notes, snapshot }));
       setMessage("Version saved in this browser session.");
       setLabel("Website draft");
       setNotes("");

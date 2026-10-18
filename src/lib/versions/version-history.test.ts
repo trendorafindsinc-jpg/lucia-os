@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addVersion, makeWebsiteSnapshot, restoreVersion, versionHistorySchema, type WebsiteSnapshot } from "./version-history";
+import { addVersion, makeWebsiteSnapshot, restoreVersion, versionHistorySchema, websiteSnapshotSchema, type WebsiteSnapshot } from "./version-history";
 
 const snapshot: WebsiteSnapshot = {
   siteName: "Northstar Studio",
@@ -39,10 +39,6 @@ describe("website version history", () => {
 
   it("rejects blank labels and invalid snapshot data", () => {
     expect(() => addVersion([], { label: "  ", snapshot })).toThrow("Give this version a name.");
-    expect(websiteSnapshotSchemaSafeParse()).toBe(false);
+    expect(websiteSnapshotSchema.safeParse({}).success).toBe(false);
   });
 });
-
-function websiteSnapshotSchemaSafeParse() {
-  return versionHistorySchema.safeParse([{ id: "version-bad", label: "Broken", notes: "", createdAt: "yesterday", snapshot: {} }]).success;
-}
