@@ -84,9 +84,10 @@ export async function POST(request: Request, context: RouteContext) {
         websiteId: site.id,
         hostname: claim.hostname,
         domainType: claim.type,
-        status: "active",
+        // A requested hostname is not proof of ownership. Keep it non-routable
+        // until a separate server-side verification/activation flow succeeds.
+        status: "pending",
         isPrimary: input.isPrimary === true,
-        verifiedAt: new Date(),
       }).returning({
         id: websiteDomains.id,
         hostname: websiteDomains.hostname,
@@ -98,12 +99,12 @@ export async function POST(request: Request, context: RouteContext) {
         actorUserId: access.user.id,
         actorKind: "user",
         organizationId: access.membership.organizationId,
-        action: "website.domain.claimed",
+        action: "website.domain.claim_requested",
         targetType: "website_domain",
         targetId: domain.id,
         purpose: "website.domain.manage",
         result: "success",
-        metadata: JSON.stringify({ hostname: domain.hostname, domainType: domain.type }),
+        metadata: JSON.stringify({ hostname: domain.hostname, domainType: domain.type, status: domain.status }),
       });
       return { domain };
     });
