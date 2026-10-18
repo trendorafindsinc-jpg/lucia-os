@@ -19,7 +19,7 @@ export function BillingWorkspace(){
  function checkCode(){
   const configuredCodes:DiscountCode[]=[];
   const result=validateDiscount(code,configuredCodes,10000,"NGN");
-  setCodeMessage(result.message);
+  setCodeMessage(result.valid ? `Code ${result.code} would save ${result.discountMinor} minor currency units in this preview.` : result.message);
   setShowCodeResult(true);
  }
  return <main className="billing-shell">
