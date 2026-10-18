@@ -1,9 +1,8 @@
 import Link from "next/link";
-import { and, count, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, count, desc, eq } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
 import { billingInvoices, memberships, organizations, supportCases, websites } from "@/lib/db/schema";
-import { hasOrganizationPermission } from "@/lib/access/policy";
 
 export const metadata = { title: "Organisation workspace" };
 
