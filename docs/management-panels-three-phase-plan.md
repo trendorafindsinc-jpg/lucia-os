@@ -1,6 +1,6 @@
 # LUCIA OS staff and tenant-owner panels — three-phase delivery
 
-## Phase 1 — Secure foundation (current)
+## Phase 1 — Secure foundation (completed; CI passed and merged to main)
 - Add explicit local staff grants, tenant support cases/messages, and platform audit event storage.
 - Add database-backed, fail-closed access policy helpers for staff permissions and tenant membership.
 - Add migration, indexes, support-message/case tenant isolation policies, and policy unit tests.
@@ -8,10 +8,10 @@
 
 **Exit gate:** lint, typecheck, tests and build pass; migration review confirms that no existing customer data is altered.
 
-## Phase 2 — Premium management UI
-- Build a dedicated LUCIA Staff workspace for support queue, case details, tenant lookup, and audit visibility.
-- Build a Tenant Owner workspace for organisation settings, team/membership management, websites, billing, and support.
-- Use responsive navigation, accessible controls, clear empty/loading/error states, confirmations for sensitive actions, and plain-language copy.
+## Phase 2 — Premium management UI (in progress)
+- Add a protected LUCIA Staff workspace with database-backed recent support cases and live queue summaries.
+- Add a tenant-owner workspace with active organisation memberships and database-backed website, invoice, and support-case summaries.
+- Use responsive navigation, accessible controls, clear empty states, and plain-language copy; unimplemented areas are visibly marked for Phase 3 rather than presented as working controls.
 - Hide privileged navigation unless the server confirms the required access; page hiding is not a security boundary.
 
 **Exit gate:** mobile and keyboard checks pass; every visible action is either wired to a protected server operation or clearly marked unavailable without presenting a fake control.
