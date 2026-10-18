@@ -221,3 +221,92 @@ export const billingWebhookEvents = pgTable(
     }).onDelete("restrict"),
   ],
 );
+
+
+/** Platform staff access is independent of organisation membership. */
+export const staffGrants = pgTable(
+  "platform_staff_grants",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
+    role: text("role").notNull(),
+    status: text("status").notNull().default("active"),
+    grantedByUserId: uuid("granted_by_user_id").references(() => appUsers.id, { onDelete: "restrict" }),
+    reason: text("reason").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    uniqueIndex("platform_staff_grants_user_role_uq").on(table.userId, table.role),
+    index("platform_staff_grants_user_status_idx").on(table.userId, table.status),
+  ],
+);
+
+/** Support cases are tenant-scoped; staff access is separately authorized and audited. */
+export const supportCases = pgTable(
+  "support_cases",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
+    createdByUserId: uuid("created_by_user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
+    assignedStaffUserId: uuid("assigned_staff_user_id").references(() => appUsers.id, { onDelete: "restrict" }),
+    subject: text("subject").notNull(),
+    category: text("category").notNull().default("general"),
+    priority: text("priority").notNull().default("normal"),
+    status: text("status").notNull().default("open"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+    closedAt: timestamp("closed_at", { withTimezone: true }),
+  },
+  (table) => [
+    uniqueIndex("support_cases_org_id_id_uq").on(table.organizationId, table.id),
+    index("support_cases_org_status_updated_idx").on(table.organizationId, table.status, table.updatedAt),
+    index("support_cases_assignee_status_idx").on(table.assignedStaffUserId, table.status),
+  ],
+);
+
+export const supportMessages = pgTable(
+  "support_messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
+    caseId: uuid("case_id").notNull(),
+    authorUserId: uuid("author_user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
+    authorKind: text("author_kind").notNull(),
+    visibility: text("visibility").notNull().default("customer"),
+    body: text("body").notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    foreignKey({
+      name: "support_messages_case_org_fk",
+      columns: [table.organizationId, table.caseId],
+      foreignColumns: [supportCases.organizationId, supportCases.id],
+    }).onDelete("restrict"),
+    index("support_messages_case_created_idx").on(table.organizationId, table.caseId, table.createdAt),
+  ],
+);
+
+export const platformAuditEvents = pgTable(
+  "platform_audit_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    actorUserId: uuid("actor_user_id").references(() => appUsers.id, { onDelete: "set null" }),
+    actorKind: text("actor_kind").notNull(),
+    organizationId: uuid("organization_id").references(() => organizations.id, { onDelete: "restrict" }),
+    action: text("action").notNull(),
+    targetType: text("target_type").notNull(),
+    targetId: text("target_id"),
+    purpose: text("purpose"),
+    result: text("result").notNull(),
+    requestId: text("request_id"),
+    metadata: text("metadata"),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    index("platform_audit_events_org_created_idx").on(table.organizationId, table.createdAt),
+    index("platform_audit_events_actor_created_idx").on(table.actorUserId, table.createdAt),
+    index("platform_audit_events_action_created_idx").on(table.action, table.createdAt),
+  ],
+);

@@ -22,6 +22,13 @@
       "when": 1792368000000,
       "tag": "0002_tenant_billing_ledger",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792368600000,
+      "tag": "0003_management_panels_foundation",
+      "breakpoints": true
     }
   ]
 }
