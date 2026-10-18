@@ -25,6 +25,8 @@ export default function HomePage() {
           <Link className="auth-link" href="/create">Start guided website setup <span aria-hidden="true">→</span></Link>
           <Link className="auth-link" href="/templates">Explore website templates <span aria-hidden="true">↗</span></Link>
           <Link className="auth-link" href="/editor">Try the visual editor <span aria-hidden="true">↗</span></Link>
+          <Link className="auth-link" href="/pages">Manage pages &amp; navigation <span aria-hidden="true">↗</span></Link>
+          <Link className="auth-link" href="/content">Open blog &amp; media library <span aria-hidden="true">↗</span></Link>
         </div>
         <div className="hero-note"><span className="note-icon" aria-hidden="true">✳</span><p><strong>Starting with websites.</strong><br />Specialist portals will be introduced in later, carefully tested phases.</p></div>
       </section>
