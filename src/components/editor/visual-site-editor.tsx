@@ -34,7 +34,7 @@ export function VisualSiteEditor() {
     <main className="editor-page">
       <header className="editor-topbar">
         <Link className="wordmark" href="/" aria-label="LUCIA OS home"><span className="brand-mark" aria-hidden="true">L</span><span>LUCIA <span className="muted-word">OS</span></span></Link>
-        <div className="editor-topbar-actions"><span className="editor-unsaved">Local draft · Not published</span><Link className="editor-back-link" href="/templates">Exit editor</Link></div>
+        <div className="editor-topbar-actions"><span className="editor-unsaved">Local draft · Not published</span><Link className="editor-back-link" href="/pages">Pages & navigation ↗</Link><Link className="editor-back-link" href="/templates">Exit editor</Link></div>
       </header>
       <section className="editor-heading">
         <p className="eyebrow">PHASE 9 · VISUAL EDITOR</p>
