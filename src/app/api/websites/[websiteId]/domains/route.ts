@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { getCurrentOrganizationAccess } from "@/lib/access/guards";
 import { getDb } from "@/lib/db/client";
 import { websiteDomains, websites } from "@/lib/db/schema";
-import { assertDomainClaimAllowed } from "@/lib/domains/hostname";
+import { classifyWebsiteHostname } from "@/lib/domains/hostname";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -57,14 +57,16 @@ export async function POST(request: Request, context: RouteContext) {
   const access = await getCurrentOrganizationAccess(input.organizationId, "website.edit");
   if (!access) return jsonError("Organisation access denied.", 403);
 
-  let claim: ReturnType<typeof assertDomainClaimAllowed>;
+  let claim: ReturnType<typeof classifyWebsiteHostname>;
   try {
-    // Premium is intentionally fail-closed until this organisation is mapped
-    // to a trusted Core tenant and the live entitlement contract is verified.
-    claim = assertDomainClaimAllowed({ hostname: input.hostname, premiumEntitled: false });
+    claim = classifyWebsiteHostname(input.hostname);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Invalid hostname.";
-    return jsonError(message, message.includes("Premium") ? 402 : 400);
+    return jsonError(error instanceof Error ? error.message : "Invalid hostname.", 400);
+  }
+  if (claim.type === "custom") {
+    // Fail closed: this deployment has no verified Core-tenant mapping and
+    // entitlement-check client yet. Never infer Premium from browser input.
+    return jsonError("Custom-domain claims are temporarily unavailable until LUCIA Core entitlement verification is connected.", 503);
   }
 
   const db = getDb();
