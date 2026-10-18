@@ -74,11 +74,29 @@ ALTER TABLE "support_cases" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "support_messages" ENABLE ROW LEVEL SECURITY;
 --> statement-breakpoint
 CREATE POLICY "support_cases_tenant_isolation" ON "support_cases"
-  USING ("organization_id" = NULLIF(current_setting('app.current_organization_id', true), '')::uuid)
-  WITH CHECK ("organization_id" = NULLIF(current_setting('app.current_organization_id', true), '')::uuid);
+  USING (
+    current_setting('app.is_platform_staff', true) = 'true'
+    OR "organization_id" = NULLIF(current_setting('app.current_organization_id', true), '')::uuid
+  )
+  WITH CHECK (
+    current_setting('app.is_platform_staff', true) = 'true'
+    OR "organization_id" = NULLIF(current_setting('app.current_organization_id', true), '')::uuid
+  );
 --> statement-breakpoint
 CREATE POLICY "support_messages_tenant_isolation" ON "support_messages"
-  USING ("organization_id" = NULLIF(current_setting('app.current_organization_id', true), '')::uuid)
-  WITH CHECK ("organization_id" = NULLIF(current_setting('app.current_organization_id', true), '')::uuid);
+  USING (
+    current_setting('app.is_platform_staff', true) = 'true'
+    OR (
+      "organization_id" = NULLIF(current_setting('app.current_organization_id', true), '')::uuid
+      AND "visibility" = 'customer'
+    )
+  )
+  WITH CHECK (
+    current_setting('app.is_platform_staff', true) = 'true'
+    OR (
+      "organization_id" = NULLIF(current_setting('app.current_organization_id', true), '')::uuid
+      AND "visibility" = 'customer'
+    )
+  );
 --> statement-breakpoint
 REVOKE UPDATE, DELETE ON "platform_audit_events" FROM PUBLIC;
