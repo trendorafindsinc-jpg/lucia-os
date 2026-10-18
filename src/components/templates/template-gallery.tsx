@@ -27,7 +27,7 @@ export function TemplateGallery() {
         <h1>Find a look that<br /><span>feels like you.</span></h1>
         <p className="template-lede">Explore a growing library of thoughtfully structured website concepts for organisations, creators and independent businesses. Choose a starting point and use the guided setup to plan a site around your goals.</p>
         <div className="template-count"><strong>{websiteTemplates.length} design concepts</strong><span> · {templateCategories.length - 1} categories · Catalogue preview</span></div>
-        <div className="template-start-link"><Link href="/create">Start guided website setup <span aria-hidden="true">→</span></Link></div>
+        <div className="template-start-link"><Link href="/create">Start guided website setup <span aria-hidden="true">→</span></Link><Link href="/editor">Open visual editor <span aria-hidden="true">↗</span></Link></div>
       </section>
       <section className="template-controls" aria-label="Find a website template">
         <label className="template-search-label" htmlFor="template-search">Search templates</label>
@@ -58,12 +58,12 @@ export function TemplateGallery() {
               <p className="template-audience">{template.audience}</p>
               <p className="template-description">{template.description}</p>
               <div className="template-sections" aria-label="Included section concepts">{template.sections.slice(0, 4).map((section) => <span key={section}>{section}</span>)}</div>
-              <Link className="template-action" href={`/create?template=${encodeURIComponent(template.id)}`}>Start with this design <span aria-hidden="true">↗</span></Link>
+              <Link className="template-action" href={`/editor?template=${encodeURIComponent(template.id)}`}>Customise this design <span aria-hidden="true">↗</span></Link>
             </div>
           </article>
         ))}</div> : <div className="template-empty"><h3>No matching concepts</h3><p>Try another search or choose a different category.</p><button type="button" onClick={() => { setCategory("All"); setSearch(""); }}>Clear filters</button></div>}
       </section>
-      <footer className="template-footer"><span>Designed as starting points, not locked-in layouts.</span><span>Setup is a preview; saving and publishing arrive in later phases.</span></footer>
+      <footer className="template-footer"><span>Designed as starting points, not locked-in layouts.</span><span>Editor changes are local preview only; saving and publishing are not connected.</span></footer>
     </main>
   );
 }
