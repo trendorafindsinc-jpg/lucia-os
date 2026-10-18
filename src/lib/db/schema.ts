@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   bigint,
   boolean,
@@ -6,7 +7,6 @@ import {
   pgTable,
   text,
   timestamp,
-  sql,
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
