@@ -11,12 +11,12 @@ const checkoutSchema=z.object({email:z.string().email().max(254),amountMinor:z.n
 export const verifiedPaymentSchema=z.object({provider:z.enum(paymentProviders),event:z.string().min(1).max(100),reference:z.string().min(1).max(160),providerTransactionId:z.string().min(1).max(160),status:z.enum(["succeeded","failed","pending"]),amountMinor:z.number().int().nonnegative(),currency:z.string().regex(/^[A-Z]{3}$/)}).strict();
 export type VerifiedPayment=z.infer<typeof verifiedPaymentSchema>;
 const secureEqual=(a:string,b:string)=>{const x=Buffer.from(a),y=Buffer.from(b);return x.length===y.length&&timingSafeEqual(x,y);};
-export function isPaymentProviderConfigured(provider:PaymentProvider,env:PaymentEnvironment=process.env){return provider==="paystack"?Boolean(env.PAYSTACK_SECRET_KEY):Boolean(env.FLUTTERWAVE_SECRET_KEY&&env.FLUTTERWAVE_WEBHOOK_SECRET_HASH);}
+export function isPaymentProviderConfigured(provider:PaymentProvider,env:PaymentEnvironment=process.env as PaymentEnvironment){return provider==="paystack"?Boolean(env.PAYSTACK_SECRET_KEY):Boolean(env.FLUTTERWAVE_SECRET_KEY&&env.FLUTTERWAVE_WEBHOOK_SECRET_HASH);}
 function requireSecret(provider:PaymentProvider,env:PaymentEnvironment){const key=provider==="paystack"?env.PAYSTACK_SECRET_KEY:env.FLUTTERWAVE_SECRET_KEY;if(!key)throw new PaymentConfigurationError(provider+" is not configured on the server.");return key;}
 function trustedCheckoutUrl(provider:PaymentProvider,value:unknown){if(typeof value!=="string")throw new PaymentProviderError("Provider returned no checkout URL.");let url:URL;try{url=new URL(value);}catch{throw new PaymentProviderError("Provider returned an invalid checkout URL.");}const host=provider==="paystack"?"checkout.paystack.com":"checkout.flutterwave.com";if(url.protocol!=="https:"||url.hostname!==host)throw new PaymentProviderError("Provider returned an untrusted checkout URL.");return url.toString();}
 
 export async function initiateCheckout(provider:PaymentProvider,input:z.input<typeof checkoutSchema>,options:{env?:PaymentEnvironment;fetchImpl?:typeof fetch}={}){
- const safe=checkoutSchema.parse(input),env=options.env??process.env,fetcher=options.fetchImpl??fetch,secret=requireSecret(provider,env);
+ const safe=checkoutSchema.parse(input),env=options.env??(process.env as PaymentEnvironment),fetcher=options.fetchImpl??fetch,secret=requireSecret(provider,env);
  const paystack=provider==="paystack";
  const endpoint=paystack?"https://api.paystack.co/transaction/initialize":"https://api.flutterwave.com/v3/payments";
  const payload=paystack?{email:safe.email,amount:safe.amountMinor,currency:safe.currency,reference:safe.reference,callback_url:safe.callbackUrl,metadata:safe.metadata}:{tx_ref:safe.reference,amount:safe.amountMinor/100,currency:safe.currency,redirect_url:safe.callbackUrl,customer:{email:safe.email},meta:safe.metadata};
@@ -29,7 +29,7 @@ export async function initiateCheckout(provider:PaymentProvider,input:z.input<ty
  return{provider,reference:safe.reference,checkoutUrl:trustedCheckoutUrl(provider,data.link)};
 }
 
-export function verifyWebhookSignature(provider:PaymentProvider,rawBody:string,signature:string|undefined,env:PaymentEnvironment=process.env){
+export function verifyWebhookSignature(provider:PaymentProvider,rawBody:string,signature:string|undefined,env:PaymentEnvironment=process.env as PaymentEnvironment){
  if(!signature)return false;
  if(provider==="paystack"){if(!env.PAYSTACK_SECRET_KEY)return false;return secureEqual(createHmac("sha512",env.PAYSTACK_SECRET_KEY).update(rawBody,"utf8").digest("hex"),signature);}
  return Boolean(env.FLUTTERWAVE_WEBHOOK_SECRET_HASH&&secureEqual(env.FLUTTERWAVE_WEBHOOK_SECRET_HASH,signature));
@@ -46,7 +46,7 @@ export function normalizeVerifiedPayment(provider:PaymentProvider,rawBody:string
  return verifiedPaymentSchema.parse({provider,event:root.event,reference:data.tx_ref,providerTransactionId:String(data.id??""),status:data.status==="successful"?"succeeded":data.status==="failed"?"failed":"pending",amountMinor:typeof data.amount==="number"?Math.round(data.amount*100):data.amount,currency:data.currency});
 }
 /** Verify raw-body signature before parsing. Callers must also verify provider transaction and persist idempotently. */
-export function acceptWebhook(provider:PaymentProvider,rawBody:string,signature:string|undefined,env:PaymentEnvironment=process.env){
+export function acceptWebhook(provider:PaymentProvider,rawBody:string,signature:string|undefined,env:PaymentEnvironment=process.env as PaymentEnvironment){
  if(!verifyWebhookSignature(provider,rawBody,signature,env))throw new PaymentProviderError("Webhook signature verification failed.");
  return normalizeVerifiedPayment(provider,rawBody);
 }
