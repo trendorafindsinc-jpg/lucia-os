@@ -31,6 +31,7 @@ export default function HomePage() {
           <Link className="auth-link" href="/versions">Drafts, preview &amp; rollback <span aria-hidden="true">↗</span></Link>
           <Link className="auth-link" href="/publish">Prepare publishing &amp; domains <span aria-hidden="true">↗</span></Link>
           <Link className="auth-link" href="/forms">Build forms &amp; review enquiries <span aria-hidden="true">↗</span></Link>
+          <Link className="auth-link" href="/analytics">Measure analytics &amp; conversions <span aria-hidden="true">↗</span></Link>
         </div>
         <div className="hero-note"><span className="note-icon" aria-hidden="true">✳</span><p><strong>Starting with websites.</strong><br />Specialist portals will be introduced in later, carefully tested phases.</p></div>
       </section>
