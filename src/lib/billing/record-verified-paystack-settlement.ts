@@ -4,6 +4,23 @@ import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { tenantSettingValue } from "@/lib/tenancy/tenant-context";
 
+type PaymentAttemptRow = {
+  id: string;
+  invoice_id: string;
+  provider_transaction_id: string | null;
+  amount_minor: number | string;
+  currency: string;
+  status: string;
+};
+
+type InvoiceRow = {
+  id: string;
+  amount_due_minor: number | string;
+  amount_paid_minor: number | string;
+  currency: string;
+  status: string;
+};
+
 export type VerifiedPaystackSettlement = {
   organizationId: string;
   reference: string;
@@ -42,14 +59,7 @@ export async function recordVerifiedPaystackSettlement(
   return db.transaction(async (tx) => {
     await tx.execute(sql`select set_config('app.current_organization_id', ${organizationId}, true)`);
 
-    const attempts = await tx.execute(sql<{
-      id: string;
-      invoice_id: string;
-      provider_transaction_id: string | null;
-      amount_minor: number;
-      currency: string;
-      status: string;
-    }>`
+    const attempts = await tx.execute(sql<PaymentAttemptRow>`
       select id, invoice_id, provider_transaction_id, amount_minor, currency, status
       from billing_payment_attempts
       where organization_id = ${organizationId}::uuid
@@ -57,7 +67,7 @@ export async function recordVerifiedPaystackSettlement(
         and provider_reference = ${input.reference}
       for update
     `);
-    const attempt = attempts[0];
+    const attempt = attempts[0] as PaymentAttemptRow | undefined;
     if (!attempt) return { ok: false, reason: "payment_not_found" };
 
     if (attempt.status === "succeeded") {
@@ -78,20 +88,14 @@ export async function recordVerifiedPaystackSettlement(
       return { ok: false, reason: "payment_mismatch" };
     }
 
-    const invoices = await tx.execute(sql<{
-      id: string;
-      amount_due_minor: number;
-      amount_paid_minor: number;
-      currency: string;
-      status: string;
-    }>`
+    const invoices = await tx.execute(sql<InvoiceRow>`
       select id, amount_due_minor, amount_paid_minor, currency, status
       from billing_invoices
       where organization_id = ${organizationId}::uuid
         and id = ${attempt.invoice_id}::uuid
       for update
     `);
-    const invoice = invoices[0];
+    const invoice = invoices[0] as InvoiceRow | undefined;
     if (!invoice || !["open", "overdue"].includes(invoice.status)) {
       return { ok: false, reason: "invoice_not_payable" };
     }
