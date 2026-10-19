@@ -4,7 +4,8 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
 import { memberships, organizations, websitePages, websites } from "@/lib/db/schema";
 import { hasOrganizationPermission } from "@/lib/access/policy";
-import { siteDraftSchema, makeInitialDraft, type SiteDraft } from "@/lib/editor/site-draft";
+import { siteDraftSchema, type SiteDraft } from "@/lib/editor/site-draft";
+import { z } from "zod";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -49,6 +50,7 @@ export async function GET(_request: Request, context: RouteContext) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Sign in with LUCIA ID to edit a saved website." }, { status: 401 });
   const { websiteId } = await context.params;
+  if (!z.string().uuid().safeParse(websiteId).success) return NextResponse.json({ error: "Invalid website id." }, { status: 400 });
   const found = await locateWebsite(websiteId, user.id, "website.read");
   if (!found) return NextResponse.json({ error: "Website not found or access denied." }, { status: 404 });
 
@@ -74,6 +76,7 @@ export async function PATCH(request: Request, context: RouteContext) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Sign in with LUCIA ID to save changes." }, { status: 401 });
   const { websiteId } = await context.params;
+  if (!z.string().uuid().safeParse(websiteId).success) return NextResponse.json({ error: "Invalid website id." }, { status: 400 });
   let raw: unknown;
   try { raw = await request.json(); } catch {
     return NextResponse.json({ error: "Submit valid draft data." }, { status: 400 });
