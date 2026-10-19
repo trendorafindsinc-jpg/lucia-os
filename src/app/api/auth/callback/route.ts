@@ -31,7 +31,7 @@ export async function GET(request: Request) {
     ?.slice("lucia_os_return_to=".length);
   const safeReturnTo = returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//") && !returnTo.includes("\\") && !returnTo.startsWith("/api/auth")
     ? returnTo
-    : "/";
+    : "/workspace";
 
   const response = safeFailure(request);
   response.cookies.set("lucia_os_return_to", "", {

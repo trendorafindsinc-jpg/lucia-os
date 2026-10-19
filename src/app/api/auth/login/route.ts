@@ -10,7 +10,7 @@ export async function GET(request: Request) {
     const requestedReturnTo = new URL(request.url).searchParams.get("returnTo");
     const returnTo = requestedReturnTo && requestedReturnTo.startsWith("/") && !requestedReturnTo.startsWith("//") && !requestedReturnTo.includes("\\") && !requestedReturnTo.startsWith("/api/auth")
       ? requestedReturnTo
-      : "/";
+      : "/workspace";
     const response = NextResponse.redirect(buildAuthorizationUrl(state));
     response.cookies.set("lucia_os_return_to", returnTo, {
       httpOnly: true,
