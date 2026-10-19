@@ -630,3 +630,26 @@ h1 span { color: #6979c9; }
   .landing *, .landing *::before, .landing *::after { animation: none !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
   .capability-card:hover, .landing-nav__cta:hover, .landing-button:hover { transform: none; }
 }
+
+
+/* LUCIA signal language: quiet geometric motion, never motion for motion's sake. */
+.workspace-brand-mark,.brand-mark{position:relative;isolation:isolate;overflow:visible}
+.workspace-brand-mark{font-size:0!important}
+.workspace-brand-mark::before,.brand-mark::before{content:"";position:absolute;inset:8px;border:1.5px solid rgba(255,255,255,.9);border-radius:6px;transform:rotate(45deg);animation:lucia-signal-turn 18s linear infinite}
+.workspace-brand-mark::after,.brand-mark::after{content:"";position:absolute;left:50%;top:50%;width:7px;height:7px;border-radius:2px;background:#fff;transform:translate(-50%,-50%);box-shadow:0 0 0 4px rgba(255,255,255,.13);animation:lucia-signal-breathe 3.8s ease-in-out infinite}
+.workspace-brand-mark i{position:absolute;inset:3px;border:1px solid rgba(255,255,255,.28);border-radius:11px;transform:rotate(0deg);animation:lucia-signal-orbit 12s ease-in-out infinite}
+.workspace-shell{background:radial-gradient(ellipse at 8% 0%,rgba(205,215,255,.42),transparent 35rem),radial-gradient(ellipse at 96% 28%,rgba(217,237,255,.48),transparent 32rem),#f5f7fb}
+.workspace-topbar{background:rgba(255,255,255,.72);box-shadow:0 1px 0 rgba(255,255,255,.7)}
+.workspace-main{animation:lucia-rise .55s cubic-bezier(.2,.75,.25,1) both}
+.workspace-metric,.workspace-panel,.workspace-org-card{transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease}
+.workspace-metric:hover{transform:translateY(-3px);border-color:#d0d8f8;box-shadow:0 18px 36px rgba(35,54,87,.08)}
+.workspace-org-card:hover{background:linear-gradient(90deg,rgba(238,241,255,.44),transparent 72%)}
+.workspace-nav-item{transition:background .18s ease,color .18s ease,transform .18s ease;text-decoration:none}
+.workspace-nav-item:hover{background:rgba(233,237,255,.78);color:#3d4fb5;transform:translateX(2px)}
+.workspace-nav-item:focus-visible{outline:3px solid #6275e8;outline-offset:2px}
+.workspace-brand-mark i{display:block}
+@keyframes lucia-signal-turn{to{transform:rotate(405deg)}}
+@keyframes lucia-signal-orbit{0%,100%{transform:rotate(0) scale(.96);opacity:.55}50%{transform:rotate(45deg) scale(1.04);opacity:1}}
+@keyframes lucia-signal-breathe{0%,100%{box-shadow:0 0 0 3px rgba(255,255,255,.12);opacity:.88}50%{box-shadow:0 0 0 7px rgba(255,255,255,.06);opacity:1}}
+@keyframes lucia-rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.workspace-brand-mark::before,.brand-mark::before,.workspace-brand-mark::after,.brand-mark::after,.workspace-brand-mark i,.workspace-main{animation:none!important}.workspace-metric,.workspace-panel,.workspace-org-card,.workspace-nav-item{transition:none!important}.workspace-metric:hover,.workspace-nav-item:hover{transform:none}}
