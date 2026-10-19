@@ -2,7 +2,7 @@
 
 **Promise:** Your website, when it is ready.
 
-This specification defines the target behavior; it does not claim production publishing, payments, DNS, or TLS are already operational.
+This PR implements LUCIA-subdomain publishing and public wildcard-host rendering in code. Production use still requires applying the database migration and verifying the deployment; custom-domain payments and activation are not implemented.
 
 ## Customer journey
 1. Enter website name, headline, short description, and optional custom hostname.
@@ -34,7 +34,7 @@ The LUCIA OS Vercel project `lucia-os` has the wildcard domain `*.lucia.name.ng`
 - Verify LUCIA ID/Core session, organisation membership, role, publish permission, and product entitlement server-side. Fail closed if authorization cannot be verified.
 - Normalize and reserve LUCIA subdomain slugs transactionally with database uniqueness and reserved-name checks.
 - Keep drafts separate from immutable published snapshots; atomically switch the published version only after validation.
-- Public host routing resolves only verified host records and published snapshots; never expose drafts or data from another tenant.
+- Public wildcard host routing resolves the configured LUCIA domain to published snapshots only; never expose drafts or data from another tenant. The existing Vercel project domain *.lucia.name.ng is verified.
 - Custom domains accept hostnames only. Require a server-verified DNS ownership challenge; report TLS ready only when the hosting provider confirms an active certificate.
 - LUCIA subdomain publishing does not require custom-domain activation. Custom domains require both the one-time activation entitlement and successful DNS/TLS verification before they are marked live.
 - Audit publish, payment-state, and domain actions; validate inputs, rate-limit sensitive endpoints, and return actionable errors without leaking secrets.
