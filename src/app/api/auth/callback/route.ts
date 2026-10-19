@@ -93,7 +93,19 @@ export async function GET(request: Request) {
       redirect: "error",
       signal: AbortSignal.timeout(8000),
     });
-    if (!tokenResponse.ok) { console.error("[LUCIA_OS_OAUTH] token exchange rejected", { status: tokenResponse.status }); return safeFailure(request, "token_exchange"); }
+    if (!tokenResponse.ok) {
+      let coreError = "unreadable_error";
+      try {
+        const errorPayload: unknown = await tokenResponse.json();
+        if (errorPayload && typeof errorPayload === "object") {
+          const payload = errorPayload as Record<string, unknown>;
+          if (typeof payload.error === "string") coreError = payload.error.slice(0, 80);
+          else if (typeof payload.code === "string") coreError = payload.code.slice(0, 80);
+        }
+      } catch { /* Keep only the safe fallback; never log response bodies. */ }
+      console.error("[LUCIA_OS_OAUTH] token exchange rejected", { status: tokenResponse.status, coreError });
+      return safeFailure(request, "token_exchange");
+    }
 
     failureStage = "token_payload";
     const tokenPayload: unknown = await tokenResponse.json();
