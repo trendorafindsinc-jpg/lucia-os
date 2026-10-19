@@ -14,7 +14,7 @@ This PR implements LUCIA-subdomain publishing and public wildcard-host rendering
 
 ## Commercial model: separate website subscription from custom-domain activation
 
-- **Website subscription:** one recurring subscription with weekly (₦7,000), monthly (₦28,000), and annual (₦336,000) billing options, plus a **7-day free trial**. Prices must be editable in LUCIA Core. Do not replace this with a one-time website subscription. Trial expiry must not trigger an automatic charge without the customer's explicit consent. The trial/subscription lifecycle and entitlement are Core-managed.
+- **Website subscription:** recurring weekly/monthly/annual billing options, plus a **7-day free trial**. Exact prices, discounts, and before/after price presentation remain configurable in LUCIA Core; ₦28,000/month was an illustrative example until explicitly finalized, so do not hardcode unapproved amounts. Do not replace this with a one-time website subscription. Trial expiry must not trigger an automatic charge without the customer's explicit consent. The trial/subscription lifecycle and entitlement are Core-managed.
 - **Custom-domain activation:** a separate **one-time payment** for activating a custom hostname on a website. It is not a recurring subscription and must not be bundled into or silently renew with the website subscription.
 - A customer may publish on their available LUCIA subdomain without buying custom-domain activation.
 - The customer may enter and validate a custom hostname before payment, but it must be labelled pending activation and must not be represented as connected/live.
