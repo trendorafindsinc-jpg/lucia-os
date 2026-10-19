@@ -684,3 +684,25 @@ h1 span { color: #6979c9; }
 .team-member-feedback{color:#237b4b}.team-member-error{color:#b64b37}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @media(max-width:680px){.team-member-controls{width:100%;justify-content:flex-start;margin-left:57px}.team-member-protected{margin-left:57px}}
+
+
+/* Support conversation: readable, quiet, mobile-first */
+.lucia-support-case-link{color:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.lucia-support-case-link:hover{color:#4558bf}
+.lucia-case-heading{align-items:flex-start}
+.lucia-message-list{display:grid;gap:14px;padding:22px 24px}
+.lucia-message{max-width:min(680px,94%);padding:15px 17px;border:1px solid #e5eaf2;border-radius:16px;background:#fafbfe}
+.lucia-message-staff{background:linear-gradient(145deg,#f0f3ff,#fbfcff);border-color:#dfe4ff}
+.lucia-message-customer{justify-self:end;background:#f3fbf7;border-color:#dcefe5}
+.lucia-message-meta{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.lucia-message-meta strong{font-size:11px;color:#35445f}
+.lucia-message-meta span{font-size:10px;color:#8994a7}
+.lucia-message p{margin:10px 0 0;color:#4c5a70;font-size:13px;line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere}
+.lucia-reply-form{display:grid;gap:10px;padding:20px 24px 24px;border-top:1px solid #edf0f5}
+.lucia-reply-form label{font-size:12px;font-weight:750;color:#526078}
+.lucia-reply-form textarea{width:100%;border:1px solid #dce3ee;border-radius:13px;background:#fbfcff;padding:13px;color:#17243b;font:inherit;font-size:13px;line-height:1.6;resize:vertical}
+.lucia-reply-form>div{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.lucia-reply-form>div>span{font-size:10px;color:#8a95a8}
+.lucia-reply-form .workspace-button{margin-top:0}
+.lucia-case-closed{margin:0 24px 24px;padding:13px;border-radius:12px;background:#f5f6fa;color:#707c90;font-size:12px;line-height:1.6}
+@media(max-width:680px){.lucia-message-list{padding:16px}.lucia-message{max-width:100%}.lucia-reply-form{padding:16px}.lucia-reply-form>div{align-items:flex-start;flex-direction:column}.lucia-reply-form .workspace-button{width:100%}}
