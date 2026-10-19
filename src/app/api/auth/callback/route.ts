@@ -104,8 +104,22 @@ export async function GET(request: Request) {
     const identityRoot = identityPayload as Record<string, unknown>;
     const identityUser = identityRoot.user && typeof identityRoot.user === "object"
       ? identityRoot.user as Record<string, unknown>
-      : identityRoot;
-    if (identityUser.id !== coreUser.id) return response;
+      : null;
+    const identityConsumer = identityRoot.consumer && typeof identityRoot.consumer === "object"
+      ? identityRoot.consumer as Record<string, unknown>
+      : null;
+
+    // The identity endpoint validates the bearer assertion; also bind its result
+    // to this exact registered client and configured product audience before
+    // creating any local OS session.
+    if (
+      !identityUser ||
+      identityUser.id !== coreUser.id ||
+      !identityConsumer ||
+      identityConsumer.clientId !== clientId ||
+      identityConsumer.productKey !== audience ||
+      identityConsumer.audience !== audience
+    ) return response;
 
     const db = getDb();
     const [user] = await db
