@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db/client";
 import { memberships, organizations, websitePages, websites } from "@/lib/db/schema";
@@ -47,22 +47,68 @@ export async function POST(request: Request) {
   try {
     const db = getDb();
     const result = await db.transaction(async (tx) => {
-      const [organization] = await tx.insert(organizations).values({
-        name: setup.organisationName,
-        slug: organizationSlug,
-        status: "active",
-      }).returning({ id: organizations.id, name: organizations.name });
+      // Reuse an organisation only when the signed-in user already has an active
+      // membership in it. This prevents repeated setup submissions from creating
+      // another organisation while never exposing another user's workspace.
+      const [existingMembership] = await tx.select({
+        id: organizations.id,
+        name: organizations.name,
+        slug: organizations.slug,
+        status: organizations.status,
+      }).from(memberships)
+        .innerJoin(organizations, eq(memberships.organizationId, organizations.id))
+        .where(and(
+          eq(memberships.userId, user.id),
+          eq(memberships.status, "active"),
+          sql`lower(trim(${organizations.name})) = lower(trim(${setup.organisationName}))`,
+        ))
+        .limit(1);
 
-      // Website tables enforce PostgreSQL RLS. Scope this transaction to the newly
-      // created organisation before any website/page writes.
+      let organization = existingMembership;
+      let createdOrganization = false;
+      if (!organization) {
+        const [created] = await tx.insert(organizations).values({
+          name: setup.organisationName,
+          slug: organizationSlug,
+          status: "active",
+        }).returning({
+          id: organizations.id,
+          name: organizations.name,
+          slug: organizations.slug,
+          status: organizations.status,
+        });
+        organization = created;
+        createdOrganization = true;
+
+        await tx.insert(memberships).values({
+          organizationId: organization.id,
+          userId: user.id,
+          role: "owner",
+          status: "active",
+        });
+      }
+
+      // Website tables enforce PostgreSQL RLS. Scope this transaction to the
+      // selected organisation before any website/page reads or writes.
       await tx.execute(sql`select set_config('app.current_organization_id', ${organization.id}, true)`);
 
-      await tx.insert(memberships).values({
-        organizationId: organization.id,
-        userId: user.id,
-        role: "owner",
-        status: "active",
-      });
+      const [existingWebsite] = await tx.select({
+        id: websites.id,
+        name: websites.name,
+        slug: websites.slug,
+      }).from(websites).where(and(
+        eq(websites.organizationId, organization.id),
+        eq(websites.slug, setup.siteSlug),
+      )).limit(1);
+
+      if (existingWebsite) {
+        return {
+          organization,
+          website: existingWebsite,
+          created: false,
+          createdOrganization: false,
+        };
+      }
 
       const [website] = await tx.insert(websites).values({
         organizationId: organization.id,
@@ -80,24 +126,26 @@ export async function POST(request: Request) {
         content: "",
       })));
 
-      return { organization, website };
+      return { organization, website, created: true, createdOrganization };
     });
 
     return NextResponse.json(
       {
-        organization: result.organization,
+        organization: { id: result.organization.id, name: result.organization.name },
         website: result.website,
         status: "draft",
-        message: "Your workspace and draft website have been saved.",
+        reused: !result.created,
+        message: result.created
+          ? "Your workspace and draft website have been saved."
+          : "This website already exists in your workspace, so we kept the existing draft.",
       },
-      { status: 201, headers: { "Cache-Control": "no-store" } },
+      { status: result.created ? 201 : 200, headers: { "Cache-Control": "no-store" } },
     );
   } catch (error) {
-    // Unique website-page paths or a database uniqueness conflict should be actionable,
-    // while internal database details must never be returned to the browser.
+    // Never expose database details to the browser.
     const message = error instanceof Error ? error.message : "";
     if (/unique constraint|duplicate key/i.test(message)) {
-      return jsonError("That website address is already in use in this workspace. Change the address and try again.", 409);
+      return jsonError("A workspace or website with these details was created at the same time. Refresh your workspace before trying again.", 409);
     }
     return jsonError("We couldn't save your website yet. Please try again shortly.", 500);
   }

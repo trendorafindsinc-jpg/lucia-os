@@ -141,7 +141,7 @@ export function WebsiteSetupWizard() {
               <div><span>Main goal</span><strong>{goal}</strong></div>
               <div><span>Country</span><strong>{country}</strong></div>
             </div>
-            <div className="setup-actions"><button className="setup-button setup-button--primary" type="button" onClick={() => { setSubmitted(false); setStep(0); setAttempted(false); }}>Edit setup</button><Link className="setup-button setup-button--secondary" href="/templates">Browse other templates</Link></div>
+            <div className="setup-actions"><Link className="setup-button setup-button--primary" href="/workspace/websites">Open saved websites</Link><button className="setup-button setup-button--secondary" type="button" onClick={() => { setSubmitted(false); setStep(0); setAttempted(false); }}>Edit setup</button></div>
           </div>
         ) : (
           <>
@@ -155,7 +155,7 @@ export function WebsiteSetupWizard() {
               <label>Website name<input value={websiteName} onChange={(event) => setWebsiteName(event.target.value)} placeholder="e.g. Bright Future Academy" maxLength={80} required />{fieldError("websiteName") && <small className="setup-error">{fieldError("websiteName")}</small>}</label>
               <label>What should your website help you do?<select value={goal} onChange={(event) => setGoal(event.target.value as (typeof websiteGoals)[number])}>{websiteGoals.map((item) => <option key={item}>{item}</option>)}</select></label>
               <label>Choose a starting design<select value={templateId} onChange={(event) => setTemplateId(event.target.value)}>{websiteTemplates.map((item) => <option key={item.id} value={item.id}>{item.name} — {item.category}</option>)}</select></label>
-              <label>Suggested website address<input value={siteSlug} onChange={(event) => { setSiteSlug(event.target.value.toLowerCase()); setSlugEdited(true); }} placeholder="your-organisation" maxLength={48} autoCapitalize="none" autoCorrect="off" required />{fieldError("siteSlug") && <small className="setup-error">{fieldError("siteSlug")}</small>}<small className="setup-help">Your suggested address: {siteSlug || "your-name"}.lucia.site. Availability will be checked when website creation is connected.</small></label>
+              <label>Suggested website address<input value={siteSlug} onChange={(event) => { setSiteSlug(event.target.value.toLowerCase()); setSlugEdited(true); }} placeholder="your-organisation" maxLength={48} autoCapitalize="none" autoCorrect="off" required />{fieldError("siteSlug") && <small className="setup-error">{fieldError("siteSlug")}</small>}<small className="setup-help">Your suggested address: {siteSlug || "your-name"}.lucia.site. This address is a draft suggestion; publishing and live availability checks are not available yet.</small></label>
               {template && <div className="setup-template-preview"><div style={{ background: template.colors[2] }}><span style={{ background: template.colors[0] }} /><span style={{ background: template.colors[1] }} /></div><section><span>{template.category} · {template.style}</span><strong>{template.name}</strong><p>{template.description}</p></section></div>}
               {attempted && !validation.success && <p className="setup-error setup-validation-summary">Please fix the highlighted fields before continuing.</p>}
             </div>}
