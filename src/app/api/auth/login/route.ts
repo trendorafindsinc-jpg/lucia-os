@@ -7,7 +7,18 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   try {
     const state = createOAuthState();
+    const requestedReturnTo = new URL(request.url).searchParams.get("returnTo");
+    const returnTo = requestedReturnTo && requestedReturnTo.startsWith("/") && !requestedReturnTo.startsWith("//") && !requestedReturnTo.includes("\\") && !requestedReturnTo.startsWith("/api/auth")
+      ? requestedReturnTo
+      : "/";
     const response = NextResponse.redirect(buildAuthorizationUrl(state));
+    response.cookies.set("lucia_os_return_to", returnTo, {
+      httpOnly: true,
+      secure: new URL(request.url).protocol === "https:",
+      sameSite: "lax",
+      path: "/api/auth",
+      maxAge: 300,
+    });
     response.cookies.set("lucia_os_oauth_state", state, {
       httpOnly: true,
       secure: new URL(request.url).protocol === "https:",

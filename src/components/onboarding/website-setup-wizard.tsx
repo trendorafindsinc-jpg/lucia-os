@@ -19,6 +19,10 @@ export function WebsiteSetupWizard() {
   const [slugEdited, setSlugEdited] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [attempted, setAttempted] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [savedWebsite, setSavedWebsite] = useState<{ name: string; slug: string } | null>(null);
+  const [draftLoaded, setDraftLoaded] = useState(false);
 
   useEffect(() => {
     const requestedTemplate = new URLSearchParams(window.location.search).get("template");
@@ -32,6 +36,35 @@ export function WebsiteSetupWizard() {
   const setup = useMemo(() => ({
     organisationName, websiteName, organisationType, goal, templateId, country, siteSlug,
   }), [organisationName, websiteName, organisationType, goal, templateId, country, siteSlug]);
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem("lucia-os-website-setup-draft");
+      if (raw) {
+        const parsed = websiteSetupSchema.safeParse(JSON.parse(raw));
+        if (parsed.success) {
+          setOrganisationName(parsed.data.organisationName);
+          setWebsiteName(parsed.data.websiteName);
+          setOrganisationType(parsed.data.organisationType);
+          setGoal(parsed.data.goal);
+          setTemplateId(parsed.data.templateId);
+          setCountry(parsed.data.country);
+          setSiteSlug(parsed.data.siteSlug);
+          setSlugEdited(true);
+        }
+      }
+    } catch {
+      window.localStorage.removeItem("lucia-os-website-setup-draft");
+    } finally {
+      setDraftLoaded(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (draftLoaded && !submitted) {
+      window.localStorage.setItem("lucia-os-website-setup-draft", JSON.stringify(setup));
+    }
+  }, [draftLoaded, setup, submitted]);
+
   const validation = websiteSetupSchema.safeParse(setup);
   const template = getTemplateById(templateId);
   const fieldError = (field: keyof WebsiteSetup) => {
@@ -39,6 +72,35 @@ export function WebsiteSetupWizard() {
     const issue = validation.error.issues.find((item) => item.path[0] === field);
     return issue?.message;
   };
+
+  async function saveSetup() {
+    if (!validation.success || saving) return;
+    setSaving(true);
+    setSaveError("");
+    try {
+      const response = await fetch("/api/onboarding/website", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(setup),
+      });
+      const payload = await response.json() as { error?: string; website?: { name: string; slug: string } };
+      if (response.status === 401) {
+        setSaveError("Sign in with LUCIA ID to save your workspace. Your choices have been saved in this browser and will be restored after sign-in.");
+        return;
+      }
+      if (!response.ok || !payload.website) {
+        setSaveError(payload.error ?? "We couldn’t save your setup. Please try again.");
+        return;
+      }
+      setSavedWebsite(payload.website);
+      window.localStorage.removeItem("lucia-os-website-setup-draft");
+      setSubmitted(true);
+    } catch {
+      setSaveError("We couldn’t reach LUCIA OS. Check your connection and try again.");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   function nextStep() {
     setAttempted(true);
@@ -68,12 +130,14 @@ export function WebsiteSetupWizard() {
             <span className="setup-success-mark" aria-hidden="true">✓</span>
             <p className="eyebrow">SETUP SUMMARY READY</p>
             <h2 id="setup-step-title">Your starting point is planned.</h2>
-            <p>Your choices are shown below. They have not been saved to an account yet; secure workspace creation and persistence will be connected after the LUCIA Core tenant-creation contract is available.</p>
+            <p>Your organisation workspace and draft website have been saved to LUCIA OS. Your website is still a draft and has not been published.</p>
             <div className="setup-summary">
               <div><span>Organisation</span><strong>{organisationName}</strong></div>
               <div><span>Website</span><strong>{websiteName}</strong></div>
-              <div><span>Website address suggestion</span><strong>{siteSlug}.lucia.site</strong></div>
+              <div><span>Website address</span><strong>{savedWebsite ? `${savedWebsite.slug}.lucia.site` : `${siteSlug}.lucia.site`}</strong></div>
               <div><span>Template</span><strong>{template?.name}</strong></div>
+              {savedWebsite && <div><span>Saved website</span><strong>{savedWebsite.name}</strong></div>}
+              <div><span>Status</span><strong>Draft — not published</strong></div>
               <div><span>Main goal</span><strong>{goal}</strong></div>
               <div><span>Country</span><strong>{country}</strong></div>
             </div>
@@ -107,12 +171,13 @@ export function WebsiteSetupWizard() {
                 <div><span>Starting design</span><strong>{template?.name}</strong></div>
                 <div><span>Suggested sections</span><strong>{template?.sections.join(" · ")}</strong></div>
               </div>
-              <p className="setup-notice"><strong>Not saved yet.</strong> This is a setup preview only. Account sign-in, workspace authorisation and durable website creation will be wired to the documented LUCIA Core contract before customer launch.</p>
+              <p className="setup-notice"><strong>Ready to save.</strong> You must sign in with LUCIA ID. Saving creates your workspace, owner membership and draft pages in LUCIA OS; it does not publish the website.</p>
             </div>}
+            {saveError && <div className="setup-error" role="alert">{saveError} {saveError.startsWith("Sign in") && <Link href="/api/auth/login?returnTo=%2Fcreate">Sign in with LUCIA ID</Link>}</div>}
             <div className="setup-actions">
               {step > 0 && <button className="setup-button setup-button--secondary" type="button" onClick={() => { setAttempted(false); setStep((current) => current - 1); }}>Back</button>}
               <span className="setup-actions-spacer" />
-              {step < 2 ? <button className="setup-button setup-button--primary" type="button" onClick={nextStep}>Continue <span aria-hidden="true">→</span></button> : <button className="setup-button setup-button--primary" type="button" onClick={() => setSubmitted(true)} disabled={!validation.success}>Finish setup preview <span aria-hidden="true">✓</span></button>}
+              {step < 2 ? <button className="setup-button setup-button--primary" type="button" onClick={nextStep}>Continue <span aria-hidden="true">→</span></button> : <button className="setup-button setup-button--primary" type="button" onClick={saveSetup} disabled={!validation.success || saving}>{saving ? "Saving…" : "Create workspace"} <span aria-hidden="true">✓</span></button>}
             </div>
           </>
         )}
