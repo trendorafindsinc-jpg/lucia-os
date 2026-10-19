@@ -653,3 +653,21 @@ h1 span { color: #6979c9; }
 @keyframes lucia-signal-breathe{0%,100%{box-shadow:0 0 0 3px rgba(255,255,255,.12);opacity:.88}50%{box-shadow:0 0 0 7px rgba(255,255,255,.06);opacity:1}}
 @keyframes lucia-rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @media(prefers-reduced-motion:reduce){.workspace-brand-mark::before,.brand-mark::before,.workspace-brand-mark::after,.brand-mark::after,.workspace-brand-mark i,.workspace-main{animation:none!important}.workspace-metric,.workspace-panel,.workspace-org-card,.workspace-nav-item{transition:none!important}.workspace-metric:hover,.workspace-nav-item:hover{transform:none}}
+
+
+/* Premium support forms and saved-draft actions */
+.lucia-support-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;padding:22px 24px 24px}
+.lucia-support-form label{display:grid;gap:8px;color:#526078;font-size:12px;font-weight:750}
+.lucia-support-form label:first-child,.lucia-support-form label:last-of-type{grid-column:1/-1}
+.lucia-support-form input,.lucia-support-form select{width:100%;min-height:44px;border:1px solid #dce3ee;border-radius:12px;background:#fbfcff;padding:11px 12px;color:#17243b;font:inherit;font-size:13px}
+.lucia-support-form input:focus,.lucia-support-form select:focus{outline:3px solid #dce2ff;border-color:#7d8be0}
+.lucia-support-actions{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.lucia-support-actions .workspace-button{margin-top:0}
+.lucia-support-actions button:disabled{opacity:.55;cursor:wait}
+.lucia-support-message,.lucia-support-error{margin:0 24px 20px;padding:12px 14px;border-radius:12px;font-size:12px;line-height:1.6}
+.lucia-support-message{background:#e9f7ef;color:#216b45}
+.lucia-support-error{background:#fff0ed;color:#a43f31}
+.lucia-support-cases{margin-top:20px}
+.workspace-website-edit{flex:0 0 auto;margin:0 0 0 auto;min-height:36px;font-size:11px}
+.editor-panel-actions .editor-done:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:680px){.lucia-support-form{grid-template-columns:1fr;padding:18px}.lucia-support-form label,.lucia-support-form label:first-child,.lucia-support-form label:last-of-type,.lucia-support-actions{grid-column:auto}.lucia-support-actions .workspace-button{flex:1}.workspace-website-edit{margin:10px 0 0 auto}.workspace-org-card{flex-wrap:wrap}}
