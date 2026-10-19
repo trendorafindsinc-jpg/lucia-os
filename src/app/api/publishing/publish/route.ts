@@ -79,19 +79,35 @@ export async function POST(request: Request) {
           return { action, id: website.id, slug: website.slug, name: settings.siteName, status: website.status, savedAt: now.toISOString() };
         }
 
-        if (home) {
-          await tx.update(websitePages).set({
-            title: "Home", content: snapshot, publishedContent: snapshot, status: "published", updatedAt: now,
-          }).where(and(eq(websitePages.id, home.id), eq(websitePages.organizationId, org.id), eq(websitePages.websiteId, website.id)));
-        } else {
+        // The public renderer expects a validated site-draft snapshot for every
+        // published path. Previously only "/" received one, leaving seeded
+        // About/Services/Contact routes permanently 404 after publishing.
+        if (pages.length === 0) {
           await tx.insert(websitePages).values({
             organizationId: org.id, websiteId: website.id, title: "Home", path: "/", status: "published",
             content: snapshot, publishedContent: snapshot, updatedAt: now,
           });
+        } else {
+          for (const page of pages) {
+            const isHome = page.path === "/";
+            await tx.update(websitePages).set({
+              ...(isHome ? { title: "Home", content: snapshot } : {}),
+              publishedContent: snapshot,
+              status: "published",
+              updatedAt: now,
+            }).where(and(
+              eq(websitePages.id, page.id),
+              eq(websitePages.organizationId, org.id),
+              eq(websitePages.websiteId, website.id),
+            ));
+          }
         }
         await tx.update(websites).set({ name: settings.siteName, status: "published", publishedAt: now, updatedAt: now })
           .where(and(eq(websites.id, website.id), eq(websites.organizationId, org.id)));
-        return { action, id: website.id, slug: website.slug, name: settings.siteName, status: "published", publishedAt: now.toISOString() };
+        return {
+          action, id: website.id, slug: website.slug, name: settings.siteName, status: "published",
+          publishedAt: now.toISOString(), publishedPageCount: Math.max(pages.length, 1),
+        };
       });
 
       if (!result) continue;
