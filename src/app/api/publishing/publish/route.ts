@@ -44,7 +44,7 @@ export async function POST(request: Request) {
   for (const org of permitted) {
     try {
       const result = await db.transaction(async (tx) => {
-        await tx.execute(sql\`select set_config('app.current_organization_id', \${org.id}, true)\`);
+        await tx.execute(sql`select set_config('app.current_organization_id', ${org.id}, true)`);
         const [website] = await tx.select({
           id: websites.id, organizationId: websites.organizationId, slug: websites.slug, status: websites.status,
         }).from(websites).where(and(eq(websites.organizationId, org.id), eq(websites.slug, settings.siteSlug))).limit(1);

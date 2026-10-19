@@ -27,7 +27,7 @@ export async function GET() {
 
     for (const org of permitted) {
       const found = await db.transaction(async (tx) => {
-        await tx.execute(sql\`select set_config('app.current_organization_id', \${org.id}, true)\`);
+        await tx.execute(sql`select set_config('app.current_organization_id', ${org.id}, true)`);
         const rows = await tx.select({
           id: websites.id, slug: websites.slug, name: websites.name, status: websites.status,
         }).from(websites).where(eq(websites.organizationId, org.id));
