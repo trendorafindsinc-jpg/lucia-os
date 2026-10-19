@@ -48,7 +48,11 @@ export async function POST(request: Request) {
         status: "active",
       }).returning({ id: organizations.id, name: organizations.name });
 
-      // Website tables enforce PostgreSQL RLS. Scope this transaction to the newly\n      // created organisation before any website/page writes.\n      await tx.execute(sql`select set_config('app.current_organization_id', \${organization.id}, true)`);\n\n      await tx.insert(memberships).values({
+      // Website tables enforce PostgreSQL RLS. Scope this transaction to the newly
+      // created organisation before any website/page writes.
+      await tx.execute(sql`select set_config('app.current_organization_id', ${organization.id}, true)`);
+
+      await tx.insert(memberships).values({
         organizationId: organization.id,
         userId: user.id,
         role: "owner",
