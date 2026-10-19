@@ -14,7 +14,7 @@ This specification defines the target behavior; it does not claim production pub
 
 ## Commercial model: separate website subscription from custom-domain activation
 
-- **Website subscription:** recurring weekly/monthly/annual plans follow the previously agreed LUCIA OS subscription model, including the planned 14-day trial and Core-managed entitlement/billing flow. Do not replace this with a one-time website subscription.
+- **Website subscription:** one recurring subscription with weekly (₦7,000), monthly (₦28,000), and annual (₦336,000) billing options, plus a **7-day free trial**. Prices must be editable in LUCIA Core. Do not replace this with a one-time website subscription. Trial expiry must not trigger an automatic charge without the customer's explicit consent. The trial/subscription lifecycle and entitlement are Core-managed.
 - **Custom-domain activation:** a separate **one-time payment** for activating a custom hostname on a website. It is not a recurring subscription and must not be bundled into or silently renew with the website subscription.
 - A customer may publish on their available LUCIA subdomain without buying custom-domain activation.
 - The customer may enter and validate a custom hostname before payment, but it must be labelled pending activation and must not be represented as connected/live.
