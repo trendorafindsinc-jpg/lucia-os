@@ -12,7 +12,9 @@ export async function GET(request: Request) {
       httpOnly: true,
       secure: new URL(request.url).protocol === "https:",
       sameSite: "lax",
-      path: "/api/auth/callback",
+      // The registered production callback is nested under /api/auth/lucia/callback.
+      // Scope to /api/auth so the state cookie reaches both canonical and legacy handlers.
+      path: "/api/auth",
       maxAge: 300,
     });
     response.headers.set("Cache-Control", "no-store");
