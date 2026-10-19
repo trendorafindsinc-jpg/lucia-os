@@ -29,6 +29,13 @@
       "when": 1792368600000,
       "tag": "0003_management_panels_foundation",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792440000000,
+      "tag": "0004_website_publishing",
+      "breakpoints": true
     }
   ]
 }

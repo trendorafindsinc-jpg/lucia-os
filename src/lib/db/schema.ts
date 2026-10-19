@@ -80,11 +80,13 @@ export const websites = pgTable(
     name: text("name").notNull(),
     slug: text("slug").notNull(),
     status: text("status").notNull().default("draft"),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
   (table) => [
     uniqueIndex("websites_org_slug_uq").on(table.organizationId, table.slug),
+    uniqueIndex("websites_published_slug_uq").on(table.slug).where(sql`status = 'published'`),
     index("websites_org_status_idx").on(table.organizationId, table.status),
   ],
 );
@@ -103,6 +105,7 @@ export const websitePages = pgTable(
     path: text("path").notNull(),
     status: text("status").notNull().default("draft"),
     content: text("content").notNull().default(""),
+    publishedContent: text("published_content"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
