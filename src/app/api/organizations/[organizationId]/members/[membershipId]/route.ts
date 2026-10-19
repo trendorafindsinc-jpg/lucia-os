@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
-import { appUsers, memberships, organizations, platformAuditEvents } from "@/lib/db/schema";
+import { appUsers, memberships, platformAuditEvents } from "@/lib/db/schema";
 import { hasOrganizationPermission } from "@/lib/access/policy";
 
 export const runtime = "nodejs";
