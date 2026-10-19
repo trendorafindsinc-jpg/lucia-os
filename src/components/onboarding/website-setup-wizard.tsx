@@ -22,6 +22,7 @@ export function WebsiteSetupWizard() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [savedWebsite, setSavedWebsite] = useState<{ name: string; slug: string } | null>(null);
+  const [draftLoaded, setDraftLoaded] = useState(false);
 
   useEffect(() => {
     const requestedTemplate = new URLSearchParams(window.location.search).get("template");
@@ -35,6 +36,35 @@ export function WebsiteSetupWizard() {
   const setup = useMemo(() => ({
     organisationName, websiteName, organisationType, goal, templateId, country, siteSlug,
   }), [organisationName, websiteName, organisationType, goal, templateId, country, siteSlug]);
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem("lucia-os-website-setup-draft");
+      if (raw) {
+        const parsed = websiteSetupSchema.safeParse(JSON.parse(raw));
+        if (parsed.success) {
+          setOrganisationName(parsed.data.organisationName);
+          setWebsiteName(parsed.data.websiteName);
+          setOrganisationType(parsed.data.organisationType);
+          setGoal(parsed.data.goal);
+          setTemplateId(parsed.data.templateId);
+          setCountry(parsed.data.country);
+          setSiteSlug(parsed.data.siteSlug);
+          setSlugEdited(true);
+        }
+      }
+    } catch {
+      window.localStorage.removeItem("lucia-os-website-setup-draft");
+    } finally {
+      setDraftLoaded(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (draftLoaded && !submitted) {
+      window.localStorage.setItem("lucia-os-website-setup-draft", JSON.stringify(setup));
+    }
+  }, [draftLoaded, setup, submitted]);
+
   const validation = websiteSetupSchema.safeParse(setup);
   const template = getTemplateById(templateId);
   const fieldError = (field: keyof WebsiteSetup) => {
@@ -55,7 +85,7 @@ export function WebsiteSetupWizard() {
       });
       const payload = await response.json() as { error?: string; website?: { name: string; slug: string } };
       if (response.status === 401) {
-        setSaveError("Sign in with LUCIA ID to save your workspace. Your current choices will remain on this screen.");
+        setSaveError("Sign in with LUCIA ID to save your workspace. Your choices have been saved in this browser and will be restored after sign-in.");
         return;
       }
       if (!response.ok || !payload.website) {
@@ -63,6 +93,7 @@ export function WebsiteSetupWizard() {
         return;
       }
       setSavedWebsite(payload.website);
+      window.localStorage.removeItem("lucia-os-website-setup-draft");
       setSubmitted(true);
     } catch {
       setSaveError("We couldn’t reach LUCIA OS. Check your connection and try again.");
