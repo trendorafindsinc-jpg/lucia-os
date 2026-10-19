@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 
 type CaseRecord = { id: string; subject: string; category: string; priority: string; status: string; createdAt: string; updatedAt: string };
 type Message = { id: string; authorKind: string; visibility: string; body: string; createdAt: string };
@@ -15,7 +15,7 @@ export function SupportConversation({ caseId }: { caseId: string }) {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true); setError("");
     try {
       const [caseResponse, messageResponse] = await Promise.all([
@@ -30,9 +30,9 @@ export function SupportConversation({ caseId }: { caseId: string }) {
       setMessages(messageData.messages ?? []);
     } catch (err) { setError(err instanceof Error ? err.message : "Couldn't load this support case."); }
     finally { setLoading(false); }
-  }
+  }, [caseId]);
 
-  useEffect(() => { void load(); }, [caseId]);
+  useEffect(() => { void load(); }, [load]);
 
   async function reply(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setSending(true); setError(""); setNotice("");
@@ -57,7 +57,7 @@ export function SupportConversation({ caseId }: { caseId: string }) {
             <div className="lucia-message-list">{messages.length ? messages.map((message) => <article className={`lucia-message ${message.authorKind === "staff" ? "lucia-message-staff" : "lucia-message-customer"}`} key={message.id}><div className="lucia-message-meta"><strong>{message.authorKind === "staff" ? "LUCIA Support" : "Your organisation"}</strong><span>{new Date(message.createdAt).toLocaleString()}</span></div><p>{message.body}</p></article>) : <div className="workspace-empty"><span className="workspace-empty-icon">◎</span><h3>Start the conversation</h3><p>Send a message with any additional details that may help resolve your request.</p></div>}</div>
             {record.status === "closed" || record.status === "resolved" ? <p className="lucia-case-closed">This case is {record.status}. Replies are disabled until the support team reopens it.</p> : <form className="lucia-reply-form" onSubmit={reply}><label htmlFor="support-reply">Your reply</label><textarea id="support-reply" value={body} onChange={(event) => setBody(event.target.value)} maxLength={12000} rows={4} required placeholder="Add details or reply to the support team…" /><div><span>{body.length}/12,000 characters</span><button className="workspace-button workspace-button-primary" type="submit" disabled={sending || !body.trim()}>{sending ? "Sending…" : "Send reply"}</button></div></form>}
             {notice ? <p className="lucia-support-message" role="status">{notice}</p> : null}
-          </section></> : <section className="workspace-panel"><div className="workspace-empty"><h3>We couldn't open this case</h3><p>It may not exist, or your LUCIA ID may not have access to the organisation that owns it.</p><Link className="workspace-button workspace-button-secondary" href="/support">Return to support</Link></div></section>}
+          </section></> : <section className="workspace-panel"><div className="workspace-empty"><h3>We couldn&apos;t open this case</h3><p>It may not exist, or your LUCIA ID may not have access to the organisation that owns it.</p><Link className="workspace-button workspace-button-secondary" href="/support">Return to support</Link></div></section>}
         {error ? <p className="lucia-support-error" role="alert">{error}</p> : null}
       </section>
     </div>
