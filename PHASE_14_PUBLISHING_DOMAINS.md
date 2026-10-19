@@ -24,6 +24,10 @@ This specification defines the target behavior; it does not claim production pub
 - Keep the domain activation charge separate from third-party domain registrar renewal/registration costs, if those are offered later. Do not imply LUCIA owns or renews a domain the customer has registered elsewhere.
 - Make refunds, charge disputes, and manual revocation able to disable the custom-domain entitlement without deleting the customer's website or LUCIA subdomain.
 
+## Confirmed Vercel wildcard setup
+
+The LUCIA OS Vercel project `lucia-os` has the wildcard domain `*.lucia.name.ng` attached and verified, alongside `os.lucia.name.ng`. Customer subdomains resolve through this single project; each customer slug is an application routing key, not a Vercel domain-registration operation. The application must route by the incoming Host header and serve only the matching published snapshot.
+
 ## Mandatory safeguards
 
 - Persist website data in the existing PostgreSQL/Drizzle layer with organisation-scoped access on every read and write.

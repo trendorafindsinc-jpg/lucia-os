@@ -13,27 +13,28 @@ describe("custom domain validation", () => {
   it("normalises valid hostnames", () => {
     expect(customDomainSchema.parse("WWW.Example.co.uk.")).toBe("www.example.co.uk");
   });
-
   it.each(["https://example.com", "example.com/path", "example.com:3000", "localhost", "127.0.0.1", "site.example", "bad domain.com", "-bad.com", "bad-.com"])(
     "rejects invalid or unsafe hostname %s",
     (domain) => expect(customDomainSchema.safeParse(domain).success).toBe(false),
   );
-
-  it("validates a complete set of site settings", () => {
+  it("validates complete site settings and reserves platform labels", () => {
     expect(publishSettingsSchema.safeParse(settings).success).toBe(true);
     expect(publishSettingsSchema.safeParse({ ...settings, siteSlug: "NO SPACES" }).success).toBe(false);
+    expect(publishSettingsSchema.safeParse({ ...settings, siteSlug: "os" }).success).toBe(false);
     expect(publishSettingsSchema.safeParse({ ...settings, customDomain: "https://example.com" }).success).toBe(false);
   });
 });
-
 describe("publish readiness", () => {
-  it("never reports production ready while platform gates are unconfigured", () => {
+  it("allows free LUCIA subdomain publishing when custom domain activation is not requested", () => {
     const checks = getPublishChecks(settings);
-    expect(checks.filter((check) => !check.ready).map((check) => check.id)).toEqual(["storage", "access", "runtime", "dns"]);
-    expect(getPublishReadiness(checks).canPublish).toBe(false);
+    expect(getPublishReadiness(checks).canPublish).toBe(true);
   });
-
-  it("reports invalid custom domain without treating it as verified", () => {
+  it("does not block LUCIA subdomain publishing when a valid paid custom domain is pending", () => {
+    const checks = getPublishChecks({ ...settings, customDomain: "www.example.com" });
+    expect(getPublishReadiness(checks).canPublish).toBe(true);
+    expect(checks.find((check) => check.id === "domain")?.detail).toContain("one-time activation payment");
+  });
+  it("reports invalid custom domains without claiming they are connected", () => {
     const checks = getPublishChecks({ ...settings, customDomain: "https://bad.example" });
     expect(checks.find((check) => check.id === "domain")?.ready).toBe(false);
   });

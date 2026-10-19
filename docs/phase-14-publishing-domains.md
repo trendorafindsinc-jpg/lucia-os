@@ -13,7 +13,7 @@
 
 This phase does **not** publish a live site, reserve a slug, verify DNS ownership, provision TLS, set up a Vercel domain, or create a public tenant renderer. A syntactically valid hostname is not proof of ownership. No made-up DNS records or target hostnames are displayed.
 
-Publishing remains blocked until the platform has durable tenant-scoped website/page/content storage, Core-backed server-side publish authorization and entitlement checks, a public renderer with tenant isolation, domain ownership verification, TLS provisioning, and audit/recovery tests. Database migration and production environment setup require separate review and explicit approval.
+LUCIA-subdomain publishing uses durable tenant-scoped PostgreSQL storage, server-side LUCIA ID session and organisation-role checks, a published-snapshot renderer, and the existing wildcard Vercel domain. Custom domains remain unavailable until their separate one-time payment and verified DNS/TLS flow is implemented. Database migration and production environment setup require separate review and explicit approval.
 
 ## Safety and regression scope
 
@@ -21,4 +21,4 @@ Publishing remains blocked until the platform has durable tenant-scoped website/
 - No production deployment or environment-secret changes.
 - No LUCIA Core endpoints are invented.
 - The legacy School OS is not modified.
-- This UI uses example settings in browser memory only; refresh resets them.
+- Website drafts are saved to PostgreSQL, and publishing copies the validated draft into a separate live snapshot. The customer wildcard domain is `*.lucia.name.ng`; no per-customer Vercel project or domain registration is created.
