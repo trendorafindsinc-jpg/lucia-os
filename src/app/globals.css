@@ -671,3 +671,16 @@ h1 span { color: #6979c9; }
 .workspace-website-edit{flex:0 0 auto;margin:0 0 0 auto;min-height:36px;font-size:11px}
 .editor-panel-actions .editor-done:disabled{opacity:.45;cursor:not-allowed}
 @media(max-width:680px){.lucia-support-form{grid-template-columns:1fr;padding:18px}.lucia-support-form label,.lucia-support-form label:first-child,.lucia-support-form label:last-of-type,.lucia-support-actions{grid-column:auto}.lucia-support-actions .workspace-button{flex:1}.workspace-website-edit{margin:10px 0 0 auto}.workspace-org-card{flex-wrap:wrap}}
+
+
+/* Organisation access controls */
+.team-member-controls{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:7px;max-width:100%}
+.team-member-controls select{max-width:112px;min-height:34px;border:1px solid #dce3ee;border-radius:9px;background:#fff;padding:6px 8px;color:#46546d;font:inherit;font-size:11px;font-weight:650}
+.team-member-controls button{min-height:34px;border:1px solid #e1e6ef;border-radius:9px;background:#fff;padding:6px 9px;color:#64718a;font:inherit;font-size:10px;font-weight:750;cursor:pointer}
+.team-member-controls button:hover:not(:disabled){border-color:#d6b7b2;background:#fff7f5;color:#a43f31}
+.team-member-controls button:disabled,.team-member-controls select:disabled{opacity:.55;cursor:wait}
+.team-member-protected{margin-left:auto;color:#8a95a8;font-size:10px;font-weight:650}
+.team-member-feedback,.team-member-error{flex-basis:100%;font-size:10px;text-align:right}
+.team-member-feedback{color:#237b4b}.team-member-error{color:#b64b37}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:680px){.team-member-controls{width:100%;justify-content:flex-start;margin-left:57px}.team-member-protected{margin-left:57px}}
