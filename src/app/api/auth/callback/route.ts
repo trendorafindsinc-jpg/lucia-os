@@ -24,7 +24,23 @@ export async function GET(request: Request) {
     .find((part) => part.startsWith("lucia_os_oauth_state="))
     ?.slice("lucia_os_oauth_state=".length);
 
+  const returnTo = request.headers.get("cookie")
+    ?.split(";")
+    .map((part) => part.trim())
+    .find((part) => part.startsWith("lucia_os_return_to="))
+    ?.slice("lucia_os_return_to=".length);
+  const safeReturnTo = returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//") && !returnTo.includes("\\") && !returnTo.startsWith("/api/auth")
+    ? returnTo
+    : "/";
+
   const response = safeFailure(request);
+  response.cookies.set("lucia_os_return_to", "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production" || requestUrl.protocol === "https:",
+    sameSite: "lax",
+    path: "/api/auth",
+    maxAge: 0,
+  });
   response.cookies.set("lucia_os_oauth_state", "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production" || requestUrl.protocol === "https:",
@@ -110,13 +126,20 @@ export async function GET(request: Request) {
     const expiresAt = new Date(Date.now() + SESSION_TTL_SECONDS * 1000);
     await db.insert(sessions).values({ userId: user.id, tokenHash, expiresAt });
 
-    const success = NextResponse.redirect(new URL("/", request.url));
+    const success = NextResponse.redirect(new URL(safeReturnTo, request.url));
     success.cookies.set(SESSION_COOKIE, rawSessionToken, {
       httpOnly: true,
       secure: requestUrl.protocol === "https:",
       sameSite: "lax",
       path: "/",
       maxAge: SESSION_TTL_SECONDS,
+    });
+    success.cookies.set("lucia_os_return_to", "", {
+      httpOnly: true,
+      secure: requestUrl.protocol === "https:",
+      sameSite: "lax",
+      path: "/api/auth",
+      maxAge: 0,
     });
     success.cookies.set("lucia_os_oauth_state", "", {
       httpOnly: true,
