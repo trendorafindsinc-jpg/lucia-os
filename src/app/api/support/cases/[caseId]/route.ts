@@ -18,6 +18,29 @@ const actionSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("assign"), staffUserId: supportCaseAssignmentSchema.shape.staffUserId }),
 ]);
 
+export async function GET(_request: Request, context: RouteContext) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  const { caseId } = await context.params;
+  if (!z.string().uuid().safeParse(caseId).success) return NextResponse.json({ error: "Invalid support case id." }, { status: 400 });
+  const db = getDb();
+  const [supportCase] = await db.select({
+    id: supportCases.id,
+    organizationId: supportCases.organizationId,
+    subject: supportCases.subject,
+    category: supportCases.category,
+    priority: supportCases.priority,
+    status: supportCases.status,
+    createdAt: supportCases.createdAt,
+    updatedAt: supportCases.updatedAt,
+  }).from(supportCases).where(eq(supportCases.id, caseId)).limit(1);
+  if (!supportCase) return NextResponse.json({ error: "Support case not found." }, { status: 404 });
+  const tenantAccess = await getCurrentOrganizationAccess(supportCase.organizationId, "support.case.read");
+  const staffAccess = await getCurrentStaffUser("support.cases.read");
+  if (!tenantAccess && !staffAccess) return NextResponse.json({ error: "Support case access denied." }, { status: 403 });
+  return NextResponse.json({ case: supportCase }, { headers: { "Cache-Control": "no-store" } });
+}
+
 export async function PATCH(request: Request, context: RouteContext) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
