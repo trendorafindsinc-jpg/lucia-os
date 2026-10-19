@@ -3,7 +3,8 @@ import Link from "next/link";
 import {useState} from "react";
 import {createTrialWindow, getTrialState, validateDiscount, type DiscountCode} from "@/lib/billing/billing";
 const cadenceLabels=["Weekly","Monthly","Annual"] as const;
-export function BillingWorkspace(){
+type Invoice = { id: string; invoiceNumber: string; organizationName: string; amountDueMinor: number; amountPaidMinor: number; currency: string; status: string; dueAt: string | null; createdAt: string };
+export function BillingWorkspace({ invoices, signedIn }: { invoices: Invoice[]; signedIn: boolean }){
  const [cadence,setCadence]=useState<"weekly"|"monthly"|"annual">("monthly");
  const [trialStarted,setTrialStarted]=useState(false);
  const [trialEnd,setTrialEnd]=useState("");
@@ -25,7 +26,10 @@ export function BillingWorkspace(){
  return <main className="billing-shell">
   <header className="billing-topbar"><Link href="/" className="billing-brand">← LUCIA OS</Link><span className="billing-pill">Phase 17 · Billing foundation</span></header>
   <section className="billing-hero"><p className="billing-eyebrow">CLEAR PLANS. NO SURPRISES.</p><h1>Grow on your terms.</h1><p>Choose a billing cadence, understand the trial window, and prepare discounts before payments are enabled.</p></section>
-  <section className="billing-notice" role="status"><strong>Billing is not connected</strong><p>This is a planning prototype. No price is configured, no subscription is saved, and no payment is collected.</p></section>
+  <section className="billing-notice" role="status"><strong>Payments are not connected</strong><p>Pricing and trial controls remain a planning prototype. No subscription is created and no payment is collected. Invoice records below are read from your organisation workspace.</p></section>
+  <section className="billing-invoice-history"><div className="billing-plan-heading"><div><p className="billing-eyebrow">BILLING HISTORY</p><h2>Your invoices</h2><p>Records already saved to LUCIA OS, across your active organisations.</p></div><span className="billing-pill">{invoices.length} records</span></div>
+    {!signedIn ? <p className="billing-empty">Sign in with LUCIA ID to view invoices linked to your organisations.</p> : invoices.length ? <div className="billing-invoice-list">{invoices.map((invoice) => { let amount = `${invoice.currency} ${(invoice.amountDueMinor / 100).toLocaleString()}`; try { amount = new Intl.NumberFormat("en-NG", { style: "currency", currency: invoice.currency }).format(invoice.amountDueMinor / 100); } catch {} return <article className="billing-invoice-row" key={invoice.id}><div><strong>{invoice.invoiceNumber}</strong><span>{invoice.organizationName} · {new Date(invoice.createdAt).toLocaleDateString()}</span></div><div><strong>{amount}</strong><span>{invoice.amountPaidMinor > 0 ? `Paid ${new Intl.NumberFormat("en-NG", { style: "currency", currency: invoice.currency }).format(invoice.amountPaidMinor / 100)}` : "No payment recorded"}</span></div><span className={`billing-invoice-status billing-invoice-${invoice.status.replace(/[^a-z0-9-]/gi, "")}`}>{invoice.status.replaceAll("_", " ")}</span></article>; })}</div> : <p className="billing-empty">No invoices have been recorded for your active organisations yet.</p>}
+  </section>
   <section className="billing-plan"><div className="billing-plan-heading"><div><p className="billing-eyebrow">WEBSITE PLAN</p><h2>One plan. Flexible billing.</h2><p>Weekly, monthly, or annual billing without artificial feature tiers.</p></div><span className="billing-plan-mark" aria-hidden="true">L</span></div>
    <div className="billing-cadences" role="group" aria-label="Billing cadence">{cadenceLabels.map((label)=><button type="button" key={label} aria-pressed={cadence===label.toLowerCase()} onClick={()=>setCadence(label.toLowerCase() as typeof cadence)}>{label}</button>)}</div>
    <div className="billing-price"><strong>Price not set</strong><span>{cadence} billing · Currency and amount require authorized configuration</span></div>
