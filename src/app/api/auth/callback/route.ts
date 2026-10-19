@@ -29,7 +29,7 @@ export async function GET(request: Request) {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production" || requestUrl.protocol === "https:",
     sameSite: "lax",
-    path: "/api/auth/callback",
+    path: "/api/auth",
     maxAge: 0,
   });
   response.headers.set("Cache-Control", "no-store");
@@ -122,7 +122,7 @@ export async function GET(request: Request) {
       httpOnly: true,
       secure: requestUrl.protocol === "https:",
       sameSite: "lax",
-      path: "/api/auth/callback",
+      path: "/api/auth",
       maxAge: 0,
     });
     success.headers.set("Cache-Control", "no-store");
