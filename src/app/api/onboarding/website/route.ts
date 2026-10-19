@@ -15,7 +15,12 @@ function jsonError(message: string, status: number) {
 }
 
 export async function POST(request: Request) {
-  const user = await getCurrentUser();
+  let user: Awaited<ReturnType<typeof getCurrentUser>>;
+  try {
+    user = await getCurrentUser();
+  } catch {
+    return jsonError("Workspace storage is temporarily unavailable. Please try again later.", 503);
+  }
   if (!user) return jsonError("Sign in with LUCIA ID before saving your website setup.", 401);
 
   let payload: unknown;
@@ -37,10 +42,10 @@ export async function POST(request: Request) {
   const template = getTemplateById(setup.templateId);
   if (!template) return jsonError("Choose a valid starting design.", 422);
 
-  const db = getDb();
   const organizationSlug = `${makeSiteSlug(setup.organisationName).slice(0, 35) || "workspace"}-${randomBytes(4).toString("hex")}`;
 
   try {
+    const db = getDb();
     const result = await db.transaction(async (tx) => {
       const [organization] = await tx.insert(organizations).values({
         name: setup.organisationName,
