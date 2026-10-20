@@ -46,3 +46,9 @@ ALTER TABLE "website_domains" ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "website_domains_tenant_isolation" ON "website_domains"
   USING ("organization_id" = NULLIF(current_setting('app.current_organization_id', true), '')::uuid)
   WITH CHECK ("organization_id" = NULLIF(current_setting('app.current_organization_id', true), '')::uuid);
+
+-- Public routing can resolve only active hostnames; pending and removed claims
+-- remain private to the owning tenant. Published-site/page policies still gate
+-- the actual rendered content.
+CREATE POLICY "website_domains_public_active_read" ON "website_domains"
+  FOR SELECT USING ("status" = 'active');
