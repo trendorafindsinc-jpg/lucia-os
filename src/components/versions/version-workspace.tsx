@@ -59,7 +59,7 @@ export function VersionWorkspace() {
   return (
     <main className="version-shell">
       <header className="version-header">
-        <div><Link href="/" className="version-back">← LUCIA OS</Link><p className="version-eyebrow">PHASE 13 · DRAFT SAFETY</p><h1>Drafts, preview &amp; rollback</h1><p className="version-intro">Save named checkpoints before making changes, preview a checkpoint, and restore it when you need to go back.</p></div>
+        <div><Link href="/" className="version-back">← LUCIA OS</Link><p className="version-eyebrow">DRAFT HISTORY</p><h1>Drafts, preview &amp; rollback</h1><p className="version-intro">Save named checkpoints before making changes, preview a checkpoint, and restore it when you need to go back.</p></div>
         <span className="version-local-badge">Session-only prototype</span>
       </header>
       <div className="version-layout">
