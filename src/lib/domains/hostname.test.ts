@@ -39,6 +39,7 @@ describe("website hostname policy", () => {
     expect(canActivateDomain({ ...base, ownershipVerified: false })).toBe(false);
     expect(canActivateDomain({ ...base, premiumEntitled: false })).toBe(false);
     expect(canActivateDomain({ ...base, status: "suspended" })).toBe(false);
+    expect(canActivateDomain({ ...base, status: "pending" })).toBe(false);
   });
 
   it("routes only exact, active domains attached to published sites", () => {
