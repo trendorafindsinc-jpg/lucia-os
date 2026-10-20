@@ -117,7 +117,7 @@ export function WebsiteSetupWizard() {
         <Link className="setup-back" href="/templates">Back to templates</Link>
       </header>
       <section className="setup-intro">
-        <p className="eyebrow">PHASE 8 · GUIDED SETUP</p>
+        <p className="eyebrow">WEBSITE SETUP</p>
         <h1>Let’s build your<br /><span>starting point.</span></h1>
         <p>Tell us a little about your organisation. We’ll shape a website setup that fits your goals, without technical jargon.</p>
       </section>

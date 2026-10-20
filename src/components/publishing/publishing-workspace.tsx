@@ -33,9 +33,14 @@ export function PublishingWorkspace() {
         return payload as { websites: WebsiteChoice[] };
       })
       .then((payload) => {
-        if (!active || payload.websites.length === 0) return;
+        if (!active) return;
+        if (payload.websites.length === 0) {
+          setMessage("No saved website yet. Create a website before publishing.");
+          return;
+        }
         setWebsiteChoices(payload.websites);
-        const first = payload.websites[0];
+        const requestedWebsiteId = new URLSearchParams(window.location.search).get("websiteId");
+        const first = payload.websites.find((website) => website.id === requestedWebsiteId) ?? payload.websites[0];
         setSettings((current) => ({
           ...current, siteName: first.name, headline: first.headline,
           description: first.description, siteSlug: first.slug,
@@ -97,7 +102,7 @@ export function PublishingWorkspace() {
     <main className="publish-shell">
       <header className="publish-header">
         <Link href="/" className="publish-back">← LUCIA OS</Link>
-        <span className="publish-status">Phase 14 · Publishing &amp; domains</span>
+        <span className="publish-status">WEBSITE PUBLISHING</span>
       </header>
       <section className="publish-intro">
         <p className="eyebrow">YOUR WEBSITE, WHEN IT IS READY</p>
@@ -115,7 +120,10 @@ export function PublishingWorkspace() {
               </select>
             </label>
           ) : (
-            <label>Website address slug<input value={settings.siteSlug} maxLength={48} onChange={(event) => update("siteSlug", event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, ""))} aria-describedby="slug-help" /><span id="slug-help" className="publish-help">Enter the exact address slug used when you created the website.</span></label>
+            <div className="publish-empty-state">
+              <p>No saved website is connected to this publishing workspace yet.</p>
+              <Link href="/create">Create a website</Link> · <Link href="/workspace/websites">Open your websites</Link>
+            </div>
           )}
           <label>Website name<input value={settings.siteName} maxLength={80} onChange={(event) => update("siteName", event.target.value)} /></label>
           <label>Homepage headline<input value={settings.headline} maxLength={100} onChange={(event) => update("headline", event.target.value)} /></label>
@@ -124,9 +132,8 @@ export function PublishingWorkspace() {
           <label>Custom domain (optional)<input value={settings.customDomain} placeholder="www.yourdomain.com" onChange={(event) => update("customDomain", event.target.value)} aria-describedby="domain-help" /><span id="domain-help" className="publish-help">Enter a hostname only, without https:// or a page path. Custom-domain activation is a separate one-time payment and is not connected yet.</span></label>
           {settings.customDomain.trim() ? <div className="dns-guide"><strong>Custom domain not connected</strong><p>Publishing below will use your LUCIA subdomain. No custom-domain payment is taken here; the future shared payment workflow and DNS/TLS verification must complete before this hostname can go live.</p></div> : null}
           <div className="publish-actions">
-            <button type="button" className="publish-secondary" disabled={!validation.success || isSaving} onClick={() => void saveOrPublish("save")}>{isSaving ? "Saving…" : "Save draft"}</button>
-            <button type="button" className="publish-primary" disabled={!validation.success || isSaving} onClick={() => void saveOrPublish("publish")}>{isSaving ? "Working…" : "Publish website"}</button>
-            <button type="button" className="publish-secondary" onClick={() => { setSettings(initialSettings); setMessage("Example settings restored. Select a saved website before saving or publishing."); setShowPreview(false); setPublishedUrl(""); }}>Reset example</button>
+            <button type="button" className="publish-secondary" disabled={!validation.success || isSaving || websiteChoices.length === 0} onClick={() => void saveOrPublish("save")}>{isSaving ? "Saving…" : "Save draft"}</button>
+            <button type="button" className="publish-primary" disabled={!validation.success || isSaving || websiteChoices.length === 0} onClick={() => void saveOrPublish("publish")}>{isSaving ? "Working…" : "Publish website"}</button>
             <button type="button" className="publish-secondary" onClick={() => { setShowPreview(true); setMessage("Private preview opened. It does not change the live website."); }}>Preview website</button>
           </div>
           {!validation.success ? <p className="publish-error" role="status">Some details need attention before they can be saved.</p> : null}

@@ -23,7 +23,7 @@ export function TemplateGallery() {
         <Link className="template-back" href="/">Platform overview <span aria-hidden="true">↗</span></Link>
       </header>
       <section className="template-intro">
-        <p className="eyebrow">PHASE 7 · WEBSITE STARTING POINTS</p>
+        <p className="eyebrow">WEBSITE STARTING POINTS</p>
         <h1>Find a look that<br /><span>feels like you.</span></h1>
         <p className="template-lede">Explore a growing library of thoughtfully structured website concepts for organisations, creators and independent businesses. Choose a starting point and use the guided setup to plan a site around your goals.</p>
         <div className="template-count"><strong>{websiteTemplates.length} design concepts</strong><span> · {templateCategories.length - 1} categories · Catalogue preview</span></div>
