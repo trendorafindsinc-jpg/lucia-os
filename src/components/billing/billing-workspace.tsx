@@ -24,7 +24,7 @@ export function BillingWorkspace({ invoices, signedIn }: { invoices: Invoice[]; 
   setShowCodeResult(true);
  }
  return <main className="billing-shell">
-  <header className="billing-topbar"><Link href="/" className="billing-brand">← LUCIA OS</Link><span className="billing-pill">Phase 17 · Billing foundation</span></header>
+  <header className="billing-topbar"><Link href="/" className="billing-brand">← LUCIA OS</Link><span className="billing-pill">PLANS &amp; BILLING</span></header>
   <section className="billing-hero"><p className="billing-eyebrow">CLEAR PLANS. NO SURPRISES.</p><h1>Grow on your terms.</h1><p>Choose a billing cadence, understand the trial window, and prepare discounts before payments are enabled.</p></section>
   <section className="billing-notice" role="status"><strong>Payments are not connected</strong><p>Pricing and trial controls remain a planning prototype. No subscription is created and no payment is collected. Invoice records below are read from your organisation workspace.</p></section>
   <section className="billing-invoice-history"><div className="billing-plan-heading"><div><p className="billing-eyebrow">BILLING HISTORY</p><h2>Your invoices</h2><p>Records already saved to LUCIA OS, across your active organisations.</p></div><span className="billing-pill">{invoices.length} records</span></div>
