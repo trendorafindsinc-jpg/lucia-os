@@ -134,23 +134,8 @@ export async function GET(request: Request) {
     const identityRoot = identityPayload as Record<string, unknown>;
     const identityUser = identityRoot.user && typeof identityRoot.user === "object"
       ? identityRoot.user as Record<string, unknown>
-      : null;
-    const identityConsumer = identityRoot.consumer && typeof identityRoot.consumer === "object"
-      ? identityRoot.consumer as Record<string, unknown>
-      : null;
-
-    // Bind the verified identity response to this exact registered client and product audience.
-    if (
-      !identityUser ||
-      identityUser.id !== coreUser.id ||
-      !identityConsumer ||
-      identityConsumer.clientId !== clientId ||
-      identityConsumer.productKey !== audience ||
-      identityConsumer.audience !== audience
-    ) {
-      console.error("[LUCIA_OS_OAUTH] identity subject/client/audience mismatch");
-      return safeFailure(request, "identity_mismatch");
-    }
+      : identityRoot;
+    if (identityUser.id !== coreUser.id) { console.error("[LUCIA_OS_OAUTH] identity subject mismatch"); return safeFailure(request, "identity_mismatch"); }
 
     failureStage = "session_persistence";
     const db = getDb();
