@@ -111,26 +111,41 @@ export async function POST(request: Request) {
         const siteDomain = (process.env.LUCIA_SITE_DOMAIN || "lucia.name.ng")
           .trim().toLowerCase().replace(/^\*\./, "").replace(/^\./, "").replace(/\.$/, "");
         const hostname = website.slug + "." + siteDomain;
-        await tx.insert(websiteDomains).values({
-          organizationId: org.id,
-          websiteId: website.id,
-          hostname,
-          domainType: "lucia_subdomain",
-          status: "active",
-          verifiedAt: now,
-          isPrimary: false,
-          updatedAt: now,
-        }).onConflictDoUpdate({
-          target: websiteDomains.hostname,
-          set: {
-            organizationId: org.id,
-            websiteId: website.id,
-            domainType: "lucia_subdomain",
+        const [existingDomain] = await tx.select({
+          id: websiteDomains.id,
+          organizationId: websiteDomains.organizationId,
+          websiteId: websiteDomains.websiteId,
+          domainType: websiteDomains.domainType,
+        }).from(websiteDomains).where(eq(websiteDomains.hostname, hostname)).limit(1);
+        if (existingDomain && (
+          existingDomain.organizationId !== org.id ||
+          existingDomain.websiteId !== website.id ||
+          existingDomain.domainType !== "lucia_subdomain"
+        )) {
+          throw new Error("The requested LUCIA hostname is already owned by another website.");
+        }
+        if (existingDomain) {
+          await tx.update(websiteDomains).set({
             status: "active",
             verifiedAt: now,
             updatedAt: now,
-          },
-        });
+          }).where(and(
+            eq(websiteDomains.id, existingDomain.id),
+            eq(websiteDomains.organizationId, org.id),
+            eq(websiteDomains.websiteId, website.id),
+          ));
+        } else {
+          await tx.insert(websiteDomains).values({
+            organizationId: org.id,
+            websiteId: website.id,
+            hostname,
+            domainType: "lucia_subdomain",
+            status: "active",
+            verifiedAt: now,
+            isPrimary: false,
+            updatedAt: now,
+          });
+        }
         return {
           action, id: website.id, slug: website.slug, name: settings.siteName, status: "published",
           publishedAt: now.toISOString(), publishedPageCount: Math.max(pages.length, 1),
