@@ -48,7 +48,7 @@ export function FormsWorkspace() {
 
   return (
     <main className="forms-shell">
-      <header className="forms-topbar"><Link href="/" className="forms-brand">← LUCIA OS</Link><span className="forms-state">Phase 15 · Forms &amp; enquiries</span></header>
+      <header className="forms-topbar"><Link href="/" className="forms-brand">← LUCIA OS</Link><span className="forms-state">FORMS &amp; ENQUIRIES</span></header>
       <section className="forms-hero"><p className="eyebrow">TURN VISITS INTO CONVERSATIONS</p><h1>Every enquiry,<br /><span>with a clear next step.</span></h1><p>Design a simple contact form, review demo submissions, and configure notification preferences. This workspace is a prototype; data stays in this browser session.</p></section>
       <nav className="forms-tabs" aria-label="Forms workspace sections">
         <button type="button" className={activeTab === "form" ? "active" : ""} onClick={() => setActiveTab("form")}>Form builder</button>
