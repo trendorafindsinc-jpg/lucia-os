@@ -83,7 +83,7 @@ export function VisualSiteEditor() {
     <main className="editor-page">
       <header className="editor-topbar">
         <Link className="wordmark" href="/" aria-label="LUCIA OS home"><span className="brand-mark" aria-hidden="true">L</span><span>LUCIA <span className="muted-word">OS</span></span></Link>
-        <div className="editor-topbar-actions"><span className="editor-unsaved">{isLoadingSaved ? "Opening saved draft…" : isSaving ? "Saving…" : websiteId ? saveLabel : "Preview only · Not saved"}</span><Link className="editor-back-link" href="/pages">Pages & navigation ↗</Link><Link className="editor-back-link" href="/workspace/websites">Exit to Websites</Link></div>
+        <div className="editor-topbar-actions"><span className="editor-unsaved">{isLoadingSaved ? "Opening saved draft…" : isSaving ? "Saving…" : websiteId ? saveLabel : "Preview only · Not saved"}</span><Link className="editor-back-link" href="/pages">Pages & navigation ↗</Link>{websiteId ? <Link className="editor-back-link" href={`/publish?websiteId=${encodeURIComponent(websiteId)}`}>Publish website ↗</Link> : null}<Link className="editor-back-link" href="/workspace/websites">Back to Websites</Link></div>
       </header>
       <section className="editor-heading">
         <p className="eyebrow">VISUAL WEBSITE EDITOR</p>
