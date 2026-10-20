@@ -86,7 +86,7 @@ export function VisualSiteEditor() {
         <div className="editor-topbar-actions"><span className="editor-unsaved">{isLoadingSaved ? "Opening saved draft…" : isSaving ? "Saving…" : websiteId ? saveLabel : "Preview only · Not saved"}</span><Link className="editor-back-link" href="/pages">Pages & navigation ↗</Link><Link className="editor-back-link" href="/workspace/websites">Exit to Websites</Link></div>
       </header>
       <section className="editor-heading">
-        <p className="eyebrow">PHASE 9 · VISUAL EDITOR</p>
+        <p className="eyebrow">VISUAL WEBSITE EDITOR</p>
         <h1>Shape your website.</h1>
         <p>Shape the layout and colours, then save changes to your workspace. Saving stores a draft; publishing is a separate step.</p>
       </section>
