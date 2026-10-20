@@ -86,6 +86,7 @@ export const websites = pgTable(
   },
   (table) => [
     uniqueIndex("websites_org_slug_uq").on(table.organizationId, table.slug),
+    uniqueIndex("websites_org_id_id_uq").on(table.organizationId, table.id),
     uniqueIndex("websites_published_slug_uq").on(table.slug).where(sql`status = 'published'`),
     index("websites_org_status_idx").on(table.organizationId, table.status),
   ],
@@ -119,6 +120,40 @@ export const websitePages = pgTable(
   ],
 );
 
+
+export const websiteDomains = pgTable(
+  "website_domains",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
+    websiteId: uuid("website_id").notNull(),
+    hostname: text("hostname").notNull(),
+    domainType: text("domain_type").notNull(),
+    status: text("status").notNull().default("pending"),
+    isPrimary: boolean("is_primary").notNull().default(false),
+    verificationTokenHash: text("verification_token_hash"),
+    verifiedAt: timestamp("verified_at", { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    foreignKey({
+      name: "website_domains_website_org_fk",
+      columns: [table.organizationId, table.websiteId],
+      foreignColumns: [websites.organizationId, websites.id],
+    }).onDelete("cascade"),
+    uniqueIndex("website_domains_hostname_uq").on(table.hostname),
+    uniqueIndex("website_domains_one_lucia_subdomain_per_site_uq")
+      .on(table.organizationId, table.websiteId)
+      .where(sql`domain_type = 'lucia_subdomain' AND status <> 'removed'`),
+    uniqueIndex("website_domains_one_primary_per_site_uq")
+      .on(table.organizationId, table.websiteId)
+      .where(sql`is_primary = true AND status <> 'removed'`),
+    index("website_domains_org_status_idx").on(table.organizationId, table.status),
+    index("website_domains_active_hostname_idx").on(table.hostname)
+      .where(sql`status = 'active'`),
+  ],
+);
 
 /**
  * Product-local opaque sessions. Core remains the identity authority; this

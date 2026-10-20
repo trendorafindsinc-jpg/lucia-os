@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { hasOrganizationPermission } from "@/lib/access/policy";
 import { getDb } from "@/lib/db/client";
-import { memberships, organizations, websitePages, websites } from "@/lib/db/schema";
+import { memberships, organizations, websiteDomains, websitePages, websites } from "@/lib/db/schema";
 import { makeInitialDraft, siteDraftSchema } from "@/lib/editor/site-draft";
 import { publishSettingsSchema } from "@/lib/publishing/publishing";
 
@@ -104,6 +104,48 @@ export async function POST(request: Request) {
         }
         await tx.update(websites).set({ name: settings.siteName, status: "published", publishedAt: now, updatedAt: now })
           .where(and(eq(websites.id, website.id), eq(websites.organizationId, org.id)));
+
+        // Publishing owns the free LUCIA subdomain lifecycle: activate its exact
+        // hostname in the same transaction as the published snapshot. Wildcard
+        // DNS is only transport; routing still requires this exact active record.
+        const siteDomain = (process.env.LUCIA_SITE_DOMAIN || "lucia.name.ng")
+          .trim().toLowerCase().replace(/^\*\./, "").replace(/^\./, "").replace(/\.$/, "");
+        const hostname = website.slug + "." + siteDomain;
+        const [existingDomain] = await tx.select({
+          id: websiteDomains.id,
+          organizationId: websiteDomains.organizationId,
+          websiteId: websiteDomains.websiteId,
+          domainType: websiteDomains.domainType,
+        }).from(websiteDomains).where(eq(websiteDomains.hostname, hostname)).limit(1);
+        if (existingDomain && (
+          existingDomain.organizationId !== org.id ||
+          existingDomain.websiteId !== website.id ||
+          existingDomain.domainType !== "lucia_subdomain"
+        )) {
+          throw new Error("The requested LUCIA hostname is already owned by another website.");
+        }
+        if (existingDomain) {
+          await tx.update(websiteDomains).set({
+            status: "active",
+            verifiedAt: now,
+            updatedAt: now,
+          }).where(and(
+            eq(websiteDomains.id, existingDomain.id),
+            eq(websiteDomains.organizationId, org.id),
+            eq(websiteDomains.websiteId, website.id),
+          ));
+        } else {
+          await tx.insert(websiteDomains).values({
+            organizationId: org.id,
+            websiteId: website.id,
+            hostname,
+            domainType: "lucia_subdomain",
+            status: "active",
+            verifiedAt: now,
+            isPrimary: false,
+            updatedAt: now,
+          });
+        }
         return {
           action, id: website.id, slug: website.slug, name: settings.siteName, status: "published",
           publishedAt: now.toISOString(), publishedPageCount: Math.max(pages.length, 1),
@@ -121,7 +163,7 @@ export async function POST(request: Request) {
       }, { headers: { "Cache-Control": "no-store" } });
     } catch (error) {
       const message = error instanceof Error ? error.message : "";
-      if (/unique constraint|duplicate key|websites_published_slug_uq/i.test(message)) return jsonError("That LUCIA address is already published. Choose another address or open the website that owns it.", 409);
+      if (/requested LUCIA hostname is already owned|unique constraint|duplicate key|websites_published_slug_uq/i.test(message)) return jsonError("That LUCIA address is already claimed. Choose another address or open the website that owns it.", 409);
       if (/saved website draft is incomplete/i.test(message)) return jsonError(message, 422);
       return jsonError("We couldn't save or publish the website right now. Your previous live version has been preserved. Please try again shortly.", 503);
     }
