@@ -123,7 +123,7 @@ export async function POST(request: Request) {
       const message = error instanceof Error ? error.message : "";
       if (/unique constraint|duplicate key|websites_published_slug_uq/i.test(message)) return jsonError("That LUCIA address is already published. Choose another address or open the website that owns it.", 409);
       if (/saved website draft is incomplete/i.test(message)) return jsonError(message, 422);
-      return jsonError("We couldn't save or publish the website. Your previous live version has been preserved. Check that the Phase 14 database migration is applied, then try again.", 503);
+      return jsonError("We couldn't save or publish the website right now. Your previous live version has been preserved. Please try again shortly.", 503);
     }
   }
   return jsonError("No saved website matches this LUCIA address in an organisation you can publish for. Create the website first, then enter its exact address here.", 404);
