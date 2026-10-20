@@ -54,7 +54,7 @@ export function canActivateDomain(input: {
   status: WebsiteDomainStatus; type: WebsiteDomainType; premiumEntitled: boolean;
   ownershipVerified: boolean; pointsToExpectedDeployment: boolean; httpsReady: boolean;
 }): boolean {
-  if (input.status === "removed" || input.status === "suspended") return false;
+  if (input.status !== "verified") return false;
   if (!input.ownershipVerified || !input.pointsToExpectedDeployment || !input.httpsReady) return false;
   if (input.type === "custom" && input.premiumEntitled !== true) return false;
   return true;
