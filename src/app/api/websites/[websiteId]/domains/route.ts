@@ -73,11 +73,16 @@ export async function POST(request: Request, context: RouteContext) {
   try {
     const created = await db.transaction(async (tx) => {
       await tx.execute(sql`select set_config('app.current_organization_id', ${access.membership.organizationId}, true)`);
-      const [site] = await tx.select({ id: websites.id, status: websites.status })
+      const [site] = await tx.select({ id: websites.id, slug: websites.slug, status: websites.status })
         .from(websites)
         .where(and(eq(websites.id, websiteId), eq(websites.organizationId, access.membership.organizationId)))
         .limit(1);
       if (!site) return { missing: true as const };
+      const siteDomain = (process.env.LUCIA_SITE_DOMAIN || "lucia.name.ng")
+        .trim().toLowerCase().replace(/^\*\./, "").replace(/^\./, "").replace(/\.$/, "");
+      if (claim.hostname !== site.slug + "." + siteDomain) {
+        return { invalidSubdomain: true as const };
+      }
 
       const [domain] = await tx.insert(websiteDomains).values({
         organizationId: access.membership.organizationId,
@@ -109,6 +114,7 @@ export async function POST(request: Request, context: RouteContext) {
       return { domain };
     });
     if ("missing" in created) return jsonError("Website not found.", 404);
+    if ("invalidSubdomain" in created) return jsonError("The free LUCIA subdomain must match this website's published address.", 400);
     return NextResponse.json({ domain: created.domain }, { status: 201, headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
