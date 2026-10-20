@@ -163,7 +163,7 @@ export async function POST(request: Request) {
       }, { headers: { "Cache-Control": "no-store" } });
     } catch (error) {
       const message = error instanceof Error ? error.message : "";
-      if (/unique constraint|duplicate key|websites_published_slug_uq/i.test(message)) return jsonError("That LUCIA address is already published. Choose another address or open the website that owns it.", 409);
+      if (/requested LUCIA hostname is already owned|unique constraint|duplicate key|websites_published_slug_uq/i.test(message)) return jsonError("That LUCIA address is already claimed. Choose another address or open the website that owns it.", 409);
       if (/saved website draft is incomplete/i.test(message)) return jsonError(message, 422);
       return jsonError("We couldn't save or publish the website right now. Your previous live version has been preserved. Please try again shortly.", 503);
     }
