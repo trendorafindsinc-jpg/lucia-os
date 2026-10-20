@@ -35,7 +35,7 @@ export function middleware(request: NextRequest) {
   }
 
   const url = request.nextUrl.clone();
-  url.pathname = pathname === "/" ? "/__tenant-site" : `/__tenant-site${pathname}`;
+  url.pathname = pathname === "/" ? "/tenant-site-internal" : `/tenant-site-internal${pathname}`;
   return NextResponse.rewrite(url);
 }
 
