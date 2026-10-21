@@ -1,24 +1,25 @@
 "use client";
 
 import { useState } from "react";
+import type { FormEvent } from "react";
 
 type Website = { id: string; name: string; slug: string; status: string; organizationId: string; organizationName: string };
 type Domain = { id: string; websiteId: string; hostname: string; domainType: string; status: string; isPrimary: boolean; createdAt: string | Date; organizationId: string; organizationName: string; websiteName: string; websiteStatus: string };
-type Props = { websites: Website[]; domains: Domain[]; siteDomain: string };
+type Props = { websites: Website[]; domains: Domain[]; siteDomain: string; initialWebsiteId?: string };
 
 function statusLabel(status: string) {
   return ({ active: "Live", verified: "Verified · awaiting activation", pending: "DNS verification needed", verifying: "Checking DNS", suspended: "Suspended", removed: "Removed" } as Record<string, string>)[status] || status;
 }
 
-export function DomainManagementClient({ websites, domains: initialDomains, siteDomain }: Props) {
+export function DomainManagementClient({ websites, domains: initialDomains, siteDomain, initialWebsiteId }: Props) {
   const [domains, setDomains] = useState(initialDomains);
-  const [websiteId, setWebsiteId] = useState(websites[0]?.id || "");
+  const [websiteId, setWebsiteId] = useState(websites.some((website) => website.id === initialWebsiteId) ? initialWebsiteId! : (websites[0]?.id || ""));
   const [hostname, setHostname] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [verification, setVerification] = useState<{ domainId: string; hostname: string; recordName: string; recordValue: string } | null>(null);
 
-  async function registerDomain(event: React.FormEvent<HTMLFormElement>) {
+  async function registerDomain(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!websiteId || busy) return;
     setBusy(true); setMessage(""); setVerification(null);
@@ -48,7 +49,7 @@ export function DomainManagementClient({ websites, domains: initialDomains, site
   }
 
   return <>
-    <section className="workspace-panel domains-register-panel">
+    <section className="workspace-panel domains-addresses-panel">\n      <div className="workspace-panel-heading"><div><h2>LUCIA subdomains</h2><p>Every website has its own address. Publishing activates that exact hostname.</p></div><span className="workspace-count">{websites.length} websites</span></div>\n      {websites.length ? <div className="workspace-org-list">{websites.map((website) => <article className="workspace-org-card domains-card" key={website.id}><div className="workspace-org-avatar">L</div><div className="workspace-org-info"><h3>{website.slug}.{siteDomain}</h3><p>{website.name} · {website.organizationName}</p><div className="workspace-org-meta"><span>LUCIA subdomain</span><span>{website.status === "published" ? "Published website" : "Publish to activate"}</span></div></div><span className={`workspace-status ${website.status === "published" ? "workspace-status-success" : "workspace-status-neutral"}`}>{website.status === "published" ? "Live" : "Draft"}</span><a className="workspace-button workspace-button-secondary domains-website-link" href={website.status === "published" ? `https://${website.slug}.${siteDomain}` : `/publish?websiteId=${encodeURIComponent(website.id)}`} target={website.status === "published" ? "_blank" : undefined} rel={website.status === "published" ? "noreferrer" : undefined}>{website.status === "published" ? "Open website ↗" : "Publish website"}</a></article>)}</div> : <div className="workspace-empty"><h3>No websites yet</h3><p>Create a website to get its own LUCIA subdomain.</p><a className="workspace-button workspace-button-secondary" href="/create">Create a website</a></div>}\n    </section>\n\n    <section className="workspace-panel domains-register-panel">
       <div className="workspace-panel-heading"><div><h2>Register a domain</h2><p>Choose the website it belongs to. The same hostname cannot be registered twice.</p></div><span className="workspace-count">Custom domain</span></div>
       {websites.length ? <form className="domains-register-form" onSubmit={registerDomain}>
         <label>Website<select value={websiteId} onChange={(event) => setWebsiteId(event.target.value)} required>{websites.map((website) => <option key={website.id} value={website.id}>{website.name} · {website.organizationName}</option>)}</select></label>
