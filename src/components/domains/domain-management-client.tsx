@@ -48,6 +48,34 @@ export function DomainManagementClient({ websites, domains: initialDomains, site
     finally { setBusy(false); }
   }
 
+  async function setPrimaryDomain(domainId: string) {
+    if (busy) return;
+    setBusy(true); setMessage("");
+    try {
+      const response = await fetch(`/api/domains/${encodeURIComponent(domainId)}`, { method: "PATCH", cache: "no-store" });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "The primary domain could not be changed.");
+      const target = domains.find((domain) => domain.id === domainId);
+      setDomains((current) => current.map((domain) => domain.websiteId === target?.websiteId ? { ...domain, isPrimary: domain.id === domainId } : domain));
+      setMessage("Primary domain updated.");
+    } catch (error) { setMessage(error instanceof Error ? error.message : "The primary domain could not be changed."); }
+    finally { setBusy(false); }
+  }
+
+  async function disconnectDomain(domainId: string) {
+    if (busy || !window.confirm("Disconnect this custom domain? Its LUCIA subdomain will remain unchanged.")) return;
+    setBusy(true); setMessage("");
+    try {
+      const response = await fetch(`/api/domains/${encodeURIComponent(domainId)}`, { method: "DELETE", cache: "no-store" });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "The domain could not be disconnected.");
+      setDomains((current) => current.filter((domain) => domain.id !== domainId));
+      setVerification((current) => current?.domainId === domainId ? null : current);
+      setMessage("Custom domain disconnected. Your LUCIA subdomain is unchanged.");
+    } catch (error) { setMessage(error instanceof Error ? error.message : "The domain could not be disconnected."); }
+    finally { setBusy(false); }
+  }
+
   return <>
     <section className="workspace-panel domains-addresses-panel">\n      <div className="workspace-panel-heading"><div><h2>LUCIA subdomains</h2><p>Every website has its own address. Publishing activates that exact hostname.</p></div><span className="workspace-count">{websites.length} websites</span></div>\n      {websites.length ? <div className="workspace-org-list">{websites.map((website) => { const subdomainIsLive = website.status === "published" && domains.some((domain) => domain.websiteId === website.id && domain.domainType === "lucia_subdomain" && domain.status === "active"); return <article className="workspace-org-card domains-card" key={website.id}><div className="workspace-org-avatar">L</div><div className="workspace-org-info"><h3>{website.slug}.{siteDomain}</h3><p>{website.name} · {website.organizationName}</p><div className="workspace-org-meta"><span>LUCIA subdomain</span><span>{subdomainIsLive ? "Published website" : "Publish to activate"}</span></div></div><span className={`workspace-status ${subdomainIsLive ? "workspace-status-success" : "workspace-status-neutral"}`}>{subdomainIsLive ? "Live" : "Not live"}</span><a className="workspace-button workspace-button-secondary domains-website-link" href={subdomainIsLive ? `https://${website.slug}.${siteDomain}` : `/publish?websiteId=${encodeURIComponent(website.id)}`} target={subdomainIsLive ? "_blank" : undefined} rel={subdomainIsLive ? "noreferrer" : undefined}>{subdomainIsLive ? "Open website ↗" : "Publish website"}</a></article>; })}</div> : <div className="workspace-empty"><h3>No websites yet</h3><p>Create a website to get its own LUCIA subdomain.</p><a className="workspace-button workspace-button-secondary" href="/create">Create a website</a></div>}\n    </section>\n\n    <section className="workspace-panel domains-register-panel">
       <div className="workspace-panel-heading"><div><h2>Register a domain</h2><p>Choose the website it belongs to. The same hostname cannot be registered twice.</p></div><span className="workspace-count">Custom domain</span></div>
@@ -73,6 +101,8 @@ export function DomainManagementClient({ websites, domains: initialDomains, site
         <div className="workspace-org-info"><h3>{domain.hostname}</h3><p>{domain.websiteName} · {domain.organizationName}</p><div className="workspace-org-meta"><span>{domain.domainType === "custom" ? "Custom domain" : "LUCIA subdomain"}</span>{domain.isPrimary ? <span>Primary</span> : null}</div></div>
         <span className={`workspace-status ${domain.status === "active" ? "workspace-status-success" : "workspace-status-neutral"}`}>{statusLabel(domain.status)}</span>
         {domain.domainType === "custom" && domain.status === "pending" ? <button className="workspace-button workspace-button-secondary domains-verify-button" type="button" disabled={busy} onClick={() => { setVerification(null); void verifyDomain(domain.id); }}>Check DNS</button> : null}
+        {domain.status === "active" && !domain.isPrimary ? <button className="workspace-button workspace-button-secondary domains-verify-button" type="button" disabled={busy} onClick={() => void setPrimaryDomain(domain.id)}>Set primary</button> : null}
+        {domain.domainType === "custom" ? <button className="workspace-button workspace-button-secondary domains-disconnect-button" type="button" disabled={busy} onClick={() => void disconnectDomain(domain.id)}>Disconnect</button> : null}
         {domain.domainType === "custom" && domain.status === "verified" ? <span className="domains-pending-note">Activation required before this domain can go live.</span> : null}
       </article>)}</div> : <div className="workspace-empty"><span className="workspace-empty-icon">⌘</span><h3>No registered domains yet</h3><p>Published websites receive their unique LUCIA subdomain automatically. Register a custom domain above when you’re ready.</p></div>}
     </section>
