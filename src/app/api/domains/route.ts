@@ -50,7 +50,7 @@ export async function POST(request: Request) {
           organizationId: org.id, websiteId: website.id, hostname, domainType: "custom", status: "pending",
           isPrimary: false, verificationTokenHash: createHash("sha256").update(token).digest("hex"), updatedAt: new Date(),
         }).returning({ id: websiteDomains.id, hostname: websiteDomains.hostname, domainType: websiteDomains.domainType, status: websiteDomains.status, isPrimary: websiteDomains.isPrimary, createdAt: websiteDomains.createdAt });
-        return { domain: { ...domain, websiteId: website.id, organizationId: org.id, organizationName: "", websiteName: website.name, websiteStatus: website.status }, verification: { domainId: domain.id, hostname, recordName: "_lucia-verification." + hostname, recordValue: token } };
+        return { domain: { ...domain, websiteId: website.id, organizationId: org.id, organizationName: org.name, websiteName: website.name, websiteStatus: website.status }, verification: { domainId: domain.id, hostname, recordName: "_lucia-verification." + hostname, recordValue: token } };
       });
       if (!result) continue;
       return NextResponse.json(result, { status: 201, headers: { "Cache-Control": "no-store" } });
