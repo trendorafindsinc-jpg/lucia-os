@@ -107,7 +107,7 @@ export function PublishingWorkspace() {
       <section className="publish-intro">
         <p className="eyebrow">YOUR WEBSITE, WHEN IT IS READY</p>
         <h1>Prepare to go live.</h1>
-        <p>Save your draft and publish on your free LUCIA address. Your custom domain remains separate until its one-time activation and verification are complete.</p>
+        <p>Save your draft and publish on your free LUCIA address. Manage custom-domain registration and verification on the separate Domains page.</p>
       </section>
 
       <div className="publish-layout">
@@ -129,8 +129,7 @@ export function PublishingWorkspace() {
           <label>Homepage headline<input value={settings.headline} maxLength={100} onChange={(event) => update("headline", event.target.value)} /></label>
           <label>Short description<textarea value={settings.description} maxLength={220} rows={3} onChange={(event) => update("description", event.target.value)} /></label>
           <p className="publish-help">Address preview: <strong>{settings.siteSlug || "your-site"}.lucia.name.ng</strong> · The server checks that the address is yours and available.</p>
-          <label>Custom domain (optional)<input value={settings.customDomain} placeholder="www.yourdomain.com" onChange={(event) => update("customDomain", event.target.value)} aria-describedby="domain-help" /><span id="domain-help" className="publish-help">Enter a hostname only, without https:// or a page path. Custom-domain activation is a separate one-time payment and is not connected yet.</span></label>
-          {settings.customDomain.trim() ? <div className="dns-guide"><strong>Custom domain not connected</strong><p>Publishing below will use your LUCIA subdomain. No custom-domain payment is taken here; the future shared payment workflow and DNS/TLS verification must complete before this hostname can go live.</p></div> : null}
+          <p className="publish-help"><Link href="/workspace/domains">Open domain management ↗</Link> to register a custom hostname, follow DNS instructions and verify ownership. Domain registration does not activate public routing.</p>
           <div className="publish-actions">
             <button type="button" className="publish-secondary" disabled={!validation.success || isSaving || websiteChoices.length === 0} onClick={() => void saveOrPublish("save")}>{isSaving ? "Saving…" : "Save draft"}</button>
             <button type="button" className="publish-primary" disabled={!validation.success || isSaving || websiteChoices.length === 0} onClick={() => void saveOrPublish("publish")}>{isSaving ? "Working…" : "Publish website"}</button>
