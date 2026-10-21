@@ -76,6 +76,6 @@ export function DomainManagementClient({ websites, domains: initialDomains, site
         {domain.domainType === "custom" && domain.status === "verified" ? <span className="domains-pending-note">Activation required before this domain can go live.</span> : null}
       </article>)}</div> : <div className="workspace-empty"><span className="workspace-empty-icon">⌘</span><h3>No registered domains yet</h3><p>Published websites receive their unique LUCIA subdomain automatically. Register a custom domain above when you’re ready.</p></div>}
     </section>
-    {message ? <p className={`domains-feedback ${message.toLowerCase().includes("could not") || message.toLowerCase().includes("not succeeded") || message.toLowerCase().includes("already") ? "domains-feedback-error" : ""}`} role="status">{message}</p> : null}
+    {message ? <p className={`domains-feedback ${message.toLowerCase().includes("could not") || message.toLowerCase().includes("not succeeded") || message.toLowerCase().includes("not found") || message.toLowerCase().includes("does not match") || message.toLowerCase().includes("already") ? "domains-feedback-error" : ""}`} role="status">{message}</p> : null}
   </>;
 }
