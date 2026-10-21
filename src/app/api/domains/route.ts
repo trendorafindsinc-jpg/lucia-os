@@ -32,7 +32,7 @@ export async function POST(request: Request) {
   if (hostname === siteDomain || hostname.endsWith("." + siteDomain)) return error("Use the LUCIA subdomain option for lucia.name.ng addresses. This form is for domains you control.", 422);
 
   const db = getDb();
-  const orgs = await db.select({ id: organizations.id, role: memberships.role, membershipStatus: memberships.status })
+  const orgs = await db.select({ id: organizations.id, name: organizations.name, role: memberships.role, membershipStatus: memberships.status })
     .from(memberships).innerJoin(organizations, eq(memberships.organizationId, organizations.id))
     .where(and(eq(memberships.userId, user.id), eq(memberships.status, "active"), eq(organizations.status, "active")));
   for (const org of orgs) {
