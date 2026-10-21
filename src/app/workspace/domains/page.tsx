@@ -9,7 +9,7 @@ import "./domains.css";
 
 export const metadata = { title: "Domains | LUCIA OS" };
 
-export default async function WorkspaceDomainsPage() {
+export default async function WorkspaceDomainsPage({ searchParams }: { searchParams: Promise<{ websiteId?: string }> }) {
   const user = await getCurrentUser();
   if (!user) return <main className="workspace-shell"><section className="workspace-card workspace-denied"><span className="workspace-kicker">DOMAIN MANAGEMENT</span><h1>Sign in to continue.</h1><p>Use LUCIA ID to manage domains for your websites.</p><Link className="workspace-button workspace-button-primary" href="/api/auth/login">Sign in with LUCIA ID</Link></section></main>;
 
@@ -33,6 +33,7 @@ export default async function WorkspaceDomainsPage() {
   })));
   const siteDomain = (process.env.LUCIA_SITE_DOMAIN || "lucia.name.ng").trim().toLowerCase().replace(/^\*\./, "").replace(/\.$/, "");
   const websitesForClient = groups.flatMap((group) => group.sites.map((site) => ({ ...site, organizationId: group.id, organizationName: group.name })));
+  const { websiteId } = await searchParams;
   const domainsForClient = groups.flatMap((group) => group.domains.map((domain) => ({
     ...domain, organizationId: group.id, organizationName: group.name,
     websiteName: group.sites.find((site) => site.id === domain.websiteId)?.name || "Website",
@@ -46,7 +47,7 @@ export default async function WorkspaceDomainsPage() {
       <section className="workspace-main domains-main">
         <div className="workspace-heading"><div><span className="workspace-kicker">WEBSITE ADDRESSES</span><h1>Every website, its own address.</h1><p>Register and verify domains here. Website editing and publishing stay separate, and a hostname can belong to only one website across LUCIA OS.</p></div><span className="workspace-live-pill"><span /> Domain registry</span></div>
         <div className="workspace-metrics"><article className="workspace-metric"><span className="workspace-metric-label">Registered domains</span><strong>{domainsForClient.length}</strong><span className="workspace-metric-foot">Across your manageable websites</span></article><article className="workspace-metric"><span className="workspace-metric-label">Websites</span><strong>{websitesForClient.length}</strong><span className="workspace-metric-foot">Each has an individual LUCIA address</span></article></div>
-        <DomainManagementClient websites={websitesForClient} domains={domainsForClient} siteDomain={siteDomain} />
+        <DomainManagementClient websites={websitesForClient} domains={domainsForClient} siteDomain={siteDomain} initialWebsiteId={websiteId} />
         <p className="workspace-footnote">Custom domains remain unavailable to the public until verification, the required one-time activation, and domain/TLS activation are completed. Registration alone never routes traffic to a website.</p>
         <Link className="workspace-back" href="/workspace/websites">Back to websites</Link>
       </section>
