@@ -40,14 +40,18 @@ describe("Vercel AI Gateway adapter", () => {
   it("normalizes non-success responses without exposing provider response bodies", async () => {
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response("private provider details", { status: 429 }));
     const provider = createVercelAIGatewayProvider({ apiKey: "test-secret", model: "test/model" }, fetchMock);
-    await expect(provider.generateBlueprint({
-      brief: "A modern, accessible website for a local design studio.",
-      signal: new AbortController().signal,
-    })).rejects.toThrow("status 429");
-    await expect(provider.generateBlueprint({
-      brief: "A modern, accessible website for a local design studio.",
-      signal: new AbortController().signal,
-    })).rejects.not.toThrow("private provider details");
+    let message = "";
+    try {
+      await provider.generateBlueprint({
+        brief: "A modern, accessible website for a local design studio.",
+        signal: new AbortController().signal,
+      });
+    } catch (error) {
+      message = error instanceof Error ? error.message : String(error);
+    }
+    expect(message).toContain("status 429");
+    expect(message).not.toContain("private provider details");
+    expect(fetchMock).toHaveBeenCalledOnce();
   });
 
   it("rejects missing choices and malformed JSON", async () => {
