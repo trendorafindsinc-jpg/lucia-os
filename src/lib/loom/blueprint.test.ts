@@ -16,6 +16,18 @@ describe("Loom Blueprint v1", () => {
     expect(draft.templateId).toBe("northstar-consulting");
   });
 
+  it("safely bounds long section labels from legacy drafts", () => {
+    const draft = {
+      ...makeInitialDraft("northstar-consulting"),
+      visibleSections: ["A".repeat(180)],
+    };
+    const blueprint = siteDraftToLoomBlueprint(draft);
+    expect(blueprint.pages[0]?.sections).toContainEqual(expect.objectContaining({
+      type: "content-grid",
+      items: [expect.objectContaining({ title: "A".repeat(100) })],
+    }));
+  });
+
   it("rejects executable or unknown fields rather than passing them to a renderer", () => {
     const blueprint = siteDraftToLoomBlueprint(makeInitialDraft("northstar-consulting"));
     expect(loomBlueprintSchema.safeParse({
