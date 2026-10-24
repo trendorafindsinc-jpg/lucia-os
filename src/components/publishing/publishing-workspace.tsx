@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { getPublishChecks, getPublishReadiness, publishSettingsSchema } from "@/lib/publishing/publishing";
+import { makeInitialDraft, siteDraftSchema, type SiteDraft } from "@/lib/editor/site-draft";
+import { siteDraftToLoomBlueprint } from "@/lib/loom/blueprint";
+import { LoomRenderer } from "@/components/loom/loom-renderer";
 
 const initialSettings = {
   siteName: "Northstar Studio",
@@ -17,6 +20,9 @@ export function PublishingWorkspace() {
   const [settings, setSettings] = useState(initialSettings);
   const [websiteChoices, setWebsiteChoices] = useState<WebsiteChoice[]>([]);
   const [showPreview, setShowPreview] = useState(false);
+  const [previewDraft, setPreviewDraft] = useState<SiteDraft | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const previewBlueprint = useMemo(() => previewDraft ? siteDraftToLoomBlueprint(previewDraft) : null, [previewDraft]);
   const [message, setMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [publishedUrl, setPublishedUrl] = useState("");
@@ -98,6 +104,38 @@ export function PublishingWorkspace() {
     }
   }
 
+  async function openPreview() {
+    if (previewLoading) return;
+    const selected = websiteChoices.find((website) => website.slug === settings.siteSlug);
+    if (!selected) {
+      setMessage("Select a saved website before opening its preview.");
+      return;
+    }
+    setPreviewLoading(true);
+    setMessage("");
+    try {
+      const response = await fetch(`/api/websites/${encodeURIComponent(selected.id)}/draft`, { cache: "no-store" });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "We couldn't load this website's draft for preview.");
+      const base = makeInitialDraft(payload.draft?.templateId || "northstar-consulting");
+      const parsed = siteDraftSchema.safeParse({
+        ...base,
+        ...(payload.draft ?? {}),
+        siteName: settings.siteName,
+        headline: settings.headline,
+        description: settings.description,
+      });
+      if (!parsed.success) throw new Error("This draft needs to be saved in Studio before it can be previewed.");
+      setPreviewDraft(parsed.data);
+      setShowPreview(true);
+      setMessage("Private preview loaded using the selected website's Loom composition. It has not been published.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "We couldn't open this website's preview.");
+    } finally {
+      setPreviewLoading(false);
+    }
+  }
+
   return (
     <main className="publish-shell">
       <header className="publish-header">
@@ -133,7 +171,7 @@ export function PublishingWorkspace() {
           <div className="publish-actions">
             <button type="button" className="publish-secondary" disabled={!validation.success || isSaving || websiteChoices.length === 0} onClick={() => void saveOrPublish("save")}>{isSaving ? "Saving…" : "Save draft"}</button>
             <button type="button" className="publish-primary" disabled={!validation.success || isSaving || websiteChoices.length === 0} onClick={() => void saveOrPublish("publish")}>{isSaving ? "Working…" : "Publish website"}</button>
-            <button type="button" className="publish-secondary" onClick={() => { setShowPreview(true); setMessage("Private preview opened. It does not change the live website."); }}>Preview website</button>
+            <button type="button" className="publish-secondary" disabled={previewLoading || websiteChoices.length === 0} onClick={() => void openPreview()}>{previewLoading ? "Loading preview…" : "Preview website"}</button>
           </div>
           {!validation.success ? <p className="publish-error" role="status">Some details need attention before they can be saved.</p> : null}
           {message ? <p className="publish-message" role="status">{message}</p> : null}
@@ -148,7 +186,7 @@ export function PublishingWorkspace() {
         </aside>
       </div>
 
-      {showPreview ? <div className="publish-modal-backdrop" role="presentation" onClick={() => setShowPreview(false)}><section className="publish-preview" role="dialog" aria-modal="true" aria-labelledby="preview-title" onClick={(event) => event.stopPropagation()}><div className="publish-preview-top"><span>Private preview · Not published</span><button type="button" onClick={() => setShowPreview(false)} aria-label="Close preview">Close ×</button></div><div className="publish-preview-content"><p className="eyebrow">{settings.siteName || "Your organisation"}</p><h2 id="preview-title">{settings.headline || "Your headline will appear here"}</h2><p>{settings.description || "Add a short description to introduce your organisation."}</p><span className="publish-preview-cta">Preview only · Not live</span></div></section></div> : null}
+      {showPreview && previewDraft && previewBlueprint ? <div className="publish-modal-backdrop" role="presentation" onClick={() => setShowPreview(false)}><section className="publish-preview" role="dialog" aria-modal="true" aria-labelledby="preview-title" onClick={(event) => event.stopPropagation()}><div className="publish-preview-top"><span>Private preview · Not published</span><button type="button" onClick={() => setShowPreview(false)} aria-label="Close preview">Close ×</button></div><div className="publish-preview-renderer" id="preview-title"><LoomRenderer blueprint={previewBlueprint} preview /></div><p className="publish-preview-note">This is the selected saved website rendered by Loom. Preview does not change the live site.</p></section></div> : null}
     </main>
   );
 }
