@@ -130,7 +130,7 @@ export function VisualSiteEditor() {
     const next: SiteDraft = {
       ...draft,
       siteName: boundedText(aiProposal.site.name, draft.siteName, 80),
-      headline: boundedText(hero?.heading, aiProposal.site.name, 100),
+      headline: boundedText(hero?.heading, draft.headline, 100),
       description: boundedText(hero?.body ?? aiProposal.site.description, draft.description, 220),
       buttonLabel: boundedText(hero?.actionLabel, draft.buttonLabel || "Get in touch", 32),
       palette: aiProposal.theme.palette,
