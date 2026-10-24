@@ -70,12 +70,6 @@ export const loomBlueprintSchema = z.object({
     contentMaxWidth: z.number().int().min(720).max(1600),
     respectReducedMotion: z.boolean(),
   }).strict().refine((value) => value.mobileBreakpoint < value.tabletBreakpoint, "Responsive breakpoints must be ordered."),
-  responsive: z.object({
-    mobileBreakpoint: z.number().int().min(320).max(767),
-    tabletBreakpoint: z.number().int().min(768).max(1023),
-    contentMaxWidth: z.number().int().min(720).max(1600),
-    respectReducedMotion: z.boolean(),
-  }).strict().refine((value) => value.mobileBreakpoint < value.tabletBreakpoint, "Responsive breakpoints must be ordered."),
   navigation: z.array(z.object({
     label: safeText(50),
     href: z.string().regex(/^#[a-z0-9-]{1,64}$/),
@@ -158,7 +152,6 @@ export function siteDraftToLoomBlueprint(draft: SiteDraft): LoomBlueprint {
       seoDescription: draft.description.slice(0, 160),
     },
     theme: { palette: draft.palette, colors: [...palette], layout },
-    responsive: { mobileBreakpoint: 760, tabletBreakpoint: 1023, contentMaxWidth: 1240, respectReducedMotion: true },
     responsive: { mobileBreakpoint: 760, tabletBreakpoint: 1023, contentMaxWidth: 1240, respectReducedMotion: true },
     navigation: [
       ...(contentSections.length ? [{ label: "Explore", href: "#highlights" }] : []),
