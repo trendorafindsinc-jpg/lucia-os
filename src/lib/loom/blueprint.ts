@@ -146,7 +146,10 @@ export function siteDraftToLoomBlueprint(draft: SiteDraft): LoomBlueprint {
       seoDescription: draft.description.slice(0, 160),
     },
     theme: { palette: draft.palette, colors: [...palette], layout },
-    navigation: contentSections.slice(0, 8).map((section) => ({ label: section.label, href: `#${section.id}` })),
+    navigation: [
+      ...(contentSections.length ? [{ label: "Explore", href: "#highlights" }] : []),
+      { label: "Contact", href: "#contact" },
+    ],
     pages: [{
       id: "home",
       path: "/",
