@@ -348,3 +348,20 @@ export const platformAuditEvents = pgTable(
     index("platform_audit_events_action_created_idx").on(table.action, table.createdAt),
   ],
 );
+
+
+/** Durable, tenant-scoped website draft checkpoints. Snapshot contains validated JSON only. */
+export const websiteVersions = pgTable("website_versions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
+  websiteId: uuid("website_id").notNull(),
+  createdByUserId: uuid("created_by_user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
+  label: text("label").notNull(),
+  notes: text("notes").notNull().default(""),
+  snapshot: text("snapshot").notNull(),
+  createdAt: createdAt(),
+}, (table) => [
+  foreignKey({ name: "website_versions_website_org_fk", columns: [table.organizationId, table.websiteId], foreignColumns: [websites.organizationId, websites.id] }).onDelete("cascade"),
+  uniqueIndex("website_versions_org_id_id_uq").on(table.organizationId, table.id),
+  index("website_versions_org_website_created_idx").on(table.organizationId, table.websiteId, table.createdAt),
+]);
