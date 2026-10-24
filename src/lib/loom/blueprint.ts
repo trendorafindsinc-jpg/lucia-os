@@ -131,7 +131,7 @@ export function siteDraftToLoomBlueprint(draft: SiteDraft): LoomBlueprint {
     type: "content-grid" as const,
     heading: "Explore",
     items: contentSections.map((section) => ({
-      title: section.label,
+      title: section.label.slice(0, 100),
       body: section.index === 0 ? draft.description : `Discover more about ${section.label.toLowerCase()}.`,
     })),
   }] : [];
