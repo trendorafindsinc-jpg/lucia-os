@@ -50,6 +50,13 @@
       "when": 1792476600000,
       "tag": "0006_website_domains",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792872900000,
+      "tag": "0007_website_versions",
+      "breakpoints": true
     }
   ]
 }
