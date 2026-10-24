@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { customDomainSchema, getPublishChecks, getPublishReadiness, publishSettingsSchema } from "./publishing";
+import { customDomainSchema, getPublishChecks, getPublishReadiness, publishActionSchema, publishSettingsSchema } from "./publishing";
 
 const settings = {
   siteName: "Northstar Studio",
@@ -37,5 +37,15 @@ describe("publish readiness", () => {
   it("reports invalid custom domains without claiming they are connected", () => {
     const checks = getPublishChecks({ ...settings, customDomain: "https://bad.example" });
     expect(checks.find((check) => check.id === "domain")?.ready).toBe(false);
+  });
+});
+
+
+describe("explicit publishing actions", () => {
+  it.each(["save", "publish"])("accepts the explicit action %s", (action) => {
+    expect(publishActionSchema.safeParse(action).success).toBe(true);
+  });
+  it.each([undefined, null, "", "preview", "delete", true])("rejects unknown action %s", (action) => {
+    expect(publishActionSchema.safeParse(action).success).toBe(false);
   });
 });

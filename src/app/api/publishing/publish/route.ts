@@ -5,7 +5,7 @@ import { hasOrganizationPermission } from "@/lib/access/policy";
 import { getDb } from "@/lib/db/client";
 import { memberships, organizations, websiteDomains, websitePages, websites } from "@/lib/db/schema";
 import { makeInitialDraft, siteDraftSchema } from "@/lib/editor/site-draft";
-import { publishSettingsSchema } from "@/lib/publishing/publishing";
+import { publishActionSchema, publishSettingsSchema } from "@/lib/publishing/publishing";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,7 +20,9 @@ export async function POST(request: Request) {
   let body: unknown;
   try { body = await request.json(); } catch { return jsonError("Submit valid website details.", 400); }
   if (!body || typeof body !== "object" || Array.isArray(body)) return jsonError("Submit valid website details.", 400);
-  const action = (body as Record<string, unknown>).action === "save" ? "save" : "publish";
+  const actionResult = publishActionSchema.safeParse((body as Record<string, unknown>).action);
+  if (!actionResult.success) return jsonError("Choose an explicit save or publish action.", 400);
+  const action = actionResult.data;
   const parsed = publishSettingsSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: "Review your website details before saving.", issues: parsed.error.flatten() }, { status: 422, headers: { "Cache-Control": "no-store" } });
