@@ -12,6 +12,8 @@ export const customDomainSchema = z.string()
   .refine((value) => !/(?:^|\.)(?:localhost|local|test|example|invalid)$/i.test(value), "Use a real registered domain, not a reserved test domain.")
   .refine((value) => value.split(".").every((label) => label.length >= 1 && label.length <= 63 && /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/.test(label)), "Check the domain labels. Each label must use letters, numbers or internal hyphens.");
 
+export const publishActionSchema = z.enum(["save", "publish"]);
+
 export const publishSettingsSchema = z.object({
   siteName: z.string().trim().min(2).max(80),
   headline: z.string().trim().min(2).max(100),
