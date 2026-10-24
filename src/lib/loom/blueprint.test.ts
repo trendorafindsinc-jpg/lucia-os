@@ -37,6 +37,12 @@ describe("Loom Blueprint v1", () => {
     }).success).toBe(false);
   });
 
+  it("requires valid responsive breakpoints and a bounded content width", () => {
+    const blueprint = siteDraftToLoomBlueprint(makeInitialDraft("northstar-consulting"));
+    expect(loomBlueprintSchema.safeParse({ ...blueprint, responsive: { ...blueprint.responsive, mobileBreakpoint: 900 } }).success).toBe(false);
+    expect(loomBlueprintSchema.safeParse({ ...blueprint, responsive: { ...blueprint.responsive, contentMaxWidth: 5000 } }).success).toBe(false);
+  });
+
   it("rejects unsafe paths, invalid colors, and oversized section collections", () => {
     const blueprint = siteDraftToLoomBlueprint(makeInitialDraft("northstar-consulting"));
     expect(loomBlueprintSchema.safeParse({
