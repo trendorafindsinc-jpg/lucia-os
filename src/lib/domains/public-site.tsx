@@ -7,7 +7,7 @@ import { getDb } from "@/lib/db/client";
 import { websiteDomains, websitePages, websites } from "@/lib/db/schema";
 import { normalizeHostname } from "@/lib/domains/hostname";
 import { siteDraftSchema } from "@/lib/editor/site-draft";
-import { siteDraftToLoomBlueprint } from "@/lib/loom/blueprint";
+import { siteDraftToLoomBlueprint, type LoomBlueprint } from "@/lib/loom/blueprint";
 import { LoomRenderer } from "@/components/loom/loom-renderer";
 
 export async function PublicWebsite({ path }: { path: string }) {
@@ -64,7 +64,7 @@ export async function PublicWebsite({ path }: { path: string }) {
   const parsed = siteDraftSchema.safeParse(raw);
   if (!parsed.success) notFound();
 
-  let blueprint;
+  let blueprint: LoomBlueprint;
   try {
     blueprint = siteDraftToLoomBlueprint({
       ...parsed.data,
