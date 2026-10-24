@@ -10,6 +10,8 @@ export const websiteSnapshotSchema = z.object({
   seoTitle: z.string().max(70),
   seoDescription: z.string().max(200),
   contentPostCount: z.number().int().min(0).max(500),
+  templateId: z.string().optional(),
+  buttonLabel: z.string().optional(),
 }).strict();
 
 export type WebsiteSnapshot = z.infer<typeof websiteSnapshotSchema>;
