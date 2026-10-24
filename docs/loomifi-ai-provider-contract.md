@@ -6,19 +6,27 @@ LoomifiAI is an optional website-creation assistant. It proposes a Loom Blueprin
 
 ## Current foundation and proposal API
 
-- `src/lib/loomifi-ai/provider.ts` defines the provider-neutral adapter contract.
+- `src/lib/loomifi-ai/provider.ts` defines the provider-neutral adapter contract, brief validation, timeout handling, and safe error normalization.
 - `src/lib/loomifi-ai/gateway.ts` adapts the Vercel AI Gateway OpenAI-compatible endpoint. The API key and model are server-only deployment settings: `AI_GATEWAY_API_KEY` and `LOOMIFIAI_MODEL`.
-- The proposal pipeline bounds user briefs, applies a timeout, validates untrusted output with `loomBlueprintSchema`, and normalises provider failures.
 - `POST /api/loomifi-ai/propose` requires a signed-in LUCIA OS session, an active organisation membership with `website.edit`, and a website belonging to that organisation.
-- The route returns a validated proposal only. It does not persist a draft, create a version, or publish a website.
-- If the Gateway settings are missing, it returns a recoverable `provider_unavailable` error. Loom Library and Studio remain usable without AI.
+- Provider output is validated against `loomBlueprintSchema` before being returned.
+- The Loom Studio UI displays the proposal through the real Loom renderer. The user must explicitly choose **Apply to editor**; that changes unsaved editor fields only. Saving a draft and publishing remain separate actions.
+- The proposal endpoint does not persist a draft, create a version, or publish a website. Responses are marked `persisted: false` and `published: false`, with `Cache-Control: no-store`.
+- Without Gateway settings, the endpoint returns a recoverable provider-unavailable error. Loom Library and non-AI Studio editing remain available.
 
-## Required next steps before general customer rollout
+## Verification completed
 
-1. Build the Loom Studio proposal/review UI, with real request states and accessible error messages.
-2. Present the validated proposal in the actual Loom renderer; do not persist it until the user explicitly chooses to apply/save it.
-3. Save through the existing tenant-scoped draft API and version history; never publish automatically.
-4. Test provider unavailability, timeouts, malformed output, cross-tenant access, duplicate retries, and draft/live preservation.
-5. Configure the Gateway key and approved model in Vercel environment settings before enabling the feature. Do not commit credentials.
+- Provider-neutral tests cover invalid briefs, missing providers, malformed blueprints, timeouts, and provider failure redaction.
+- Gateway adapter tests cover request construction, missing configuration, malformed responses, and safe error handling.
+- Route-level tests cover unauthenticated access, cross-origin requests, viewer denial, cross-tenant website denial, malformed input, and the authorized editor path.
+- GitHub Quality checks passed for branch head `2811a5b10af1654c42a623523b58cbfe3e430d47`.
+- Its Vercel preview deployment is READY and `/editor` returns HTTP 200. This is an HTTP smoke test, not a full interactive visual review.
 
-No production data, migrations, DNS, or live websites are changed by this proposal API.
+## Remaining release gates
+
+1. Configure `AI_GATEWAY_API_KEY` and `LOOMIFIAI_MODEL` in Vercel Preview first, then test a real provider request. Keep the key server-side and never commit it.
+2. Perform a signed-in end-to-end test against a saved website: generate a proposal, inspect it, apply it, verify the draft remains unsaved until the user saves, and confirm the live site is unchanged until an explicit publish.
+3. Complete interactive visual review at mobile and desktop sizes, including loading, provider-unavailable, timeout, and malformed-output states.
+4. Re-run the quality checks and preview smoke test after any resulting changes.
+
+Keep the feature out of general customer rollout until the remaining gates pass. No production database migration, DNS change, or customer website content change is part of this foundation.
