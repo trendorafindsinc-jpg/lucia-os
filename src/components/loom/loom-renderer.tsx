@@ -1,5 +1,3 @@
-"use client";
-
 import type { CSSProperties } from "react";
 import type { LoomBlueprint, LoomSection } from "@/lib/loom/blueprint";
 
@@ -18,6 +16,7 @@ export function LoomRenderer({ blueprint, preview = false }: { blueprint: LoomBl
     "--loom-ink": ink,
     "--loom-accent": accent,
     "--loom-paper": paper,
+    "--loom-content-max-width": `${blueprint.responsive.contentMaxWidth}px`,
   } as CSSProperties;
   const page = blueprint.pages.find((item) => item.path === "/") ?? blueprint.pages[0];
   if (!page) return null;
@@ -29,7 +28,7 @@ export function LoomRenderer({ blueprint, preview = false }: { blueprint: LoomBl
         <nav aria-label="Main navigation">
           {blueprint.navigation.map((item) => <a key={item.href + item.label} href={item.href}>{item.label}</a>)}
         </nav>
-        <a className="loom-header-action" href="#contact">{page.sections.find((item) => item.type === "hero")?.type === "hero" ? (page.sections.find((item) => item.type === "hero") as Extract<LoomSection, { type: "hero" }>).actionLabel : "Get in touch"}</a>
+        <a className="loom-header-action" href="#contact">{page.sections.find((item): item is Extract<LoomSection, { type: "hero" }> => item.type === "hero")?.actionLabel ?? "Get in touch"}</a>
       </header>
       <div id="top" className="loom-page-content">
         {page.sections.map((section) => <LoomSectionView key={section.id} section={section} />)}
