@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { getTemplateById, websiteTemplates } from "@/lib/templates/catalogue";
 import { editorPalettes, makeInitialDraft, moveSection, siteDraftSchema, type EditorPaletteId, type SiteDraft } from "@/lib/editor/site-draft";
+import { siteDraftToLoomBlueprint } from "@/lib/loom/blueprint";
+import { LoomRenderer } from "@/components/loom/loom-renderer";
 
 export function VisualSiteEditor() {
   const [draft, setDraft] = useState<SiteDraft>(() => makeInitialDraft("northstar-consulting"));
@@ -14,6 +16,7 @@ export function VisualSiteEditor() {
   const [saveLabel, setSaveLabel] = useState("Unsaved changes");
   const template = getTemplateById(draft.templateId);
   const validation = useMemo(() => siteDraftSchema.safeParse(draft), [draft]);
+  const previewBlueprint = useMemo(() => siteDraftToLoomBlueprint(validation.success ? validation.data : makeInitialDraft(draft.templateId)), [draft, validation]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -106,12 +109,7 @@ export function VisualSiteEditor() {
         </aside>
         <section className="editor-preview-wrap" aria-label="Live website preview">
           <div className="editor-preview-toolbar"><span><i /> Preview</span><span>Desktop concept</span></div>
-          <article className="editor-preview" style={{ "--preview-ink": editorPalettes[draft.palette][0], "--preview-accent": editorPalettes[draft.palette][1], "--preview-paper": editorPalettes[draft.palette][2] } as React.CSSProperties}>
-            <header className="preview-site-nav"><strong>{draft.siteName || "Your website"}</strong><nav><span>About</span><span>Services</span><span>Contact</span></nav><button type="button" onClick={() => setNotice("The preview button is illustrative; public navigation is added in a later phase.")}>{draft.buttonLabel || "Get in touch"}</button></header>
-            <section className="preview-hero"><span className="preview-label">{template?.category ?? "Website"} · YOUR STORY, CLEARLY TOLD</span><h2>{draft.headline || "Your headline goes here"}</h2><p>{draft.description || "Add a short introduction to tell visitors what makes you different."}</p><button type="button" onClick={() => setNotice("This is a preview-only call to action. Forms and navigation arrive in a later phase.")}>{draft.buttonLabel || "Learn more"} <span aria-hidden="true">↗</span></button><div className="preview-hero-art" aria-hidden="true"><span /><span /><span /></div></section>
-            <div className="preview-section-stack">{draft.visibleSections.map((section, index) => <section key={section} className={index === 0 ? "preview-content-section is-featured" : "preview-content-section"}><span>0{index + 1}</span><div><h3>{section}</h3><p>{index === 0 ? draft.description : `A dedicated space for your ${section.toLowerCase()} content. Add your own details when content editing is connected.`}</p></div><b aria-hidden="true">↗</b></section>)}</div>
-            <footer className="preview-footer"><strong>{draft.siteName || "Your website"}</strong><span>Made with LUCIA OS · Preview only</span></footer>
-          </article>
+          <div className="editor-loom-preview"><LoomRenderer blueprint={previewBlueprint} preview /></div>
           <p className="editor-preview-caption">{websiteId ? "Changes can be saved to your organisation’s website draft. This preview is private; it is not a public website." : "Illustrative preview. Open a saved website from your Websites library to enable persistent saving."}</p>
         </section>
       </div>
