@@ -1,0 +1,43 @@
+/* Shared Loom Blueprint renderer. Scoped to the generated site only. */
+.loom-site{--loom-ink:#142c3b;--loom-accent:#d4e5dc;--loom-paper:#f5f2ea;background:var(--loom-paper);color:var(--loom-ink);min-height:100%;font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow:hidden}
+.loom-site *{box-sizing:border-box}
+.loom-site a{color:inherit}
+.loom-site-header{max-width:1240px;margin:0 auto;padding:clamp(1.25rem,4vw,3rem) clamp(1rem,5vw,4rem);display:flex;align-items:center;gap:2rem;border-bottom:1px solid color-mix(in srgb,var(--loom-ink) 14%,transparent)}
+.loom-brand{text-decoration:none;font-weight:750;letter-spacing:-.04em;font-size:1.1rem;margin-right:auto}
+.loom-site-header nav{display:flex;gap:clamp(.75rem,2vw,1.75rem);flex-wrap:wrap}
+.loom-site-header nav a{text-decoration:none;font-size:.88rem;opacity:.8}
+.loom-header-action,.loom-primary-action{display:inline-flex;align-items:center;gap:.9rem;text-decoration:none;border-radius:999px;background:var(--loom-ink);color:var(--loom-paper)!important;padding:.85rem 1.1rem;font-weight:650}
+.loom-page-content{max-width:1240px;margin:0 auto;padding:0 clamp(1rem,5vw,4rem)}
+.loom-hero{position:relative;min-height:clamp(480px,70vh,760px);padding:clamp(4rem,10vw,9rem) 0;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;isolation:isolate}
+.loom-eyebrow{font-size:.72rem;font-weight:750;letter-spacing:.16em;text-transform:uppercase;opacity:.7}
+.loom-hero h1{max-width:900px;font-size:clamp(3rem,8vw,7.5rem);line-height:.98;letter-spacing:-.075em;margin:1.25rem 0;white-space:pre-line}
+.loom-lede{max-width:650px;font-size:clamp(1.05rem,2vw,1.35rem);line-height:1.75;opacity:.82}
+.loom-primary-action{margin-top:1.5rem}
+.loom-hero-art{position:absolute;right:0;bottom:10%;width:min(30%,280px);height:260px;z-index:-1;opacity:.9}
+.loom-hero-art span{position:absolute;display:block;border-radius:50%;background:var(--loom-accent);width:72%;aspect-ratio:1;right:0;top:0}
+.loom-hero-art span:nth-child(2){width:58%;right:35%;top:30%;border:1px solid var(--loom-ink);background:transparent}
+.loom-hero-art span:nth-child(3){width:35%;right:8%;top:52%;background:var(--loom-ink)}
+.loom-content-section{padding:clamp(3.5rem,8vw,7rem) 0}
+.loom-content-section>header{display:flex;justify-content:space-between;align-items:end;gap:2rem;margin-bottom:2rem}
+.loom-content-section h2,.loom-cta h2,.loom-contact h2{font-size:clamp(2rem,5vw,4rem);letter-spacing:-.06em;line-height:1.04;margin:.5rem 0}
+.loom-content-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}
+.loom-content-grid article{position:relative;min-height:230px;padding:1.5rem;border:1px solid color-mix(in srgb,var(--loom-ink) 18%,transparent);border-radius:1.2rem;display:flex;flex-direction:column;align-items:flex-start;background:color-mix(in srgb,var(--loom-paper) 82%,white)}
+.loom-item-index{font-size:.75rem;opacity:.65}
+.loom-content-grid h3{font-size:1.35rem;letter-spacing:-.035em;margin:2rem 0 .5rem}
+.loom-content-grid p,.loom-contact p,.loom-cta p{line-height:1.7;opacity:.8}
+.loom-item-arrow{margin-top:auto;align-self:flex-end;font-size:1.25rem}
+.loom-cta{margin:2rem 0;padding:clamp(2rem,6vw,5rem);border-radius:1.5rem;background:var(--loom-accent)}
+.loom-cta a{display:inline-block;margin-top:1rem;font-weight:700}
+.loom-contact{padding:clamp(3.5rem,8vw,7rem) 0;max-width:760px}
+.loom-site-footer{max-width:1240px;margin:0 auto;padding:2rem clamp(1rem,5vw,4rem);border-top:1px solid color-mix(in srgb,var(--loom-ink) 14%,transparent);display:flex;justify-content:space-between;gap:1rem;font-size:.82rem;opacity:.72}
+.loom-layout-split .loom-hero{padding-right:30%;min-height:620px}
+.loom-layout-split .loom-hero-art{width:32%;height:380px;bottom:auto;top:20%}
+.loom-layout-gallery .loom-hero{min-height:540px;align-items:center;text-align:center}
+.loom-layout-gallery .loom-lede{margin-left:auto;margin-right:auto}
+.loom-layout-gallery .loom-hero-art{right:5%;bottom:2%;width:170px;height:170px;opacity:.5}
+.loom-layout-cards .loom-content-grid article{border-radius:.25rem;box-shadow:0 12px 36px color-mix(in srgb,var(--loom-ink) 8%,transparent)}
+.loom-layout-storefront .loom-hero{min-height:650px}
+.loom-layout-storefront .loom-hero h1{max-width:720px}
+.loom-layout-storefront .loom-content-grid article{border-radius:0}
+.loom-layout-classic .loom-hero{border-bottom:3px double color-mix(in srgb,var(--loom-ink) 25%,transparent)}
+@media(max-width:760px){.loom-site-header{align-items:flex-start;flex-wrap:wrap;gap:1rem}.loom-site-header nav{order:3;width:100%;gap:1rem}.loom-header-action{padding:.7rem .9rem;font-size:.85rem}.loom-hero{min-height:510px;padding:4rem 0}.loom-hero h1{font-size:clamp(2.8rem,13vw,5rem)}.loom-hero-art{width:100px;height:100px;right:0;bottom:4%}.loom-layout-split .loom-hero{padding-right:0;min-height:550px}.loom-layout-split .loom-hero-art{width:110px;height:110px;top:auto;bottom:3%}.loom-content-section>header{display:block}.loom-content-grid{grid-template-columns:1fr}.loom-content-grid article{min-height:180px}.loom-site-footer{flex-direction:column}}
