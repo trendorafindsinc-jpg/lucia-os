@@ -20,7 +20,9 @@ export async function POST(request: Request) {
   let body: unknown;
   try { body = await request.json(); } catch { return jsonError("Submit valid website details.", 400); }
   if (!body || typeof body !== "object" || Array.isArray(body)) return jsonError("Submit valid website details.", 400);
-  const action = (body as Record<string, unknown>).action === "save" ? "save" : "publish";
+  const requestedAction = (body as Record<string, unknown>).action;
+  if (requestedAction !== "save" && requestedAction !== "publish") return jsonError("Choose an explicit save or publish action.", 400);
+  const action = requestedAction;
   const parsed = publishSettingsSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: "Review your website details before saving.", issues: parsed.error.flatten() }, { status: 422, headers: { "Cache-Control": "no-store" } });
