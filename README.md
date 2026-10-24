@@ -26,7 +26,7 @@ LUCIA OS is a multi-tenant platform for building and operating websites and, ove
 - S3-compatible object storage behind an adapter
 - Provider adapters for payments and other external services
 
-See [Architecture](docs/architecture.md), [Engineering Standards](docs/engineering-standards.md), [Security Baseline](docs/security-baseline.md), and [Environment Setup](docs/environment-setup.md).
+See [Website Engine Blueprint](docs/website-engine-blueprint.md) for the locked v1 product language, Loom Blueprint contract, LoomifiAI flow, and acceptance gates. Also see [Architecture](docs/architecture.md), [Engineering Standards](docs/engineering-standards.md), [Security Baseline](docs/security-baseline.md), and [Environment Setup](docs/environment-setup.md).
 
 ## Local development
 
