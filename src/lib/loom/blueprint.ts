@@ -64,6 +64,12 @@ export const loomBlueprintSchema = z.object({
     colors: z.tuple([z.string().regex(/^#[0-9a-fA-F]{6}$/), z.string().regex(/^#[0-9a-fA-F]{6}$/), z.string().regex(/^#[0-9a-fA-F]{6}$/)]),
     layout: z.enum(["editorial", "split", "gallery", "cards", "storefront", "classic"]),
   }).strict(),
+  responsive: z.object({
+    mobileBreakpoint: z.number().int().min(320).max(767),
+    tabletBreakpoint: z.number().int().min(768).max(1023),
+    contentMaxWidth: z.number().int().min(720).max(1600),
+    respectReducedMotion: z.boolean(),
+  }).strict().refine((value) => value.mobileBreakpoint < value.tabletBreakpoint, "Responsive breakpoints must be ordered."),
   navigation: z.array(z.object({
     label: safeText(50),
     href: z.string().regex(/^#[a-z0-9-]{1,64}$/),
@@ -119,7 +125,7 @@ export function siteDraftToLoomBlueprint(draft: SiteDraft): LoomBlueprint {
     actionLabel: draft.buttonLabel,
     actionHref: "#contact" as const,
   };
-  const contentSections = sections.filter((section) => !/^(hero|intro|welcome)$/i.test(section.label));
+  const contentSections = sections.filter((section) => !/^(hero|intro|welcome|contact|enquir.*|book.*|apply|support.*)$/i.test(section.label));
   const contentGrid = contentSections.length ? [{
     id: "highlights",
     type: "content-grid" as const,
@@ -146,6 +152,7 @@ export function siteDraftToLoomBlueprint(draft: SiteDraft): LoomBlueprint {
       seoDescription: draft.description.slice(0, 160),
     },
     theme: { palette: draft.palette, colors: [...palette], layout },
+    responsive: { mobileBreakpoint: 760, tabletBreakpoint: 1023, contentMaxWidth: 1240, respectReducedMotion: true },
     navigation: [
       ...(contentSections.length ? [{ label: "Explore", href: "#highlights" }] : []),
       { label: "Contact", href: "#contact" },
