@@ -123,12 +123,16 @@ export function VisualSiteEditor() {
       if (section.type === "call-to-action" || section.type === "contact") return [section.heading];
       return [];
     }).filter((label, index, all) => label.trim().length > 0 && all.indexOf(label) === index).slice(0, 12) ?? [];
+    const boundedText = (value: string | undefined, fallback: string, maxLength: number) => {
+      const candidate = (value ?? "").trim().slice(0, maxLength).trim();
+      return candidate.length >= 2 ? candidate : fallback;
+    };
     const next: SiteDraft = {
       ...draft,
-      siteName: aiProposal.site.name,
-      headline: hero?.heading ?? aiProposal.site.name,
-      description: hero?.body ?? aiProposal.site.description,
-      buttonLabel: hero?.actionLabel ?? "Get in touch",
+      siteName: boundedText(aiProposal.site.name, draft.siteName, 80),
+      headline: boundedText(hero?.heading, aiProposal.site.name, 100),
+      description: boundedText(hero?.body ?? aiProposal.site.description, draft.description, 220),
+      buttonLabel: boundedText(hero?.actionLabel, draft.buttonLabel || "Get in touch", 32),
       palette: aiProposal.theme.palette,
       visibleSections: labels.length ? labels : ["Home"],
     };
