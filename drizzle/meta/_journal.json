@@ -141,6 +141,13 @@
       "when": 1792969210000,
       "tag": "0019_loom_group_discussions",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1792969211000,
+      "tag": "0020_loom_profile_moderation",
+      "breakpoints": true
     }
   ]
 }
