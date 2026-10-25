@@ -454,7 +454,7 @@ export const loomBusinessVerifications = pgTable(
     status: text("status").notNull().default("pending"),
     reviewNote: text("review_note"),
     reviewedByUserId: uuid("reviewed_by_user_id").references(() => appUsers.id, { onDelete: "set null" }),
-    submittedAt: createdAt(),
+    submittedAt: timestamp("submitted_at", { withTimezone: true }).notNull().defaultNow(),
     reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
     updatedAt: updatedAt(),
   },
