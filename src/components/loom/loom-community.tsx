@@ -1,7 +1,7 @@
 "use client";
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import type { FormEvent } from "react";
 import Link from "next/link";
-import "./loom.css";
 type Post = { id:string; body:string; createdAt:string; authorId:string; authorName:string|null };
 export function LoomCommunity(){
  const [posts,setPosts]=useState<Post[]>([]),[body,setBody]=useState(""),[loading,setLoading]=useState(true),[posting,setPosting]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");
