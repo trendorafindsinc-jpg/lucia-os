@@ -1,24 +1,34 @@
 # Phase 20 — Tenant-scoped billing ledger foundation
 
-## Delivered in this phase
+## Implemented in repository
 
 - Additive PostgreSQL migration for invoices, payment attempts, and webhook event receipts.
-- Drizzle schema definitions matching the new ledger tables.
+- Drizzle schema definitions for the ledger tables.
 - Tenant-scoped uniqueness for invoice numbers, payment references, idempotency keys, and provider transaction IDs.
-- Composite foreign keys ensure a payment attempt and its invoice belong to the same organization, and a webhook receipt belongs to the same organization as its payment attempt.
-- Row-level security policies scope all three tables to `app.current_organization_id`.
-- Checks constrain provider names, currency format, positive amounts, statuses, and webhook payload SHA-256 format.
+- Composite foreign keys bind each payment attempt to an invoice in the same organisation and each webhook receipt to a payment attempt in the same organisation.
+- RLS policies scope all three tables to `app.current_organization_id`.
+- Migration `0012_force_rls_billing_ledger.sql` enables `FORCE ROW LEVEL SECURITY` on all three ledger tables so ordinary table owners are subject to the policies too.
+- Constraints validate provider names, currency shape, positive amounts, status values, paid amounts not exceeding invoice amounts, and webhook payload SHA-256 format.
 
-## Safety properties and boundaries
+## Security and correctness boundaries
 
-- The migration is additive. It does not alter existing tenant/content records and has not been applied to any production database.
-- No checkout or webhook HTTP route is exposed by this phase; no payment secrets or live provider credentials are required.
-- An idempotency key prevents duplicate attempts for one organization, while unique provider references and transaction IDs reduce duplicate settlement risk.
-- Webhook receipt uniqueness supports replay handling, but the future handler must derive the tenant from a previously created payment reference only after signature verification, verify the transaction directly with the provider, and compare provider reference, transaction ID, amount, currency, and expected invoice before changing balances.
-- The handler must record the receipt and update payment/invoice state atomically. A duplicate event must not issue duplicate entitlements or fulfill an order twice.
-- Application database connections must use a non-owner role without RLS bypass privileges and set `app.current_organization_id` only from server-verified LUCIA Core authorization. A client-supplied organization ID is not authorization.
-- The database migration journal and Drizzle schema are included; CI must pass before merge. A staging migration and cross-tenant integration tests are still required before production rollout.
+- `FORCE ROW LEVEL SECURITY` does **not** constrain superusers or roles with `BYPASSRLS`. The application connection must use a dedicated non-owner `NOBYPASSRLS` role; tests must prove cross-tenant denial under that real login role.
+- Application code must set `app.current_organization_id` from verified server-side membership and permission checks inside each transaction. A client-supplied organisation ID is never authorization.
+- The migration is additive. It has not been applied to production by this work, and no production database was modified.
+- No checkout/webhook route is enabled by this phase. No payment was collected and no entitlement was activated.
+- Webhook receipt uniqueness provides a replay-detection primitive, not a complete webhook processor. A future handler must verify the signature over the raw body, resolve a previously created payment reference, call the provider's transaction-verification API, and compare provider, reference, transaction ID, amount, currency, and expected invoice before settlement.
+- Receipt recording and invoice/payment state transitions must be atomic. Duplicate or out-of-order events must not double-settle or grant entitlements twice.
+- Current invoice/payment-attempt/webhook tables are a billing storage foundation, not a full immutable accounting journal or a durable product-order/entitlement system. Do not represent them as proof that a product has been purchased.
 
-## Not yet production-ready
+## Acceptance still outstanding
 
-This is the ledger storage foundation, not an end-to-end billing implementation. Core-authenticated route authorization, provider-side transaction verification, atomic webhook processing, reconciliation/retry operations, audit policy, and staging E2E remain follow-up work. No invoice/payment should be marked paid and no entitlement granted based solely on a browser redirect or a valid webhook signature.
+1. CI validates migration journal consistency, lint, typecheck, unit tests, and production build.
+2. Apply migrations only to a disposable/staging database using the approved migration procedure; never reset or mutate production as part of this phase.
+3. Run integration tests with a non-owner `LOGIN NOBYPASSRLS` role for same-tenant access, cross-tenant reads/writes, missing transaction-local tenant context, and revoked membership.
+4. Verify uniqueness and foreign-key rejection for cross-organisation invoice/payment/webhook references.
+5. Add transaction-level concurrency tests for duplicate idempotency keys and provider transaction IDs.
+6. Before commercial launch, implement provider-side verification, atomic settlement, reconciliation, immutable audit evidence, and purchase/entitlement linkage under separately tested phases.
+
+## Safety
+
+Phase 20 is **not commercially accepted**. No live checkout, production migration, provider credential change, payment, or entitlement activation is authorised by this document.

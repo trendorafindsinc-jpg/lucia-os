@@ -41,14 +41,14 @@ This is the single source of truth for implementation order. Read it and the [Un
 | 14 | Publishing and domains | Reliable live delivery | Domain ownership, DNS/TLS, publish and live rendering separately verified |
 | 15 | Forms, submissions and notifications | Functional website interactions | Server validation, anti-abuse and tenant-scoped submissions |
 | 16 | Analytics and conversions | Privacy-aware measurement | Correct attribution, tenant scope and truthful reporting |
-| 17 | Plans, trials and billing rules | Explicit plan/usage policy | Plan rules approved; no UI-only premium gates |
+| 17 | Product/version catalogue and purchase rules | Explicit one-time pricing, licence and entitlement policy | Purchase rules approved; no UI-only premium gates |
 | 18 | Payment provider abstraction | Replaceable payment integration | Contract, retry, timeout and idempotency tests |
 | 19 | Security, recovery and resilience | Security and operational readiness | Threat-focused checks and recovery evidence |
 | 20 | Tenant billing ledger | Auditable financial state and entitlement basis | Ledger consistency, idempotency and reconciliation |
 | 21 | Provider verification foundation | Trusted provider events | Signature/source verification, replay resistance and audit |
 | 22 | Paystack adapter | Paystack-specific integration | Adapter contract/sandbox checks and secret safety |
 | 23 | Server-side payment verification | Authoritative payment outcome | Redirect/query alone cannot confirm payment |
-| 24 | Atomic settlement | Consistent payment/subscription transitions | Duplicate events cannot double-settle; partial failures recover |
+| 24 | Atomic settlement | Consistent one-time purchase settlement | Duplicate events cannot double-settle; partial failures recover |
 | 25 | Unified workspace and navigation | Connected product experience | End-to-end cross-workspace journeys, mobile access, no dead controls |
 | 26 | Store for sellers and buyers | Commerce catalogue and order lifecycle | Seller/buyer permissions, verified checkout and durable order state |
 | 27 | Category-specific Portals | Purpose-built specialist workflows | Each shipped category has explicit specs and tenant/resource isolation |
@@ -112,8 +112,8 @@ Read `docs/phase-15-forms-submissions-notifications.md`. Verify server-side vali
 ### Phase 16 — Analytics and conversions
 Read `docs/phase-16-analytics-conversions.md`. Verify truthful events, attribution, tenant boundaries, privacy/consent and failure handling. Never fabricate metrics.
 
-### Phase 17 — Plans, trials and billing rules
-Read `docs/phase-17-plans-trials-billing.md`. Define explicit approved plan, trial, usage, grace and downgrade rules. Do not invent pricing or a final free/premium matrix.
+### Phase 17 — Product/version catalogue and purchase rules
+Read `docs/phase-17-plans-trials-billing.md` and `docs/commerce-model-one-time-purchases.md`. Define versioned products, one-time prices, licence terms, discount rules, durable entitlements, upgrade purchases, and any separately disclosed third-party recurring costs. Do not introduce subscription expiry as a condition for retaining a purchased version; do not invent prices.
 
 ### Phase 18 — Payment provider abstraction
 Read `docs/phase-18-payment-provider-integration.md`. Keep provider integration behind a stable adapter; test timeouts, retries, idempotency and provider outage.
@@ -163,8 +163,8 @@ Implement Loom as a first-class main-navigation destination—not a Business Adm
 
 Keep business verification separate from representative authority. Verify public/private visibility, consent, blocking (including shared-context bypass attempts), reporting, moderation, appeals, evidence access/retention and exports. Paid status cannot buy a verified badge. Do not implement broad cross-product data sharing without an explicitly approved policy.
 
-### Phase 30 — Premium access, ecosystem integration and release readiness
-Obtain explicit approval for the final plan/entitlement matrix, metering, grace and downgrade rules before enforcing commercial assumptions. Apply backend checks across Websites, Store, Portals, Business Admin, Loom-related paid capabilities and optional AI. Verify permission and entitlement independently. Run cross-product end-to-end/regression, security, privacy, accessibility, performance, backup/recovery and payment reconciliation checks. Downgrade must not accidentally destroy data, valid verification, orders or an existing published site. Release readiness requires recorded evidence and explicit sign-off.
+### Phase 30 — Paid capabilities, ecosystem integration and release readiness
+Obtain explicit approval for the versioned product/entitlement catalogue, licence terms, usage limits, and any separately disclosed ongoing service fees before enforcing commercial assumptions. Apply backend checks across Websites, Store, Portals, Business Admin, Loom-related paid capabilities and optional AI. Verify permission and entitlement independently. Run cross-product end-to-end/regression, security, privacy, accessibility, performance, backup/recovery and payment reconciliation checks. A new release must not revoke a previously purchased version's documented usage rights or accidentally destroy data, valid verification, orders or an existing published site. Release readiness requires recorded evidence and explicit sign-off.
 
 ## Cross-phase non-negotiable rules
 

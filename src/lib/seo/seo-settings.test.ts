@@ -13,6 +13,8 @@ describe("SEO and social sharing settings", () => {
   it("rejects insecure canonical and social image URLs", () => {
     expect(seoSettingsSchema.safeParse({ ...defaultSeoSettings, canonicalUrl: "http://example.com" }).success).toBe(false);
     expect(seoSettingsSchema.safeParse({ ...defaultSeoSettings, socialImageUrl: "javascript:alert(1)" }).success).toBe(false);
+    expect(seoSettingsSchema.safeParse({ ...defaultSeoSettings, canonicalUrl: "https://user:pass@example.com/page" }).success).toBe(false);
+    expect(seoSettingsSchema.safeParse({ ...defaultSeoSettings, socialImageUrl: "https://example.com/image.png#fragment" }).success).toBe(false);
   });
   it("supports noindex settings for private or unfinished pages", () => {
     expect(buildPageMetadata({ ...defaultSeoSettings, indexable: false, followLinks: false }).robots).toEqual({ index: false, follow: false });

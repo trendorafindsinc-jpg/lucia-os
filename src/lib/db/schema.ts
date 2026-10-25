@@ -384,3 +384,34 @@ export const websiteStructures = pgTable("website_structures", {
   uniqueIndex("website_structures_org_website_uq").on(table.organizationId, table.websiteId),
   uniqueIndex("website_structures_org_id_id_uq").on(table.organizationId, table.id),
 ]);
+
+
+/** Tenant-scoped blog drafts and media references. Media source is a URL/storage key, not uploaded bytes. */
+export const websiteContentLibraries = pgTable("website_content_libraries", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
+  websiteId: uuid("website_id").notNull(),
+  createdByUserId: uuid("created_by_user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
+  library: text("library").notNull(),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+}, (table) => [
+  foreignKey({ name: "website_content_libraries_website_org_fk", columns: [table.organizationId, table.websiteId], foreignColumns: [websites.organizationId, websites.id] }).onDelete("cascade"),
+  uniqueIndex("website_content_libraries_org_website_uq").on(table.organizationId, table.websiteId),
+  uniqueIndex("website_content_libraries_org_id_id_uq").on(table.organizationId, table.id),
+]);
+
+/** Tenant-scoped SEO/social metadata; public output must consume it only through the publishing path. */
+export const websiteSeoSettings = pgTable("website_seo_settings", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
+  websiteId: uuid("website_id").notNull(),
+  createdByUserId: uuid("created_by_user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
+  settings: text("settings").notNull(),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+}, (table) => [
+  foreignKey({ name: "website_seo_settings_website_org_fk", columns: [table.organizationId, table.websiteId], foreignColumns: [websites.organizationId, websites.id] }).onDelete("cascade"),
+  uniqueIndex("website_seo_settings_org_website_uq").on(table.organizationId, table.websiteId),
+  uniqueIndex("website_seo_settings_org_id_id_uq").on(table.organizationId, table.id),
+]);

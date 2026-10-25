@@ -24,4 +24,18 @@ describe("blog and media content model", () => {
     expect(next.assets).toHaveLength(1);
     expect(addMediaAsset(next, asset)).toBe(next);
   });
+
+  it("rejects executable URLs and unsafe media storage paths", () => {
+    const base = {
+      id: "asset-safe",
+      name: "Banner",
+      kind: "image" as const,
+      altText: "",
+      caption: "",
+      createdAt: "2026-10-18T12:00:00.000Z",
+    };
+    expect(contentLibrarySchema.safeParse({ posts: [], assets: [{ ...base, source: "javascript:alert(1)" }] }).success).toBe(false);
+    expect(contentLibrarySchema.safeParse({ posts: [], assets: [{ ...base, source: "assets/../private.jpg" }] }).success).toBe(false);
+    expect(contentLibrarySchema.safeParse({ posts: [], assets: [{ ...base, source: "assets/banner.jpg" }] }).success).toBe(true);
+  });
 });
