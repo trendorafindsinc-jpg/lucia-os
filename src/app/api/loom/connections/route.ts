@@ -22,6 +22,8 @@ export async function GET() {
   const user = await getCurrentUser().catch(() => null);
   if (!user) return NextResponse.json({ error: "Sign in to view connections." }, { status: 401 });
   try {
+    const restriction = await getLoomRestriction(user.id);
+    if (restriction?.status === "banned") return NextResponse.json({ error: "Loom access is unavailable for this account." }, { status: 403 });
     const db = getDb();
     const requester = alias(appUsers, "loom_requester");
     const recipient = alias(appUsers, "loom_recipient");
