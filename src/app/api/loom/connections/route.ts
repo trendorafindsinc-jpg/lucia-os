@@ -49,7 +49,7 @@ export async function POST(request: Request) {
   if (origin && origin !== new URL(request.url).origin) return NextResponse.json({ error: "Invalid origin." }, { status: 403 });
   const user = await getCurrentUser().catch(() => null);
   if (!user) return NextResponse.json({ error: "Sign in to connect with a member." }, { status: 401 });
-  const restriction = await getLoomRestriction(user.id).catch(() => null);
+  const restriction = await getLoomRestriction(user.id);
   if (restriction) return NextResponse.json({ error: "Your Loom participation is currently restricted." }, { status: 403 });
   let raw: unknown;
   try { raw = await request.json(); } catch { return NextResponse.json({ error: "Submit a valid connection request." }, { status: 400 }); }
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     const db = getDb();
     const [recipient] = await db.select({ id: appUsers.id }).from(appUsers).where(and(eq(appUsers.id, parsed.data.recipientUserId), eq(appUsers.active, true))).limit(1);
     if (!recipient) return NextResponse.json({ error: "Member not found." }, { status: 404 });
-    const recipientRestriction = await getLoomRestriction(recipient.id).catch(() => null);
+    const recipientRestriction = await getLoomRestriction(recipient.id);
     if (recipientRestriction) return NextResponse.json({ error: "This member is not currently available for connections." }, { status: 403 });
     const [existing] = await db.select({ id: loomConnections.id }).from(loomConnections).where(or(
       and(eq(loomConnections.requesterUserId, user.id), eq(loomConnections.recipientUserId, recipient.id)),
