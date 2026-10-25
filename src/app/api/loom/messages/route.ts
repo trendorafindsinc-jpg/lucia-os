@@ -28,14 +28,14 @@ async function isVerified(userId: string) {
 export async function GET(request: Request) {
   const user = await getCurrentUser().catch(() => null);
   if (!user) return NextResponse.json({ error: "Sign in to access messages." }, { status: 401 });
-  const restriction = await getLoomRestriction(user.id).catch(() => null);
+  const restriction = await getLoomRestriction(user.id);
   if (restriction) return NextResponse.json({ error: "Your Loom participation is currently restricted." }, { status: 403 });
   const peer = new URL(request.url).searchParams.get("with");
   if (!z.string().uuid().safeParse(peer).success) return NextResponse.json({ error: "Choose a conversation." }, { status: 400 });
   try {
     if (!(await isVerified(user.id))) return NextResponse.json({ error: "Business verification is required to use private messages." }, { status: 403 });
     if (!(await isVerified(peer!))) return NextResponse.json({ error: "This member is not currently available for private messages." }, { status: 403 });
-    const peerRestriction = await getLoomRestriction(peer!).catch(() => null);
+    const peerRestriction = await getLoomRestriction(peer!);
     if (peerRestriction) return NextResponse.json({ error: "This member is not currently available for private messages." }, { status: 403 });
     if (!(await hasAcceptedConnection(user.id, peer!))) return NextResponse.json({ error: "An accepted connection is required before messaging." }, { status: 403 });
     const db = getDb();
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
   if (origin && origin !== new URL(request.url).origin) return NextResponse.json({ error: "Invalid origin." }, { status: 403 });
   const user = await getCurrentUser().catch(() => null);
   if (!user) return NextResponse.json({ error: "Sign in to send a message." }, { status: 401 });
-  const restriction = await getLoomRestriction(user.id).catch(() => null);
+  const restriction = await getLoomRestriction(user.id);
   if (restriction) return NextResponse.json({ error: "Your Loom participation is currently restricted." }, { status: 403 });
   let raw: unknown;
   try { raw = await request.json(); } catch { return NextResponse.json({ error: "Submit a valid message." }, { status: 400 }); }
@@ -75,7 +75,7 @@ export async function POST(request: Request) {
   try {
     if (!(await isVerified(user.id))) return NextResponse.json({ error: "Business verification is required to send private messages." }, { status: 403 });
     if (!(await isVerified(parsed.data.recipientUserId))) return NextResponse.json({ error: "This member is not currently available for private messages." }, { status: 403 });
-    const recipientRestriction = await getLoomRestriction(parsed.data.recipientUserId).catch(() => null);
+    const recipientRestriction = await getLoomRestriction(parsed.data.recipientUserId);
     if (recipientRestriction) return NextResponse.json({ error: "This member is not currently available for private messages." }, { status: 403 });
     if (!(await hasAcceptedConnection(user.id, parsed.data.recipientUserId))) return NextResponse.json({ error: "An accepted connection is required before messaging." }, { status: 403 });
     const db = getDb();
