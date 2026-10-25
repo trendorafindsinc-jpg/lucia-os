@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { buildAuthorizationUrl, createOAuthState, matchesOAuthState } from "@/lib/auth/oauth";
+import { buildAuthorizationUrl, createOAuthState, getSafeReturnTo, matchesOAuthState } from "@/lib/auth/oauth";
 
 describe("LUCIA Core OAuth helpers", () => {
   afterEach(() => vi.unstubAllEnvs());
@@ -15,6 +15,20 @@ describe("LUCIA Core OAuth helpers", () => {
     expect(matchesOAuthState("abc", "abd")).toBe(false);
     expect(matchesOAuthState(undefined, "abc")).toBe(false);
     expect(matchesOAuthState("abc", undefined)).toBe(false);
+  });
+
+  it("restores a percent-encoded internal return destination", () => {
+    expect(getSafeReturnTo("lucia_os_return_to=%2Feditor%3FwebsiteId%3Dabc")).toBe("/editor?websiteId=abc");
+  });
+
+  it.each([
+    "lucia_os_return_to=%2F%2Fevil.example",
+    "lucia_os_return_to=%2Fapi%2Fauth%2Flogout",
+    "lucia_os_return_to=%2F%5C%5Cevil.example",
+    "lucia_os_return_to=%E0%A4%A",
+    "other=value",
+  ])("falls back safely for invalid callback destination cookie (%s)", (cookie) => {
+    expect(getSafeReturnTo(cookie)).toBe("/workspace");
   });
 
   it("builds the documented Core authorize URL with all required bindings", () => {
