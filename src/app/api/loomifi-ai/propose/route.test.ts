@@ -116,7 +116,7 @@ describe("POST /api/loomifi-ai/propose authorization boundary", () => {
       persisted: false,
       published: false,
     });
-    expect(tx.execute).toHaveBeenCalledOnce();
+    expect(tx.execute).toHaveBeenCalledTimes(2);
     expect(mocks.propose).toHaveBeenCalledOnce();
     expect(response.headers.get("cache-control")).toBe("no-store");
   });
