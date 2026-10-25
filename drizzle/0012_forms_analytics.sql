@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS website_form_submissions (
   organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE RESTRICT,
   website_id uuid NOT NULL,
   form_key text NOT NULL,
-  values text NOT NULL,
+  submission_values text NOT NULL,
   status text NOT NULL DEFAULT 'new' CHECK (status IN ('new', 'reviewed', 'archived')),
   submitted_at timestamptz NOT NULL DEFAULT now(),
   retention_until timestamptz NOT NULL DEFAULT (now() + interval '90 days'),
