@@ -95,6 +95,7 @@ export async function PATCH(request: Request) {
     const [connection] = await db.update(loomConnections).set({ status: parsed.data.action === "accept" ? "accepted" : "declined", updatedAt: new Date() })
       .where(and(eq(loomConnections.id, parsed.data.connectionId), eq(loomConnections.recipientUserId, user.id), eq(loomConnections.status, "pending"))).returning();
     if (!connection) return NextResponse.json({ error: "Pending connection request not found." }, { status: 404 });
+    try { await db.insert(loomNotifications).values({ userId: connection.requesterUserId, actorUserId: user.id, kind: "connection_updated", targetId: connection.id, body: (user.displayName || "A Loom member") + " updated your connection request." }); } catch { /* Keep the connection decision successful if notification delivery fails. */ }
     return NextResponse.json({ connection });
   } catch {
     return NextResponse.json({ error: "Connection request could not be updated." }, { status: 503 });
