@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
+import { getLoomRestriction } from "@/lib/loom/staff";
 import { appUsers, loomBusinessVerifications, loomConnections, loomNotifications } from "@/lib/db/schema";
 
 export const runtime = "nodejs";
@@ -48,6 +49,8 @@ export async function POST(request: Request) {
   if (origin && origin !== new URL(request.url).origin) return NextResponse.json({ error: "Invalid origin." }, { status: 403 });
   const user = await getCurrentUser().catch(() => null);
   if (!user) return NextResponse.json({ error: "Sign in to connect with a member." }, { status: 401 });
+  const restriction = await getLoomRestriction(user.id).catch(() => null);
+  if (restriction) return NextResponse.json({ error: "Your Loom participation is currently restricted." }, { status: 403 });
   let raw: unknown;
   try { raw = await request.json(); } catch { return NextResponse.json({ error: "Submit a valid connection request." }, { status: 400 }); }
   const parsed = requestSchema.safeParse(raw);
