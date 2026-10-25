@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { hasOrganizationPermission } from "@/lib/access/policy";
 import { getDb } from "@/lib/db/client";
-import { websitePages, websites } from "@/lib/db/schema";
+import { memberships, websitePages, websites } from "@/lib/db/schema";
 import { makeInitialDraft, siteDraftSchema } from "@/lib/editor/site-draft";
 
 export const runtime = "nodejs";
@@ -25,6 +25,12 @@ export async function GET() {
 
     for (const org of permitted) {
       const found = await db.transaction(async (tx) => {
+        await tx.execute(sql`select set_config('app.current_user_id', ${user.id}, true)`);
+        const [membership] = await tx.select({ role: memberships.role, status: memberships.status })
+          .from(memberships)
+          .where(and(eq(memberships.organizationId, org.id), eq(memberships.userId, user.id), eq(memberships.status, "active")))
+          .limit(1);
+        if (!membership || !hasOrganizationPermission({ role: membership.role, status: membership.status }, "website.publish")) return [];
         await tx.execute(sql`select set_config('app.current_organization_id', ${org.id}, true)`);
         const rows = await tx.select({
           id: websites.id, slug: websites.slug, name: websites.name, status: websites.status,
