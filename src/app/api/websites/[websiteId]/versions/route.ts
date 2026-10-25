@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getOrganizationMembershipsForUser } from "@/lib/access/guards";
 import { hasOrganizationPermission } from "@/lib/access/policy";
 import { getDb } from "@/lib/db/client";
-import { websiteVersions, websites } from "@/lib/db/schema";
+import { memberships, websiteVersions, websites } from "@/lib/db/schema";
 import { websiteSnapshotSchema } from "@/lib/versions/version-history";
 
 export const runtime = "nodejs";
@@ -23,6 +23,12 @@ async function locateWebsite(websiteId: string, userId: string, permission: stri
   for (const org of orgs) {
     if (!hasOrganizationPermission({ role: org.role, status: org.membershipStatus }, permission)) continue;
     const found = await db.transaction(async (tx) => {
+      await tx.execute(sql`select set_config('app.current_user_id', ${userId}, true)`);
+      const [membership] = await tx.select({ role: memberships.role, status: memberships.status })
+        .from(memberships)
+        .where(and(eq(memberships.organizationId, org.id), eq(memberships.userId, userId), eq(memberships.status, "active")))
+        .limit(1);
+      if (!membership || !hasOrganizationPermission({ role: membership.role, status: membership.status }, permission)) return null;
       await tx.execute(sql`select set_config('app.current_organization_id', ${org.id}, true)`);
       const [website] = await tx.select({ id: websites.id, organizationId: websites.organizationId })
         .from(websites).where(and(eq(websites.id, websiteId), eq(websites.organizationId, org.id))).limit(1);
@@ -42,11 +48,18 @@ export async function GET(_request: Request, context: RouteContext) {
   if (!website) return NextResponse.json({ error: "Website not found or access denied." }, { status: 404 });
   const db = getDb();
   const rows = await db.transaction(async (tx) => {
+    await tx.execute(sql`select set_config('app.current_user_id', ${user.id}, true)`);
+    const [membership] = await tx.select({ role: memberships.role, status: memberships.status })
+      .from(memberships)
+      .where(and(eq(memberships.organizationId, website.organizationId), eq(memberships.userId, user.id), eq(memberships.status, "active")))
+      .limit(1);
+    if (!membership || !hasOrganizationPermission({ role: membership.role, status: membership.status }, "website.read")) return null;
     await tx.execute(sql`select set_config('app.current_organization_id', ${website.organizationId}, true)`);
     return tx.select().from(websiteVersions)
       .where(and(eq(websiteVersions.websiteId, website.id), eq(websiteVersions.organizationId, website.organizationId)))
       .orderBy(desc(websiteVersions.createdAt)).limit(25);
   });
+  if (!rows) return NextResponse.json({ error: "Website not found or access denied." }, { status: 404 });
   const versions = rows.flatMap((row) => {
     try {
       const snapshot = websiteSnapshotSchema.safeParse(JSON.parse(row.snapshot));
@@ -69,7 +82,14 @@ export async function POST(request: Request, context: RouteContext) {
   if (!website) return NextResponse.json({ error: "Website not found or you do not have editing access." }, { status: 404 });
   const db = getDb();
   const created = await db.transaction(async (tx) => {
+    await tx.execute(sql`select set_config('app.current_user_id', ${user.id}, true)`);
+    const [membership] = await tx.select({ role: memberships.role, status: memberships.status })
+      .from(memberships)
+      .where(and(eq(memberships.organizationId, website.organizationId), eq(memberships.userId, user.id), eq(memberships.status, "active")))
+      .limit(1);
+    if (!membership || !hasOrganizationPermission({ role: membership.role, status: membership.status }, "website.edit")) return null;
     await tx.execute(sql`select set_config('app.current_organization_id', ${website.organizationId}, true)`);
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${website.id}))`);
     const [row] = await tx.insert(websiteVersions).values({
       organizationId: website.organizationId, websiteId: website.id, createdByUserId: user.id,
       label: parsed.data.label, notes: parsed.data.notes, snapshot: JSON.stringify(parsed.data.snapshot),
@@ -82,5 +102,6 @@ export async function POST(request: Request, context: RouteContext) {
     }
     return row;
   });
+  if (!created) return NextResponse.json({ error: "Website not found or editing access was revoked." }, { status: 404 });
   return NextResponse.json({ saved: true, id: created.id, createdAt: created.createdAt.toISOString() }, { status: 201, headers: { "Cache-Control": "no-store" } });
 }
