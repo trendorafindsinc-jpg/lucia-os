@@ -39,11 +39,11 @@ export default async function PublishedWebsitePage({ params }: PageProps) {
         eq(websitePages.path, pagePath),
         eq(websitePages.status, "published"),
       )).limit(1);
-      const [savedStructure] = await tx.select({ structure: websiteStructures.structure })
+      const [savedStructure] = await tx.select({ structure: websiteStructures.publishedStructure })
         .from(websiteStructures)
         .where(and(eq(websiteStructures.websiteId, website.id), eq(websiteStructures.organizationId, website.organizationId)))
         .limit(1);
-      return { page: page ?? null, savedStructure: savedStructure?.structure ?? null };
+      return { page: page ?? null, publishedStructure: savedStructure?.structure ?? null };
     });
 
     if (!pageData.page?.publishedContent) notFound();
@@ -54,9 +54,9 @@ export default async function PublishedWebsitePage({ params }: PageProps) {
 
     let blueprint: LoomBlueprint;
     try {
-      if (pageData.savedStructure) {
+      if (pageData.publishedStructure) {
         let structureRaw: unknown;
-        try { structureRaw = JSON.parse(pageData.savedStructure); } catch { notFound(); }
+        try { structureRaw = JSON.parse(pageData.publishedStructure); } catch { notFound(); }
         const structure = siteStructureSchema.safeParse(structureRaw);
         if (!structure.success) notFound();
         const selectedPage = structure.data.pages.find((item) => (item.slug ? `/${item.slug}` : "/") === pagePath);
