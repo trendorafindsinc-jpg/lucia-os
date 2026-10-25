@@ -2,6 +2,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
+import { withUserScope } from "@/lib/db/tenant-scope";
 import { getDb } from "@/lib/db/client";
 import { appUsers, memberships, platformAuditEvents } from "@/lib/db/schema";
 import { hasOrganizationPermission } from "@/lib/access/policy";
@@ -28,8 +29,11 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (!parsed.success) return NextResponse.json({ error: "Choose a valid role or access status.", issues: parsed.error.flatten() }, { status: 400 });
 
   const db = getDb();
-  const [actor] = await db.select({ role: memberships.role, status: memberships.status })
-    .from(memberships).where(and(eq(memberships.organizationId, organizationId), eq(memberships.userId, user.id), eq(memberships.status, "active"))).limit(1);
+  const actor = await withUserScope(user.id, async (tx) => {
+    const [row] = await tx.select({ role: memberships.role, status: memberships.status })
+      .from(memberships).where(and(eq(memberships.organizationId, organizationId), eq(memberships.userId, user.id), eq(memberships.status, "active"))).limit(1);
+    return row ?? null;
+  });
   if (!actor || !hasOrganizationPermission(actor, "members.manage")) {
     return NextResponse.json({ error: "You do not have permission to manage this organisation's members." }, { status: 403 });
   }
