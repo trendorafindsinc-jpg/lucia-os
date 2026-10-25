@@ -1,12 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { addMediaAsset, addPost, contentLibrarySchema, makeEmptyLibrary, type BlogPost, type MediaAsset } from "@/lib/content/content-library";
 
 type Tab = "posts" | "media";
 
 export function ContentLibraryWorkspace() {
   const [library, setLibrary] = useState(makeEmptyLibrary);
+  const [websiteId, setWebsiteId] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
   const [tab, setTab] = useState<Tab>("posts");
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState("");
@@ -19,9 +24,50 @@ export function ContentLibraryWorkspace() {
   const selectedPost = library.posts.find((post) => post.id === selectedPostId) ?? library.posts[0] ?? null;
   const validation = useMemo(() => contentLibrarySchema.safeParse(library), [library]);
 
+  useEffect(() => {
+    const requestedWebsiteId = new URLSearchParams(window.location.search).get("websiteId");
+    if (!requestedWebsiteId) return;
+    setWebsiteId(requestedWebsiteId);
+    setIsLoading(true);
+    fetch(`/api/websites/${encodeURIComponent(requestedWebsiteId)}/content-library`, { cache: "no-store" })
+      .then(async (response) => {
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || "Couldn't load this website's content library.");
+        const checked = contentLibrarySchema.safeParse(payload.library);
+        if (!checked.success) throw new Error("Saved content failed validation. Saving is disabled to protect it.");
+        setLibrary(checked.data);
+        setSelectedPostId(checked.data.posts[0]?.id ?? null);
+        setIsDirty(false);
+        setLoadFailed(false);
+      })
+      .catch((error: unknown) => {
+        setLoadFailed(true);
+        setNotice(error instanceof Error ? `${error.message} Saving is disabled until the library loads safely.` : "Couldn't load the saved library. Saving is disabled to protect existing data.");
+      })
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  async function saveLibrary() {
+    if (!websiteId || isLoading || loadFailed || !validation.success) return;
+    setIsSaving(true);
+    setNotice("");
+    try {
+      const response = await fetch(`/api/websites/${encodeURIComponent(websiteId)}/content-library`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" }, cache: "no-store", body: JSON.stringify(validation.data),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "Couldn't save content.");
+      setIsDirty(false);
+      setNotice("Blog and media references saved to this website's workspace. Nothing was published or uploaded.");
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Couldn't save content. The last saved library remains unchanged.");
+    } finally { setIsSaving(false); }
+  }
+
   function updatePost(update: Partial<BlogPost>) {
     if (!selectedPost) return;
-    setLibrary((current) => ({ ...current, posts: current.posts.map((post) => post.id === selectedPost.id ? { ...post, ...update, updatedAt: new Date().toISOString() } : post) }));
+    setLibrary((current) => ({ ...current, posts: current.posts.map((post) => post.id === selectedPost.id ? { ...post, ...update, updatedAt: new Date().toISOString() } : post }));
+    setIsDirty(true);
     setNotice("");
   }
   function createPost(event: React.FormEvent<HTMLFormElement>) {
@@ -29,9 +75,10 @@ export function ContentLibraryWorkspace() {
     const next = addPost(library, newTitle);
     if (next === library) { setNotice("Enter a title to create a draft."); return; }
     setLibrary(next);
+    setIsDirty(true);
     setSelectedPostId(next.posts[next.posts.length - 1].id);
     setNewTitle("");
-    setNotice("Draft added locally. It has not been saved or published.");
+    setNotice("Draft added. Save the library to persist it; it is not published.");
   }
   function registerMedia(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -39,16 +86,18 @@ export function ContentLibraryWorkspace() {
     const asset: MediaAsset = { id: `asset-${Date.now().toString(36)}`, name: mediaName.trim().slice(0, 120), kind: mediaKind, source: mediaSource.trim().slice(0, 2048), altText: mediaAlt.slice(0, 300), caption: mediaCaption.slice(0, 500), createdAt: new Date().toISOString() };
     const next = addMediaAsset(library, asset);
     if (next === library) { setNotice("Media library limit reached."); return; }
-    setLibrary(next); setMediaName(""); setMediaSource(""); setMediaAlt(""); setMediaCaption("");
-    setNotice("Media details registered locally. No file was uploaded.");
+    setLibrary(next); setIsDirty(true); setMediaName(""); setMediaSource(""); setMediaAlt(""); setMediaCaption("");
+    setNotice("Media reference added. Save the library to persist it; no file was uploaded.");
   }
   function removeMedia(assetId: string) {
     if (library.posts.some((post) => post.featuredImageId === assetId)) { setNotice("This media is used as a featured image. Remove that reference first."); return; }
     setLibrary((current) => ({ ...current, assets: current.assets.filter((asset) => asset.id !== assetId) }));
+    setIsDirty(true);
     setNotice("Media record removed from this local draft.");
   }
 
   return <section className="content-workspace" aria-label="Blog and media workspace">
+    <div className="content-validation"><span>{isLoading ? "Loading saved library…" : loadFailed ? "Saved library unavailable · saving disabled" : websiteId ? (isDirty ? "Unsaved changes" : "Saved workspace library") : "Local draft · not saved"}</span>{websiteId && <button type="button" className="content-primary-button" onClick={saveLibrary} disabled={isLoading || loadFailed || isSaving || !isDirty || !validation.success}>{isSaving ? "Saving…" : "Save library"}</button>}</div>
     <div className="content-tabs" role="tablist" aria-label="Content type">
       <button type="button" role="tab" aria-selected={tab === "posts"} className={tab === "posts" ? "is-active" : ""} onClick={() => { setTab("posts"); setNotice(""); }}>Blog posts <span>{library.posts.length}</span></button>
       <button type="button" role="tab" aria-selected={tab === "media"} className={tab === "media" ? "is-active" : ""} onClick={() => { setTab("media"); setNotice(""); }}>Media library <span>{library.assets.length}</span></button>
@@ -69,8 +118,8 @@ export function ContentLibraryWorkspace() {
           <label>Featured image<select value={selectedPost.featuredImageId ?? ""} onChange={(event) => updatePost({ featuredImageId: event.target.value || null })}><option value="">No featured image</option>{library.assets.filter((asset) => asset.kind === "image").map((asset) => <option key={asset.id} value={asset.id}>{asset.name}</option>)}</select></label>
           <label>Tags, comma separated<input value={selectedPost.tags.join(", ")} onChange={(event) => updatePost({ tags: [...new Set(event.target.value.split(",").map((tag) => tag.trim()).filter(Boolean))].slice(0, 12) })} placeholder="news, organisation, updates" /><small>Up to 12 tags.</small></label>
         </div>
-        <div className="content-editor-foot"><span>Last edited {new Date(selectedPost.updatedAt).toLocaleString()}</span><button type="button" className="content-danger-button" onClick={() => { setLibrary((current) => ({ ...current, posts: current.posts.filter((post) => post.id !== selectedPost.id) })); setSelectedPostId(null); setNotice("Post removed from this local draft."); }}>Delete draft</button></div>
-      </> : <div className="content-empty content-empty-large"><span aria-hidden="true">✎</span><strong>Choose a story or create a draft</strong><p>Posts are temporary until database persistence is implemented.</p></div>}</div>
+        <div className="content-editor-foot"><span>Last edited {new Date(selectedPost.updatedAt).toLocaleString()}</span><button type="button" className="content-danger-button" onClick={() => { setLibrary((current) => ({ ...current, posts: current.posts.filter((post) => post.id !== selectedPost.id) })); setSelectedPostId(null); setNotice("Post removed from this draft. Save to persist the change."); }}>Delete draft</button></div>
+      </> : <div className="content-empty content-empty-large"><span aria-hidden="true">✎</span><strong>Choose a story or create a draft</strong><p>Choose a saved website to persist posts and media references.</p></div>}</div>
     </div> : <div className="content-media-layout">
       <section className="content-editor-panel"><div className="content-panel-heading"><div><span className="content-kicker">MEDIA RECORDS</span><h2>Register an existing asset</h2><p>Add an existing URL or future storage key. This form does not upload files.</p></div></div>
         <form className="content-fields" onSubmit={registerMedia}>
@@ -87,6 +136,6 @@ export function ContentLibraryWorkspace() {
       </section>
     </div>}
     {notice && <p className="content-notice" role="status">{notice}</p>}
-    <div className="content-validation"><span>{validation.success ? "Content checks passed" : "Check post slugs and featured media references"}</span><span>Local only · Not saved or published</span></div>
+    <div className="content-validation"><span>{validation.success ? "Content checks passed" : "Check post slugs and featured media references"}</span><span>{websiteId ? (isDirty ? "Unsaved · Not published" : "Workspace data · Not published") : "Local only · Not saved or published"}</span></div>
   </section>;
 }
