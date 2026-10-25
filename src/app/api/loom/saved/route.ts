@@ -3,17 +3,12 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
-import { appUsers, loomBusinessVerifications, loomPosts, loomSavedPosts } from "@/lib/db/schema";
+import { appUsers, loomPosts, loomSavedPosts } from "@/lib/db/schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const inputSchema = z.object({ postId: z.string().uuid() }).strict();
 
-async function isVerified(userId: string) {
-  const db = getDb();
-  const [row] = await db.select({ status: loomBusinessVerifications.status }).from(loomBusinessVerifications).where(eq(loomBusinessVerifications.userId, userId)).limit(1);
-  return row?.status === "verified";
-}
 
 export async function GET() {
   const user = await getCurrentUser().catch(() => null);
@@ -47,7 +42,6 @@ export async function POST(request: Request) {
   const parsed = inputSchema.safeParse(raw);
   if (!parsed.success) return NextResponse.json({ error: "Invalid post." }, { status: 422 });
   try {
-    if (!(await isVerified(user.id))) return NextResponse.json({ error: "Business verification is required to save posts." }, { status: 403 });
     const db = getDb();
     const [post] = await db.select({ id: loomPosts.id }).from(loomPosts).where(eq(loomPosts.id, parsed.data.postId)).limit(1);
     if (!post) return NextResponse.json({ error: "Post not found." }, { status: 404 });
