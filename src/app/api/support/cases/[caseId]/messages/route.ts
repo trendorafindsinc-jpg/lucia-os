@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 import { getCurrentOrganizationAccess, getCurrentStaffUser } from "@/lib/access/guards";
 import { getCurrentUser } from "@/lib/auth/session";
 import { withOrganizationScope, withPlatformStaffScope } from "@/lib/db/tenant-scope";
-import { getDb } from "@/lib/db/client";
 import { platformAuditEvents, supportCases, supportMessages } from "@/lib/db/schema";
 import { findSupportCaseForStaff, findSupportCaseForUser } from "@/lib/support/authorized-case";
 import { supportMessageInputSchema } from "@/lib/support/validation";
@@ -67,7 +66,6 @@ export async function POST(request: Request, context: RouteContext) {
 
   const visibility = staff && new URL(request.url).searchParams.get("visibility") === "internal" ? "internal" : "customer";
   const authorKind = staff ? "staff" : "tenant";
-  const db = getDb();
   const result = staff
     ? await withPlatformStaffScope(staff.id, async (tx) => {
         const [message] = await tx.insert(supportMessages).values({
