@@ -53,7 +53,15 @@ export async function PATCH(request: Request, context: RouteContext) {
   const { websiteId } = await context.params;
   if (!z.string().uuid().safeParse(websiteId).success) return NextResponse.json({ error: "Invalid website id." }, { status: 400 });
   let raw: unknown;
-  try { raw = await request.json(); } catch {
+  try {
+    const declaredLength = Number(request.headers.get("content-length") ?? "0");
+    if (Number.isFinite(declaredLength) && declaredLength > 5_000_000) {
+      return NextResponse.json({ error: "Content payload exceeds the 5 MB limit." }, { status: 413 });
+    }
+    const body = await request.text();
+    if (body.length > 5_000_000) return NextResponse.json({ error: "Content payload exceeds the 5 MB limit." }, { status: 413 });
+    raw = JSON.parse(body);
+  } catch {
     return NextResponse.json({ error: "Submit valid content data." }, { status: 400 });
   }
   const checked = contentLibrarySchema.safeParse(raw);
