@@ -78,3 +78,16 @@
 .loom-notification-item p{margin:0 0 .35rem;line-height:1.55}
 .loom-notification-item time{font-size:.76rem;color:var(--loom-muted,#64748b)}
 @media(max-width:480px){.loom-notification-item{flex-wrap:wrap}.loom-notification-item button{margin-left:1rem}}
+
+.loom-member-list{display:grid;gap:.75rem;margin-top:1.2rem}
+.loom-member-card{display:flex;align-items:flex-start;gap:1rem;padding:1.1rem;border:1px solid rgba(115,139,166,.2);border-radius:18px;background:rgba(255,255,255,.8)}
+.loom-member-info{flex:1;min-width:0}
+.loom-member-info h2{margin:.1rem 0 .3rem;font-size:1.05rem;letter-spacing:-.02em}
+.loom-member-info p{margin:.3rem 0 .6rem;color:var(--loom-muted,#64748b);line-height:1.55;overflow-wrap:anywhere}
+.loom-member-info .loom-member-person{font-size:.82rem;margin:0}
+.loom-member-info>a{font-size:.82rem;color:#315b85;text-decoration:none}
+.loom-member-actions{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;margin-top:.8rem}
+.loom-member-actions button{border:0;border-radius:10px;padding:.65rem .9rem;background:#14263d;color:#fff;font:inherit;font-size:.84rem;font-weight:650;cursor:pointer}
+.loom-member-actions button:disabled{opacity:.55;cursor:not-allowed}
+.loom-member-actions span{font-size:.8rem;color:var(--loom-muted,#64748b)}
+@media(max-width:480px){.loom-member-card{gap:.7rem;padding:.85rem}.loom-member-card .loom-post-avatar{flex:0 0 36px;width:36px;height:36px}}
