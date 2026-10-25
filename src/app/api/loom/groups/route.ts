@@ -46,7 +46,10 @@ export async function POST(request: Request) {
       id: loomGroups.id, name: loomGroups.name, slug: loomGroups.slug, description: loomGroups.description, createdAt: loomGroups.createdAt,
     });
     return NextResponse.json({ group }, { status: 201, headers: { "Cache-Control": "no-store" } });
-  } catch {
-    return NextResponse.json({ error: "Group could not be created. The slug may already be in use." }, { status: 409 });
+  } catch (cause) {
+    if (typeof cause === "object" && cause !== null && "code" in cause && cause.code === "23505") {
+      return NextResponse.json({ error: "That group address is already in use." }, { status: 409 });
+    }
+    return NextResponse.json({ error: "Group storage is temporarily unavailable." }, { status: 503 });
   }
 }
