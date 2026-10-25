@@ -424,12 +424,13 @@ export const loomPosts = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     authorUserId: uuid("author_user_id").notNull().references(() => appUsers.id, { onDelete: "cascade" }),
+    groupId: uuid("group_id").references(() => loomGroups.id, { onDelete: "cascade" }),
     body: text("body").notNull(),
     moderationStatus: text("moderation_status").notNull().default("visible"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (table) => [index("loom_posts_created_idx").on(table.createdAt), index("loom_posts_author_idx").on(table.authorUserId)],
+  (table) => [index("loom_posts_created_idx").on(table.createdAt), index("loom_posts_author_idx").on(table.authorUserId), index("loom_posts_group_created_idx").on(table.groupId, table.createdAt)],
 );
 
 export const loomReplies = pgTable(
