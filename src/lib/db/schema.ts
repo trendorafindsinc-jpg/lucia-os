@@ -368,3 +368,19 @@ export const websiteVersions = pgTable("website_versions", {
   uniqueIndex("website_versions_org_id_id_uq").on(table.organizationId, table.id),
   index("website_versions_org_website_created_idx").on(table.organizationId, table.websiteId, table.createdAt),
 ]);
+
+
+/** Durable, tenant-scoped page/navigation structure, separate from published content and editor drafts. */
+export const websiteStructures = pgTable("website_structures", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
+  websiteId: uuid("website_id").notNull(),
+  createdByUserId: uuid("created_by_user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
+  structure: text("structure").notNull(),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+}, (table) => [
+  foreignKey({ name: "website_structures_website_org_fk", columns: [table.organizationId, table.websiteId], foreignColumns: [websites.organizationId, websites.id] }).onDelete("cascade"),
+  uniqueIndex("website_structures_org_website_uq").on(table.organizationId, table.websiteId),
+  uniqueIndex("website_structures_org_id_id_uq").on(table.organizationId, table.id),
+]);
