@@ -24,7 +24,7 @@ export async function POST(request: Request, routeContext: Context) {
   const state = await resolve(request, routeContext);
   if ("response" in state) return state.response;
   const { user, groupId } = state;
-  const restriction = await getLoomRestriction(user.id).catch(() => null);
+  const restriction = await getLoomRestriction(user.id);
   if (restriction) return NextResponse.json({ error: "Your Loom participation is currently restricted." }, { status: 403 });
   try {
     const db = getDb();
