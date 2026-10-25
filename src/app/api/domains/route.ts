@@ -2,10 +2,11 @@ import { createHash, randomBytes } from "node:crypto";
 import { and, eq, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getOrganizationMembershipsForUser } from "@/lib/access/guards";
 import { hasOrganizationPermission } from "@/lib/access/policy";
 import { getDb } from "@/lib/db/client";
 import { customDomainSchema } from "@/lib/publishing/publishing";
-import { memberships, organizations, websiteDomains, websites } from "@/lib/db/schema";
+import { websiteDomains, websites } from "@/lib/db/schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -32,9 +33,7 @@ export async function POST(request: Request) {
   if (hostname === siteDomain || hostname.endsWith("." + siteDomain)) return error("Use the LUCIA subdomain option for lucia.name.ng addresses. This form is for domains you control.", 422);
 
   const db = getDb();
-  const orgs = await db.select({ id: organizations.id, name: organizations.name, role: memberships.role, membershipStatus: memberships.status })
-    .from(memberships).innerJoin(organizations, eq(memberships.organizationId, organizations.id))
-    .where(and(eq(memberships.userId, user.id), eq(memberships.status, "active"), eq(organizations.status, "active")));
+  const orgs = await getOrganizationMembershipsForUser(user.id);
   for (const org of orgs) {
     if (!hasOrganizationPermission({ role: org.role, status: org.membershipStatus }, "website.publish")) continue;
     try {
