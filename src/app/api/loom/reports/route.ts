@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
-import { appUsers, loomGroups, loomMessages, loomPosts, loomProfiles, loomReplies, loomReports } from "@/lib/db/schema";
+import { loomGroups, loomMessages, loomPosts, loomProfiles, loomReplies, loomReports } from "@/lib/db/schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
