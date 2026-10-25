@@ -23,7 +23,7 @@ const mediaSourceSchema = z.string().trim().min(1).max(2048).refine((value) => {
     } catch { return false; }
   }
   // Storage keys are opaque identifiers, never filesystem paths or executable URLs.
-  return /^[A-Za-z0-9][A-Za-z0-9/_-]*(?:\\.[A-Za-z0-9_-]+)?$/.test(value)
+  return /^[A-Za-z0-9][A-Za-z0-9/_-]*(?:\.[A-Za-z0-9_-]+)?$/.test(value)
     && !value.split("/").some((part) => part === "." || part === "..");
 }, "Use an HTTPS URL or a safe storage key.");
 
