@@ -5,6 +5,7 @@ import {
   check,
   foreignKey,
   index,
+  integer,
   pgTable,
   text,
   timestamp,
@@ -612,3 +613,11 @@ export const loomBlocks = pgTable("loom_blocks", {
   index("loom_blocks_blocked_created_idx").on(table.blockedUserId, table.createdAt),
   check("loom_blocks_no_self", sql`${table.blockerUserId} <> ${table.blockedUserId}`),
 ]);
+
+/** Atomic Postgres-backed throttling for high-abuse Loom write actions. */
+export const loomActionLimits = pgTable("loom_action_limits", {
+  limitKey: text("limit_key").primaryKey(),
+  windowStartedAt: timestamp("window_started_at", { withTimezone: true }).notNull().defaultNow(),
+  requestCount: integer("request_count").notNull().default(0),
+  updatedAt: updatedAt(),
+}, (table) => [index("loom_action_limits_window_idx").on(table.windowStartedAt)]);
