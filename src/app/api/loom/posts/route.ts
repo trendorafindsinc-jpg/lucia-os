@@ -1,4 +1,4 @@
-import { and, desc, eq, ilike, notInArray } from "drizzle-orm";
+import { and, desc, eq, ilike, isNull, notInArray } from "drizzle-orm";
 import { getLoomRestriction } from "@/lib/loom/staff";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -27,7 +27,7 @@ export async function GET(request: Request) {
       notInArray(loomPosts.authorUserId, db.select({ userId: loomBlocks.blockedUserId }).from(loomBlocks).where(eq(loomBlocks.blockerUserId, currentUser.id))),
       notInArray(loomPosts.authorUserId, db.select({ userId: loomBlocks.blockerUserId }).from(loomBlocks).where(eq(loomBlocks.blockedUserId, currentUser.id))),
     ] : [];
-    const posts = await base.where(and(eq(loomPosts.moderationStatus, "visible"), ...blockedAuthors, query ? ilike(loomPosts.body, `%${query}%`) : undefined))
+    const posts = await base.where(and(eq(loomPosts.moderationStatus, "visible"), isNull(loomPosts.groupId), ...blockedAuthors, query ? ilike(loomPosts.body, `%${query}%`) : undefined))
       .orderBy(desc(loomPosts.createdAt)).limit(50);
     return NextResponse.json({ posts, query: query || null }, { headers: { "Cache-Control": "no-store" } });
   } catch {
