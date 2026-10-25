@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, notInArray, or } from "drizzle-orm";
+import { and, desc, eq, notInArray } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
