@@ -134,6 +134,13 @@
       "when": 1792969209000,
       "tag": "0018_loom_member_blocks",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1792969210000,
+      "tag": "0019_loom_group_discussions",
+      "breakpoints": true
     }
   ]
 }
