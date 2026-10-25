@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getOrganizationMembershipsForUser } from "@/lib/access/guards";
 import { getDb } from "@/lib/db/client";
-import { websitePages, websites } from "@/lib/db/schema";
+import { memberships, websitePages, websites } from "@/lib/db/schema";
 import { hasOrganizationPermission } from "@/lib/access/policy";
 import { siteDraftSchema, type SiteDraft } from "@/lib/editor/site-draft";
 import { z } from "zod";
@@ -19,6 +19,12 @@ async function locateWebsite(websiteId: string, userId: string, permission: stri
   for (const org of orgs) {
     if (!hasOrganizationPermission({ role: org.role, status: org.membershipStatus }, permission)) continue;
     const found = await db.transaction(async (tx) => {
+      await tx.execute(sql`select set_config('app.current_user_id', ${userId}, true)`);
+      const [membership] = await tx.select({ role: memberships.role, status: memberships.status })
+        .from(memberships)
+        .where(and(eq(memberships.organizationId, org.id), eq(memberships.userId, userId), eq(memberships.status, "active")))
+        .limit(1);
+      if (!membership || !hasOrganizationPermission({ role: membership.role, status: membership.status }, permission)) return null;
       await tx.execute(sql`select set_config('app.current_organization_id', ${org.id}, true)`);
       const [website] = await tx.select({
         id: websites.id,
@@ -82,8 +88,17 @@ export async function PATCH(request: Request, context: RouteContext) {
   const found = await locateWebsite(websiteId, user.id, "website.edit");
   if (!found) return NextResponse.json({ error: "Website not found or you do not have editing access." }, { status: 404 });
   const db = getDb();
-  await db.transaction(async (tx) => {
+  const saved = await db.transaction(async (tx) => {
+    await tx.execute(sql`select set_config('app.current_user_id', ${user.id}, true)`);
+    const [membership] = await tx.select({ role: memberships.role, status: memberships.status })
+      .from(memberships)
+      .where(and(eq(memberships.organizationId, found.website.organizationId), eq(memberships.userId, user.id), eq(memberships.status, "active")))
+      .limit(1);
+    if (!membership || !hasOrganizationPermission({ role: membership.role, status: membership.status }, "website.edit")) return false;
     await tx.execute(sql`select set_config('app.current_organization_id', ${found.website.organizationId}, true)`);
+    const [website] = await tx.select({ id: websites.id }).from(websites)
+      .where(and(eq(websites.id, found.website.id), eq(websites.organizationId, found.website.organizationId))).limit(1);
+    if (!website) return false;
     await tx.update(websites).set({ name: parsed.data.siteName, updatedAt: new Date() })
       .where(and(eq(websites.id, found.website.id), eq(websites.organizationId, found.website.organizationId)));
     const home = found.pages.find((page) => page.path === "/") ?? found.pages[0];
@@ -103,6 +118,8 @@ export async function PATCH(request: Request, context: RouteContext) {
         content: JSON.stringify(parsed.data),
       });
     }
+    return true;
   });
+  if (!saved) return NextResponse.json({ error: "Website not found or editing access was revoked." }, { status: 404 });
   return NextResponse.json({ saved: true, websiteId: found.website.id, savedAt: new Date().toISOString(), status: "draft" }, { headers: { "Cache-Control": "no-store" } });
 }
