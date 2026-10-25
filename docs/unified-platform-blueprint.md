@@ -116,6 +116,20 @@ Loom's main areas:
 5. **Collaboration Spaces** — scoped shared spaces for approved collaboration.
 6. **Trust & Safety** — business verification, reporting, moderation, appeals, and account restrictions.
 
+#### Loom UI direction — GitHub structure + Facebook discovery
+
+The approved visual direction is a **beautiful, original blend of GitHub's structured collaboration UI and Facebook's social discovery UI**. Borrow the useful interaction principles, not either product's branding or literal screen layouts:
+
+- **Structure from GitHub:** clear information hierarchy, topic/context labels, readable discussion threads, contribution actions, activity context, predictable navigation and well-scoped collaboration spaces.
+- **Discovery from Facebook:** an engaging central feed, easy discovery of groups and businesses, people/connection suggestions, notifications and natural paths from a post or profile into a conversation.
+- **Desktop composition:** a shared top bar with Loom identity, prominent search, create action, notifications and account/workspace context; a left navigation rail for Home, Discussions, Groups, Business Directory, Connections/Messages and relevant spaces; a central feed or selected content; and a contextual right rail for relevant groups, suggested businesses/people or useful activity.
+- **Responsive composition:** at tablet/mobile widths, simplify to a focused single-column content experience with clear navigation/drawers. Keep primary actions reachable and avoid horizontal overflow or hover-only interactions.
+- **Premium LUCIA styling:** restrained indigo/violet accents, refined typography, balanced whitespace, soft surfaces and borders, subtle purposeful motion, strong focus states and accessible contrast. Avoid visual clutter and avoid copying either reference product.
+- **Connected workflows:** the feed, discussions, groups, business profiles, connections, messages, collaboration spaces and trust/safety actions must link into real product flows and reflect persisted server state. Do not ship a visual shell with inert controls or fabricated activity.
+- **State and accessibility contract:** include meaningful loading, empty, error/offline, permission-denied, blocked-user and moderation states; keyboard navigation, semantic structure, accessible names, reduced-motion support and suitable touch targets.
+
+The precise component layout may evolve during implementation, but the GitHub-plus-Facebook product direction and the behaviour/accessibility requirements above are canonical.
+
 #### Loom trust and participation rules
 
 - Eligible LUCIA ID holders may join Loom, but an account alone does not make a person a verified business representative.
