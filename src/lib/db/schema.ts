@@ -580,3 +580,20 @@ export const loomNotifications = pgTable("loom_notifications", {
 }, (table) => [
   index("loom_notifications_user_read_created_idx").on(table.userId, table.readAt, table.createdAt),
 ]);
+
+/** Loom-specific restrictions are separate from LUCIA ID and the wider OS account status. */
+export const loomMemberRestrictions = pgTable("loom_member_restrictions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => appUsers.id, { onDelete: "cascade" }),
+  status: text("status").notNull().default("restricted"),
+  reason: text("reason").notNull(),
+  createdByStaffUserId: uuid("created_by_staff_user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  liftedAt: timestamp("lifted_at", { withTimezone: true }),
+  liftedByStaffUserId: uuid("lifted_by_staff_user_id").references(() => appUsers.id, { onDelete: "set null" }),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+}, (table) => [
+  uniqueIndex("loom_member_restrictions_user_uq").on(table.userId),
+  index("loom_member_restrictions_status_expires_idx").on(table.status, table.expiresAt),
+]);
