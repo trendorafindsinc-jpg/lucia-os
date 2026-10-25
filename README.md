@@ -20,8 +20,8 @@ Repository-wide agent instructions are in [AGENTS.md](AGENTS.md). Codex and othe
 The approved first-class destinations are:
 
 - **Overview** — workspace status and next actions.
-- **Websites** — Loom Library/Layouts, Layer Studio, pages, drafts, domains, preview and publishing.
-- **AI Studio** — optional LoomifiAI assistance; AI is not required to create or operate a website.
+- **Websites** — Layouts, Layer Studio, pages, drafts, domains, preview and publishing.
+- **AI Studio** — optional loomifyAI assistance; AI is not required to create or operate a website.
 - **Store** — tailored to sellers and buyers.
 - **Portals** — tailored to the workflows and controls of each approved category.
 - **Business Admin** — tailored to companies managing day-to-day activities.
