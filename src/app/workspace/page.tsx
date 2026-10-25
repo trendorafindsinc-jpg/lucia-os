@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { and, count, desc, eq } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getDb } from "@/lib/db/client";
-import { billingInvoices, memberships, organizations, supportCases, websites } from "@/lib/db/schema";
+import { getOrganizationMembershipsForUser } from "@/lib/access/guards";
+import { withOrganizationScope } from "@/lib/db/tenant-scope";
+import { billingInvoices, supportCases, websites } from "@/lib/db/schema";
 
 export const metadata = { title: "Organisation workspace" };
 
@@ -12,24 +13,17 @@ export default async function OrganizationWorkspacePage() {
     return <main className="workspace-shell"><section className="workspace-card workspace-denied"><span className="workspace-kicker">YOUR ORGANISATION</span><h1>Your work, securely together.</h1><p>Sign in with LUCIA ID to view organisations you belong to.</p><Link className="workspace-button workspace-button-primary" href="/api/auth/login">Sign in with LUCIA ID</Link><Link className="workspace-back" href="/">Back to LUCIA OS</Link></section></main>;
   }
 
-  const db = getDb();
-  const orgs = await db.select({
-    id: organizations.id,
-    name: organizations.name,
-    slug: organizations.slug,
-    status: organizations.status,
-    role: memberships.role,
-    membershipStatus: memberships.status,
-  }).from(memberships).innerJoin(organizations, eq(memberships.organizationId, organizations.id))
-    .where(and(eq(memberships.userId, user.id), eq(memberships.status, "active")))
-    .orderBy(desc(organizations.updatedAt));
+  const orgs = (await getOrganizationMembershipsForUser(user.id))
+    .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
 
-  const summaries = await Promise.all(orgs.map(async (org) => {
-    const [websiteSummary] = await db.select({ total: count() }).from(websites).where(eq(websites.organizationId, org.id));
-    const [invoiceSummary] = await db.select({ total: count() }).from(billingInvoices).where(eq(billingInvoices.organizationId, org.id));
-    const [caseSummary] = await db.select({ total: count() }).from(supportCases).where(eq(supportCases.organizationId, org.id));
-    return { ...org, websiteCount: websiteSummary.total, invoiceCount: invoiceSummary.total, caseCount: caseSummary.total };
-  }));
+  const summaries = await Promise.all(orgs.map(async (org) =>
+    withOrganizationScope(org.id, async (tx) => {
+      const [websiteSummary] = await tx.select({ total: count() }).from(websites).where(eq(websites.organizationId, org.id));
+      const [invoiceSummary] = await tx.select({ total: count() }).from(billingInvoices).where(eq(billingInvoices.organizationId, org.id));
+      const [caseSummary] = await tx.select({ total: count() }).from(supportCases).where(eq(supportCases.organizationId, org.id));
+      return { ...org, websiteCount: websiteSummary.total, invoiceCount: invoiceSummary.total, caseCount: caseSummary.total };
+    }),
+  ));
 
   return <main className="workspace-shell">
     <header className="workspace-topbar"><Link className="workspace-brand" href="/"><span className="workspace-brand-mark" aria-hidden="true"><i /></span><span>LUCIA <span className="workspace-brand-muted">OS</span></span></Link><div className="workspace-topbar-right"><span className="workspace-context">Organisation workspace</span><span className="workspace-avatar" aria-label="Signed-in user">{(user.displayName || "U").slice(0,1).toUpperCase()}</span></div></header>
