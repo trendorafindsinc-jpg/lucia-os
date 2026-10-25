@@ -119,3 +119,25 @@
 @media(max-width:520px){.loom-staff-card{padding:.9rem}.loom-staff-card dl{grid-template-columns:1fr;gap:.2rem}.loom-staff-card dd{margin-bottom:.55rem}}
 
 .loom-group-join{align-self:center;flex:0 0 auto;border:1px solid rgba(115,139,166,.25);border-radius:11px;padding:.65rem .85rem;background:#14263d;color:white;font:inherit;font-size:.82rem;font-weight:650;cursor:pointer}.loom-group-join:disabled{opacity:.55;cursor:wait}@media(max-width:520px){.loom-group-card{flex-wrap:wrap}.loom-group-join{margin-left:3.1rem}}
+
+.loom-messages-layout{display:grid;grid-template-columns:minmax(180px,.36fr) minmax(0,1fr);min-height:520px;border:1px solid rgba(115,139,166,.2);border-radius:20px;overflow:hidden;background:rgba(255,255,255,.75)}
+.loom-conversation-list{padding:.85rem;border-right:1px solid rgba(115,139,166,.18);background:rgba(245,248,252,.7)}
+.loom-conversation-list h2{margin:.3rem .4rem .8rem;font-size:.9rem}
+.loom-conversation-list>button{display:flex;align-items:center;gap:.6rem;width:100%;padding:.65rem;border:0;border-radius:12px;background:transparent;color:inherit;text-align:left;font:inherit;font-size:.85rem;cursor:pointer}
+.loom-conversation-list>button.loom-conversation-active{background:rgba(70,115,160,.12);font-weight:650}
+.loom-conversation-list .loom-post-avatar{width:34px;height:34px;flex-basis:34px}
+.loom-message-thread{display:flex;flex-direction:column;min-width:0;min-height:520px}
+.loom-message-thread>header{display:flex;flex-direction:column;gap:.2rem;padding:1rem;border-bottom:1px solid rgba(115,139,166,.18)}
+.loom-message-thread>header strong{font-size:.95rem}
+.loom-message-thread>header span{font-size:.78rem;color:var(--loom-muted,#64748b)}
+.loom-message-history{display:flex;flex:1;flex-direction:column;gap:.7rem;padding:1rem;min-height:280px;max-height:520px;overflow-y:auto}
+.loom-message-bubble{align-self:flex-start;max-width:min(88%,520px);padding:.8rem .9rem;border:1px solid rgba(115,139,166,.18);border-radius:15px 15px 15px 4px;background:#fff;overflow-wrap:anywhere}
+.loom-message-bubble.loom-message-own{align-self:flex-end;border-color:rgba(64,112,156,.22);border-radius:15px 15px 4px 15px;background:rgba(225,239,252,.88)}
+.loom-message-bubble p{margin:0;line-height:1.55;white-space:pre-wrap}
+.loom-message-bubble time{display:block;margin-top:.45rem;font-size:.7rem;color:var(--loom-muted,#64748b)}
+.loom-message-composer{padding:.85rem;border-top:1px solid rgba(115,139,166,.18)}
+.loom-message-composer textarea{width:100%;resize:vertical;border:1px solid rgba(115,139,166,.28);border-radius:12px;padding:.8rem;background:white;color:inherit;font:inherit}
+.loom-message-composer>div{display:flex;align-items:center;justify-content:space-between;gap:.7rem;margin-top:.55rem;font-size:.75rem;color:var(--loom-muted,#64748b)}
+.loom-message-composer button{border:0;border-radius:10px;padding:.7rem .9rem;background:#14263d;color:#fff;font:inherit;font-size:.83rem;font-weight:650;cursor:pointer}
+.loom-message-composer button:disabled{opacity:.5;cursor:not-allowed}
+@media(max-width:640px){.loom-messages-layout{grid-template-columns:1fr}.loom-conversation-list{border-right:0;border-bottom:1px solid rgba(115,139,166,.18)}.loom-conversation-list>button{display:inline-flex;width:auto;max-width:100%;margin:.2rem}.loom-conversation-list{display:flex;flex-wrap:wrap;align-items:center}.loom-conversation-list h2{width:100%}.loom-message-thread{min-height:440px}.loom-message-history{max-height:420px}}
