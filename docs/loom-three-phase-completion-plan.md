@@ -90,7 +90,7 @@ The UI should use a premium, polished visual language, with a three-column deskt
 - `/loom/discussions` routes to the live feed rather than remaining a dead navigation destination; `/loom/staff` provides the staff review interface.
 
 ### Remaining Phase 2 work
-- Finish block/ban controls in the staff interface and complete block behavior across public feed, search, connections, and messaging.
+- Complete member-to-member blocking across public feed, search, connections, and messaging; staff moderation now has restrict, remove-access, and lift controls.
 - Add complete group discussion content workflows, group detail pages, profile reporting controls, message notifications, connection-accept notifications, and stronger abuse/rate limiting.
 - Add automated route-level tests for unauthorised writes, private-message isolation, staff queue permissions, report actions, and restrictions.
 - Review verification evidence handling and ensure the staff queue workflow is operational with real authorised staff grants; evidence references are manually reviewed and do not automatically grant access.
@@ -103,5 +103,5 @@ The UI should use a premium, polished visual language, with a three-column deskt
 ### Known limitations
 - No automated or beta-user acceptance test has been performed against the latest UI.
 - Content moderation currently supports hiding posts, replies, groups, and messages. Profile hiding is deliberately rejected because the current profile model has no moderation-visibility field.
-- Staff UI currently exposes restriction/lift actions; the backend supports a stronger status, but a complete staff ban control and corresponding blocked-access experience remain to be finished.
+- Staff access removal is implemented for Loom APIs; member-to-member blocking and additional abuse/rate limiting remain outstanding.
 - Do not call Loom complete until all three phases meet their exit criteria and the final report separates implemented behavior, verified behavior, and deployment state.
