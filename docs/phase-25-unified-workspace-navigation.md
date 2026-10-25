@@ -2,7 +2,7 @@
 
 ## Scope
 
-The v1 workspace should make the primary supported workflows easy to find and should preserve organisation context across the user's work. The navigation links must lead to working destinations; unfinished future-version products must not look active.
+The v1 workspace should make the primary supported workflows easy to find and should preserve organisation context across the user's work. Overview, Websites, and Domains now share the same primary navigation structure. The navigation links must lead to working destinations; unfinished future-version products must not look active.
 
 ## v1 destinations
 
@@ -20,7 +20,7 @@ Store, Portals, and Business Admin are intentionally not v1 features. If shown i
 
 ## Acceptance checklist
 
-- [x] The existing organisation overview and website list have a shared, consistent set of primary destinations.
+- [x] Organisation overview, website list, and domain management have a shared, consistent set of primary destinations.
 - [x] AI Studio and Loom point to existing routes (`/create` and `/templates`); Plan & Billing points to `/billing`.
 - [x] Store, Portals, and Business Admin are visibly unavailable and not clickable.
 - [x] The existing responsive workspace navigation styles collapse to a horizontal, scrollable strip on narrow screens.
