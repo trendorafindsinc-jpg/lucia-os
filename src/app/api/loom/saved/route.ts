@@ -25,7 +25,7 @@ export async function GET() {
       authorName: appUsers.displayName,
     }).from(loomSavedPosts).innerJoin(loomPosts, eq(loomSavedPosts.postId, loomPosts.id))
       .innerJoin(appUsers, eq(loomPosts.authorUserId, appUsers.id))
-      .where(eq(loomSavedPosts.userId, user.id)).orderBy(desc(loomSavedPosts.createdAt)).limit(100);
+      .where(and(eq(loomSavedPosts.userId, user.id), eq(loomPosts.moderationStatus, "visible"))).orderBy(desc(loomSavedPosts.createdAt)).limit(100);
     return NextResponse.json({ saved }, { headers: { "Cache-Control": "no-store" } });
   } catch {
     return NextResponse.json({ error: "Saved posts are temporarily unavailable." }, { status: 503 });
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: "Invalid post." }, { status: 422 });
   try {
     const db = getDb();
-    const [post] = await db.select({ id: loomPosts.id }).from(loomPosts).where(eq(loomPosts.id, parsed.data.postId)).limit(1);
+    const [post] = await db.select({ id: loomPosts.id }).from(loomPosts).where(and(eq(loomPosts.id, parsed.data.postId), eq(loomPosts.moderationStatus, "visible"))).limit(1);
     if (!post) return NextResponse.json({ error: "Post not found." }, { status: 404 });
     await db.insert(loomSavedPosts).values({ userId: user.id, postId: post.id }).onConflictDoNothing();
     return NextResponse.json({ ok: true }, { status: 201 });
