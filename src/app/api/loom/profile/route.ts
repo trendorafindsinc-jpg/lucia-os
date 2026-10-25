@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 const profileSchema = z.object({
   businessName: z.string().trim().max(120).default(""),
   bio: z.string().trim().max(500).default(""),
-  website: z.union([z.literal(""), z.string().url().max(300)]).default(""),
+  website: z.union([z.literal(""), z.string().url().max(300).refine(value => /^https?:\/\//i.test(value))]).default(""),
 }).strict();
 
 export async function GET() {
