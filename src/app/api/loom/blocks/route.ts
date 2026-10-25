@@ -1,4 +1,5 @@
 import { and, desc, eq, or } from "drizzle-orm";
+import { consumeLoomRateLimit } from "@/lib/loom/rate-limit";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -43,6 +44,8 @@ export async function POST(request: Request) {
   if (!parsed.success || parsed.data.userId === user.id) return NextResponse.json({ error: "Choose another member." }, { status: 422 });
   try {
     const db = getDb();
+    const rate = await consumeLoomRateLimit(user.id, "block", 30, 86400000);
+    if (!rate.allowed) return NextResponse.json({ error: "Too many requests. Try again later." }, { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } });
     const [target] = await db.select({ id: appUsers.id }).from(appUsers).where(and(eq(appUsers.id, parsed.data.userId), eq(appUsers.active, true))).limit(1);
     if (!target) return NextResponse.json({ error: "Member not found." }, { status: 404 });
     const [block] = await db.insert(loomBlocks).values({ blockerUserId: user.id, blockedUserId: target.id }).onConflictDoNothing().returning({ id: loomBlocks.id });
