@@ -112,7 +112,7 @@ The source tree contains **27 `.test.ts` files**. The quality workflow runs inst
 
 ### P2 — Production/runtime evidence is not part of this source audit
 
-No production database was queried or changed. One existing, isolated Neon QA branch was inspected using read-only PostgreSQL catalog queries; no data rows were queried and no database was changed. No migration was run. No DNS, Vercel configuration, secrets, deployment, or customer content was changed. No live-site browser smoke test or real LUCIA Core OAuth round trip was executed in this audit. The two known-good published customer sites are not identified as test fixtures in the audited repository.
+No production database was queried or changed. Two existing, isolated Neon QA branches were inspected using read-only PostgreSQL catalog queries; no data rows were queried and no database was changed. No migration was run. Vercel control-plane inspection confirms the current production deployment is `READY` on `main` commit `95c667d06896f1882478fd56819c4e7651289908`, with `os.lucia.name.ng` and `*.lucia.name.ng` aliases attached and marked verified. This proves deployment/domain attachment status only; it does not prove HTTP page rendering, correct tenant routing, TLS from every client, or end-to-end publish behavior. No Vercel configuration, secrets, deployment, DNS, or customer content was changed. An external browser fetch of the live URLs was unavailable through the current inspection tool, so a live-site browser smoke test and real LUCIA Core OAuth round trip remain unexecuted. The two known-good published customer sites are not identified as test fixtures in the audited repository.
 
 The audit PR's GitHub Actions `verify` job completed successfully on commit `04ffedd96359057d7c2753e47dfce127b8b1fdd3`: dependency installation, lint, type check, unit tests, and production build all passed. A separate external check named `Workers Builds: lucia-os` reported failure on the same commit; its build log has not yet been inspected, so it remains an unresolved check and is not assumed to be harmless. The successful repository quality job is useful CI evidence, but it does not substitute for live integration checks or a fresh quality run against the current `main` head.
 
@@ -132,6 +132,7 @@ The audit PR's GitHub Actions `verify` job completed successfully on commit `04f
 - [ ] Verify Core OAuth against a provisioned test client and isolated non-production database.
 - [x] Inspect RLS catalog state read-only on the existing isolated Neon QA branch; uncovered tables and missing non-owner role recorded.
 - [ ] Verify cross-tenant read/write denial against a fresh, current non-production PostgreSQL branch, including RLS and non-owner role behavior.
+- [x] Inspect Vercel production deployment and domain attachment status read-only; production deployment is READY and platform/wildcard aliases are marked verified.
 - [ ] Verify wildcard subdomain, custom domain, publish and live rendering end to end.
 - [ ] Identify and run regression checks for both known-good published customer sites.
 - [ ] Review the findings and remaining checks with the user before Phase 01 is marked VERIFIED/ACCEPTED.
