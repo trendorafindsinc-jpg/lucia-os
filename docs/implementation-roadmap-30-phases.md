@@ -31,8 +31,8 @@ This is the single source of truth for implementation order. Read it and the [Un
 | 04 | Organisation workspaces | Organisation context and membership | Multiple organisations remain isolated |
 | 05 | Roles, permissions and audit | Scoped access control | Server-side allow/deny and audit tests pass |
 | 06 | Template design system | Reusable design tokens and component rules | Accessibility, responsive and compatibility checks |
-| 07 | Template catalogue / Loom Library | Distinct website compositions | Actual-composition previews; tenant edits cannot mutate shared designs |
-| 08 | Guided onboarding and AI creation | Real creation journey and LoomifiAI handoff | Real action-to-task-to-saved-draft flow; AI remains optional |
+| 07 | Template catalogue / Layouts | Distinct website compositions | Actual-composition previews; tenant edits cannot mutate shared designs |
+| 08 | Guided onboarding and AI creation | Real creation journey and loomifyAI handoff | Real action-to-task-to-saved-draft flow; AI remains optional |
 | 09 | Visual editor / Layer Studio | Connected editing experience | Changes persist and appear in the same renderer/preview |
 | 10 | Pages, navigation and sections | Multi-page website structure | Route and section changes round-trip through persistence |
 | 11 | Blog, media and content | Durable tenant-safe content/assets | Asset access and content rendering are authorised and safe |
@@ -76,8 +76,8 @@ Read `docs/phase-5-roles-permissions-audit.md`. Verify server-side resource/acti
 ### Phase 06 — Template design system
 Read `docs/phase-6-template-design-system.md` and `docs/website-engine-blueprint.md`. Verify supported tokens/components, responsive/accessibility standards, schema compatibility and safe migrations.
 
-### Phase 07 — Template catalogue / Loom Library
-Read `docs/phase-7-template-catalogue.md`. Designs must differ in composition, not just colour. Previews must reflect actual supported designs. Customer edits cannot mutate shared designs or another tenant.
+### Phase 07 — Template catalogue / Layouts
+Read `docs/phase-7-template-catalogue.md`. Use **Layouts** as the customer-facing library name; “Loom Library” in legacy docs is historical. Designs must differ in composition, not just colour. Previews must reflect actual supported designs. Customer edits cannot mutate shared designs or another tenant.
 
 ### Phase 08 — Guided onboarding and AI creation
 Read `docs/phase-8-guided-onboarding.md` and the AI flow in `docs/website-engine-blueprint.md`. The create/proposal action must really trigger a durable task, validate output, save a real editable draft and hand off to Layer Studio. No fake progress. AI failure must not block manual/template creation.
