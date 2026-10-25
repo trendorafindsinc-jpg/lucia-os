@@ -1,11 +1,12 @@
 import { and, eq, sql } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { getDb } from "@/lib/db/client";
-import { websitePages, websiteStructures, websites } from "@/lib/db/schema";
+import { websitePages, websiteStructures } from "@/lib/db/schema";
 import { siteDraftSchema } from "@/lib/editor/site-draft";
 import { siteDraftToLoomBlueprint, type LoomBlueprint } from "@/lib/loom/blueprint";
 import { siteStructurePageToBlueprint } from "@/lib/site-structure/loom-adapter";
 import { siteStructureSchema } from "@/lib/site-structure/structure";
+import { resolvePublicWebsiteBySlug } from "@/lib/domains/public-lookup";
 import { LoomRenderer } from "@/components/loom/loom-renderer";
 
 export const runtime = "nodejs";
@@ -20,11 +21,7 @@ export default async function PublishedWebsitePage({ params }: PageProps) {
 
   try {
     const db = getDb();
-    const [website] = await db.select({
-      id: websites.id,
-      organizationId: websites.organizationId,
-    }).from(websites).where(and(eq(websites.slug, slug), eq(websites.status, "published"))).limit(1);
-
+    const website = await resolvePublicWebsiteBySlug(slug);
     if (!website) notFound();
     const pagePath = path.length ? "/" + path.join("/") : "/";
     const pageData = await db.transaction(async (tx) => {
