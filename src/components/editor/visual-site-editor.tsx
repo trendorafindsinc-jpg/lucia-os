@@ -22,6 +22,7 @@ export function VisualSiteEditor() {
   const [aiProposal, setAiProposal] = useState<LoomBlueprint | null>(null);
   const [aiError, setAiError] = useState("");
   const [versions, setVersions] = useState<SavedWebsiteVersion[]>([]);
+  const [isLoadingVersions, setIsLoadingVersions] = useState(false);
   const [versionLabel, setVersionLabel] = useState("Checkpoint");
   const [versionBusy, setVersionBusy] = useState(false);
   const [versionError, setVersionError] = useState("");
@@ -37,6 +38,7 @@ export function VisualSiteEditor() {
     if (!savedWebsiteId) return;
     setWebsiteId(savedWebsiteId);
     setIsLoadingSaved(true);
+    setIsLoadingVersions(true);
     fetch(`/api/websites/${encodeURIComponent(savedWebsiteId)}/versions`, { cache: "no-store" })
       .then(async (response) => {
         const payload = await response.json();
@@ -44,7 +46,8 @@ export function VisualSiteEditor() {
         setVersions(Array.isArray(payload.versions) ? payload.versions : []);
         setVersionError("");
       })
-      .catch((error: unknown) => setVersionError(error instanceof Error ? error.message : "Version history is temporarily unavailable."));
+      .catch((error: unknown) => setVersionError(error instanceof Error ? error.message : "Version history is temporarily unavailable."))
+      .finally(() => setIsLoadingVersions(false));
     fetch(`/api/websites/${encodeURIComponent(savedWebsiteId)}/draft`, { cache: "no-store" })
       .then(async (response) => {
         const data = await response.json();
@@ -263,9 +266,9 @@ export function VisualSiteEditor() {
             <div className="loomifi-card-top"><span className="editor-kicker">VERSION HISTORY</span><h3 id="version-history-title">Saved checkpoints</h3></div>
             <p>Save a named checkpoint of the visual draft and related website metadata. Restore currently brings back visual editor fields only; pages, SEO settings and blog/media content are not restored. It never publishes.</p>
             <label className="editor-field">Checkpoint name<input value={versionLabel} maxLength={80} onChange={(event) => setVersionLabel(event.target.value)} /></label>
-            <button type="button" className="loomifi-generate" onClick={saveVersionCheckpoint} disabled={!websiteId || isLoadingSaved || savedDraftUnavailable || isSaving || versionBusy || !validation.success}>{versionBusy ? "Saving checkpoint…" : "Save checkpoint"}</button>
+            <button type="button" className="loomifi-generate" onClick={saveVersionCheckpoint} disabled={!websiteId || isLoadingSaved || isLoadingVersions || savedDraftUnavailable || isSaving || versionBusy || !validation.success}>{versionBusy ? "Saving checkpoint…" : "Save checkpoint"}</button>
             {versionError && <p className="loomifi-error" role="alert">{versionError}</p>}
-            {versions.length ? <div className="editor-section-list">{versions.map((version) => <div className="editor-section-row" key={version.id}><div><strong>{version.label}</strong><small>{new Date(version.createdAt).toLocaleString()}</small></div><button type="button" onClick={() => restoreVisualDraft(version)} disabled={isLoadingSaved || isSaving || versionBusy}>Restore visual draft</button></div>)}</div> : <p className="loomifi-helper">{websiteId ? "No saved checkpoints yet." : "Open a saved website to enable checkpoints."}</p>}
+            {isLoadingVersions ? <p className="loomifi-helper">Loading saved checkpoints…</p> : versions.length ? <div className="editor-section-list">{versions.map((version) => <div className="editor-section-row" key={version.id}><div><strong>{version.label}</strong><small>{new Date(version.createdAt).toLocaleString()}</small></div><button type="button" onClick={() => restoreVisualDraft(version)} disabled={isLoadingSaved || isSaving || versionBusy}>Restore visual draft</button></div>)}</div> : <p className="loomifi-helper">{websiteId ? "No saved checkpoints yet." : "Open a saved website to enable checkpoints."}</p>}
           </section>
           <label className="editor-field">Starting design<select value={draft.templateId} onChange={(event) => { setDraft(makeInitialDraft(event.target.value)); setSaveLabel("Unsaved changes"); setNotice(""); }}>{websiteTemplates.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
           <label className="editor-field">Website name<input value={draft.siteName} maxLength={80} onChange={(event) => update("siteName", event.target.value)} /></label>
