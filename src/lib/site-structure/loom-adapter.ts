@@ -56,7 +56,7 @@ export function siteStructurePageToBlueprint(draft: SiteDraft, structure: SiteSt
     };
   });
 
-  if (!sections.length) sections.push(base.pages[0].sections[0]);
+  if (!sections.length) return base;
   const navigation = structure.navigationPageIds
     .map((id) => structure.pages.find((candidate) => candidate.id === id))
     .filter((candidate): candidate is NonNullable<typeof candidate> => Boolean(candidate))
