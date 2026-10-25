@@ -47,6 +47,9 @@ export async function POST(request: Request) {
   try {
     const db = getDb();
     const result = await db.transaction(async (tx) => {
+      // This identity comes from the verified server session, never request data.
+      await tx.execute(sql`select set_config('app.current_user_id', ${user.id}, true)`);
+
       // Reuse an organisation only when the signed-in user already has an active
       // membership in it. This prevents repeated setup submissions from creating
       // another organisation while never exposing another user's workspace.
@@ -80,6 +83,8 @@ export async function POST(request: Request) {
         organization = created;
         createdOrganization = true;
 
+        // Membership insertion is scoped to the organisation created above.
+        await tx.execute(sql`select set_config('app.current_organization_id', ${organization.id}, true)`);
         await tx.insert(memberships).values({
           organizationId: organization.id,
           userId: user.id,
