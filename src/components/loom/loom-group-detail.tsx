@@ -23,6 +23,11 @@ export function LoomGroupDetail({ groupId }: { groupId: string }) {
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [replyErrors, setReplyErrors] = useState<Record<string, string>>({});
   const [replyBusy, setReplyBusy] = useState<Record<string, boolean>>({});
+  const [reportOpen, setReportOpen] = useState<Record<string, boolean>>({});
+  const [reportReasons, setReportReasons] = useState<Record<string, string>>({});
+  const [reportDetails, setReportDetails] = useState<Record<string, string>>({});
+  const [reportBusy, setReportBusy] = useState<Record<string, boolean>>({});
+  const [reportMessages, setReportMessages] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     setLoading(true); setError("");
@@ -88,6 +93,23 @@ export function LoomGroupDetail({ groupId }: { groupId: string }) {
     }
   }
 
+  async function submitReport(event: FormEvent<HTMLFormElement>, postId: string) {
+    event.preventDefault();
+    if (reportBusy[postId]) return;
+    setReportBusy(current => ({ ...current, [postId]: true })); setError("");
+    try {
+      const response = await fetch("/api/loom/reports", { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify({ targetType: "post", targetId: postId, reason: reportReasons[postId] || "other", details: reportDetails[postId] || "" }) });
+      const payload = await response.json() as { error?: string; report?: { id: string } };
+      if (!response.ok) throw new Error(payload.error || "Report could not be submitted.");
+      setReportMessages(current => ({ ...current, [postId]: "Report submitted for staff review." }));
+      setReportOpen(current => ({ ...current, [postId]: false }));
+      setReportDetails(current => ({ ...current, [postId]: "" }));
+    } catch (cause) {
+      setReportMessages(current => ({ ...current, [postId]: cause instanceof Error ? cause.message : "Report could not be submitted." }));
+    } finally {
+      setReportBusy(current => ({ ...current, [postId]: false }));
+    }
+  }
   async function toggleReplies(postId: string) {
     const opening = !openReplies[postId];
     setOpenReplies(current => ({ ...current, [postId]: opening }));
@@ -133,7 +155,7 @@ export function LoomGroupDetail({ groupId }: { groupId: string }) {
           {group.isMember && verified ? <form className="loom-composer loom-group-composer" onSubmit={publish}><label htmlFor="loom-group-post">Start a group discussion</label><textarea id="loom-group-post" rows={4} maxLength={4000} value={body} onChange={event => setBody(event.target.value)} placeholder={"Share a question or lesson with " + group.name + "…"} required/><div className="loom-composer-bottom"><span>{body.length}/4000 characters</span><button type="submit" disabled={posting || !body.trim()}>{posting ? "Publishing…" : "Publish to group ↗"}</button></div></form> : <p className="loom-privacy-note">{!verified ? "Business verification is required to join and publish in groups." : "Join this group to publish discussions and replies."}</p>}
           {notice && <p className="loom-notice" role="status">{notice}</p>}
           <div className="loom-feed-heading"><h2>Group discussions</h2><span>{posts.length}</span></div>
-          {posts.length ? <div className="loom-post-list">{posts.map(post => <article className="loom-post" key={post.id}><div className="loom-post-avatar">{(post.authorName || "L").trim().slice(0,1).toUpperCase()}</div><div className="loom-post-content"><div className="loom-post-meta"><strong>{post.authorName || "LUCIA member"}</strong><span>·</span><time dateTime={post.createdAt}>{new Date(post.createdAt).toLocaleString()}</time></div><p>{post.body}</p><div className="loom-post-actions"><button type="button" onClick={() => void toggleReplies(post.id)}>{openReplies[post.id] ? "Hide replies" : "Replies"}</button></div>{openReplies[post.id] && <div className="loom-replies">{replyErrors[post.id] && <p className="loom-error" role="alert">{replyErrors[post.id]}</p>}{(replies[post.id] || []).map(item => <div className="loom-reply" key={item.id}><strong>{item.authorName || "LUCIA member"}</strong><time dateTime={item.createdAt}>{new Date(item.createdAt).toLocaleString()}</time><p>{item.body}</p></div>)}{verified && group.isMember ? <form className="loom-reply-form" onSubmit={event => void reply(event, post.id)}><textarea aria-label="Write a reply" rows={2} maxLength={2000} value={drafts[post.id] || ""} onChange={event => setDrafts(current => ({ ...current, [post.id]: event.target.value }))} placeholder="Reply to this group discussion…"/><button type="submit" disabled={replyBusy[post.id] || !(drafts[post.id] || "").trim()}>{replyBusy[post.id] ? "Sending…" : "Reply"}</button></form> : <p className="loom-privacy-note">Join the group and verify your business to reply.</p>}</div>}</div></article>)}</div> : <div className="loom-feed-state loom-empty"><h3>No discussions yet.</h3><p>{group.isMember ? "Start the first useful conversation in this group." : "Join this group to start a discussion."}</p></div>}
+          {posts.length ? <div className="loom-post-list">{posts.map(post => <article className="loom-post" key={post.id}><div className="loom-post-avatar">{(post.authorName || "L").trim().slice(0,1).toUpperCase()}</div><div className="loom-post-content"><div className="loom-post-meta"><strong>{post.authorName || "LUCIA member"}</strong><span>·</span><time dateTime={post.createdAt}>{new Date(post.createdAt).toLocaleString()}</time></div><p>{post.body}</p><div className="loom-post-actions"><button type="button" onClick={() => void toggleReplies(post.id)}>{openReplies[post.id] ? "Hide replies" : "Replies"}</button></div><button className="loom-report-toggle" type="button" onClick={() => setReportOpen(current => ({ ...current, [post.id]: !current[post.id] }))}>{reportOpen[post.id] ? "Cancel report" : "Report post"}</button>{reportOpen[post.id] && <form className="loom-report-form" onSubmit={event => void submitReport(event, post.id)}><label htmlFor={"loom-group-report-reason-" + post.id}>Reason</label><select id={"loom-group-report-reason-" + post.id} value={reportReasons[post.id] || "other"} onChange={event => setReportReasons(current => ({ ...current, [post.id]: event.target.value }))}><option value="spam">Spam</option><option value="harassment">Harassment</option><option value="misinformation">Misleading information</option><option value="privacy">Privacy concern</option><option value="other">Other</option></select><label htmlFor={"loom-group-report-details-" + post.id}>Details (optional)</label><textarea id={"loom-group-report-details-" + post.id} rows={2} maxLength={1000} value={reportDetails[post.id] || ""} onChange={event => setReportDetails(current => ({ ...current, [post.id]: event.target.value }))} placeholder="Give the review team useful context."/><button type="submit" disabled={reportBusy[post.id]}>{reportBusy[post.id] ? "Submitting…" : "Send report"}</button></form>}{reportMessages[post.id] && <p className="loom-notice" role="status">{reportMessages[post.id]}</p>}{openReplies[post.id] && <div className="loom-replies">{replyErrors[post.id] && <p className="loom-error" role="alert">{replyErrors[post.id]}</p>}{(replies[post.id] || []).map(item => <div className="loom-reply" key={item.id}><strong>{item.authorName || "LUCIA member"}</strong><time dateTime={item.createdAt}>{new Date(item.createdAt).toLocaleString()}</time><p>{item.body}</p></div>)}{verified && group.isMember ? <form className="loom-reply-form" onSubmit={event => void reply(event, post.id)}><textarea aria-label="Write a reply" rows={2} maxLength={2000} value={drafts[post.id] || ""} onChange={event => setDrafts(current => ({ ...current, [post.id]: event.target.value }))} placeholder="Reply to this group discussion…"/><button type="submit" disabled={replyBusy[post.id] || !(drafts[post.id] || "").trim()}>{replyBusy[post.id] ? "Sending…" : "Reply"}</button></form> : <p className="loom-privacy-note">Join the group and verify your business to reply.</p>}</div>}</div></article>)}</div> : <div className="loom-feed-state loom-empty"><h3>No discussions yet.</h3><p>{group.isMember ? "Start the first useful conversation in this group." : "Join this group to start a discussion."}</p></div>}
         </> : <div className="loom-feed-state loom-empty"><h3>Group unavailable.</h3><p>This group may have been removed or restricted.</p><Link href="/loom/groups">Return to groups ↗</Link></div>}
         {error && <div className="loom-error" role="alert"><span>{error}</span><button type="button" onClick={() => void load()}>Retry</button></div>}
       </section>
