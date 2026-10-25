@@ -67,6 +67,9 @@ Phases 26–28 remain in the 30-phase long-term roadmap but are explicitly out o
 ### Phase 01 — Repository and product audit
 Read the README, architecture, engineering standards, security baseline, unified blueprint, this roadmap, and relevant phase specs. Inspect real routes, UI actions, APIs, schema, migrations, tests, deployment assumptions, and known live-site regression fixtures. Produce an evidence-backed gap map. Do not claim a feature is complete based on docs alone.
 
+**Audit report:** [Phase 01 — Repository and Product Audit](phase-1-repository-product-audit.md).  
+**Current checkpoint (2026-10-25): IN PROGRESS.** Source-level audit and file-backed gap register are recorded. Exact-main quality commands, isolated PostgreSQL/RLS checks, real Core OAuth, host/domain/publish E2E, and known-good customer-site regression checks remain outstanding. Documentation is not a substitute for those checks.
+
 ### Phase 02 — Database foundation and tenant model
 Read `docs/phase-2-database-foundation.md`. Reconcile the actual schema, organisation ownership, constraints, migrations and rollback. Do not reset production data. Test tenant-scoped reads/writes and invalid references.
 
