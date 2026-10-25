@@ -1,4 +1,5 @@
 import { and, desc, eq, notInArray } from "drizzle-orm";
+import { consumeLoomRateLimit } from "@/lib/loom/rate-limit";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -56,6 +57,8 @@ export async function POST(request: Request, context: Context) {
   if (!parsed.success) return NextResponse.json({ error: "Posts must contain 1–4,000 characters." }, { status: 422 });
   try {
     const db = getDb();
+    const rate = await consumeLoomRateLimit(user.id, "group_post", 10, 600000);
+    if (!rate.allowed) return NextResponse.json({ error: "Too many posts. Try again shortly." }, { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } });
     const [verification] = await db.select({ status: loomBusinessVerifications.status }).from(loomBusinessVerifications).where(eq(loomBusinessVerifications.userId, user.id)).limit(1);
     if (verification?.status !== "verified") return NextResponse.json({ error: "Business verification is required to publish in groups." }, { status: 403 });
     const [membership] = await db.select({ id: loomGroupMemberships.id }).from(loomGroupMemberships).where(and(eq(loomGroupMemberships.groupId, groupId), eq(loomGroupMemberships.userId, user.id), eq(loomGroupMemberships.status, "active"))).limit(1);
