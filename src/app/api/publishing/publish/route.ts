@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getOrganizationMembershipsForUser } from "@/lib/access/guards";
 import { hasOrganizationPermission } from "@/lib/access/policy";
 import { getDb } from "@/lib/db/client";
-import { websiteDomains, websitePages, websites } from "@/lib/db/schema";
+import { memberships, websiteDomains, websitePages, websites } from "@/lib/db/schema";
 import { makeInitialDraft, siteDraftSchema } from "@/lib/editor/site-draft";
 import { publishActionSchema, publishSettingsSchema } from "@/lib/publishing/publishing";
 
@@ -44,6 +44,12 @@ export async function POST(request: Request) {
   for (const org of permitted) {
     try {
       const result = await db.transaction(async (tx) => {
+        await tx.execute(sql`select set_config('app.current_user_id', ${user.id}, true)`);
+        const [membership] = await tx.select({ role: memberships.role, status: memberships.status })
+          .from(memberships)
+          .where(and(eq(memberships.organizationId, org.id), eq(memberships.userId, user.id), eq(memberships.status, "active")))
+          .limit(1);
+        if (!membership || !hasOrganizationPermission({ role: membership.role, status: membership.status }, requiredPermission)) return null;
         await tx.execute(sql`select set_config('app.current_organization_id', ${org.id}, true)`);
         const [website] = await tx.select({
           id: websites.id, organizationId: websites.organizationId, slug: websites.slug, status: websites.status,
