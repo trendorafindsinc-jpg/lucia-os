@@ -12,6 +12,7 @@ export function VisualSiteEditor() {
   const [notice, setNotice] = useState("");
   const [websiteId, setWebsiteId] = useState("");
   const [isLoadingSaved, setIsLoadingSaved] = useState(false);
+  const [savedDraftUnavailable, setSavedDraftUnavailable] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveLabel, setSaveLabel] = useState("Unsaved changes");
   const [aiBrief, setAiBrief] = useState("");
@@ -36,9 +37,21 @@ export function VisualSiteEditor() {
         if (!response.ok) throw new Error(data.error || "Couldn't open this saved website.");
         const base = makeInitialDraft(data.draft?.templateId || requested || "northstar-consulting");
         setDraft({ ...base, ...(data.draft ?? {}), siteName: data.draft?.siteName || data.website?.name || base.siteName });
-        setSaveLabel("Saved draft loaded");
+        if (data.draft) {
+          setSavedDraftUnavailable(false);
+          setSaveLabel("Saved draft loaded");
+        } else {
+          // Never allow the default editor draft to overwrite a legacy or malformed saved page.
+          setSavedDraftUnavailable(true);
+          setSaveLabel("Draft needs recovery");
+          setNotice("This website has no valid structured editor draft. Saving is disabled to protect its existing page content.");
+        }
       })
-      .catch((error: unknown) => setNotice(error instanceof Error ? error.message : "Couldn't load this website draft."))
+      .catch((error: unknown) => {
+        setSavedDraftUnavailable(true);
+        setSaveLabel("Couldn't load saved draft");
+        setNotice(error instanceof Error ? `${error.message} Saving is disabled until the saved draft can be loaded.` : "Couldn't load this website draft. Saving is disabled until the saved draft can be loaded.");
+      })
       .finally(() => setIsLoadingSaved(false));
   }, []);
 
@@ -51,6 +64,10 @@ export function VisualSiteEditor() {
   async function saveDraft() {
     if (!websiteId) {
       setNotice("Open a saved website from Websites before saving changes.");
+      return;
+    }
+    if (isLoadingSaved || savedDraftUnavailable) {
+      setNotice("The saved draft could not be safely loaded. Reload this website before trying to save, so existing content is not overwritten.");
       return;
     }
     const checked = siteDraftSchema.safeParse(draft);
@@ -190,7 +207,7 @@ export function VisualSiteEditor() {
           <fieldset className="editor-sections-field"><legend>Page sections</legend><p>Show, hide and reorder the sections on your page.</p><div className="editor-section-list">{Array.from(new Set([...(template?.sections ?? []), ...draft.visibleSections])).map((section) => { const index = draft.visibleSections.indexOf(section); const visible = index !== -1; return <div className={visible ? "editor-section-row" : "editor-section-row is-hidden"} key={section}><label><input type="checkbox" checked={visible} onChange={() => toggleSection(section)} /><span>{section}</span></label><div><button type="button" aria-label={`Move ${section} up`} disabled={!visible || index === 0} onClick={() => update("visibleSections", moveSection(draft.visibleSections, index, -1))}>↑</button><button type="button" aria-label={`Move ${section} down`} disabled={!visible || index === draft.visibleSections.length - 1} onClick={() => update("visibleSections", moveSection(draft.visibleSections, index, 1))}>↓</button></div></div>; })}</div></fieldset>
           {notice && <p className="editor-notice" role="status">{notice}</p>}
           {!validation.success && <p className="editor-notice" role="status">Some fields need a little more text before this draft can be considered valid.</p>}
-          <div className="editor-panel-actions"><button type="button" className="editor-reset" onClick={() => { setDraft(makeInitialDraft(draft.templateId)); setSaveLabel("Unsaved changes"); setNotice("The editor preview was reset. Save to update the stored draft."); }}>Reset design</button><button type="button" className="editor-done" onClick={saveDraft} disabled={!websiteId || isSaving || !validation.success}>{isSaving ? "Saving…" : "Save draft"}</button></div>
+          <div className="editor-panel-actions"><button type="button" className="editor-reset" onClick={() => { setDraft(makeInitialDraft(draft.templateId)); setSaveLabel("Unsaved changes"); setNotice("The editor preview was reset. Save to update the stored draft."); }}>Reset design</button><button type="button" className="editor-done" onClick={saveDraft} disabled={!websiteId || isLoadingSaved || savedDraftUnavailable || isSaving || !validation.success}>{isSaving ? "Saving…" : "Save draft"}</button></div>
         </aside>
         <section className="editor-preview-wrap" aria-label="Live website preview">
           <div className="editor-preview-toolbar"><span><i /> Preview</span><span>Desktop concept</span></div>
