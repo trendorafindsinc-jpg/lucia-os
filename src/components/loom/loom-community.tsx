@@ -7,6 +7,7 @@ import Link from "next/link";
 type Post = { id: string; body: string; createdAt: string; authorId: string; authorName: string | null };
 type Reply = { id: string; postId: string; body: string; createdAt: string; authorId: string; authorName: string | null };
 type Verification = { evidenceType: string; status: string; reviewNote: string | null; submittedAt: string; reviewedAt: string | null } | null;
+type ReactionState = { count: number; reaction: string | null };
 
 export function LoomCommunity() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -36,6 +37,8 @@ export function LoomCommunity() {
   const [reportMessages, setReportMessages] = useState<Record<string, string>>({});
   const [savedStatus, setSavedStatus] = useState<Record<string, string>>({});
   const [savingPost, setSavingPost] = useState<Record<string, boolean>>({});
+  const [reactionState, setReactionState] = useState<Record<string, ReactionState>>({});
+  const [reactionBusy, setReactionBusy] = useState<Record<string, boolean>>({});
 
   const load = useCallback(async (query = "") => {
     setLoading(true);
@@ -46,6 +49,15 @@ export function LoomCommunity() {
       if (!response.ok || !payload.posts) throw new Error(payload.error || "The Loom feed could not be loaded.");
       setPosts(payload.posts);
       setActiveSearch(query);
+      const reactionResults = await Promise.all(payload.posts.map(async post => {
+        try {
+          const reactionResponse = await fetch("/api/loom/reactions?postId=" + encodeURIComponent(post.id), { cache: "no-store" });
+          const reactionPayload = await reactionResponse.json() as ReactionState;
+          if (reactionResponse.ok) return [post.id, { count: reactionPayload.count || 0, reaction: reactionPayload.reaction || null }] as const;
+        } catch { /* Feed remains available if reaction counts are unavailable. */ }
+        return [post.id, { count: 0, reaction: null }] as const;
+      }));
+      setReactionState(current => ({ ...current, ...Object.fromEntries(reactionResults) }));
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "The Loom feed could not be loaded.");
     } finally {
@@ -161,6 +173,25 @@ export function LoomCommunity() {
     }
   }
 
+  async function toggleReaction(postId: string) {
+    if (reactionBusy[postId]) return;
+    setReactionBusy(current => ({ ...current, [postId]: true }));
+    try {
+      const response = await fetch("/api/loom/reactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ postId, reaction: "like" }),
+      });
+      const payload = await response.json() as ReactionState & { error?: string };
+      if (!response.ok) throw new Error(payload.error || "Reaction could not be saved.");
+      setReactionState(current => ({ ...current, [postId]: { count: payload.count, reaction: payload.reaction } }));
+      setReplyErrors(current => ({ ...current, [postId]: "" }));
+    } catch (cause) {
+      setReplyErrors(current => ({ ...current, [postId]: cause instanceof Error ? cause.message : "Reaction could not be saved." }));
+    } finally {
+      setReactionBusy(current => ({ ...current, [postId]: false }));
+    }
+  }
   async function savePost(postId: string) {
     if (savingPost[postId]) return;
     setSavingPost(current => ({ ...current, [postId]: true }));
@@ -261,7 +292,7 @@ export function LoomCommunity() {
                 <div className="loom-post-content">
                   <div className="loom-post-meta"><strong>{post.authorName || "LUCIA member"}</strong><span>·</span><time dateTime={post.createdAt}>{new Date(post.createdAt).toLocaleString()}</time></div>
                   <p>{post.body}</p>
-                  <div className="loom-post-actions"><button type="button" onClick={() => void toggleReplies(post.id)}>{openReplies[post.id] ? "Hide replies" : `Replies ${replies[post.id] ? `(${replies[post.id].length})` : ""}`}</button><button type="button" onClick={() => void toggleReplies(post.id)}>Join discussion ↗</button><button type="button" onClick={() => void savePost(post.id)} disabled={savingPost[post.id]}>{savingPost[post.id] ? "Saving…" : "Save post"}</button></div>
+                  <div className="loom-post-actions"><button type="button" aria-pressed={reactionState[post.id]?.reaction === "like"} className={reactionState[post.id]?.reaction === "like" ? "loom-reacted" : ""} onClick={() => void toggleReaction(post.id)} disabled={reactionBusy[post.id]}>{reactionBusy[post.id] ? "Saving…" : "Like" + (reactionState[post.id] ? " (" + reactionState[post.id].count + ")" : "")}</button><button type="button" onClick={() => void toggleReplies(post.id)}>{openReplies[post.id] ? "Hide replies" : `Replies ${replies[post.id] ? `(${replies[post.id].length})` : ""}`}</button><button type="button" onClick={() => void toggleReplies(post.id)}>Join discussion ↗</button><button type="button" onClick={() => void savePost(post.id)} disabled={savingPost[post.id]}>{savingPost[post.id] ? "Saving…" : "Save post"}</button></div>
                   <button className="loom-report-toggle" type="button" onClick={() => setReportOpen(current => ({ ...current, [post.id]: !current[post.id] }))}>{reportOpen[post.id] ? "Cancel report" : "Report post"}</button>
                   {reportOpen[post.id] && <form className="loom-report-form" onSubmit={event => void submitReport(event, post.id)}>
                     <label htmlFor={`loom-report-reason-${post.id}`}>Reason</label>
