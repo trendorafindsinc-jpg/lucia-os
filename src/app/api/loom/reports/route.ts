@@ -26,6 +26,7 @@ export async function POST(request: Request) {
   try {
     const db = getDb();
     const target = parsed.data;
+    if (target.targetType === "profile" && target.targetId === user.id) return NextResponse.json({ error: "This profile cannot be submitted as a report target." }, { status: 422 });
     let exists = false;
     if (target.targetType === "post") exists = Boolean((await db.select({ id: loomPosts.id }).from(loomPosts).where(eq(loomPosts.id, target.targetId)).limit(1))[0]);
     if (target.targetType === "reply") exists = Boolean((await db.select({ id: loomReplies.id }).from(loomReplies).where(eq(loomReplies.id, target.targetId)).limit(1))[0]);
