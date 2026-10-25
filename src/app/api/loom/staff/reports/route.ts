@@ -2,7 +2,7 @@ import { and, asc, eq, inArray } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getDb } from "@/lib/db/client";
-import { appUsers, loomGroups, loomMemberRestrictions, loomMessages, loomPosts, loomProfiles, loomReplies, loomReports, platformAuditEvents } from "@/lib/db/schema";
+import { appUsers, loomGroups, loomMemberRestrictions, loomMessages, loomNotifications, loomPosts, loomProfiles, loomReplies, loomReports, platformAuditEvents } from "@/lib/db/schema";
 import { requireLoomStaff } from "@/lib/loom/staff";
 
 export const runtime = "nodejs";
@@ -89,6 +89,11 @@ export async function PATCH(request: Request) {
           await tx.insert(loomMemberRestrictions).values({ userId: subjectUserId, status: parsed.data.memberAction === "ban" ? "banned" : "restricted", reason: "Loom moderation action for report " + report.id, createdByStaffUserId: access.user!.id, updatedAt: now })
             .onConflictDoUpdate({ target: loomMemberRestrictions.userId, set: { status: parsed.data.memberAction === "ban" ? "banned" : "restricted", reason: "Loom moderation action for report " + report.id, createdByStaffUserId: access.user!.id, expiresAt: null, liftedAt: null, liftedByStaffUserId: null, updatedAt: now } });
         }
+        await tx.insert(loomNotifications).values({
+          userId: subjectUserId, actorUserId: access.user!.id, kind: parsed.data.memberAction === "lift" ? "member_access_restored" : parsed.data.memberAction === "ban" ? "member_access_removed" : "member_restricted",
+          targetId: report.id,
+          body: parsed.data.memberAction === "lift" ? "A Loom participation restriction has been lifted." : parsed.data.memberAction === "ban" ? "Your Loom access has been removed following staff review." : "Your Loom participation has been restricted following staff review.",
+        });
       }
       if (parsed.data.hideContent) {
         if (report.targetType === "post") {
@@ -111,7 +116,7 @@ export async function PATCH(request: Request) {
       await tx.insert(platformAuditEvents).values({
         actorUserId: access.user!.id,
         actorKind: "platform_staff",
-        action: parsed.data.hideContent ? "loom.moderation.hide_content" : "loom.moderation.review_report",
+        action: parsed.data.memberAction !== "none" ? "loom.moderation.member_access" : parsed.data.hideContent ? "loom.moderation.hide_content" : "loom.moderation.review_report",
         targetType: report.targetType,
         targetId: report.targetId,
         purpose: "Review a community content report.",
