@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addPage, addReusableSection, makeInitialStructure, makePageId, moveReusableSection, removePage, siteStructureSchema, toggleNavigationPage } from "./structure";
+import { addPage, addReusableSection, makeInitialStructure, makePageId, moveReusableSection, removePage, setHomepage, siteStructureSchema, toggleNavigationPage } from "./structure";
 
 describe("site structure", () => {
   it("starts with four valid pages and an existing homepage", () => {
@@ -22,6 +22,16 @@ describe("site structure", () => {
     expect(removePage(structure, "home")).toEqual(structure);
     const onePage = { homePageId: "home", pages: [structure.pages[0]], navigationPageIds: ["home"] };
     expect(removePage(onePage, "home")).toEqual(onePage);
+  });
+
+  it("switches the homepage while preserving unique addresses", () => {
+    const initial = makeInitialStructure();
+    const next = setHomepage(initial, "about");
+    expect(next.homePageId).toBe("about");
+    expect(next.pages.find((page) => page.id === "about")?.slug).toBe("");
+    expect(next.pages.find((page) => page.id === "home")?.slug).toBe("about");
+    expect(siteStructureSchema.safeParse(next).success).toBe(true);
+    expect(initial.homePageId).toBe("home");
   });
 
   it("keeps navigation restricted to existing unique page ids", () => {
