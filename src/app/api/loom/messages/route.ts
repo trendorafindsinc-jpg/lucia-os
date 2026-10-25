@@ -1,4 +1,5 @@
 import { and, asc, eq, or } from "drizzle-orm";
+import { getLoomRestriction } from "@/lib/loom/staff";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -27,6 +28,8 @@ async function isVerified(userId: string) {
 export async function GET(request: Request) {
   const user = await getCurrentUser().catch(() => null);
   if (!user) return NextResponse.json({ error: "Sign in to access messages." }, { status: 401 });
+  const restriction = await getLoomRestriction(user.id).catch(() => null);
+  if (restriction) return NextResponse.json({ error: "Your Loom participation is currently restricted." }, { status: 403 });
   const peer = new URL(request.url).searchParams.get("with");
   if (!z.string().uuid().safeParse(peer).success) return NextResponse.json({ error: "Choose a conversation." }, { status: 400 });
   try {
@@ -56,6 +59,8 @@ export async function POST(request: Request) {
   if (origin && origin !== new URL(request.url).origin) return NextResponse.json({ error: "Invalid origin." }, { status: 403 });
   const user = await getCurrentUser().catch(() => null);
   if (!user) return NextResponse.json({ error: "Sign in to send a message." }, { status: 401 });
+  const restriction = await getLoomRestriction(user.id).catch(() => null);
+  if (restriction) return NextResponse.json({ error: "Your Loom participation is currently restricted." }, { status: 403 });
   let raw: unknown;
   try { raw = await request.json(); } catch { return NextResponse.json({ error: "Submit a valid message." }, { status: 400 }); }
   const parsed = messageSchema.safeParse(raw);
