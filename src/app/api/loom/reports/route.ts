@@ -1,4 +1,5 @@
 import { and, eq, or } from "drizzle-orm";
+import { consumeLoomRateLimit } from "@/lib/loom/rate-limit";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -25,6 +26,8 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: "Choose a valid report reason and target." }, { status: 422 });
   try {
     const db = getDb();
+    const rate = await consumeLoomRateLimit(user.id, "report", 5, 3600000);
+    if (!rate.allowed) return NextResponse.json({ error: "Too many requests. Try again shortly." }, { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } });
     const target = parsed.data;
     if (target.targetType === "profile" && target.targetId === user.id) return NextResponse.json({ error: "This profile cannot be submitted as a report target." }, { status: 422 });
     let exists = false;
