@@ -1,4 +1,5 @@
 import { and, desc, eq, or } from "drizzle-orm";
+import { consumeLoomRateLimit } from "@/lib/loom/rate-limit";
 import { alias } from "drizzle-orm/pg-core";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -60,6 +61,8 @@ export async function POST(request: Request) {
   try {
     if (!(await verified(user.id))) return NextResponse.json({ error: "Business verification is required to send connection requests." }, { status: 403 });
     const db = getDb();
+    const rate = await consumeLoomRateLimit(user.id, "connection", 20, 86400000);
+    if (!rate.allowed) return NextResponse.json({ error: "Too many requests. Try again later." }, { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } });
     const [recipient] = await db.select({ id: appUsers.id }).from(appUsers).where(and(eq(appUsers.id, parsed.data.recipientUserId), eq(appUsers.active, true))).limit(1);
     if (!recipient) return NextResponse.json({ error: "Member not found." }, { status: 404 });
     const recipientRestriction = await getLoomRestriction(recipient.id);
