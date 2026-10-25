@@ -18,8 +18,8 @@ export interface StaffGrant {
 const staffPermissions: Record<StaffRole, ReadonlySet<string>> = {
   support_agent: new Set(["support.cases.read", "support.cases.reply", "support.cases.assign_self"]),
   support_lead: new Set(["support.cases.read", "support.cases.reply", "support.cases.assign_self", "support.cases.assign", "support.cases.resolve"]),
-  platform_operator: new Set(["platform.overview.read", "tenants.read", "tenants.suspend", "support.cases.read", "support.cases.reply", "support.cases.assign", "support.cases.resolve"]),
-  security_reviewer: new Set(["security.incidents.read", "audit.read", "staff.grants.read"]),
+  platform_operator: new Set(["platform.overview.read", "tenants.read", "tenants.suspend", "support.cases.read", "support.cases.reply", "support.cases.assign", "support.cases.resolve", "loom.moderate", "loom.verify_business"]),
+  security_reviewer: new Set(["security.incidents.read", "audit.read", "staff.grants.read", "loom.moderate", "loom.verify_business"]),
 };
 
 export function hasStaffPermission(
