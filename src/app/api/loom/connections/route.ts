@@ -1,4 +1,5 @@
 import { and, desc, eq, or } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -21,16 +22,21 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: "Sign in to view connections." }, { status: 401 });
   try {
     const db = getDb();
-    const connections = await db.select({
+    const requester = alias(appUsers, "loom_requester");
+    const recipient = alias(appUsers, "loom_recipient");
+    const rows = await db.select({
       id: loomConnections.id,
       requesterUserId: loomConnections.requesterUserId,
       recipientUserId: loomConnections.recipientUserId,
       status: loomConnections.status,
       createdAt: loomConnections.createdAt,
-      requesterName: appUsers.displayName,
-    }).from(loomConnections).innerJoin(appUsers, eq(loomConnections.requesterUserId, appUsers.id))
+      requesterName: requester.displayName,
+      recipientName: recipient.displayName,
+    }).from(loomConnections).innerJoin(requester, eq(loomConnections.requesterUserId, requester.id))
+      .innerJoin(recipient, eq(loomConnections.recipientUserId, recipient.id))
       .where(or(eq(loomConnections.requesterUserId, user.id), eq(loomConnections.recipientUserId, user.id)))
       .orderBy(desc(loomConnections.createdAt)).limit(100);
+    const connections = rows.map(row => ({ ...row, direction: row.recipientUserId === user.id ? "incoming" : "outgoing", otherUserName: row.requesterUserId === user.id ? row.recipientName : row.requesterName }));
     return NextResponse.json({ connections }, { headers: { "Cache-Control": "no-store" } });
   } catch {
     return NextResponse.json({ error: "Connections are temporarily unavailable." }, { status: 503 });
