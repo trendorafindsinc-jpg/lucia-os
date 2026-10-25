@@ -41,9 +41,9 @@ The approved first-class LUCIA OS destinations are Overview, Websites, AI Studio
 - **Business Admin:** tailored to companies managing day-to-day activities.
 - **Loom:** community, business discovery, discussions, groups, connections, messaging, collaboration and trust/safety.
 - **LUCIA ID/Core:** authentication only.
-- **LoomifiAI:** optional AI creation assistant.
+- **loomifyAI:** optional AI creation assistant.
 - **Layer Studio:** website editing/creation workspace.
-- **Layouts / Loom Library:** discover reusable website compositions; avoid duplicate product concepts.
+- **Layouts:** discover reusable website compositions.
 
 ## End-of-session report
 
