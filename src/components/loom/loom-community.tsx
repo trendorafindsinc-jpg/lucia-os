@@ -39,6 +39,7 @@ export function LoomCommunity() {
   const [savingPost, setSavingPost] = useState<Record<string, boolean>>({});
   const [reactionState, setReactionState] = useState<Record<string, ReactionState>>({});
   const [reactionBusy, setReactionBusy] = useState<Record<string, boolean>>({});
+  const [reactionErrors, setReactionErrors] = useState<Record<string, string>>({});
 
   const load = useCallback(async (query = "") => {
     setLoading(true);
@@ -185,9 +186,9 @@ export function LoomCommunity() {
       const payload = await response.json() as ReactionState & { error?: string };
       if (!response.ok) throw new Error(payload.error || "Reaction could not be saved.");
       setReactionState(current => ({ ...current, [postId]: { count: payload.count, reaction: payload.reaction } }));
-      setReplyErrors(current => ({ ...current, [postId]: "" }));
+      setReactionErrors(current => ({ ...current, [postId]: "" }));
     } catch (cause) {
-      setReplyErrors(current => ({ ...current, [postId]: cause instanceof Error ? cause.message : "Reaction could not be saved." }));
+      setReactionErrors(current => ({ ...current, [postId]: cause instanceof Error ? cause.message : "Reaction could not be saved." }));
     } finally {
       setReactionBusy(current => ({ ...current, [postId]: false }));
     }
@@ -292,7 +293,7 @@ export function LoomCommunity() {
                 <div className="loom-post-content">
                   <div className="loom-post-meta"><strong>{post.authorName || "LUCIA member"}</strong><span>·</span><time dateTime={post.createdAt}>{new Date(post.createdAt).toLocaleString()}</time></div>
                   <p>{post.body}</p>
-                  <div className="loom-post-actions"><button type="button" aria-pressed={reactionState[post.id]?.reaction === "like"} className={reactionState[post.id]?.reaction === "like" ? "loom-reacted" : ""} onClick={() => void toggleReaction(post.id)} disabled={reactionBusy[post.id]}>{reactionBusy[post.id] ? "Saving…" : "Like" + (reactionState[post.id] ? " (" + reactionState[post.id].count + ")" : "")}</button><button type="button" onClick={() => void toggleReplies(post.id)}>{openReplies[post.id] ? "Hide replies" : `Replies ${replies[post.id] ? `(${replies[post.id].length})` : ""}`}</button><button type="button" onClick={() => void toggleReplies(post.id)}>Join discussion ↗</button><button type="button" onClick={() => void savePost(post.id)} disabled={savingPost[post.id]}>{savingPost[post.id] ? "Saving…" : "Save post"}</button></div>
+                  {reactionErrors[post.id] && <p className="loom-error" role="alert">{reactionErrors[post.id]}</p>}<div className="loom-post-actions"><button type="button" aria-pressed={reactionState[post.id]?.reaction === "like"} className={reactionState[post.id]?.reaction === "like" ? "loom-reacted" : ""} onClick={() => void toggleReaction(post.id)} disabled={reactionBusy[post.id]}>{reactionBusy[post.id] ? "Saving…" : "Like" + (reactionState[post.id] ? " (" + reactionState[post.id].count + ")" : "")}</button><button type="button" onClick={() => void toggleReplies(post.id)}>{openReplies[post.id] ? "Hide replies" : `Replies ${replies[post.id] ? `(${replies[post.id].length})` : ""}`}</button><button type="button" onClick={() => void toggleReplies(post.id)}>Join discussion ↗</button><button type="button" onClick={() => void savePost(post.id)} disabled={savingPost[post.id]}>{savingPost[post.id] ? "Saving…" : "Save post"}</button></div>
                   <button className="loom-report-toggle" type="button" onClick={() => setReportOpen(current => ({ ...current, [post.id]: !current[post.id] }))}>{reportOpen[post.id] ? "Cancel report" : "Report post"}</button>
                   {reportOpen[post.id] && <form className="loom-report-form" onSubmit={event => void submitReport(event, post.id)}>
                     <label htmlFor={`loom-report-reason-${post.id}`}>Reason</label>
