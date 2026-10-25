@@ -3,8 +3,9 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { BillingWorkspace } from "@/components/billing/billing-workspace";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getOrganizationMembershipsForUser } from "@/lib/access/guards";
+import { hasOrganizationPermission } from "@/lib/access/policy";
 import { getDb } from "@/lib/db/client";
-import { billingInvoices } from "@/lib/db/schema";
+import { billingInvoices, memberships } from "@/lib/db/schema";
 import "./billing.css";
 
 export const metadata: Metadata = { title: "Plans & billing | LUCIA OS", description: "Review saved billing records and the current payment integration status." };
@@ -16,6 +17,12 @@ export default async function BillingPage() {
     const db = getDb();
     const orgs = await getOrganizationMembershipsForUser(user.id);
     const grouped = await Promise.all(orgs.map(async (org) => db.transaction(async (tx) => {
+      await tx.execute(sql`select set_config('app.current_user_id', ${user.id}, true)`);
+      const [membership] = await tx.select({ role: memberships.role, status: memberships.status })
+        .from(memberships)
+        .where(and(eq(memberships.organizationId, org.id), eq(memberships.userId, user.id), eq(memberships.status, "active")))
+        .limit(1);
+      if (!membership || !hasOrganizationPermission({ role: membership.role, status: membership.status }, "billing.read")) return [];
       await tx.execute(sql`select set_config('app.current_organization_id', ${org.id}, true)`);
       return tx.select({
         id: billingInvoices.id,
