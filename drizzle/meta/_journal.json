@@ -64,6 +64,13 @@
       "when": 1792886400000,
       "tag": "0008_website_page_tenant_integrity",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792969200000,
+      "tag": "0009_tenant_rls_hardening",
+      "breakpoints": true
     }
   ]
 }
