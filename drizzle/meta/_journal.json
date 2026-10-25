@@ -127,6 +127,13 @@
       "when": 1792969208000,
       "tag": "0017_loom_member_restrictions",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1792969209000,
+      "tag": "0018_loom_member_blocks",
+      "breakpoints": true
     }
   ]
 }
