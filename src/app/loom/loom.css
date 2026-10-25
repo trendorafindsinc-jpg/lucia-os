@@ -65,3 +65,16 @@
 .loom-saved-card>p{line-height:1.65;overflow-wrap:anywhere;white-space:pre-wrap}
 .loom-saved-card>button{border:1px solid rgba(115,139,166,.25);border-radius:10px;padding:.6rem .8rem;background:transparent;color:inherit;font:inherit;font-size:.83rem;cursor:pointer}
 .loom-saved-card>button:disabled{opacity:.55}
+
+.loom-notification-toolbar{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin:1.4rem 0;padding:.8rem 0;border-bottom:1px solid rgba(115,139,166,.2);font-size:.86rem}
+.loom-notification-toolbar button,.loom-notification-item button{border:1px solid rgba(115,139,166,.25);border-radius:10px;padding:.6rem .8rem;background:rgba(255,255,255,.8);color:inherit;font:inherit;font-size:.8rem;cursor:pointer}
+.loom-notification-toolbar button:disabled,.loom-notification-item button:disabled{opacity:.5;cursor:not-allowed}
+.loom-notification-list{display:grid;gap:.65rem}
+.loom-notification-item{display:flex;align-items:flex-start;gap:.8rem;padding:1rem;border:1px solid rgba(115,139,166,.18);border-radius:15px;background:rgba(255,255,255,.72)}
+.loom-notification-item.loom-notification-unread{background:rgba(226,239,252,.7);border-color:rgba(70,115,160,.25)}
+.loom-notification-dot{flex:0 0 8px;width:8px;height:8px;margin-top:.45rem;border-radius:50%;background:#3d7bb5}
+.loom-notification-item:not(.loom-notification-unread) .loom-notification-dot{background:transparent;border:1px solid #9aa8b7}
+.loom-notification-item>div{flex:1;min-width:0}
+.loom-notification-item p{margin:0 0 .35rem;line-height:1.55}
+.loom-notification-item time{font-size:.76rem;color:var(--loom-muted,#64748b)}
+@media(max-width:480px){.loom-notification-item{flex-wrap:wrap}.loom-notification-item button{margin-left:1rem}}
