@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { getTemplateById, websiteTemplates } from "@/lib/templates/catalogue";
 import { makeSiteSlug, organisationTypes, websiteGoals, websiteSetupSchema, type WebsiteSetup } from "@/lib/onboarding/website-setup";
+import { getPreferredTemplateId } from "@/lib/templates/navigation";
 
 const steps = ["Your organisation", "Your website", "Review setup"] as const;
 
@@ -21,13 +22,8 @@ export function WebsiteSetupWizard() {
   const [attempted, setAttempted] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
-  const [savedWebsite, setSavedWebsite] = useState<{ name: string; slug: string } | null>(null);
+  const [savedWebsite, setSavedWebsite] = useState<{ id: string; name: string; slug: string } | null>(null);
   const [draftLoaded, setDraftLoaded] = useState(false);
-
-  useEffect(() => {
-    const requestedTemplate = new URLSearchParams(window.location.search).get("template");
-    if (requestedTemplate && getTemplateById(requestedTemplate)) setTemplateId(requestedTemplate);
-  }, []);
 
   useEffect(() => {
     if (!slugEdited) setSiteSlug(makeSiteSlug(websiteName));
@@ -37,6 +33,7 @@ export function WebsiteSetupWizard() {
     organisationName, websiteName, organisationType, goal, templateId, country, siteSlug,
   }), [organisationName, websiteName, organisationType, goal, templateId, country, siteSlug]);
   useEffect(() => {
+    let restoredTemplateId = "northstar-consulting";
     try {
       const raw = window.localStorage.getItem("lucia-os-website-setup-draft");
       if (raw) {
@@ -46,12 +43,16 @@ export function WebsiteSetupWizard() {
           setWebsiteName(parsed.data.websiteName);
           setOrganisationType(parsed.data.organisationType);
           setGoal(parsed.data.goal);
+          restoredTemplateId = parsed.data.templateId;
           setTemplateId(parsed.data.templateId);
           setCountry(parsed.data.country);
           setSiteSlug(parsed.data.siteSlug);
           setSlugEdited(true);
         }
       }
+      // A template selected from Loom Library must win over an older saved setup draft.
+      const requestedTemplate = new URLSearchParams(window.location.search).get("template");
+      setTemplateId(getPreferredTemplateId(requestedTemplate, restoredTemplateId, (id) => Boolean(getTemplateById(id))));
     } catch {
       window.localStorage.removeItem("lucia-os-website-setup-draft");
     } finally {
@@ -83,7 +84,7 @@ export function WebsiteSetupWizard() {
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify(setup),
       });
-      const payload = await response.json() as { error?: string; website?: { name: string; slug: string } };
+      const payload = await response.json() as { error?: string; website?: { id: string; name: string; slug: string } };
       if (response.status === 401) {
         setSaveError("Sign in with LUCIA ID to save your workspace. Your choices have been saved in this browser and will be restored after sign-in.");
         return;
@@ -141,7 +142,7 @@ export function WebsiteSetupWizard() {
               <div><span>Main goal</span><strong>{goal}</strong></div>
               <div><span>Country</span><strong>{country}</strong></div>
             </div>
-            <div className="setup-actions"><Link className="setup-button setup-button--primary" href="/workspace/websites">Open saved websites</Link><button className="setup-button setup-button--secondary" type="button" onClick={() => { setSubmitted(false); setStep(0); setAttempted(false); }}>Edit setup</button></div>
+            <div className="setup-actions">{savedWebsite && <Link className="setup-button setup-button--primary" href={`/editor?websiteId=${encodeURIComponent(savedWebsite.id)}`}>Open Layer Studio</Link>}<Link className="setup-button setup-button--secondary" href="/workspace/websites">Open saved websites</Link><button className="setup-button setup-button--secondary" type="button" onClick={() => { setSubmitted(false); setStep(0); setAttempted(false); }}>Edit setup</button></div>
           </div>
         ) : (
           <>

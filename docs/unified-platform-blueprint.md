@@ -148,7 +148,7 @@ The precise component layout may evolve during implementation, but the GitHub-pl
 - Connections require mutual consent. Blocking must prevent direct messages and connection requests from the blocked party, including attempts through shared groups or collaboration contexts.
 - Platform-wide moderation authority belongs to authorised LUCIA staff; group owners can manage routine group matters but cannot override platform enforcement.
 - Penalties, appeals, urgent restrictions, evidence access, retention, exports, and deletion must follow documented trust/safety and privacy rules.
-- Paid status is independent of verification. A subscription can never purchase or preserve a verified-business badge.
+- Paid status is independent of verification. A software purchase can never purchase or preserve a verified-business badge.
 - Paid placements must be labelled and kept separate from organic ranking. Paid status must not silently influence verification or trust decisions.
 - Loom bans are Loom-only by default. Cross-product restrictions require a separate explicit authorisation and audit trail.
 
@@ -163,7 +163,7 @@ Explicit, scoped, auditable consent-controlled integration is the proposed safe 
 ### Organisation and tenant isolation
 
 - One LUCIA ID may belong to multiple organisations.
-- An organisation owns its membership, scoped roles, projects, websites, Store, Portals, assets, records, domains, and subscriptions.
+- An organisation owns its membership, scoped roles, projects, websites, Store, Portals, assets, records, domains, purchases, entitlements, and billing records.
 - Every protected read, write, render, export, background job, webhook, and administrative action must be tenant-scoped and authorised on the server.
 - Organisation IDs, hostnames, slugs, URL parameters, browser state, and user-supplied metadata are locators—not proof of permission.
 - Use database constraints and row-level security as defence in depth where supported by the existing architecture.
@@ -181,13 +181,13 @@ Access requires independent checks:
 
 Payment does not grant an administrative role. Administrative role does not automatically grant premium entitlements. Verification badges are not paid entitlements. UI hiding is convenience only; backend enforcement is mandatory.
 
-Potential premium areas include advanced website capabilities/limits/analytics, paid custom-domain activation, advanced Store tools, category-specific Portal capabilities, enhanced Business Admin/team/reporting, and optional AI usage. The exact plan matrix, prices, free limits, metering, and grace periods must be documented and approved separately before billing gates are implemented.
+Potential paid areas include advanced website capabilities/limits/analytics, custom-domain capability, premium design/tools, optional AI packages, and future software modules or product versions. LUCIA's default commercial model is a one-time purchase of a specified product/version, with durable rights to use that purchased version under its licence terms. A later version is a separate purchase unless the listing explicitly includes an upgrade. Exact prices, included features, usage limits, licence terms, discounts, and support/security-update commitments must be documented before sale.
 
-Subscription expiry/downgrade must follow a clear policy. It must not silently delete business data, destroy orders, remove a valid verification status, or unexpectedly erase an existing published site.
+A one-time LUCIA purchase does not cover third-party recurring charges by implication. Domain registration/renewal, paid email, or other external services must be disclosed and charged separately or paid directly to the provider. Do not promise lifetime hosting, unlimited usage, ongoing support, or perpetual security updates unless LUCIA can fund and contractually provide them. Previously purchased versions must not be revoked solely because a newer version is released.
 
 ### Billing and payments
 
-LUCIA OS owns its plan catalogue, trials, subscription state, invoices, discounts, entitlement decisions, and billing ledger. Provider adapters (including Paystack and other explicitly approved providers) are replaceable. Provider status must be verified server-side using authenticated webhooks/API verification, idempotency, and reconciliation. Never commit secrets or trust client-submitted payment state.
+LUCIA OS owns its versioned product catalogue, one-time prices, orders, discount rules, payment records, entitlement decisions, and billing ledger. Provider adapters (including Paystack and other explicitly approved providers) are replaceable. Provider status must be verified server-side using authenticated webhooks/API verification, idempotency, and reconciliation. Never commit secrets or trust client-submitted payment state. Recurring billing is not the default and must not be introduced without a separate explicit product decision.
 
 ### Persistence, versioning, and failure safety
 

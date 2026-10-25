@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addPage, addReusableSection, makeInitialStructure, makePageId, moveReusableSection, removePage, siteStructureSchema, toggleNavigationPage } from "./structure";
+import { addPage, addReusableSection, makeInitialStructure, makePageId, moveReusableSection, removePage, setHomepage, siteStructureSchema, toggleNavigationPage } from "./structure";
 
 describe("site structure", () => {
   it("starts with four valid pages and an existing homepage", () => {
@@ -24,10 +24,35 @@ describe("site structure", () => {
     expect(removePage(onePage, "home")).toEqual(onePage);
   });
 
+  it("switches the homepage while preserving unique addresses", () => {
+    const initial = makeInitialStructure();
+    const next = setHomepage(initial, "about");
+    expect(next.homePageId).toBe("about");
+    expect(next.pages.find((page) => page.id === "about")?.slug).toBe("");
+    expect(next.pages.find((page) => page.id === "home")?.slug).toBe("about");
+    expect(siteStructureSchema.safeParse(next).success).toBe(true);
+    expect(initial.homePageId).toBe("home");
+  });
+
   it("keeps navigation restricted to existing unique page ids", () => {
     const structure = toggleNavigationPage(makeInitialStructure(), "about");
     expect(structure.navigationPageIds).not.toContain("about");
     expect(siteStructureSchema.safeParse({ ...structure, navigationPageIds: ["home", "missing"] }).success).toBe(false);
+  });
+
+  it("rejects duplicate page addresses and a homepage with a non-root address", () => {
+    const structure = makeInitialStructure();
+    const duplicateSlug = {
+      ...structure,
+      pages: structure.pages.map((page) => page.id === "about" ? { ...page, slug: "services" } : page),
+    };
+    expect(siteStructureSchema.safeParse(duplicateSlug).success).toBe(false);
+
+    const nonRootHomepage = {
+      ...structure,
+      pages: structure.pages.map((page) => page.id === "home" ? { ...page, slug: "home" } : page),
+    };
+    expect(siteStructureSchema.safeParse(nonRootHomepage).success).toBe(false);
   });
 
   it("adds and reorders reusable sections without mutating the original", () => {

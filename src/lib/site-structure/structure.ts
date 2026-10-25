@@ -27,8 +27,12 @@ export const siteStructureSchema = z.object({
   navigationPageIds: z.array(z.string()).max(12),
 }).superRefine((structure, ctx) => {
   const ids = structure.pages.map((page) => page.id);
+  const slugs = structure.pages.map((page) => page.slug);
   if (new Set(ids).size !== ids.length) ctx.addIssue({ code: "custom", path: ["pages"], message: "Page IDs must be unique." });
+  if (new Set(slugs).size !== slugs.length) ctx.addIssue({ code: "custom", path: ["pages"], message: "Page addresses must be unique." });
   if (!ids.includes(structure.homePageId)) ctx.addIssue({ code: "custom", path: ["homePageId"], message: "Choose an existing homepage." });
+  const homepage = structure.pages.find((page) => page.id === structure.homePageId);
+  if (homepage && homepage.slug !== "") ctx.addIssue({ code: "custom", path: ["pages"], message: "The homepage must use the root address." });
   if (new Set(structure.navigationPageIds).size !== structure.navigationPageIds.length) ctx.addIssue({ code: "custom", path: ["navigationPageIds"], message: "Navigation items must be unique." });
   for (const id of structure.navigationPageIds) if (!ids.includes(id)) ctx.addIssue({ code: "custom", path: ["navigationPageIds"], message: "Navigation can only include existing pages." });
 });
@@ -61,6 +65,24 @@ export function addPage(structure: SiteStructure, title: string): SiteStructure 
   const slugBase = id === "home" ? "page" : id;
   const page: SitePage = { id, title: cleanTitle, slug: slugBase, sectionTypes: ["hero", "intro", "call-to-action"] };
   return { ...structure, pages: [...structure.pages, page], navigationPageIds: structure.navigationPageIds.length < 12 ? [...structure.navigationPageIds, id] : structure.navigationPageIds };
+}
+
+export function setHomepage(structure: SiteStructure, pageId: string): SiteStructure {
+  const nextHomepage = structure.pages.find((page) => page.id === pageId);
+  if (!nextHomepage || pageId === structure.homePageId) return structure;
+  const currentHomepage = structure.pages.find((page) => page.id === structure.homePageId);
+  if (!currentHomepage) return structure;
+  return {
+    ...structure,
+    homePageId: pageId,
+    pages: structure.pages.map((page) =>
+      page.id === currentHomepage.id
+        ? { ...page, slug: nextHomepage.slug }
+        : page.id === nextHomepage.id
+          ? { ...page, slug: "" }
+          : page,
+    ),
+  };
 }
 
 export function removePage(structure: SiteStructure, pageId: string): SiteStructure {

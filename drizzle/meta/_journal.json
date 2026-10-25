@@ -71,6 +71,27 @@
       "when": 1792969200000,
       "tag": "0009_tenant_rls_hardening",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792969201000,
+      "tag": "0010_website_structures",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792969202000,
+      "tag": "0011_website_content_seo",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792969203000,
+      "tag": "0012_force_rls_billing_ledger",
+      "breakpoints": true
     }
   ]
 }
