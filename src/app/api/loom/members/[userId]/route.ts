@@ -41,7 +41,7 @@ export async function GET(request: Request, context: Context) {
         or(isNull(loomProfiles.id), eq(loomProfiles.moderationStatus, "visible")),
       )).limit(1);
     if (!profile) return NextResponse.json({ error: "Verified public profile not found." }, { status: 404 });
-    return NextResponse.json({ profile }, { headers: { "Cache-Control": "no-store" } });
+    return NextResponse.json({ profile, isSelf: viewer?.id === profile.userId }, { headers: { "Cache-Control": "no-store" } });
   } catch {
     return NextResponse.json({ error: "Public profile is temporarily unavailable." }, { status: 503 });
   }
