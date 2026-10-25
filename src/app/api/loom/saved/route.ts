@@ -1,4 +1,5 @@
 import { and, desc, eq } from "drizzle-orm";
+import { getLoomRestriction } from "@/lib/loom/staff";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -14,6 +15,8 @@ export async function GET() {
   const user = await getCurrentUser().catch(() => null);
   if (!user) return NextResponse.json({ error: "Sign in to view saved posts." }, { status: 401 });
   try {
+    const restriction = await getLoomRestriction(user.id);
+    if (restriction?.status === "banned") return NextResponse.json({ error: "Loom access is unavailable for this account." }, { status: 403 });
     const db = getDb();
     const saved = await db.select({
       id: loomSavedPosts.id,
