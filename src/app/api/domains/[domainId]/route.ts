@@ -1,9 +1,10 @@
 import { and, eq, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getOrganizationMembershipsForUser } from "@/lib/access/guards";
 import { hasOrganizationPermission } from "@/lib/access/policy";
 import { getDb } from "@/lib/db/client";
-import { memberships, organizations, websiteDomains } from "@/lib/db/schema";
+import { websiteDomains } from "@/lib/db/schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,9 +17,7 @@ async function getAuthorizedDomain(domainId: string) {
   const user = await getCurrentUser().catch(() => null);
   if (!user) return { response: error("Sign in with LUCIA ID before managing domains.", 401) };
   const db = getDb();
-  const orgs = await db.select({ id: organizations.id, role: memberships.role, membershipStatus: memberships.status })
-    .from(memberships).innerJoin(organizations, eq(memberships.organizationId, organizations.id))
-    .where(and(eq(memberships.userId, user.id), eq(memberships.status, "active"), eq(organizations.status, "active")));
+  const orgs = await getOrganizationMembershipsForUser(user.id);
   for (const org of orgs) {
     if (!hasOrganizationPermission({ role: org.role, status: org.membershipStatus }, "website.publish")) continue;
     const domain = await db.transaction(async (tx) => {
