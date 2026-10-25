@@ -59,6 +59,9 @@ export async function GET(_request: Request, context: RouteContext) {
     await tx.execute(sql`select set_config('app.current_organization_id', ${website.organizationId}, true)`);
     const [organization] = await tx.select({ status: organizations.status }).from(organizations).where(eq(organizations.id, website.organizationId)).limit(1);
     if (!organization || organization.status !== "active") return null;
+    const [websiteStillAccessible] = await tx.select({ id: websites.id }).from(websites)
+      .where(and(eq(websites.id, website.id), eq(websites.organizationId, website.organizationId))).limit(1);
+    if (!websiteStillAccessible) return null;
     return tx.select().from(websiteVersions)
       .where(and(eq(websiteVersions.websiteId, website.id), eq(websiteVersions.organizationId, website.organizationId)))
       .orderBy(desc(websiteVersions.createdAt)).limit(25);
