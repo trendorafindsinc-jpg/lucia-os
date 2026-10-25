@@ -477,6 +477,7 @@ export const loomProfiles = pgTable("loom_profiles", {
   bio: text("bio").notNull().default(""),
   website: text("website"),
   avatarUrl: text("avatar_url"),
+  moderationStatus: text("moderation_status").notNull().default("visible"),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 }, (table) => [uniqueIndex("loom_profiles_user_uq").on(table.userId)]);
