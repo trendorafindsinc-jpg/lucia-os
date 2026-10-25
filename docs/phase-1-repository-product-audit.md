@@ -76,7 +76,10 @@ The source tree contains **27 `.test.ts` files**. The quality workflow runs inst
 
 **Evidence**
 - RLS policies are present in migrations for websites/pages, billing ledger records, support cases/messages, website domains and website versions.
-- The inspected migrations do not enable equivalent RLS policies for `organizations`, `organization_memberships`, `app_users`, `app_sessions`, or `platform_audit_events`.
+- Read-only catalog inspection on the existing isolated Neon branch `lucia-os-phase1-migration-check` (branch created 2026-10-18; database `lucia_os`) confirmed RLS is enabled on `websites`, `website_pages`, `website_domains`, `support_cases`, `support_messages`, `billing_invoices`, `billing_payment_attempts`, and `billing_webhook_events` in that snapshot.
+- The same branch snapshot reported RLS disabled and zero policies for `organizations`, `organization_memberships`, `app_users`, `app_sessions`, `platform_audit_events`, and `platform_staff_grants`.
+- That branch is an older snapshot and its catalog contained 14 public tables; it did not contain `website_versions`. It is not evidence of the exact current production schema. The finding must be rechecked against a fresh, explicitly non-production branch before any migration is proposed.
+- The only listed Postgres role on that branch was `lucia_os_owner`; no separate non-owner application role was listed. Non-owner RLS enforcement therefore remains unverified.
 - Application code often applies explicit membership checks and organisation filters, which remain necessary; they do not replace the defence-in-depth policy required by `docs/architecture.md` and `docs/security-baseline.md`.
 
 **Impact:** A missed or incorrectly scoped query on uncovered records has less database-level containment. Platform-wide records need deliberately designed access rules rather than indiscriminately applying a tenant policy.
@@ -109,9 +112,9 @@ The source tree contains **27 `.test.ts` files**. The quality workflow runs inst
 
 ### P2 — Production/runtime evidence is not part of this source audit
 
-No production database was queried or changed. No migration was run. No DNS, Vercel configuration, secrets, deployment, or customer content was changed. No live-site browser smoke test or real LUCIA Core OAuth round trip was executed in this audit. The two known-good published customer sites are not identified as test fixtures in the audited repository.
+No production database was queried or changed. One existing, isolated Neon QA branch was inspected using read-only PostgreSQL catalog queries; no data rows were queried and no database was changed. No migration was run. No DNS, Vercel configuration, secrets, deployment, or customer content was changed. No live-site browser smoke test or real LUCIA Core OAuth round trip was executed in this audit. The two known-good published customer sites are not identified as test fixtures in the audited repository.
 
-The latest inspected GitHub Actions summaries show successful quality runs for recent PRs, including the AI button fix and documentation changes. Those results are useful CI evidence, but they do not substitute for live integration checks or a fresh quality run against the current `main` head.
+The audit PR's GitHub Actions `verify` job completed successfully on commit `04ffedd96359057d7c2753e47dfce127b8b1fdd3`: dependency installation, lint, type check, unit tests, and production build all passed. A separate external check named `Workers Builds: lucia-os` reported failure on the same commit; its build log has not yet been inspected, so it remains an unresolved check and is not assumed to be harmless. The successful repository quality job is useful CI evidence, but it does not substitute for live integration checks or a fresh quality run against the current `main` head.
 
 ## Existing work that must not be duplicated blindly
 
@@ -124,9 +127,11 @@ The latest inspected GitHub Actions summaries show successful quality runs for r
 - [x] Read governing product, architecture, roadmap, engineering and security documents.
 - [x] Inventory source routes, domain modules, schema/migrations, tests and CI configuration.
 - [x] Record source-supported gaps and risks with file-level evidence.
+- [x] Run lint, typecheck, Vitest and production build on the Phase 01 audit PR commit (all passed).
 - [ ] Run lint, typecheck, Vitest and production build against the exact current `main` commit.
 - [ ] Verify Core OAuth against a provisioned test client and isolated non-production database.
-- [ ] Verify cross-tenant read/write denial against PostgreSQL, including RLS and non-owner role behavior.
+- [x] Inspect RLS catalog state read-only on the existing isolated Neon QA branch; uncovered tables and missing non-owner role recorded.
+- [ ] Verify cross-tenant read/write denial against a fresh, current non-production PostgreSQL branch, including RLS and non-owner role behavior.
 - [ ] Verify wildcard subdomain, custom domain, publish and live rendering end to end.
 - [ ] Identify and run regression checks for both known-good published customer sites.
 - [ ] Review the findings and remaining checks with the user before Phase 01 is marked VERIFIED/ACCEPTED.
