@@ -409,6 +409,7 @@ export const websiteSeoSettings = pgTable("website_seo_settings", {
   websiteId: uuid("website_id").notNull(),
   createdByUserId: uuid("created_by_user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
   settings: text("settings").notNull(),
+  publishedSettings: text("published_settings"),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 }, (table) => [
