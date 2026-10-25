@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, ilike } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -9,18 +9,20 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const postSchema = z.object({ body: z.string().trim().min(1).max(4000) }).strict();
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const db = getDb();
-    const posts = await db.select({
+    const query = new URL(request.url).searchParams.get("q")?.trim().slice(0, 100);
+    const base = db.select({
       id: loomPosts.id,
       body: loomPosts.body,
       createdAt: loomPosts.createdAt,
       authorId: appUsers.id,
       authorName: appUsers.displayName,
-    }).from(loomPosts).innerJoin(appUsers, eq(loomPosts.authorUserId, appUsers.id))
+    }).from(loomPosts).innerJoin(appUsers, eq(loomPosts.authorUserId, appUsers.id));
+    const posts = await (query ? base.where(ilike(loomPosts.body, `%${query}%`)) : base)
       .orderBy(desc(loomPosts.createdAt)).limit(50);
-    return NextResponse.json({ posts }, { headers: { "Cache-Control": "no-store" } });
+    return NextResponse.json({ posts, query: query || null }, { headers: { "Cache-Control": "no-store" } });
   } catch {
     return NextResponse.json({ error: "Loom community storage is not available. Please try again later." }, { status: 503, headers: { "Cache-Control": "no-store" } });
   }
