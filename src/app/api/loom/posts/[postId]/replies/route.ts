@@ -24,7 +24,7 @@ export async function GET(_request: Request, context: Context) {
       authorId: appUsers.id,
       authorName: appUsers.displayName,
     }).from(loomReplies).innerJoin(appUsers, eq(loomReplies.authorUserId, appUsers.id))
-      .where(eq(loomReplies.postId, postId)).orderBy(asc(loomReplies.createdAt)).limit(100);
+      .where(and(eq(loomReplies.postId, postId), eq(loomReplies.moderationStatus, "visible"))).orderBy(asc(loomReplies.createdAt)).limit(100);
     return NextResponse.json({ replies }, { headers: { "Cache-Control": "no-store" } });
   } catch {
     return NextResponse.json({ error: "Replies are temporarily unavailable." }, { status: 503 });
@@ -47,8 +47,8 @@ export async function POST(request: Request, context: Context) {
     const [verification] = await db.select({ status: loomBusinessVerifications.status })
       .from(loomBusinessVerifications).where(eq(loomBusinessVerifications.userId, user.id)).limit(1);
     if (verification?.status !== "verified") return NextResponse.json({ error: "Only verified businesses can reply. Request business verification in Loom.", code: "BUSINESS_VERIFICATION_REQUIRED" }, { status: 403 });
-    const [parent] = await db.select({ id: loomPosts.id, authorUserId: loomPosts.authorUserId }).from(loomPosts).where(eq(loomPosts.id, postId)).limit(1);
-    if (!parent) return NextResponse.json({ error: "That post could not be found." }, { status: 404 });
+    const [parent] = await db.select({ id: loomPosts.id, authorUserId: loomPosts.authorUserId, moderationStatus: loomPosts.moderationStatus }).from(loomPosts).where(eq(loomPosts.id, postId)).limit(1);
+    if (!parent || parent.moderationStatus !== "visible") return NextResponse.json({ error: "That post could not be found." }, { status: 404 });
     const [reply] = await db.insert(loomReplies).values({ postId, authorUserId: user.id, body: parsed.data.body }).returning({
       id: loomReplies.id, postId: loomReplies.postId, body: loomReplies.body, createdAt: loomReplies.createdAt, authorId: loomReplies.authorUserId,
     });
