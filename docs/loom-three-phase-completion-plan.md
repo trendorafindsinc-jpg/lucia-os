@@ -86,12 +86,12 @@ The UI should use a premium, polished visual language, with a three-column deskt
 - Server-side access checks for verified participation and member restrictions across post creation, replies, reactions, group creation/joining, connection requests, and private messaging.
 - Profile editing, verified-member discovery, connection request/accept/decline, saved-post management, notifications/read state, group creation plus join/leave controls, and a private messages interface for accepted connections.
 - Private messages are scoped to the two participants; messages are marked read when the recipient opens the conversation.
-- Migration-backed tables for community posts/replies, verification, profiles, groups/memberships, connections, reactions, saved posts, reports, messages, notifications, moderation visibility, and member restrictions.
+- Migration-backed tables for community posts/replies, verification, profiles, groups/memberships, connections, reactions, saved posts, reports, messages, notifications, moderation visibility, member restrictions, and member-to-member blocks.
 - `/loom/discussions` routes to the live feed rather than remaining a dead navigation destination; `/loom/staff` provides the staff review interface.
 
 ### Remaining Phase 2 work
-- Complete member-to-member blocking across public feed, search, connections, and messaging; staff moderation now has restrict, remove-access, and lift controls.
-- Add complete group discussion content workflows, group detail pages, profile reporting controls, message notifications, connection-accept notifications, and stronger abuse/rate limiting.
+- Finish block coverage for every remaining community surface and add tests for block/unblock, connection retries, and blocked content visibility; core block/unblock UI and API enforcement are implemented.
+- Add complete group discussion content workflows, group detail pages, profile reporting controls, and stronger abuse/rate limiting.
 - Add automated route-level tests for unauthorised writes, private-message isolation, staff queue permissions, report actions, and restrictions.
 - Review verification evidence handling and ensure the staff queue workflow is operational with real authorised staff grants; evidence references are manually reviewed and do not automatically grant access.
 
@@ -103,5 +103,5 @@ The UI should use a premium, polished visual language, with a three-column deskt
 ### Known limitations
 - No automated or beta-user acceptance test has been performed against the latest UI.
 - Content moderation currently supports hiding posts, replies, groups, and messages. Profile hiding is deliberately rejected because the current profile model has no moderation-visibility field.
-- Staff access removal is implemented for Loom APIs; member-to-member blocking and additional abuse/rate limiting remain outstanding.
+- Staff restriction/removal actions and member-to-member block/unblock are implemented; broader abuse/rate limiting and some block-edge cases remain outstanding.
 - Do not call Loom complete until all three phases meet their exit criteria and the final report separates implemented behavior, verified behavior, and deployment state.
