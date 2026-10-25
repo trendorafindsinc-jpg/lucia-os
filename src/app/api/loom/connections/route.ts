@@ -51,6 +51,11 @@ export async function POST(request: Request) {
     const db = getDb();
     const [recipient] = await db.select({ id: appUsers.id }).from(appUsers).where(and(eq(appUsers.id, parsed.data.recipientUserId), eq(appUsers.active, true))).limit(1);
     if (!recipient) return NextResponse.json({ error: "Member not found." }, { status: 404 });
+    const [existing] = await db.select({ id: loomConnections.id }).from(loomConnections).where(or(
+      and(eq(loomConnections.requesterUserId, user.id), eq(loomConnections.recipientUserId, recipient.id)),
+      and(eq(loomConnections.requesterUserId, recipient.id), eq(loomConnections.recipientUserId, user.id)),
+    )).limit(1);
+    if (existing) return NextResponse.json({ error: "A connection already exists between these members." }, { status: 409 });
     const [connection] = await db.insert(loomConnections).values({ requesterUserId: user.id, recipientUserId: recipient.id, status: "pending" }).returning();
     return NextResponse.json({ connection }, { status: 201, headers: { "Cache-Control": "no-store" } });
   } catch (cause) {
