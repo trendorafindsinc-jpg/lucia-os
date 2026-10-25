@@ -1,4 +1,4 @@
-import { and, asc, eq, ilike, notInArray, or, ne } from "drizzle-orm";
+import { and, asc, eq, ilike, isNull, notInArray, or, ne } from "drizzle-orm";
 import { getLoomRestriction } from "@/lib/loom/staff";
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -29,6 +29,7 @@ export async function GET(request: Request) {
       eq(appUsers.active, true),
       eq(loomBusinessVerifications.status, "verified"),
       ne(appUsers.id, user.id),
+      or(isNull(loomProfiles.id), eq(loomProfiles.moderationStatus, "visible")),
       notInArray(appUsers.id, db.select({ userId: loomBlocks.blockedUserId }).from(loomBlocks).where(eq(loomBlocks.blockerUserId, user.id))),
       notInArray(appUsers.id, db.select({ userId: loomBlocks.blockerUserId }).from(loomBlocks).where(eq(loomBlocks.blockedUserId, user.id))),
     );
