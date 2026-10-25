@@ -67,3 +67,22 @@ export async function withOrganizationScope<T>(
     return operation(transaction);
   });
 }
+
+/**
+ * Runs a query with platform-staff RLS context. Call only after the server has
+ * verified the user's active staff grant and the specific permission required
+ * for this operation. This setting is not itself an authorization check.
+ */
+export async function withPlatformStaffScope<T>(
+  userId: string,
+  operation: (transaction: DatabaseTransaction) => Promise<T>,
+): Promise<T> {
+  const authenticatedUserId = normalizeUserId(userId);
+  return getDb().transaction(async (transaction) => {
+    await transaction.execute(
+      sql`select set_config('app.current_user_id', ${authenticatedUserId}, true)`,
+    );
+    await transaction.execute(sql`select set_config('app.is_platform_staff', 'true', true)`);
+    return operation(transaction);
+  });
+}
