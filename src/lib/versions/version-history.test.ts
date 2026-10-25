@@ -41,4 +41,17 @@ describe("website version history", () => {
     expect(() => addVersion([], { label: "  ", snapshot })).toThrow("Give this version a name.");
     expect(websiteSnapshotSchema.safeParse({}).success).toBe(false);
   });
+  it("rejects duplicate checkpoint identifiers and unknown snapshot fields", () => {
+    const history = addVersion([], { label: "First", snapshot }, new Date("2026-02-01T00:00:00.000Z"));
+    expect(versionHistorySchema.safeParse([history[0], history[0]]).success).toBe(false);
+    expect(websiteSnapshotSchema.safeParse({ ...snapshot, unexpected: true }).success).toBe(false);
+  });
+
+  it("rejects snapshot page and section collections above their documented bounds", () => {
+    const pages = Array.from({ length: 51 }, (_, index) => ({ id: String(index), title: "Page", slug: String(index), sectionTypes: [] }));
+    const sections = Array.from({ length: 13 }, (_, index) => "section-" + index);
+    expect(websiteSnapshotSchema.safeParse({ ...snapshot, pages }).success).toBe(false);
+    expect(websiteSnapshotSchema.safeParse({ ...snapshot, visibleSections: sections }).success).toBe(false);
+  });
+
 });
