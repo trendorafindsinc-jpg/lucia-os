@@ -6,7 +6,7 @@ import { getOrganizationMembershipsForUser } from "@/lib/access/guards";
 import { hasOrganizationPermission } from "@/lib/access/policy";
 import { getDb } from "@/lib/db/client";
 import { customDomainSchema } from "@/lib/publishing/publishing";
-import { websiteDomains, websites } from "@/lib/db/schema";
+import { memberships, websiteDomains, websites } from "@/lib/db/schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -38,6 +38,12 @@ export async function POST(request: Request) {
     if (!hasOrganizationPermission({ role: org.role, status: org.membershipStatus }, "website.publish")) continue;
     try {
       const result = await db.transaction(async (tx) => {
+        await tx.execute(sql`select set_config('app.current_user_id', ${user.id}, true)`);
+        const [membership] = await tx.select({ role: memberships.role, status: memberships.status })
+          .from(memberships)
+          .where(and(eq(memberships.organizationId, org.id), eq(memberships.userId, user.id), eq(memberships.status, "active")))
+          .limit(1);
+        if (!membership || !hasOrganizationPermission({ role: membership.role, status: membership.status }, "website.publish")) return null;
         await tx.execute(sql`select set_config('app.current_organization_id', ${org.id}, true)`);
         const [website] = await tx.select({ id: websites.id, name: websites.name, slug: websites.slug, status: websites.status })
           .from(websites).where(and(eq(websites.id, input.websiteId as string), eq(websites.organizationId, org.id))).limit(1);
