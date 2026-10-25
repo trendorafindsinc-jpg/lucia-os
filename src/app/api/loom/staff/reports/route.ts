@@ -71,8 +71,7 @@ export async function PATCH(request: Request) {
           const [target] = await tx.select({ userId: loomReplies.authorUserId }).from(loomReplies).where(eq(loomReplies.id, report.targetId)).limit(1);
           subjectUserId = target?.userId ?? null;
         } else if (report.targetType === "profile") {
-          const [target] = await tx.select({ userId: loomProfiles.userId }).from(loomProfiles).where(eq(loomProfiles.userId, report.targetId)).limit(1);
-          subjectUserId = target?.userId ?? null;
+          subjectUserId = report.targetId;
         } else if (report.targetType === "group") {
           const [target] = await tx.select({ userId: loomGroups.createdByUserId }).from(loomGroups).where(eq(loomGroups.id, report.targetId)).limit(1);
           subjectUserId = target?.userId ?? null;
@@ -104,7 +103,7 @@ export async function PATCH(request: Request) {
         } else if (report.targetType === "message") {
           await tx.delete(loomMessages).where(eq(loomMessages.id, report.targetId));
         } else if (report.targetType === "profile") {
-          await tx.update(loomProfiles).set({ moderationStatus: "hidden", updatedAt: now }).where(eq(loomProfiles.userId, report.targetId));
+          await tx.insert(loomProfiles).values({ userId: report.targetId, moderationStatus: "hidden", updatedAt: now }).onConflictDoUpdate({ target: loomProfiles.userId, set: { moderationStatus: "hidden", updatedAt: now } });
         }
       }
       await tx.update(loomReports).set({
