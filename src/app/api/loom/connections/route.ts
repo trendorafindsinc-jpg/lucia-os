@@ -5,7 +5,7 @@ import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
 import { getLoomRestriction } from "@/lib/loom/staff";
-import { appUsers, loomBusinessVerifications, loomConnections, loomNotifications } from "@/lib/db/schema";
+import { appUsers, loomBlocks, loomBusinessVerifications, loomConnections, loomNotifications } from "@/lib/db/schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -64,12 +64,16 @@ export async function POST(request: Request) {
     if (!recipient) return NextResponse.json({ error: "Member not found." }, { status: 404 });
     const recipientRestriction = await getLoomRestriction(recipient.id);
     if (recipientRestriction) return NextResponse.json({ error: "This member is not currently available for connections." }, { status: 403 });
-    const [existing] = await db.select({ id: loomConnections.id }).from(loomConnections).where(or(
+    const [block] = await db.select({ id: loomBlocks.id }).from(loomBlocks).where(or(and(eq(loomBlocks.blockerUserId, user.id), eq(loomBlocks.blockedUserId, recipient.id)), and(eq(loomBlocks.blockerUserId, recipient.id), eq(loomBlocks.blockedUserId, user.id)))).limit(1);
+    if (block) return NextResponse.json({ error: "A member in this connection has blocked the other." }, { status: 403 });
+    const [existing] = await db.select({ id: loomConnections.id, status: loomConnections.status }).from(loomConnections).where(or(
       and(eq(loomConnections.requesterUserId, user.id), eq(loomConnections.recipientUserId, recipient.id)),
       and(eq(loomConnections.requesterUserId, recipient.id), eq(loomConnections.recipientUserId, user.id)),
     )).limit(1);
-    if (existing) return NextResponse.json({ error: "A connection already exists between these members." }, { status: 409 });
-    const [connection] = await db.insert(loomConnections).values({ requesterUserId: user.id, recipientUserId: recipient.id, status: "pending" }).returning();
+    if (existing && (existing.status === "pending" || existing.status === "accepted")) return NextResponse.json({ error: "A connection already exists between these members." }, { status: 409 });
+    const [connection] = existing
+      ? await db.update(loomConnections).set({ requesterUserId: user.id, recipientUserId: recipient.id, status: "pending", updatedAt: new Date() }).where(eq(loomConnections.id, existing.id)).returning()
+      : await db.insert(loomConnections).values({ requesterUserId: user.id, recipientUserId: recipient.id, status: "pending" }).returning();
     try { await db.insert(loomNotifications).values({ userId: recipient.id, actorUserId: user.id, kind: "connection_request", targetId: connection.id, body: `${user.displayName || "A Loom member"} sent you a connection request.` }); } catch { /* The connection request remains successful if notification delivery fails. */ }
     return NextResponse.json({ connection }, { status: 201, headers: { "Cache-Control": "no-store" } });
   } catch (cause) {
