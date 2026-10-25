@@ -169,6 +169,7 @@ export function LoomCommunity() {
           <a className="loom-rail-active" href="#feed">◉ Community feed</a>
           <a href="#compose">＋ New discussion</a>
           <a href="#verification">✓ Business verification</a>
+          <Link href="/loom/discussions">Discussions</Link><Link href="/loom/groups">Groups</Link><Link href="/loom/connections">Connections</Link><Link href="/loom/messages">Messages</Link><Link href="/loom/notifications">Notifications</Link><Link href="/loom/saved">Saved posts</Link><Link href="/loom/profile">Your profile</Link>
           <div className="loom-rail-note"><strong>Build in the open.</strong><p>Share useful lessons, ask thoughtful questions, and learn alongside people building their next thing.</p></div>
         </aside>
         <section className="loom-feed-column" id="feed">
