@@ -6,18 +6,27 @@ import { getTemplateById, websiteTemplates } from "@/lib/templates/catalogue";
 import { editorPalettes, makeInitialDraft, moveSection, siteDraftSchema, type EditorPaletteId, type SiteDraft } from "@/lib/editor/site-draft";
 import { loomBlueprintSchema, siteDraftToLoomBlueprint, type LoomBlueprint } from "@/lib/loom/blueprint";
 import { LoomRenderer } from "@/components/loom/loom-renderer";
+import { websiteSnapshotSchema, type WebsiteSnapshot } from "@/lib/versions/version-history";
+
+type SavedWebsiteVersion = { id: string; label: string; notes: string; createdAt: string; snapshot: WebsiteSnapshot };
 
 export function VisualSiteEditor() {
   const [draft, setDraft] = useState<SiteDraft>(() => makeInitialDraft("northstar-consulting"));
   const [notice, setNotice] = useState("");
   const [websiteId, setWebsiteId] = useState("");
   const [isLoadingSaved, setIsLoadingSaved] = useState(false);
+  const [savedDraftUnavailable, setSavedDraftUnavailable] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveLabel, setSaveLabel] = useState("Unsaved changes");
   const [aiBrief, setAiBrief] = useState("");
   const [aiBusy, setAiBusy] = useState(false);
   const [aiProposal, setAiProposal] = useState<LoomBlueprint | null>(null);
   const [aiError, setAiError] = useState("");
+  const [versions, setVersions] = useState<SavedWebsiteVersion[]>([]);
+  const [isLoadingVersions, setIsLoadingVersions] = useState(false);
+  const [versionLabel, setVersionLabel] = useState("Checkpoint");
+  const [versionBusy, setVersionBusy] = useState(false);
+  const [versionError, setVersionError] = useState("");
   const template = getTemplateById(draft.templateId);
   const validation = useMemo(() => siteDraftSchema.safeParse(draft), [draft]);
   const previewBlueprint = useMemo(() => siteDraftToLoomBlueprint(validation.success ? validation.data : makeInitialDraft(draft.templateId)), [draft, validation]);
@@ -30,15 +39,36 @@ export function VisualSiteEditor() {
     if (!savedWebsiteId) return;
     setWebsiteId(savedWebsiteId);
     setIsLoadingSaved(true);
+    setIsLoadingVersions(true);
+    fetch(`/api/websites/${encodeURIComponent(savedWebsiteId)}/versions`, { cache: "no-store" })
+      .then(async (response) => {
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || "Couldn't load version history.");
+        setVersions(Array.isArray(payload.versions) ? payload.versions : []);
+        setVersionError("");
+      })
+      .catch((error: unknown) => setVersionError(error instanceof Error ? error.message : "Version history is temporarily unavailable."))
+      .finally(() => setIsLoadingVersions(false));
     fetch(`/api/websites/${encodeURIComponent(savedWebsiteId)}/draft`, { cache: "no-store" })
       .then(async (response) => {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Couldn't open this saved website.");
         const base = makeInitialDraft(data.draft?.templateId || requested || "northstar-consulting");
         setDraft({ ...base, ...(data.draft ?? {}), siteName: data.draft?.siteName || data.website?.name || base.siteName });
-        setSaveLabel("Saved draft loaded");
+        if (data.draft) {
+          setSavedDraftUnavailable(false);
+          setSaveLabel("Saved draft loaded");
+        } else {
+          setSavedDraftUnavailable(true);
+          setSaveLabel("Draft needs recovery");
+          setNotice("This website has no valid structured editor draft. Saving is disabled to protect its existing page content.");
+        }
       })
-      .catch((error: unknown) => setNotice(error instanceof Error ? error.message : "Couldn't load this website draft."))
+      .catch((error: unknown) => {
+        setSavedDraftUnavailable(true);
+        setSaveLabel("Couldn't load saved draft");
+        setNotice(error instanceof Error ? `${error.message} Saving is disabled until the saved draft can be loaded.` : "Couldn't load this website draft. Saving is disabled until the saved draft can be loaded.");
+      })
       .finally(() => setIsLoadingSaved(false));
   }, []);
 
@@ -51,6 +81,10 @@ export function VisualSiteEditor() {
   async function saveDraft() {
     if (!websiteId) {
       setNotice("Open a saved website from Websites before saving changes.");
+      return;
+    }
+    if (isLoadingSaved || savedDraftUnavailable) {
+      setNotice("The saved draft could not be safely loaded. Reload this website before trying to save.");
       return;
     }
     const checked = siteDraftSchema.safeParse(draft);
@@ -75,6 +109,69 @@ export function VisualSiteEditor() {
     } finally {
       setIsSaving(false);
     }
+  }
+
+  async function saveVersionCheckpoint() {
+    if (!websiteId || !validation.success || versionBusy) return;
+    const label = versionLabel.trim();
+    if (!label || label.length > 80) { setVersionError("Give this checkpoint a name of 1–80 characters."); return; }
+    setVersionBusy(true);
+    setVersionError("");
+    try {
+      const endpoints = [
+        `/api/websites/${encodeURIComponent(websiteId)}/structure`,
+        `/api/websites/${encodeURIComponent(websiteId)}/content-library`,
+        `/api/websites/${encodeURIComponent(websiteId)}/seo`,
+      ];
+      const responses = await Promise.all(endpoints.map((url) => fetch(url, { cache: "no-store" })));
+      const payloads = await Promise.all(responses.map((response) => response.json()));
+      const failed = responses.findIndex((response) => !response.ok);
+      if (failed !== -1) throw new Error(payloads[failed]?.error || "Could not read all website metadata for a complete checkpoint.");
+      const snapshot = websiteSnapshotSchema.safeParse({
+        siteName: draft.siteName,
+        headline: draft.headline,
+        description: draft.description,
+        palette: draft.palette,
+        visibleSections: draft.visibleSections,
+        pages: payloads[0].structure.pages,
+        seoTitle: (payloads[2].settings.title || draft.siteName).slice(0, 70),
+        seoDescription: (payloads[2].settings.description || draft.description).slice(0, 200),
+        contentPostCount: payloads[1].library.posts.length,
+        templateId: draft.templateId,
+        buttonLabel: draft.buttonLabel,
+      });
+      if (!snapshot.success) throw new Error("This checkpoint did not pass validation. Your saved data is unchanged.");
+      const response = await fetch(`/api/websites/${encodeURIComponent(websiteId)}/versions`, {
+        method: "POST", headers: { "Content-Type": "application/json" }, cache: "no-store",
+        body: JSON.stringify({ label, notes: "Saved from Layer Studio", snapshot: snapshot.data }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "Couldn't save this checkpoint.");
+      setVersions((current) => [{ id: payload.id, label, notes: "Saved from Layer Studio", createdAt: payload.createdAt, snapshot: snapshot.data }, ...current].slice(0, 25));
+      setVersionLabel("Checkpoint");
+    } catch (error) {
+      setVersionError(error instanceof Error ? error.message : "Couldn't save a checkpoint. Your saved draft remains unchanged.");
+    } finally { setVersionBusy(false); }
+  }
+
+  function restoreVisualDraft(version: SavedWebsiteVersion) {
+    const snapshot = version.snapshot;
+    const base = makeInitialDraft(snapshot.templateId || draft.templateId);
+    const checked = siteDraftSchema.safeParse({
+      ...base,
+      siteName: snapshot.siteName,
+      headline: snapshot.headline,
+      description: snapshot.description,
+      palette: snapshot.palette,
+      visibleSections: snapshot.visibleSections,
+      buttonLabel: snapshot.buttonLabel || base.buttonLabel,
+    });
+    if (!checked.success) { setVersionError("This checkpoint cannot be restored into the visual editor safely."); return; }
+    setDraft(checked.data);
+    setSaveLabel("Unsaved changes");
+    setNotice("Visual draft restored into the editor only. Choose Save draft to persist it; publishing is not triggered.");
+    setAiProposal(null);
+    setVersionError("");
   }
 
   async function generateAIProposal() {
@@ -181,6 +278,14 @@ export function VisualSiteEditor() {
             {aiError && <p className="loomifi-error" role="alert">{aiError}</p>}
             {aiProposal && <p className="loomifi-helper" role="status">Proposal ready below. Nothing has been saved or published.</p>}
           </section>
+          <section className="loomifi-card" aria-labelledby="version-history-title">
+            <div className="loomifi-card-top"><span className="editor-kicker">VERSION HISTORY</span><h3 id="version-history-title">Saved checkpoints</h3></div>
+            <p>Save a named checkpoint of the visual draft and related website metadata. Restore currently brings back visual editor fields only; pages, SEO settings and blog/media content are not restored. It never publishes.</p>
+            <label className="editor-field">Checkpoint name<input value={versionLabel} maxLength={80} onChange={(event) => setVersionLabel(event.target.value)} /></label>
+            <button type="button" className="loomifi-generate" onClick={saveVersionCheckpoint} disabled={!websiteId || isLoadingSaved || isLoadingVersions || savedDraftUnavailable || isSaving || versionBusy || !validation.success}>{versionBusy ? "Saving checkpoint…" : "Save checkpoint"}</button>
+            {versionError && <p className="loomifi-error" role="alert">{versionError}</p>}
+            {isLoadingVersions ? <p className="loomifi-helper">Loading saved checkpoints…</p> : versions.length ? <div className="editor-section-list">{versions.map((version) => <div className="editor-section-row" key={version.id}><div><strong>{version.label}</strong><small>{new Date(version.createdAt).toLocaleString()}</small></div><button type="button" onClick={() => restoreVisualDraft(version)} disabled={isLoadingSaved || isSaving || versionBusy}>Restore visual draft</button></div>)}</div> : <p className="loomifi-helper">{websiteId ? "No saved checkpoints yet." : "Open a saved website to enable checkpoints."}</p>}
+          </section>
           <label className="editor-field">Starting design<select value={draft.templateId} onChange={(event) => { setDraft(makeInitialDraft(event.target.value)); setSaveLabel("Unsaved changes"); setNotice(""); }}>{websiteTemplates.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
           <label className="editor-field">Website name<input value={draft.siteName} maxLength={80} onChange={(event) => update("siteName", event.target.value)} /></label>
           <label className="editor-field">Main headline<input value={draft.headline} maxLength={100} onChange={(event) => update("headline", event.target.value)} /></label>
@@ -190,7 +295,7 @@ export function VisualSiteEditor() {
           <fieldset className="editor-sections-field"><legend>Page sections</legend><p>Show, hide and reorder the sections on your page.</p><div className="editor-section-list">{Array.from(new Set([...(template?.sections ?? []), ...draft.visibleSections])).map((section) => { const index = draft.visibleSections.indexOf(section); const visible = index !== -1; return <div className={visible ? "editor-section-row" : "editor-section-row is-hidden"} key={section}><label><input type="checkbox" checked={visible} onChange={() => toggleSection(section)} /><span>{section}</span></label><div><button type="button" aria-label={`Move ${section} up`} disabled={!visible || index === 0} onClick={() => update("visibleSections", moveSection(draft.visibleSections, index, -1))}>↑</button><button type="button" aria-label={`Move ${section} down`} disabled={!visible || index === draft.visibleSections.length - 1} onClick={() => update("visibleSections", moveSection(draft.visibleSections, index, 1))}>↓</button></div></div>; })}</div></fieldset>
           {notice && <p className="editor-notice" role="status">{notice}</p>}
           {!validation.success && <p className="editor-notice" role="status">Some fields need a little more text before this draft can be considered valid.</p>}
-          <div className="editor-panel-actions"><button type="button" className="editor-reset" onClick={() => { setDraft(makeInitialDraft(draft.templateId)); setSaveLabel("Unsaved changes"); setNotice("The editor preview was reset. Save to update the stored draft."); }}>Reset design</button><button type="button" className="editor-done" onClick={saveDraft} disabled={!websiteId || isSaving || !validation.success}>{isSaving ? "Saving…" : "Save draft"}</button></div>
+          <div className="editor-panel-actions"><button type="button" className="editor-reset" onClick={() => { setDraft(makeInitialDraft(draft.templateId)); setSaveLabel("Unsaved changes"); setNotice("The editor preview was reset. Save to update the stored draft."); }}>Reset design</button><button type="button" className="editor-done" onClick={saveDraft} disabled={!websiteId || isLoadingSaved || savedDraftUnavailable || isSaving || !validation.success}>{isSaving ? "Saving…" : "Save draft"}</button></div>
         </aside>
         <section className="editor-preview-wrap" aria-label="Live website preview">
           <div className="editor-preview-toolbar"><span><i /> Preview</span><span>Desktop concept</span></div>
