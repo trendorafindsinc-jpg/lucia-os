@@ -81,6 +81,8 @@ export async function PATCH(request: Request) {
   if (origin && origin !== new URL(request.url).origin) return NextResponse.json({ error: "Invalid origin." }, { status: 403 });
   const user = await getCurrentUser().catch(() => null);
   if (!user) return NextResponse.json({ error: "Sign in to manage connection requests." }, { status: 401 });
+  const restriction = await getLoomRestriction(user.id);
+  if (restriction) return NextResponse.json({ error: "Your Loom participation is currently restricted." }, { status: 403 });
   let raw: unknown;
   try { raw = await request.json(); } catch { return NextResponse.json({ error: "Submit a valid action." }, { status: 400 }); }
   const parsed = actionSchema.safeParse(raw);
