@@ -12,6 +12,8 @@ const postSchema = z.object({ body: z.string().trim().min(1).max(4000) }).strict
 
 export async function GET(request: Request) {
   try {
+    const currentUser = await getCurrentUser().catch(() => null);
+    if (currentUser && (await getLoomRestriction(currentUser.id))?.status === "banned") return NextResponse.json({ error: "Loom access is unavailable for this account." }, { status: 403 });
     const db = getDb();
     const query = new URL(request.url).searchParams.get("q")?.trim().slice(0, 100);
     const base = db.select({
