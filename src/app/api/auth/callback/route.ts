@@ -2,7 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db/client";
 import { appUsers, sessions } from "@/lib/db/schema";
-import { getCoreIssuer, matchesOAuthState } from "@/lib/auth/oauth";
+import { getCoreIssuer, getSafeReturnTo, matchesOAuthState } from "@/lib/auth/oauth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -40,14 +40,7 @@ export async function GET(request: Request) {
     .find((part) => part.startsWith("lucia_os_oauth_state="))
     ?.slice("lucia_os_oauth_state=".length);
 
-  const returnTo = request.headers.get("cookie")
-    ?.split(";")
-    .map((part) => part.trim())
-    .find((part) => part.startsWith("lucia_os_return_to="))
-    ?.slice("lucia_os_return_to=".length);
-  const safeReturnTo = returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//") && !returnTo.includes("\\") && !returnTo.startsWith("/api/auth")
-    ? returnTo
-    : "/workspace";
+  const safeReturnTo = getSafeReturnTo(request.headers.get("cookie"));
 
   let failureStage = "state_validation";
   if (!matchesOAuthState(expectedState, state) || !code) {
