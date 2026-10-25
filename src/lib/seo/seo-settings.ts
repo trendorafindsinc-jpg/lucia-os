@@ -1,8 +1,11 @@
 import { z } from "zod";
 
 const secureUrl = z.string().trim().url().refine((value) => {
-  try { return new URL(value).protocol === "https:"; } catch { return false; }
-}, "Use a complete HTTPS URL.");
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && Boolean(url.hostname) && !url.username && !url.password && !url.hash;
+  } catch { return false; }
+}, "Use a complete HTTPS URL without credentials or fragments.");
 
 export const seoSettingsSchema = z.object({
   pageName: z.string().trim().min(1).max(120),
