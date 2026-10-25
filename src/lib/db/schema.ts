@@ -440,7 +440,7 @@ export const websiteFormSubmissions = pgTable("website_form_submissions", {
   organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
   websiteId: uuid("website_id").notNull(),
   formKey: text("form_key").notNull(),
-  values: text("values").notNull(),
+  values: text("submission_values").notNull(),
   status: text("status").notNull().default("new"),
   submittedAt: timestamp("submitted_at", { withTimezone: true }).notNull().defaultNow(),
   retentionUntil: timestamp("retention_until", { withTimezone: true }).notNull().default(sql`now() + interval '90 days'`),
