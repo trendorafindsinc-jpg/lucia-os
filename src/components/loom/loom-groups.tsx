@@ -16,6 +16,8 @@ export function LoomGroups() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [membershipBusy, setMembershipBusy] = useState<Record<string, boolean>>({});
+  const [verified, setVerified] = useState(false);
+  const [verificationLoaded, setVerificationLoaded] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -33,6 +35,13 @@ export function LoomGroups() {
   }, []);
 
   useEffect(() => { void load(); }, [load]);
+
+  useEffect(() => {
+    void fetch("/api/loom/verification", { cache: "no-store" }).then(async response => {
+      const payload = await response.json() as { verification?: { status?: string } | null };
+      if (response.ok) setVerified(payload.verification?.status === "verified");
+    }).catch(() => undefined).finally(() => setVerificationLoaded(true));
+  }, []);
 
   function updateName(value: string) {
     setName(value);
@@ -96,13 +105,13 @@ export function LoomGroups() {
             <label htmlFor="loom-group-name">Group name</label><input id="loom-group-name" value={name} onChange={event => updateName(event.target.value)} minLength={2} maxLength={100} required placeholder="e.g. Independent founders" />
             <label htmlFor="loom-group-slug">Unique address</label><input id="loom-group-slug" value={slug} onChange={event => setSlug(event.target.value.toLowerCase())} maxLength={80} pattern="[a-z0-9]+(-[a-z0-9]+)*" required placeholder="independent-founders" />
             <label htmlFor="loom-group-description">What is this group for?</label><textarea id="loom-group-description" value={description} onChange={event => setDescription(event.target.value)} maxLength={1000} rows={3} placeholder="Explain the group's purpose and who it helps." />
-            <button type="submit" disabled={busy || !name.trim() || !slug.trim()}>{busy ? "Creating…" : "Create group"}</button>
-            <p className="loom-privacy-note">Creating groups requires verified business identity. If you are not verified yet, <Link href="/loom#verification">request verification</Link>.</p>
+            <button type="submit" disabled={!verificationLoaded || !verified || busy || !name.trim() || !slug.trim()}>{!verificationLoaded ? "Checking access…" : !verified ? "Verification required" : busy ? "Creating…" : "Create group"}</button>
+            <p className="loom-privacy-note">{verified ? "Group creation requires verified business identity." : <>Group creation and membership require verified business identity. <Link href="/loom#verification">Request verification</Link>.</>}</p>
           </form>
           {error && <div className="loom-error" role="alert"><span>{error}</span><button type="button" onClick={() => void load()}>Retry</button></div>}
           {notice && <p className="loom-notice" role="status">{notice}</p>}
           <div className="loom-feed-heading"><h2>Public groups</h2><span>{groups.length}</span></div>
-          {loading ? <div className="loom-feed-state">Loading groups…</div> : groups.length ? <div className="loom-group-list">{groups.map(group => <article className="loom-group-card" key={group.id}><span className="loom-group-symbol">L</span><div><h3>{group.name}</h3><p>{group.description || "A public Loom community space."}</p><span className="loom-group-slug">loom / {group.slug}</span></div><button type="button" className="loom-group-join" disabled={membershipBusy[group.id]} onClick={() => void toggleMembership(group)}>{membershipBusy[group.id] ? "Updating…" : group.isMember ? (group.memberRole === "owner" ? "Owner" : "Leave group") : "Join group"}</button></article>)}</div> : <div className="loom-feed-state loom-empty"><h3>No groups yet.</h3><p>Create the first group for your business community. Group creation requires verification.</p></div>}
+          {loading ? <div className="loom-feed-state">Loading groups…</div> : groups.length ? <div className="loom-group-list">{groups.map(group => <article className="loom-group-card" key={group.id}><span className="loom-group-symbol">L</span><div><h3>{group.name}</h3><p>{group.description || "A public Loom community space."}</p><span className="loom-group-slug">loom / {group.slug}</span></div><button type="button" className="loom-group-join" disabled={membershipBusy[group.id] || (!group.isMember && (!verificationLoaded || !verified))} onClick={() => void toggleMembership(group)}>{membershipBusy[group.id] ? "Updating…" : group.isMember ? (group.memberRole === "owner" ? "Owner" : "Leave group") : !verificationLoaded ? "Checking…" : !verified ? "Verify to join" : "Join group"}</button></article>)}</div> : <div className="loom-feed-state loom-empty"><h3>No groups yet.</h3><p>Create the first group for your business community. Group creation requires verification.</p></div>}
         </section>
       </div>
     </main>
