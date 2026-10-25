@@ -121,6 +121,17 @@ describe("POST /api/loomifi-ai/propose authorization boundary", () => {
     expect(response.headers.get("cache-control")).toBe("no-store");
   });
 
+  it("returns a safe provider failure without saving or publishing a proposal", async () => {
+    mocks.propose.mockRejectedValue(new Error("upstream provider detail"));
+    const response = await POST(request({ websiteId, brief }));
+    expect(response.status).toBe(502);
+    await expect(response.json()).resolves.toMatchObject({
+      error: "LoomifiAI could not create a safe proposal. Your existing draft and live site have not been changed.",
+    });
+    expect(mocks.propose).toHaveBeenCalledOnce();
+    expect(response.headers.get("cache-control")).toBe("no-store");
+  });
+
   it("rejects malformed input before database access", async () => {
     const response = await POST(request({ websiteId: "not-a-uuid", brief: "too short" }));
     expect(response.status).toBe(422);
