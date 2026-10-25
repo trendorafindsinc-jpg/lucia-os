@@ -13,6 +13,7 @@
 - Enforce a composite foreign key from website pages `(organization_id, website_id)` to the matching website `(organization_id, id)`. This prevents a page from naming a website in another organisation even when both UUIDs exist.
 - Add a transaction-scoped tenant context helper that uses parameterized `set_config('app.current_organization_id', $1, true)`; the scope is cleared automatically at transaction end.
 - The migration checks for existing mismatched page/website ownership before changing constraints. It must fail safely and report the integrity problem rather than silently reassign or delete data.
+- CI runs `npm run db:check` to catch Drizzle migration journal/schema inconsistency.
 
 ## Security contract
 
@@ -24,10 +25,20 @@
 6. Public published-site reads are intentionally separate from private tenant access. The composite foreign key protects the relationship between a page and its owning website.
 7. Do not run migrations against production as part of this phase. Migration behavior and RLS must be verified on a dedicated non-production Neon branch first.
 
+## Verification recorded (2026-10-25)
+
+- GitHub Actions Quality checks run `40189055910` completed successfully: lint, typecheck, Drizzle migration consistency, unit tests and production build.
+- On disposable Neon branch `phase-2-tenant-integrity-test`, the clean migration preflight passed and the composite ownership foreign key was added. A cross-organisation page/website insert was rejected by the composite FK.
+- On separate disposable branch `phase-2-preflight-failure-test`, a deliberately mismatched page row caused the migration preflight to fail with the expected ownership-integrity exception; the invalid row was not silently rewritten or deleted.
+- A least-privilege test role with `NOBYPASSRLS` was created only on the disposable test branch. With organisation A set as the transaction context, it could not read or update organisation B's draft website.
+- **Blocking gap confirmed:** `organizations` and `organization_memberships` have RLS disabled and no policies on the test snapshot. The test role could read both organisations and both membership rows. This must be resolved before Phase 2 can be accepted.
+- The initial Neon-created test role had `BYPASSRLS`; it was not used as proof of isolation. A separate `NOBYPASSRLS` role was used for the passing website isolation assertion.
+- No production migration, production data change, merge, or deployment occurred.
+
 ## Acceptance evidence still required
 
-- Run lint, TypeScript, unit tests, migration consistency checks and production build against this phase branch.
-- Apply migration on a disposable non-production PostgreSQL/Neon branch and verify rollback/recovery behavior.
-- Prove cross-tenant read/write denial using a valid non-owner application role, including missing/invalid tenant context and mismatched page-to-website ownership.
-- Verify existing tenant website/page records pass the migration preflight.
-- Review the resulting diff and checks before merging. No production database has been provisioned or migrated by this phase.
+- Resolve the RLS gap for `organizations` and `organization_memberships` without breaking the pre-authorization membership lookup flow or creating recursive policies.
+- Wire transaction-scoped tenant/user context into the protected request paths; the helper existing alone does not mean app-wide enforcement is complete.
+- Prove cross-tenant read/write denial across relevant tenant-owned tables with a non-owner, non-`BYPASSRLS` role, including missing/invalid context and mismatched page-to-website ownership.
+- Verify rollback/recovery behavior on a disposable branch and review the full resulting diff.
+- No production migration or merge until the security and acceptance gates pass.
