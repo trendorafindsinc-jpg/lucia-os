@@ -78,6 +78,13 @@
       "when": 1792969201000,
       "tag": "0010_website_structures",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792969202000,
+      "tag": "0011_website_content_seo",
+      "breakpoints": true
     }
   ]
 }
