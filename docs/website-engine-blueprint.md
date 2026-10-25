@@ -4,6 +4,8 @@
 **Scope:** Blueprint and implementation contract; this document does not claim the described features are already implemented.  
 **Repository:** `trendorafindsinc-jpg/lucia-os`
 
+> **Current naming update (supersedes legacy customer-facing terms below):** **Loom** is the business community product; **Layouts** is the website template library; **Layer Studio** is the website editor; **loomifyAI** is the optional AI assistant; **Website Blueprint** is the validated website definition. This document was originally written with “Loom” as a website template and “LoomifiAI” as the assistant. Treat those as legacy terminology, not current UI naming. New customer-facing surfaces and new documentation must follow [Unified Platform Blueprint](unified-platform-blueprint.md). Do not rename persisted identifiers or internal code without a compatibility plan.
+
 ## 1. Product direction
 
 LUCIA OS is a durable, multi-tenant software platform. Version 1 prioritises an excellent website engine. The engine must deliver premium, distinct websites quickly through curated designs and a connected visual editor. AI is an optional creation shortcut—not a required gateway and not a runtime dependency for websites that have already been created.
