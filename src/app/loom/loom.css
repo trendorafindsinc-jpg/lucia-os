@@ -141,3 +141,5 @@
 .loom-message-composer button{border:0;border-radius:10px;padding:.7rem .9rem;background:#14263d;color:#fff;font:inherit;font-size:.83rem;font-weight:650;cursor:pointer}
 .loom-message-composer button:disabled{opacity:.5;cursor:not-allowed}
 @media(max-width:640px){.loom-messages-layout{grid-template-columns:1fr}.loom-conversation-list{border-right:0;border-bottom:1px solid rgba(115,139,166,.18)}.loom-conversation-list>button{display:inline-flex;width:auto;max-width:100%;margin:.2rem}.loom-conversation-list{display:flex;flex-wrap:wrap;align-items:center}.loom-conversation-list h2{width:100%}.loom-message-thread{min-height:440px}.loom-message-history{max-height:420px}}
+
+.loom-member-actions .loom-block-button{background:transparent;color:#7c4350;border:1px solid rgba(124,67,80,.3)}
