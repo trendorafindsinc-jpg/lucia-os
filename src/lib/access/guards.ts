@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
 import { memberships, staffGrants } from "@/lib/db/schema";
 import { assertOrganizationId } from "@/lib/tenancy/tenant-context";
+import { withUserScope } from "@/lib/db/tenant-scope";
 import { hasOrganizationPermission, hasStaffPermission } from "./policy";
 
 /** Resolve staff grants from the database; never accept grants from request data. */
@@ -36,16 +37,20 @@ export async function getCurrentOrganizationAccess(
     return null;
   }
 
-  const db = getDb();
-  const [membership] = await db
-    .select({ organizationId: memberships.organizationId, role: memberships.role, status: memberships.status })
-    .from(memberships)
-    .where(and(
-      eq(memberships.organizationId, organizationId),
-      eq(memberships.userId, user.id),
-      eq(memberships.status, "active"),
-    ))
-    .limit(1);
+  // The verified local user ID is installed only for this transaction so RLS
+  // can permit the user's own membership lookup without opening all memberships.
+  const membership = await withUserScope(user.id, async (tx) => {
+    const [row] = await tx
+      .select({ organizationId: memberships.organizationId, role: memberships.role, status: memberships.status })
+      .from(memberships)
+      .where(and(
+        eq(memberships.organizationId, organizationId),
+        eq(memberships.userId, user.id),
+        eq(memberships.status, "active"),
+      ))
+      .limit(1);
+    return row ?? null;
+  });
 
   if (!membership || !hasOrganizationPermission(membership, permission)) return null;
   return { user, membership };
