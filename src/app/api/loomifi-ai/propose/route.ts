@@ -3,8 +3,9 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { hasOrganizationPermission } from "@/lib/access/policy";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getOrganizationMembershipsForUser } from "@/lib/access/guards";
 import { getDb } from "@/lib/db/client";
-import { memberships, organizations, websites } from "@/lib/db/schema";
+import { websites } from "@/lib/db/schema";
 import { getConfiguredLoomifiAIProvider } from "@/lib/loomifi-ai/gateway";
 import { LoomifiAIError, proposeLoomBlueprint } from "@/lib/loomifi-ai/provider";
 
@@ -49,17 +50,11 @@ export async function POST(request: Request) {
 
   let membershipsForUser: Array<{ organizationId: string; role: string; status: string }>;
   try {
-    membershipsForUser = await db.select({
-      organizationId: memberships.organizationId,
-      role: memberships.role,
-      status: memberships.status,
-    }).from(memberships)
-      .innerJoin(organizations, eq(memberships.organizationId, organizations.id))
-      .where(and(
-        eq(memberships.userId, user.id),
-        eq(memberships.status, "active"),
-        eq(organizations.status, "active"),
-      ));
+    membershipsForUser = (await getOrganizationMembershipsForUser(user.id)).map((membership) => ({
+      organizationId: membership.id,
+      role: membership.role,
+      status: membership.membershipStatus,
+    }));
   } catch {
     return errorResponse("We couldn't verify your website access. Your draft has not been changed.", 503);
   }

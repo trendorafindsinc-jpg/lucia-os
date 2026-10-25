@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getDb } from "@/lib/db/client";
-import { appUsers, memberships, organizations } from "@/lib/db/schema";
+import { getOrganizationMembershipsForUser } from "@/lib/access/guards";
+import { withOrganizationScope } from "@/lib/db/tenant-scope";
+import { appUsers, memberships } from "@/lib/db/schema";
 import { hasOrganizationPermission } from "@/lib/access/policy";
 import { TeamMemberControls } from "@/components/support/team-member-controls";
 
@@ -12,15 +13,14 @@ export default async function WorkspaceTeamPage() {
   const user = await getCurrentUser();
   if (!user) return <main className="workspace-shell"><section className="workspace-card workspace-denied"><span className="workspace-kicker">PEOPLE & ACCESS</span><h1>Sign in to continue.</h1><p>Use LUCIA ID to view the people connected to your organisations.</p><Link className="workspace-button workspace-button-primary" href="/api/auth/login">Sign in with LUCIA ID</Link></section></main>;
 
-  const db = getDb();
-  const ownOrgs = await db.select({ id: organizations.id, name: organizations.name, role: memberships.role, membershipStatus: memberships.status })
-    .from(memberships).innerJoin(organizations, eq(memberships.organizationId, organizations.id))
-    .where(and(eq(memberships.userId, user.id), eq(memberships.status, "active"), eq(organizations.status, "active")));
+  const ownOrgs = await getOrganizationMembershipsForUser(user.id);
   const visibleOrgs = ownOrgs.filter((org) => hasOrganizationPermission({ role: org.role, status: org.membershipStatus }, "members.read"));
   const groups = await Promise.all(visibleOrgs.map(async (org) => {
-    const people = await db.select({ id: appUsers.id, membershipId: memberships.id, displayName: appUsers.displayName, role: memberships.role, status: memberships.status, joinedAt: memberships.createdAt })
-      .from(memberships).innerJoin(appUsers, eq(memberships.userId, appUsers.id))
-      .where(eq(memberships.organizationId, org.id));
+    const people = await withOrganizationScope(org.id, async (tx) =>
+      tx.select({ id: appUsers.id, membershipId: memberships.id, displayName: appUsers.displayName, role: memberships.role, status: memberships.status, joinedAt: memberships.createdAt })
+        .from(memberships).innerJoin(appUsers, eq(memberships.userId, appUsers.id))
+        .where(eq(memberships.organizationId, org.id)),
+    );
     return { ...org, people };
   }));
 

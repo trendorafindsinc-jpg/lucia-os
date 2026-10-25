@@ -1,9 +1,10 @@
 import { and, eq, sql } from "drizzle-orm";
+import { getOrganizationMembershipsForUser } from "@/lib/access/guards";
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { hasOrganizationPermission } from "@/lib/access/policy";
 import { getDb } from "@/lib/db/client";
-import { memberships, organizations, websitePages, websites } from "@/lib/db/schema";
+import { websitePages, websites } from "@/lib/db/schema";
 import { makeInitialDraft, siteDraftSchema } from "@/lib/editor/site-draft";
 
 export const runtime = "nodejs";
@@ -18,10 +19,7 @@ export async function GET() {
     return NextResponse.json({ error: "Website storage is not configured." }, { status: 503, headers: { "Cache-Control": "no-store" } });
   }
   try {
-    const orgs = await db.select({
-      id: organizations.id, role: memberships.role, membershipStatus: memberships.status,
-    }).from(memberships).innerJoin(organizations, eq(memberships.organizationId, organizations.id))
-      .where(and(eq(memberships.userId, user.id), eq(memberships.status, "active"), eq(organizations.status, "active")));
+    const orgs = await getOrganizationMembershipsForUser(user.id);
     const permitted = orgs.filter((org) => hasOrganizationPermission({ role: org.role, status: org.membershipStatus }, "website.publish"));
     const websitesForUser: Array<{ id: string; slug: string; name: string; status: string; headline: string; description: string }> = [];
 

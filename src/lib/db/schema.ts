@@ -99,9 +99,7 @@ export const websitePages = pgTable(
     organizationId: uuid("organization_id")
       .notNull()
       .references(() => organizations.id, { onDelete: "restrict" }),
-    websiteId: uuid("website_id")
-      .notNull()
-      .references(() => websites.id, { onDelete: "cascade" }),
+    websiteId: uuid("website_id").notNull(),
     title: text("title").notNull(),
     path: text("path").notNull(),
     status: text("status").notNull().default("draft"),
@@ -111,6 +109,11 @@ export const websitePages = pgTable(
     updatedAt: updatedAt(),
   },
   (table) => [
+    foreignKey({
+      name: "website_pages_website_org_fk",
+      columns: [table.organizationId, table.websiteId],
+      foreignColumns: [websites.organizationId, websites.id],
+    }).onDelete("cascade"),
     uniqueIndex("website_pages_org_website_path_uq").on(
       table.organizationId,
       table.websiteId,

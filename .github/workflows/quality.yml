@@ -27,6 +27,8 @@ jobs:
         run: npm run lint
       - name: Type check
         run: npm run typecheck
+      - name: Check Drizzle migration consistency
+        run: npm run db:check
       - name: Unit tests
         run: npm test
       - name: Production build

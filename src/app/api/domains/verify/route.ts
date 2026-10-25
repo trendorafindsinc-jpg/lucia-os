@@ -3,9 +3,10 @@ import { resolveTxt } from "node:dns/promises";
 import { and, eq, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getOrganizationMembershipsForUser } from "@/lib/access/guards";
 import { hasOrganizationPermission } from "@/lib/access/policy";
 import { getDb } from "@/lib/db/client";
-import { memberships, organizations, websiteDomains } from "@/lib/db/schema";
+import { websiteDomains } from "@/lib/db/schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,9 +25,7 @@ export async function POST(request: Request) {
   if (!body || typeof body !== "object" || Array.isArray(body) || typeof (body as Record<string, unknown>).domainId !== "string") return error("Choose a registered domain to verify.", 400);
   const domainId = (body as { domainId: string }).domainId;
   const db = getDb();
-  const orgs = await db.select({ id: organizations.id, role: memberships.role, membershipStatus: memberships.status })
-    .from(memberships).innerJoin(organizations, eq(memberships.organizationId, organizations.id))
-    .where(and(eq(memberships.userId, user.id), eq(memberships.status, "active"), eq(organizations.status, "active")));
+  const orgs = await getOrganizationMembershipsForUser(user.id);
   for (const org of orgs) {
     if (!hasOrganizationPermission({ role: org.role, status: org.membershipStatus }, "website.publish")) continue;
     const record = await db.transaction(async (tx) => {

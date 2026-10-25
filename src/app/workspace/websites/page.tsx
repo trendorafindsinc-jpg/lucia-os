@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { and, eq, sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getOrganizationMembershipsForUser } from "@/lib/access/guards";
 import { getDb } from "@/lib/db/client";
-import { memberships, organizations, websites } from "@/lib/db/schema";
+import { websites } from "@/lib/db/schema";
 
 export const metadata = { title: "Your websites" };
 
@@ -13,13 +14,7 @@ export default async function WorkspaceWebsitesPage() {
   }
 
   const db = getDb();
-  const orgs = await db.select({
-    id: organizations.id,
-    name: organizations.name,
-    role: memberships.role,
-  }).from(memberships)
-    .innerJoin(organizations, eq(memberships.organizationId, organizations.id))
-    .where(and(eq(memberships.userId, user.id), eq(memberships.status, "active"), eq(organizations.status, "active")));
+  const orgs = await getOrganizationMembershipsForUser(user.id);
 
   const grouped = await Promise.all(orgs.map(async (org) => {
     const items = await db.transaction(async (tx) => {

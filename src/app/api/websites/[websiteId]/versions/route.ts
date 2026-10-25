@@ -2,9 +2,10 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getOrganizationMembershipsForUser } from "@/lib/access/guards";
 import { hasOrganizationPermission } from "@/lib/access/policy";
 import { getDb } from "@/lib/db/client";
-import { memberships, organizations, websiteVersions, websites } from "@/lib/db/schema";
+import { websiteVersions, websites } from "@/lib/db/schema";
 import { websiteSnapshotSchema } from "@/lib/versions/version-history";
 
 export const runtime = "nodejs";
@@ -18,9 +19,7 @@ const inputSchema = z.object({
 
 async function locateWebsite(websiteId: string, userId: string, permission: string) {
   const db = getDb();
-  const orgs = await db.select({ id: organizations.id, role: memberships.role, membershipStatus: memberships.status })
-    .from(memberships).innerJoin(organizations, eq(memberships.organizationId, organizations.id))
-    .where(and(eq(memberships.userId, userId), eq(memberships.status, "active"), eq(organizations.status, "active")));
+  const orgs = await getOrganizationMembershipsForUser(userId);
   for (const org of orgs) {
     if (!hasOrganizationPermission({ role: org.role, status: org.membershipStatus }, permission)) continue;
     const found = await db.transaction(async (tx) => {

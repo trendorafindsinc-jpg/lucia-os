@@ -1,6 +1,7 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getCurrentOrganizationAccess } from "@/lib/access/guards";
+import { withOrganizationScope } from "@/lib/db/tenant-scope";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
 import { organizations, platformAuditEvents, supportCases, supportMessages } from "@/lib/db/schema";
@@ -19,21 +20,22 @@ export async function GET(request: Request) {
   const access = await getCurrentOrganizationAccess(organizationId, "support.case.read");
   if (!access) return NextResponse.json({ error: "Organisation access denied." }, { status: 403 });
 
-  const db = getDb();
-  const rows = await db
-    .select({
-      id: supportCases.id,
-      subject: supportCases.subject,
-      category: supportCases.category,
-      priority: supportCases.priority,
-      status: supportCases.status,
-      createdAt: supportCases.createdAt,
-      updatedAt: supportCases.updatedAt,
-    })
-    .from(supportCases)
-    .where(eq(supportCases.organizationId, access.membership.organizationId))
-    .orderBy(desc(supportCases.updatedAt))
-    .limit(50);
+  const rows = await withOrganizationScope(access.membership.organizationId, async (tx) =>
+    tx
+      .select({
+        id: supportCases.id,
+        subject: supportCases.subject,
+        category: supportCases.category,
+        priority: supportCases.priority,
+        status: supportCases.status,
+        createdAt: supportCases.createdAt,
+        updatedAt: supportCases.updatedAt,
+      })
+      .from(supportCases)
+      .where(eq(supportCases.organizationId, access.membership.organizationId))
+      .orderBy(desc(supportCases.updatedAt))
+      .limit(50),
+  );
 
   return NextResponse.json({ cases: rows });
 }
@@ -57,6 +59,7 @@ export async function POST(request: Request) {
 
   const db = getDb();
   const created = await db.transaction(async (tx) => {
+    await tx.execute(sql`select set_config('app.current_organization_id', ${access.membership.organizationId}, true)`);
     const [organization] = await tx
       .select({ id: organizations.id })
       .from(organizations)

@@ -1,9 +1,10 @@
 import { and, eq, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getOrganizationMembershipsForUser } from "@/lib/access/guards";
 import { hasOrganizationPermission } from "@/lib/access/policy";
 import { getDb } from "@/lib/db/client";
-import { memberships, organizations, websiteDomains, websitePages, websites } from "@/lib/db/schema";
+import { websiteDomains, websitePages, websites } from "@/lib/db/schema";
 import { makeInitialDraft, siteDraftSchema } from "@/lib/editor/site-draft";
 import { publishActionSchema, publishSettingsSchema } from "@/lib/publishing/publishing";
 
@@ -33,10 +34,7 @@ export async function POST(request: Request) {
 
   let orgRows: Array<{ id: string; role: string; membershipStatus: string }>;
   try {
-    orgRows = await db.select({
-      id: organizations.id, role: memberships.role, membershipStatus: memberships.status,
-    }).from(memberships).innerJoin(organizations, eq(memberships.organizationId, organizations.id))
-      .where(and(eq(memberships.userId, user.id), eq(memberships.status, "active"), eq(organizations.status, "active")));
+    orgRows = await getOrganizationMembershipsForUser(user.id);
   } catch { return jsonError("We couldn't verify your organisation access. Please try again.", 503); }
 
   const requiredPermission = action === "save" ? "website.edit" : "website.publish";
