@@ -13,11 +13,12 @@ export async function getCurrentStaffUser(permission: string) {
   const user = await getCurrentUser();
   if (!user) return null;
 
-  const db = getDb();
-  const grants = await db
-    .select({ role: staffGrants.role, status: staffGrants.status, expiresAt: staffGrants.expiresAt })
-    .from(staffGrants)
-    .where(and(eq(staffGrants.userId, user.id), eq(staffGrants.status, "active")));
+  const grants = await withUserScope(user.id, async (tx) =>
+    tx
+      .select({ role: staffGrants.role, status: staffGrants.status, expiresAt: staffGrants.expiresAt })
+      .from(staffGrants)
+      .where(and(eq(staffGrants.userId, user.id), eq(staffGrants.status, "active"))),
+  );
 
   return hasStaffPermission(grants, permission) ? user : null;
 }
