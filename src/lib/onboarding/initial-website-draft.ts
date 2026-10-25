@@ -9,3 +9,8 @@ export function makeInitialWebsiteDraft(templateId: string, websiteName: string)
     siteName: websiteName,
   });
 }
+
+/** Serialize the structured draft exactly as Layer Studio restores it from the home page. */
+export function serializeInitialWebsiteDraft(templateId: string, websiteName: string): string {
+  return JSON.stringify(makeInitialWebsiteDraft(templateId, websiteName));
+}
