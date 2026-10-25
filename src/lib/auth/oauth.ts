@@ -49,3 +49,29 @@ export function buildAuthorizationUrl(state: string): URL {
   url.searchParams.set("state", state);
   return url;
 }
+
+/** Decode and validate the callback destination from the browser's cookie header. */
+export function getSafeReturnTo(cookieHeader: string | null | undefined): string {
+  const raw = cookieHeader
+    ?.split(";")
+    .map((part) => part.trim())
+    .find((part) => part.startsWith("lucia_os_return_to="))
+    ?.slice("lucia_os_return_to=".length);
+  if (!raw) return "/workspace";
+
+  let destination: string;
+  try {
+    destination = decodeURIComponent(raw);
+  } catch {
+    return "/workspace";
+  }
+
+  if (
+    !destination.startsWith("/") ||
+    destination.startsWith("//") ||
+    destination.includes("\\\\") ||
+    destination.startsWith("/api/auth")
+  ) return "/workspace";
+
+  return destination;
+}
