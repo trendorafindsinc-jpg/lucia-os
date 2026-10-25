@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { makeInitialWebsiteDraft } from "./initial-website-draft";
+import { makeInitialWebsiteDraft, serializeInitialWebsiteDraft } from "./initial-website-draft";
 
 describe("initial website editor draft", () => {
   it("persists the selected template and requested website name", () => {
@@ -7,6 +7,14 @@ describe("initial website editor draft", () => {
     expect(draft.templateId).toBe("schoolhouse");
     expect(draft.siteName).toBe("Bright Future Academy");
     expect(draft.visibleSections.length).toBeGreaterThan(0);
+  });
+
+  it("serializes the exact structured draft that Layer Studio restores from the home page", () => {
+    const serialized = serializeInitialWebsiteDraft("schoolhouse", "Bright Future Academy");
+    expect(JSON.parse(serialized)).toMatchObject({
+      templateId: "schoolhouse",
+      siteName: "Bright Future Academy",
+    });
   });
 
   it("rejects an unknown template rather than persisting invalid editor state", () => {
