@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
-import { loomBusinessVerifications, loomGroups } from "@/lib/db/schema";
+import { loomBusinessVerifications, loomGroupMemberships, loomGroups } from "@/lib/db/schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,8 +42,12 @@ export async function POST(request: Request) {
     const db = getDb();
     const [verification] = await db.select({ status: loomBusinessVerifications.status }).from(loomBusinessVerifications).where(eq(loomBusinessVerifications.userId, user.id)).limit(1);
     if (verification?.status !== "verified") return NextResponse.json({ error: "Business verification is required to create groups." }, { status: 403 });
-    const [group] = await db.insert(loomGroups).values({ ...parsed.data, createdByUserId: user.id }).returning({
-      id: loomGroups.id, name: loomGroups.name, slug: loomGroups.slug, description: loomGroups.description, createdAt: loomGroups.createdAt,
+    const group = await db.transaction(async tx => {
+      const [created] = await tx.insert(loomGroups).values({ ...parsed.data, createdByUserId: user.id }).returning({
+        id: loomGroups.id, name: loomGroups.name, slug: loomGroups.slug, description: loomGroups.description, createdAt: loomGroups.createdAt,
+      });
+      await tx.insert(loomGroupMemberships).values({ groupId: created.id, userId: user.id, role: "owner", status: "active" });
+      return created;
     });
     return NextResponse.json({ group }, { status: 201, headers: { "Cache-Control": "no-store" } });
   } catch (cause) {
