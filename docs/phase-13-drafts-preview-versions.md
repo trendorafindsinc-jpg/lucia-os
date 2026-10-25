@@ -9,6 +9,10 @@
 - Unit tests for snapshot cloning, version ordering, rollback copy safety, history cap and validation.
 
 ## Important boundaries
+
+- Website draft checkpoints and rollback history are editing/version-control features, not a commercial product catalogue. They must not be treated as subscription plans or as purchased software versions.
+- Commercial software versions are defined separately in `docs/commerce-model-one-time-purchases.md`: customers purchase a specific product/version once and retain its documented usage rights; a later version is a separate purchase unless explicitly bundled.
+- Phase 13 may preserve a site's draft/history independently of any paid software entitlement. Access to paid capabilities is checked separately by the server and must never be inferred from a website checkpoint.
 - The workspace and history are held in React memory for the current browser session. Refreshing the page clears them.
 - This is not durable database versioning, tenant-specific storage, audit logging, or cross-device restore.
 - Preview is a private illustrative view, not a deployed public website or a fully rendered page from the template engine.
