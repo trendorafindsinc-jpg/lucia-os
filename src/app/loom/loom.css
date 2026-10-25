@@ -40,3 +40,16 @@
 .loom-section-layout .loom-left-rail>a{padding:.7rem .8rem;border-radius:10px;text-decoration:none;color:inherit}
 .loom-section-layout .loom-left-rail>a.loom-rail-active{background:rgba(84,126,170,.12);font-weight:700}
 @media(max-width:760px){.loom-section-layout{grid-template-columns:minmax(0,1fr);gap:1rem;padding-top:1rem}.loom-section-layout .loom-left-rail{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.35rem}.loom-section-layout .loom-rail-label{grid-column:1/-1}.loom-section-main{padding-top:.5rem}}
+
+.loom-group-form{display:grid;gap:.6rem;margin:1.5rem 0 2rem;padding:1.25rem;border:1px solid rgba(115,139,166,.24);border-radius:20px;background:rgba(255,255,255,.75)}
+.loom-group-form h2{margin:0 0 .25rem;font-size:1.15rem}
+.loom-group-form label{font-size:.83rem;font-weight:650}
+.loom-group-form input,.loom-group-form textarea{width:100%;min-width:0;padding:.8rem .9rem;border:1px solid rgba(115,139,166,.3);border-radius:12px;background:rgba(255,255,255,.9);color:inherit;font:inherit}
+.loom-group-form button{justify-self:start;border:0;border-radius:12px;padding:.8rem 1rem;background:#14263d;color:#fff;font:inherit;font-weight:650;cursor:pointer}
+.loom-group-form button:disabled{opacity:.55;cursor:not-allowed}
+.loom-group-list{display:grid;gap:.75rem}
+.loom-group-card{display:flex;align-items:flex-start;gap:1rem;padding:1.1rem;border:1px solid rgba(115,139,166,.2);border-radius:17px;background:rgba(255,255,255,.78)}
+.loom-group-symbol{display:grid;place-items:center;flex:0 0 42px;height:42px;border-radius:14px;background:#e0eaf5;color:#284a6d;font-weight:800}
+.loom-group-card h3{margin:.1rem 0 .35rem;font-size:1rem}
+.loom-group-card p{margin:0 0 .5rem;color:var(--loom-muted,#64748b);line-height:1.55}
+.loom-group-slug{font-size:.78rem;color:#476b8c}
