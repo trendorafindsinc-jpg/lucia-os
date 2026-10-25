@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 vi.mock("@/lib/db/client", () => ({ getDb: vi.fn() }));
 vi.mock("@/lib/auth/oauth", () => ({
   getCoreIssuer: vi.fn(),
+  getSafeReturnTo: vi.fn(() => "/workspace"),
   matchesOAuthState: vi.fn(() => false),
 }));
 
