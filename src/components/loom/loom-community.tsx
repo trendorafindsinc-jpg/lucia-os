@@ -29,6 +29,11 @@ export function LoomCommunity() {
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [replyErrors, setReplyErrors] = useState<Record<string, string>>({});
   const [replyBusy, setReplyBusy] = useState<Record<string, boolean>>({});
+  const [reportOpen, setReportOpen] = useState<Record<string, boolean>>({});
+  const [reportReasons, setReportReasons] = useState<Record<string, string>>({});
+  const [reportDetails, setReportDetails] = useState<Record<string, string>>({});
+  const [reportBusy, setReportBusy] = useState<Record<string, boolean>>({});
+  const [reportMessages, setReportMessages] = useState<Record<string, string>>({});
 
   const load = useCallback(async (query = "") => {
     setLoading(true);
@@ -154,6 +159,29 @@ export function LoomCommunity() {
     }
   }
 
+  async function submitReport(event: FormEvent<HTMLFormElement>, postId: string) {
+    event.preventDefault();
+    if (reportBusy[postId]) return;
+    setReportBusy(current => ({ ...current, [postId]: true }));
+    setReplyErrors(current => ({ ...current, [postId]: "" }));
+    try {
+      const response = await fetch("/api/loom/reports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ targetType: "post", targetId: postId, reason: reportReasons[postId] || "other", details: reportDetails[postId] || "" }),
+      });
+      const payload = await response.json() as { message?: string; error?: string };
+      if (!response.ok) throw new Error(payload.error || "Report could not be submitted.");
+      setReportMessages(current => ({ ...current, [postId]: payload.message || "Report submitted." }));
+      setReportOpen(current => ({ ...current, [postId]: false }));
+      setReportDetails(current => ({ ...current, [postId]: "" }));
+    } catch (cause) {
+      setReportMessages(current => ({ ...current, [postId]: cause instanceof Error ? cause.message : "Report could not be submitted." }));
+    } finally {
+      setReportBusy(current => ({ ...current, [postId]: false }));
+    }
+  }
+
   const verified = verification?.status === "verified";
 
   return (
@@ -213,6 +241,15 @@ export function LoomCommunity() {
                   <div className="loom-post-meta"><strong>{post.authorName || "LUCIA member"}</strong><span>·</span><time dateTime={post.createdAt}>{new Date(post.createdAt).toLocaleString()}</time></div>
                   <p>{post.body}</p>
                   <div className="loom-post-actions"><button type="button" onClick={() => void toggleReplies(post.id)}>{openReplies[post.id] ? "Hide replies" : `Replies ${replies[post.id] ? `(${replies[post.id].length})` : ""}`}</button><button type="button" onClick={() => void toggleReplies(post.id)}>Join discussion ↗</button></div>
+                  <button className="loom-report-toggle" type="button" onClick={() => setReportOpen(current => ({ ...current, [post.id]: !current[post.id] }))}>{reportOpen[post.id] ? "Cancel report" : "Report post"}</button>
+                  {reportOpen[post.id] && <form className="loom-report-form" onSubmit={event => void submitReport(event, post.id)}>
+                    <label htmlFor={`loom-report-reason-${post.id}`}>Reason</label>
+                    <select id={`loom-report-reason-${post.id}`} value={reportReasons[post.id] || "other"} onChange={event => setReportReasons(current => ({ ...current, [post.id]: event.target.value }))}><option value="spam">Spam</option><option value="harassment">Harassment</option><option value="misinformation">Misleading information</option><option value="privacy">Privacy concern</option><option value="other">Other</option></select>
+                    <label htmlFor={`loom-report-details-${post.id}`}>Details (optional)</label>
+                    <textarea id={`loom-report-details-${post.id}`} rows={2} maxLength={1000} value={reportDetails[post.id] || ""} onChange={event => setReportDetails(current => ({ ...current, [post.id]: event.target.value }))} placeholder="Give the review team useful context." />
+                    <button type="submit" disabled={reportBusy[post.id]}>{reportBusy[post.id] ? "Submitting…" : "Send report"}</button>
+                  </form>}
+                  {reportMessages[post.id] && <p className="loom-notice" role="status">{reportMessages[post.id]}</p>}
                   {openReplies[post.id] && <div className="loom-replies">
                     {replyErrors[post.id] && <p className="loom-error" role="alert">{replyErrors[post.id]}</p>}
                     {(replies[post.id] || []).map(reply => <div className="loom-reply" key={reply.id}><strong>{reply.authorName || "LUCIA member"}</strong><time dateTime={reply.createdAt}>{new Date(reply.createdAt).toLocaleString()}</time><p>{reply.body}</p></div>)}
