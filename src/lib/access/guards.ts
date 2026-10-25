@@ -31,6 +31,9 @@ export async function getOrganizationMembershipsForUser(userId: string) {
     tx.select({
       id: organizations.id,
       name: organizations.name,
+      slug: organizations.slug,
+      status: organizations.status,
+      updatedAt: organizations.updatedAt,
       role: memberships.role,
       membershipStatus: memberships.status,
     })
