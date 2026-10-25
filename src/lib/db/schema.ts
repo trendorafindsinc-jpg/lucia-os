@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import {
   bigint,
   boolean,
+  check,
   foreignKey,
   index,
   pgTable,
@@ -596,4 +597,16 @@ export const loomMemberRestrictions = pgTable("loom_member_restrictions", {
 }, (table) => [
   uniqueIndex("loom_member_restrictions_user_uq").on(table.userId),
   index("loom_member_restrictions_status_expires_idx").on(table.status, table.expiresAt),
+]);
+
+/** Member-to-member blocks prevent unwanted Loom interactions without changing the LUCIA ID account. */
+export const loomBlocks = pgTable("loom_blocks", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  blockerUserId: uuid("blocker_user_id").notNull().references(() => appUsers.id, { onDelete: "cascade" }),
+  blockedUserId: uuid("blocked_user_id").notNull().references(() => appUsers.id, { onDelete: "cascade" }),
+  createdAt: createdAt(),
+}, (table) => [
+  uniqueIndex("loom_blocks_pair_uq").on(table.blockerUserId, table.blockedUserId),
+  index("loom_blocks_blocked_created_idx").on(table.blockedUserId, table.createdAt),
+  check("loom_blocks_no_self", sql`${table.blockerUserId} <> ${table.blockedUserId}`),
 ]);
