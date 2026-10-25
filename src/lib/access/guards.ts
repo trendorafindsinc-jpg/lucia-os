@@ -2,7 +2,6 @@ import "server-only";
 
 import { and, eq } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getDb } from "@/lib/db/client";
 import { memberships, organizations, staffGrants } from "@/lib/db/schema";
 import { assertOrganizationId } from "@/lib/tenancy/tenant-context";
 import { withUserScope } from "@/lib/db/tenant-scope";
