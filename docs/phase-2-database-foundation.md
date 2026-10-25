@@ -5,7 +5,7 @@
 - Drizzle ORM schema and PostgreSQL migrations for application-side Core subject references, organisations, memberships, websites, website pages, domains and tenant billing/support records.
 - Immutable UUID organisation identifiers and database uniqueness constraints.
 - Tenant-aware indexes and composite uniqueness for organisation-scoped website slugs and page paths.
-- PostgreSQL row-level security (RLS) on selected tenant-owned records.
+- PostgreSQL row-level security (RLS) on tenant-owned records, including organization/membership visibility, domains, versions, billing, support, staff-grant self-read and audit-event visibility.
 - Strict UUID validation for tenant context values.
 
 ## Phase 2 work in progress
@@ -28,18 +28,18 @@
 
 ## Verification recorded (2026-10-25)
 
-- GitHub Actions Quality checks run `40189055910` passed lint, typecheck, Drizzle migration consistency, unit tests and production build for the earlier Phase 2 revision. The current user-context helper and guard changes still require fresh CI verification.
+- GitHub Actions Quality checks run `40189055910` passed lint, typecheck, Drizzle migration consistency, unit tests and production build for the earlier Phase 2 revision. The current user-context helper, guard changes and RLS migration require fresh CI verification.
 - On disposable Neon branch `phase-2-tenant-integrity-test`, the clean migration preflight passed and the composite ownership foreign key was added. A cross-organisation page/website insert was rejected by the composite FK.
 - On separate disposable branch `phase-2-preflight-failure-test`, a deliberately mismatched page row caused the migration preflight to fail with the expected ownership-integrity exception; the invalid row was not silently rewritten or deleted.
 - A least-privilege `NOBYPASSRLS` role could not read or update organisation B's draft website when organisation A was the transaction context.
-- **Policy design test (disposable Neon branch only):** enabling candidate RLS policies on `organizations` and `organization_memberships` hid all rows without user context and exposed only the single organisation/membership associated with a test user when `app.current_user_id` was set. The test user could not read another organisation's records. These candidate policies are not yet committed as a migration because every route that queries memberships/organisations must first establish the correct user context and creation/update paths must be covered.
+- **Policy migration test (disposable Neon branch only):** migration `0009_tenant_rls_hardening.sql` applied successfully as a transaction on `phase-2-tenant-integrity-test`; PostgreSQL reports RLS enabled for organizations, memberships, websites, pages, domains, billing, support, staff grants and audit events. A restricted-role runtime query could not be completed because the role connection lacked authentication credentials; this is not counted as isolation proof.
 - The initial Neon-created test role had `BYPASSRLS`; it was not used as proof of isolation. A separate `NOBYPASSRLS` role was used for the passing isolation assertions.
 - No production migration, production data change, merge, or deployment occurred.
 
 ## Acceptance evidence still required
 
-- Wire transaction-scoped user context into every protected route that performs membership/organisation lookups, including onboarding, domains, AI proposal, publishing, member management, website draft/version and support flows.
-- Add the tested RLS policies as a migration only after route coverage is complete; include safe creation of an organisation and its initial owner membership.
+- Wire transaction-scoped user context into every protected route that performs membership/organisation lookups, including onboarding, domains, AI proposal, publishing, member management, website draft/version and support flows; verify each call site on this branch.
+- Migration `0009_tenant_rls_hardening.sql` now defines RLS policies for organizations, memberships, billing, support, staff grants and audit events. Route coverage and the organization-plus-owner creation transaction still require verification before Phase 2 can be accepted.
 - Prove cross-tenant read/write denial across relevant tenant-owned tables with a non-owner, non-`BYPASSRLS` role, including missing/invalid context and mismatched page-to-website ownership.
-- Run fresh CI on the current head, verify rollback/recovery on a disposable branch, and review the full resulting diff.
+- Run fresh CI on the current head, prove cross-tenant read/write denial using an authenticated non-owner, non-`BYPASSRLS` role, verify missing/invalid context and rollback/recovery on a disposable branch, and review the full resulting diff.
 - No production migration or merge until the security and acceptance gates pass.
