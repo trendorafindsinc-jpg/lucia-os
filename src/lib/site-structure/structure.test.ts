@@ -30,6 +30,21 @@ describe("site structure", () => {
     expect(siteStructureSchema.safeParse({ ...structure, navigationPageIds: ["home", "missing"] }).success).toBe(false);
   });
 
+  it("rejects duplicate page addresses and a homepage with a non-root address", () => {
+    const structure = makeInitialStructure();
+    const duplicateSlug = {
+      ...structure,
+      pages: structure.pages.map((page) => page.id === "about" ? { ...page, slug: "services" } : page),
+    };
+    expect(siteStructureSchema.safeParse(duplicateSlug).success).toBe(false);
+
+    const nonRootHomepage = {
+      ...structure,
+      pages: structure.pages.map((page) => page.id === "home" ? { ...page, slug: "home" } : page),
+    };
+    expect(siteStructureSchema.safeParse(nonRootHomepage).success).toBe(false);
+  });
+
   it("adds and reorders reusable sections without mutating the original", () => {
     const page = makeInitialStructure().pages[0];
     const expanded = addReusableSection(page, "faq");
