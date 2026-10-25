@@ -1,4 +1,4 @@
-import { desc, eq, ilike } from "drizzle-orm";
+import { and, desc, eq, ilike } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -21,8 +21,8 @@ export async function GET(request: Request) {
       authorName: appUsers.displayName,
     }).from(loomPosts).innerJoin(appUsers, eq(loomPosts.authorUserId, appUsers.id));
     const posts = query
-      ? await base.where(ilike(loomPosts.body, `%${query}%`)).orderBy(desc(loomPosts.createdAt)).limit(50)
-      : await base.orderBy(desc(loomPosts.createdAt)).limit(50);
+      ? await base.where(and(eq(loomPosts.moderationStatus, "visible"), ilike(loomPosts.body, `%${query}%`))).orderBy(desc(loomPosts.createdAt)).limit(50)
+      : await base.where(eq(loomPosts.moderationStatus, "visible")).orderBy(desc(loomPosts.createdAt)).limit(50);
     return NextResponse.json({ posts, query: query || null }, { headers: { "Cache-Control": "no-store" } });
   } catch {
     return NextResponse.json({ error: "Loom community storage is not available. Please try again later." }, { status: 503, headers: { "Cache-Control": "no-store" } });
