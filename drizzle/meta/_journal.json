@@ -92,6 +92,13 @@
       "when": 1792969203000,
       "tag": "0012_forms_analytics",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792969204000,
+      "tag": "0013_published_structure_snapshot",
+      "breakpoints": true
     }
   ]
 }
