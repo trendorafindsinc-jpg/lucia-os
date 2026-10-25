@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { getTemplateById, websiteTemplates } from "@/lib/templates/catalogue";
 import { makeSiteSlug, organisationTypes, websiteGoals, websiteSetupSchema, type WebsiteSetup } from "@/lib/onboarding/website-setup";
+import { getPreferredTemplateId } from "@/lib/templates/navigation";
 
 const steps = ["Your organisation", "Your website", "Review setup"] as const;
 
@@ -32,6 +33,7 @@ export function WebsiteSetupWizard() {
     organisationName, websiteName, organisationType, goal, templateId, country, siteSlug,
   }), [organisationName, websiteName, organisationType, goal, templateId, country, siteSlug]);
   useEffect(() => {
+    let restoredTemplateId = "northstar-consulting";
     try {
       const raw = window.localStorage.getItem("lucia-os-website-setup-draft");
       if (raw) {
@@ -41,6 +43,7 @@ export function WebsiteSetupWizard() {
           setWebsiteName(parsed.data.websiteName);
           setOrganisationType(parsed.data.organisationType);
           setGoal(parsed.data.goal);
+          restoredTemplateId = parsed.data.templateId;
           setTemplateId(parsed.data.templateId);
           setCountry(parsed.data.country);
           setSiteSlug(parsed.data.siteSlug);
@@ -49,9 +52,7 @@ export function WebsiteSetupWizard() {
       }
       // A template selected from Loom Library must win over an older saved setup draft.
       const requestedTemplate = new URLSearchParams(window.location.search).get("template");
-      if (requestedTemplate && getTemplateById(requestedTemplate)) {
-        setTemplateId(requestedTemplate);
-      }
+      setTemplateId(getPreferredTemplateId(requestedTemplate, restoredTemplateId, (id) => Boolean(getTemplateById(id))));
     } catch {
       window.localStorage.removeItem("lucia-os-website-setup-draft");
     } finally {
