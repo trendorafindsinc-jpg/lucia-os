@@ -2,7 +2,7 @@ import { and, asc, eq, inArray } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getDb } from "@/lib/db/client";
-import { appUsers, loomGroups, loomMessages, loomPosts, loomProfiles, loomReplies, loomReports, platformAuditEvents } from "@/lib/db/schema";
+import { appUsers, loomGroups, loomMessages, loomPosts, loomReplies, loomReports, platformAuditEvents } from "@/lib/db/schema";
 import { requireLoomStaff } from "@/lib/loom/staff";
 
 export const runtime = "nodejs";
