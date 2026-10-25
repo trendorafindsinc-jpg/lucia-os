@@ -2,7 +2,6 @@ import "server-only";
 
 import { and, eq } from "drizzle-orm";
 import { getCurrentStaffUser, getOrganizationMembershipsForUser } from "@/lib/access/guards";
-import { getDb } from "@/lib/db/client";
 import { withOrganizationScope, withPlatformStaffScope } from "@/lib/db/tenant-scope";
 import { supportCases } from "@/lib/db/schema";
 
@@ -53,8 +52,4 @@ export async function findSupportCaseForStaff(caseId: string, permission: string
       .limit(1),
   );
   return supportCase ?? null;
-}
-
-export async function findSupportCaseUnscopedIsNotAllowed() {
-  throw new Error("Support cases must be queried through an authorised tenant or staff scope.");
 }
