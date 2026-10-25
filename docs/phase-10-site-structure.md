@@ -21,11 +21,12 @@
 - Changes remain draft-only until the user explicitly chooses **Save structure**. Publishing remains a separate operation.
 - If loading fails, saving is disabled to avoid overwriting saved data with the default local structure.
 - Without a saved website ID, the editor remains a local-only prototype.
+- The selected page is adapted to the validated Loom Blueprint and displayed with the shared Loom renderer in the structure editor preview. This is an editor preview, not proof that the public multi-page publishing routes consume the structure.
 
 ## Verification still required
 
 - Run the migration on a disposable Neon branch and inspect rollback/recovery before production use.
 - Use a non-owner `LOGIN NOBYPASSRLS` role to prove missing-context and cross-tenant read/write denial.
 - Exercise authenticated/unauthenticated routes, permission denial, malformed payloads, duplicate slugs, refresh/reopen persistence, save failure, and concurrent updates.
-- Confirm the page/section structure is consumed by the shared Loom renderer before considering Phase 10 complete.
+- Confirm saved structure drives public multi-page routes, navigation links, and the published renderer before considering Phase 10 complete.
 - Do not run a production migration or deploy solely because this code has been merged.
