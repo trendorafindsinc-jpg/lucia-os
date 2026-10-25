@@ -77,27 +77,31 @@ The UI should use a premium, polished visual language, with a three-column deskt
 
 ## Implementation status (live tracking)
 
-**Current phase: Phase 1 — Foundation and complete interface. Phase 1 is in progress, not complete.**
+**Current phase: Phase 2 — working community features and trust. Phase 2 is in progress, not complete.**
 
 ### Implemented on the current feature branch
-- Responsive Loom feed and navigation, with separate destinations for discovery, groups, profile, saved posts, notifications, and other community areas.
-- Database-backed public post feed, post creation, text search, and threaded replies.
-- Business verification request/status API; post publishing and replies are denied by the server unless the member has verified status.
-- Migration-backed tables for business verification, profiles, groups/memberships, connections, reactions, saved posts, reports, private messages, and notifications.
-- Working public group listing/creation, verified-member discovery, connection request/accept/decline APIs, private-message APIs gated to verified members with accepted connections, saved-post APIs, notification read state, profile editing, and post reporting.
-- Notifications are emitted for post replies and connection requests.
-- Public group listing excludes private groups; private message reads are scoped to the two conversation participants.
-
-### Still required before Phase 1 can be closed
-- Run the latest CI checks through lint, type checking, Drizzle migration consistency, unit tests, and production build; fix every failure.
-- Complete the remaining navigation surfaces so every advertised destination has a real workflow or a clearly stated limitation.
-- Review schema/migration alignment and add focused automated coverage for Loom permissions and key API behavior.
+- Responsive Loom feed with public search, publishing composer, replies, reporting controls, and post reactions backed by database APIs.
+- Business verification request/status flow plus a staff-only verification queue. Approval/rejection requires a database-backed staff grant, creates an audit event, and notifies the requesting member.
+- Report review queue with staff permission checks, audited report resolution/dismissal, explicit content hiding for posts/replies/groups/messages, and member restriction records.
+- Server-side access checks for verified participation and member restrictions across post creation, replies, reactions, group creation/joining, connection requests, and private messaging.
+- Profile editing, verified-member discovery, connection request/accept/decline, saved-post management, notifications/read state, group creation plus join/leave controls, and a private messages interface for accepted connections.
+- Private messages are scoped to the two participants; messages are marked read when the recipient opens the conversation.
+- Migration-backed tables for community posts/replies, verification, profiles, groups/memberships, connections, reactions, saved posts, reports, messages, notifications, moderation visibility, and member restrictions.
+- `/loom/discussions` routes to the live feed rather than remaining a dead navigation destination; `/loom/staff` provides the staff review interface.
 
 ### Remaining Phase 2 work
-- Reactions UI/API and group membership/join workflows.
-- Complete messaging UI, connection management UI, and notification delivery for all relevant community events.
-- Authorised staff verification review queue and moderation actions; blocking/restrictions and report resolution.
-- Additional privacy/access-control hardening and automated permission tests.
+- Finish block/ban controls in the staff interface and complete block behavior across public feed, search, connections, and messaging.
+- Add complete group discussion content workflows, group detail pages, profile reporting controls, message notifications, connection-accept notifications, and stronger abuse/rate limiting.
+- Add automated route-level tests for unauthorised writes, private-message isolation, staff queue permissions, report actions, and restrictions.
+- Review verification evidence handling and ensure the staff queue workflow is operational with real authorised staff grants; evidence references are manually reviewed and do not automatically grant access.
 
-### Delivery status
-No production migration or deployment has been run. Do not call Loom complete until the current branch passes the available checks and the remaining Phase 2 workflows are implemented. The existing PR remains open and unmerged.
+### Phase 3 — stabilisation and delivery
+- Re-run lint, TypeScript, Drizzle migration consistency, unit tests, and the production build against the final PR head. The earlier successful CI run predates the latest implementation commits and does not certify this head.
+- Vercel currently reports a build-rate-limit failure; this is an external deployment blocker, not a passing deployment. No production migration or deployment has been run.
+- Fix every current-head check failure before merging. The PR remains open and unmerged.
+
+### Known limitations
+- No automated or beta-user acceptance test has been performed against the latest UI.
+- Content moderation currently supports hiding posts, replies, groups, and messages. Profile hiding is deliberately rejected because the current profile model has no moderation-visibility field.
+- Staff UI currently exposes restriction/lift actions; the backend supports a stronger status, but a complete staff ban control and corresponding blocked-access experience remain to be finished.
+- Do not call Loom complete until all three phases meet their exit criteria and the final report separates implemented behavior, verified behavior, and deployment state.
