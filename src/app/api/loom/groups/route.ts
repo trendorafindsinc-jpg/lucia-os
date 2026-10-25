@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -22,7 +22,7 @@ export async function GET() {
       slug: loomGroups.slug,
       description: loomGroups.description,
       createdAt: loomGroups.createdAt,
-    }).from(loomGroups).where(eq(loomGroups.status, "active")).orderBy(desc(loomGroups.createdAt)).limit(100);
+    }).from(loomGroups).where(and(eq(loomGroups.status, "active"), eq(loomGroups.visibility, "public"))).orderBy(desc(loomGroups.createdAt)).limit(100);
     return NextResponse.json({ groups }, { headers: { "Cache-Control": "no-store" } });
   } catch {
     return NextResponse.json({ error: "Groups are temporarily unavailable." }, { status: 503 });
