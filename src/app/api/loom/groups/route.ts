@@ -17,6 +17,8 @@ const groupSchema = z.object({
 
 export async function GET() {
   try {
+    const currentUser = await getCurrentUser().catch(() => null);
+    if (currentUser && (await getLoomRestriction(currentUser.id))?.status === "banned") return NextResponse.json({ error: "Loom access is unavailable for this account." }, { status: 403 });
     const db = getDb();
     const user = await getCurrentUser().catch(() => null);
     const groups = await db.select({
