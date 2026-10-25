@@ -74,3 +74,30 @@ The UI should use a premium, polished visual language, with a three-column deskt
 4. Do not claim a feature works merely because a UI element, schema, route, or document exists.
 5. Do not bypass security, access-control, migration-safety, or data-integrity requirements to make a phase appear complete.
 6. Keep LUCIA OS Loom work within the existing repository and submit changes through the established branch/PR workflow.
+
+## Implementation status (live tracking)
+
+**Current phase: Phase 1 — Foundation and complete interface. Phase 1 is in progress, not complete.**
+
+### Implemented on the current feature branch
+- Responsive Loom feed and navigation, with separate destinations for discovery, groups, profile, saved posts, notifications, and other community areas.
+- Database-backed public post feed, post creation, text search, and threaded replies.
+- Business verification request/status API; post publishing and replies are denied by the server unless the member has verified status.
+- Migration-backed tables for business verification, profiles, groups/memberships, connections, reactions, saved posts, reports, private messages, and notifications.
+- Working public group listing/creation, verified-member discovery, connection request/accept/decline APIs, private-message APIs gated to verified members with accepted connections, saved-post APIs, notification read state, profile editing, and post reporting.
+- Notifications are emitted for post replies and connection requests.
+- Public group listing excludes private groups; private message reads are scoped to the two conversation participants.
+
+### Still required before Phase 1 can be closed
+- Run the latest CI checks through lint, type checking, Drizzle migration consistency, unit tests, and production build; fix every failure.
+- Complete the remaining navigation surfaces so every advertised destination has a real workflow or a clearly stated limitation.
+- Review schema/migration alignment and add focused automated coverage for Loom permissions and key API behavior.
+
+### Remaining Phase 2 work
+- Reactions UI/API and group membership/join workflows.
+- Complete messaging UI, connection management UI, and notification delivery for all relevant community events.
+- Authorised staff verification review queue and moderation actions; blocking/restrictions and report resolution.
+- Additional privacy/access-control hardening and automated permission tests.
+
+### Delivery status
+No production migration or deployment has been run. Do not call Loom complete until the current branch passes the available checks and the remaining Phase 2 workflows are implemented. The existing PR remains open and unmerged.
