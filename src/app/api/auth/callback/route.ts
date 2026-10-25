@@ -14,7 +14,19 @@ function safeFailure(request: Request, reason = "callback_failed") {
   const destination = new URL("/", request.url);
   destination.searchParams.set("auth", "failed");
   destination.searchParams.set("reason", reason);
-  return NextResponse.redirect(destination);
+  const response = NextResponse.redirect(destination);
+  const secureCookies = process.env.NODE_ENV === "production" || new URL(request.url).protocol === "https:";
+  for (const name of ["lucia_os_return_to", "lucia_os_oauth_state"]) {
+    response.cookies.set(name, "", {
+      httpOnly: true,
+      secure: secureCookies,
+      sameSite: "lax",
+      path: "/api/auth",
+      maxAge: 0,
+    });
+  }
+  response.headers.set("Cache-Control", "no-store");
+  return response;
 }
 
 export async function GET(request: Request) {
@@ -38,23 +50,6 @@ export async function GET(request: Request) {
     : "/workspace";
 
   let failureStage = "state_validation";
-  const response = safeFailure(request);
-  response.cookies.set("lucia_os_return_to", "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production" || requestUrl.protocol === "https:",
-    sameSite: "lax",
-    path: "/api/auth",
-    maxAge: 0,
-  });
-  response.cookies.set("lucia_os_oauth_state", "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production" || requestUrl.protocol === "https:",
-    sameSite: "lax",
-    path: "/api/auth",
-    maxAge: 0,
-  });
-  response.headers.set("Cache-Control", "no-store");
-
   if (!matchesOAuthState(expectedState, state) || !code) {
     console.error("[LUCIA_OS_OAUTH] callback rejected", {
       stage: failureStage,
