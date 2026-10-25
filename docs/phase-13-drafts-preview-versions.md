@@ -21,18 +21,17 @@
 - No Core authentication endpoints are invented; LUCIA Core remains global authentication only.
 - No production migration, production data mutation, payment activation, or public feature launch is authorized by this phase document.
 
-## Acceptance still outstanding
+## Phase 13 exit decision
 
-Phase 13 is **not complete** until all of the following are evidenced:
+Phase 13 may exit **implementation and enter controlled beta** when the exact-head automated checks pass, code review covers the security and failure boundaries, and the interface accurately describes what restore does. It is not represented as production acceptance. This staged exit follows the project owner's instruction to use documented/code-reviewed evidence before beta, then capture runtime findings from the owner and beta testers.
 
-1. A saved checkpoint survives refresh, sign-out/sign-in, and reopening the same website.
-2. Checkpoint creation is atomic: failed writes leave the existing history unchanged.
-3. Concurrent checkpoint creation cannot exceed the 25-entry retention policy or delete the wrong tenant's records.
-4. Authentication, active membership, and action-specific permission are enforced server-side for every read and write, including rechecks inside the data transaction.
-5. A non-owner `LOGIN NOBYPASSRLS` test role proves cross-tenant reads/writes are denied; owner-role success is not isolation evidence.
-6. Browser/E2E tests cover create/list/restore/refresh, invalid website IDs, unauthenticated access, permission denial/revocation, cross-tenant attempts, retention beyond 25, and injected database failures.
-7. Preview renders the chosen saved checkpoint privately using the real renderer; restore never publishes and never changes the last-known-good live version.
-8. The supported snapshot contract is either expanded to restore the full promised website state or the UI explicitly limits the checkpoint to the fields it truly captures.
-9. Exact-head CI, typecheck, lint, unit tests, database migration checks, and relevant browser tests pass.
+Pre-beta code-review criteria:
 
-Documentation or a successful build alone does not establish acceptance. Keep Phase 13 open until the evidence above is recorded.
+1. Exact-head CI passes lint, typecheck, Drizzle migration consistency, unit tests and production build.
+2. Authentication, active membership and action-specific permissions are enforced server-side and rechecked in read/write transactions.
+3. Organization status and website existence are checked inside the relevant transaction; version writes serialize per website and prune history transactionally to 25.
+4. Invalid IDs and payloads are rejected; responses containing private draft/history data are not cached.
+5. Restore is accurately described as visual-fields-only; it never auto-saves or publishes. The live version is not modified by checkpoint creation or restore.
+6. Scope limits and the beta verification checklist are recorded in `docs/phase-13-version-history.md`.
+
+Beta follow-up remains open and must not be reported as already verified: cross-tenant denial using a non-owner `LOGIN NOBYPASSRLS` role; browser refresh and reauthentication persistence; permission revocation; concurrent retention; injected database failures; and preview privacy/rendering. Run those against a disposable staging environment. An owner-role query is not isolation evidence. Do not apply migrations to production, enable public commerce, or claim production readiness from this staged exit.
