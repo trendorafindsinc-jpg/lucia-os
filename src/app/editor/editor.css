@@ -70,3 +70,21 @@
 .editor-page-footer { display:flex; justify-content:space-between; gap:12px; padding:20px 0 30px; color:var(--color-muted); font-size:10px; }
 @media(max-width:980px) { .editor-workspace { grid-template-columns:minmax(280px,340px) minmax(0,1fr); gap:14px; } .editor-panel { position:static; max-height:none; } .preview-site-nav nav { display:none; } }
 @media(max-width:700px) { .editor-page { width:calc(100% - 24px); } .editor-topbar { min-height:66px; } .editor-unsaved { display:none; } .editor-heading { padding:30px 0 20px; } .editor-workspace { grid-template-columns:1fr; } .editor-preview-wrap { grid-row:1; } .editor-panel { grid-row:2; } .editor-preview { margin:0 7px 7px; } .preview-hero { min-height:260px; } .preview-hero-art { width:50%; right:-16%; bottom:-20%; } .editor-page-footer { flex-direction:column; gap:6px; } }
+
+
+.version-history-launcher { width:min(1440px,calc(100% - 40px)); margin:0 auto 28px; }
+.version-history-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.version-history-actions button,.version-history-panel button { min-height:38px; border:1px solid var(--color-line); border-radius:999px; padding:0 14px; background:white; color:var(--color-ink); font:inherit; font-size:12px; font-weight:750; cursor:pointer; }
+.version-history-actions button:disabled,.version-history-panel button:disabled { opacity:.45; cursor:not-allowed; }
+.version-history-panel { margin-top:12px; border:1px solid var(--color-line); border-radius:16px; padding:18px; background:white; box-shadow:var(--shadow-soft); }
+.version-history-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.version-history-heading h2 { margin:0; font-size:20px; letter-spacing:-.04em; }
+.version-history-panel > p { color:var(--color-muted); font-size:12px; line-height:1.6; }
+.version-history-panel ol { display:grid; gap:8px; margin:14px 0 0; padding:0; list-style:none; }
+.version-history-panel li { display:flex; align-items:center; justify-content:space-between; gap:14px; border:1px solid var(--color-line); border-radius:12px; padding:12px; }
+.version-history-panel li strong,.version-history-panel li time { display:block; }
+.version-history-panel li strong { font-size:13px; }
+.version-history-panel li time { margin-top:4px; color:var(--color-muted); font-size:10px; }
+.version-history-panel li p { margin:6px 0 0; color:var(--color-muted); font-size:12px; }
+.version-history-panel .editor-notice { margin:10px 0 0; }
+@media(max-width:700px) { .version-history-launcher { width:calc(100% - 24px); } .version-history-panel li { align-items:flex-start; flex-direction:column; } }
