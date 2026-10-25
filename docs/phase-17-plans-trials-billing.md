@@ -1,23 +1,36 @@
-# Phase 17 — Plans, trials, and billing foundation
+# Phase 17 — Commercial rules and purchase policy
 
-## Included
-- Strict schemas for price records, subscriptions, discount codes, and payment records.
-- Weekly, monthly, and annual billing cadences with positive configured price requirements.
-- A 14-day trial-window helper, elapsed-trial state calculation, and bounded trial duration.
-- Discount validation for active periods, percentage limits, currency matching, and redemption caps.
-- Responsive `/billing` planning workspace, cadence selection, trial preview, and promotion-code validation state.
-- Automated tests for trial dates, invalid price/trial records, discount normalization, date windows, and redemption limits.
+## Approved commercial model
 
-## Prototype boundary
-No actual prices are configured. The trial preview is client-only and does not activate or persist a subscription. No promo codes are configured. There is no checkout, payment provider, webhook, invoice, receipt, or subscription persistence in this phase. The payment-record schema is a contract only; it does not prove a payment occurred.
+LUCIA sells technology, not mandatory recurring software subscriptions. The website engine is free within the documented baseline. Optional capabilities, modules, tools, and separately released major software versions may be sold as one-time purchases. A successful purchase grants durable entitlement to the exact product/version and licence disclosed at checkout; a subscription is not required merely to retain that purchased-version entitlement. Later major versions are separate purchases unless explicitly bundled.
 
-## Required before commercial use
-- Store plans/prices and subscription state durably with effective-date history and tenant isolation.
-- Resolve tenant and product membership through verified LUCIA Core authorization; do not trust client-supplied IDs.
-- Define authorized price editing, audit events, tax/discount stacking rules, and price-change grandfathering.
-- Integrate a selected payment provider server-side, verify signed webhooks, make processing idempotent, and reconcile provider transactions.
-- Add trial eligibility/abuse controls, reminders, cancellation/grace periods, dunning, receipts, refunds, and privacy/retention policies.
-- Test the complete subscription lifecycle end-to-end before any customer charges.
+LUCIA's product owner controls catalogue prices and may authorise discount codes. No price, discount, bundle, grace rule, or entitlement matrix is approved merely because it exists in a schema or UI. Public Store, checkout, discount redemption, and entitlement activation remain disabled until their security and payment gates pass.
+
+Third-party domain registration/renewals, paid email, payment-provider charges, and other external services may recur independently of the LUCIA software purchase. A purchased custom-domain capability does not prepay a registrar or guarantee a particular domain.
+
+## Existing implementation that remains useful
+
+- Strict validation schemas for configured price records, discount codes and payment records.
+- Date-window, percentage, currency, and redemption-cap validation helpers.
+- Responsive billing workspace and tests for validation logic.
+
+## Conflicts and limitations to correct
+
+- Legacy weekly/monthly/annual software subscription and 14-day trial previews do not represent the approved LUCIA software commercial model. They must not be presented as live or authoritative pricing.
+- The existing trial helper may remain for a future explicitly approved third-party service or a separately approved service offering, but it must not gate the free website engine or revoke access to a version already purchased.
+- No real catalogue prices or discount codes are configured. Client-only previews do not create durable entitlements.
+- The current invoice/payment schema is a storage contract; it does not establish that a payment occurred or that a product was purchased.
+
+## Required before acceptance
+
+1. Represent products and immutable releases with stable product key, version, licence, compatibility, release notes, price, and explicit upgrade path.
+2. Record one-time orders and itemised purchase snapshots, including currency/minor-unit amount and discount attribution at purchase time.
+3. Make entitlements server-authoritative, durable, idempotent, and scoped to the buyer/organisation; distinguish ownership of an exact version from current catalogue price or latest release.
+4. Apply authorised price/discount editing and audit trails. Validate promotion windows, currency, redemption caps, concurrency, and abuse limits server-side.
+5. Keep third-party recurring fees distinct from one-time LUCIA software purchases.
+6. Run purchase, duplicate/replayed event, failed-payment, refund/reversal-policy, permission, and cross-tenant tests before any customer charge or entitlement activation.
+7. Do not implement subscription cancellation, grace periods, or downgrade rules for software ownership without a separately approved product decision.
 
 ## Safety
-No production deployment, database migrations, provider credentials, invented Core endpoints, or School OS changes.
+
+No production checkout, provider credentials, production migration, or entitlement activation is authorised by this phase document. Phase 17 is a rules/specification phase, not a claim that commercial billing is live.
