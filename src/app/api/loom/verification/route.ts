@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import { consumeLoomRateLimit } from "@/lib/loom/rate-limit";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -41,6 +42,8 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: "Choose registration or domain evidence and provide a valid reference." }, { status: 422 });
   try {
     const db = getDb();
+    const rate = await consumeLoomRateLimit(user.id, "verification", 5, 86400000);
+    if (!rate.allowed) return NextResponse.json({ error: "Too many requests. Try again tomorrow." }, { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } });
     const [existing] = await db.select({ id: loomBusinessVerifications.id, status: loomBusinessVerifications.status }).from(loomBusinessVerifications).where(eq(loomBusinessVerifications.userId, user.id)).limit(1);
     if (existing?.status === "verified") return NextResponse.json({ error: "Your business is already verified. Contact authorised support if your details need to change." }, { status: 409 });
     const values = {
