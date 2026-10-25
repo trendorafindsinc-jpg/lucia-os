@@ -25,6 +25,7 @@ export async function GET(request: Request, context: Context) {
       notInArray(loomPosts.authorUserId, db.select({ userId: loomBlocks.blockedUserId }).from(loomBlocks).where(eq(loomBlocks.blockerUserId, user.id))),
       notInArray(loomPosts.authorUserId, db.select({ userId: loomBlocks.blockerUserId }).from(loomBlocks).where(eq(loomBlocks.blockedUserId, user.id))),
     ] : [];
+    const [membership] = user ? await db.select({ role: loomGroupMemberships.role }).from(loomGroupMemberships).where(and(eq(loomGroupMemberships.groupId, groupId), eq(loomGroupMemberships.userId, user.id), eq(loomGroupMemberships.status, "active"))).limit(1) : [];
     const posts = await db.select({
       id: loomPosts.id,
       body: loomPosts.body,
@@ -34,7 +35,7 @@ export async function GET(request: Request, context: Context) {
     }).from(loomPosts).innerJoin(appUsers, eq(loomPosts.authorUserId, appUsers.id))
       .where(and(eq(loomPosts.groupId, groupId), eq(loomPosts.moderationStatus, "visible"), ...blockedAuthors))
       .orderBy(desc(loomPosts.createdAt)).limit(100);
-    return NextResponse.json({ group, posts }, { headers: { "Cache-Control": "no-store" } });
+    return NextResponse.json({ group: { ...group, isMember: Boolean(membership), memberRole: membership?.role ?? null }, posts }, { headers: { "Cache-Control": "no-store" } });
   } catch {
     return NextResponse.json({ error: "Group discussion is temporarily unavailable." }, { status: 503 });
   }
