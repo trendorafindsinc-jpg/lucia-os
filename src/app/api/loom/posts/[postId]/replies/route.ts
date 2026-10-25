@@ -1,10 +1,10 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, notInArray } from "drizzle-orm";
 import { getLoomRestriction } from "@/lib/loom/staff";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
-import { appUsers, loomBusinessVerifications, loomNotifications, loomPosts, loomReplies } from "@/lib/db/schema";
+import { appUsers, loomBlocks, loomBusinessVerifications, loomNotifications, loomPosts, loomReplies } from "@/lib/db/schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,7 +27,14 @@ export async function GET(_request: Request, context: Context) {
       authorId: appUsers.id,
       authorName: appUsers.displayName,
     }).from(loomReplies).innerJoin(appUsers, eq(loomReplies.authorUserId, appUsers.id))
-      .where(and(eq(loomReplies.postId, postId), eq(loomReplies.moderationStatus, "visible"))).orderBy(asc(loomReplies.createdAt)).limit(100);
+      .where(and(
+        eq(loomReplies.postId, postId),
+        eq(loomReplies.moderationStatus, "visible"),
+        ...(currentUser ? [
+          notInArray(loomReplies.authorUserId, db.select({ userId: loomBlocks.blockedUserId }).from(loomBlocks).where(eq(loomBlocks.blockerUserId, currentUser.id))),
+          notInArray(loomReplies.authorUserId, db.select({ userId: loomBlocks.blockerUserId }).from(loomBlocks).where(eq(loomBlocks.blockedUserId, currentUser.id))),
+        ] : []),
+      )).orderBy(asc(loomReplies.createdAt)).limit(100);
     return NextResponse.json({ replies }, { headers: { "Cache-Control": "no-store" } });
   } catch {
     return NextResponse.json({ error: "Replies are temporarily unavailable." }, { status: 503 });
