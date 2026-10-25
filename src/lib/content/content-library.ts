@@ -15,11 +15,23 @@ export const blogPostSchema = z.object({
   updatedAt: z.string().datetime(),
 }).strict();
 
+const mediaSourceSchema = z.string().trim().min(1).max(2048).refine((value) => {
+  if (value.startsWith("https://")) {
+    try {
+      const url = new URL(value);
+      return url.protocol === "https:" && Boolean(url.hostname) && !url.username && !url.password;
+    } catch { return false; }
+  }
+  // Storage keys are opaque identifiers, never filesystem paths or executable URLs.
+  return /^[A-Za-z0-9][A-Za-z0-9/_-]*(?:\\.[A-Za-z0-9_-]+)?$/.test(value)
+    && !value.split("/").some((part) => part === "." || part === "..");
+}, "Use an HTTPS URL or a safe storage key.");
+
 export const mediaAssetSchema = z.object({
   id: z.string().regex(/^[a-z0-9-]{1,64}$/),
   name: z.string().trim().min(1).max(120),
   kind: z.enum(mediaKinds),
-  source: z.string().trim().min(1).max(2048),
+  source: mediaSourceSchema,
   altText: z.string().max(300),
   caption: z.string().max(500),
   createdAt: z.string().datetime(),
