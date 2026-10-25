@@ -62,6 +62,7 @@ export async function PATCH(request: Request) {
       }).from(loomReports).where(eq(loomReports.id, parsed.data.reportId)).limit(1);
       if (!report) return { kind: "not_found" as const };
       if (report.status !== "open" && report.status !== "reviewing") return { kind: "already_reviewed" as const };
+      if (parsed.data.hideContent && report.targetType === "profile") return { kind: "unsupported_target" as const };
       if (parsed.data.memberAction !== "none") {
         let subjectUserId: string | null = null;
         if (report.targetType === "post") {
@@ -99,7 +100,7 @@ export async function PATCH(request: Request) {
         } else if (report.targetType === "message") {
           await tx.delete(loomMessages).where(eq(loomMessages.id, report.targetId));
         } else if (report.targetType === "profile") {
-          return { kind: "unsupported_target" as const };
+          // Prevalidated before any writes.
         }
       }
       await tx.update(loomReports).set({
