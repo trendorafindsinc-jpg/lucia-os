@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
-import { appUsers, loomBusinessVerifications, loomPosts, loomReplies } from "@/lib/db/schema";
+import { appUsers, loomBusinessVerifications, loomNotifications, loomPosts, loomReplies } from "@/lib/db/schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -47,11 +47,14 @@ export async function POST(request: Request, context: Context) {
     const [verification] = await db.select({ status: loomBusinessVerifications.status })
       .from(loomBusinessVerifications).where(eq(loomBusinessVerifications.userId, user.id)).limit(1);
     if (verification?.status !== "verified") return NextResponse.json({ error: "Only verified businesses can reply. Request business verification in Loom.", code: "BUSINESS_VERIFICATION_REQUIRED" }, { status: 403 });
-    const [parent] = await db.select({ id: loomPosts.id }).from(loomPosts).where(eq(loomPosts.id, postId)).limit(1);
+    const [parent] = await db.select({ id: loomPosts.id, authorUserId: loomPosts.authorUserId }).from(loomPosts).where(eq(loomPosts.id, postId)).limit(1);
     if (!parent) return NextResponse.json({ error: "That post could not be found." }, { status: 404 });
     const [reply] = await db.insert(loomReplies).values({ postId, authorUserId: user.id, body: parsed.data.body }).returning({
       id: loomReplies.id, postId: loomReplies.postId, body: loomReplies.body, createdAt: loomReplies.createdAt, authorId: loomReplies.authorUserId,
     });
+    if (parent.authorUserId !== user.id) {
+      try { await db.insert(loomNotifications).values({ userId: parent.authorUserId, actorUserId: user.id, kind: "post_reply", targetId: postId, body: `${user.displayName || "A Loom member"} replied to your post.` }); } catch { /* The reply remains successful if notification delivery fails. */ }
+    }
     return NextResponse.json({ reply: { ...reply, authorName: user.displayName } }, { status: 201, headers: { "Cache-Control": "no-store" } });
   } catch {
     return NextResponse.json({ error: "Your reply could not be saved. Please try again." }, { status: 503 });
