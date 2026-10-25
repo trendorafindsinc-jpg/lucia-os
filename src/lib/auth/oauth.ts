@@ -69,7 +69,7 @@ export function getSafeReturnTo(cookieHeader: string | null | undefined): string
   if (
     !destination.startsWith("/") ||
     destination.startsWith("//") ||
-    destination.includes("\\\\") ||
+    destination.includes("\\") ||
     destination.startsWith("/api/auth")
   ) return "/workspace";
 
