@@ -6,6 +6,7 @@ import { hasOrganizationPermission } from "@/lib/access/policy";
 import { getDb } from "@/lib/db/client";
 import { memberships, websiteDomains, websitePages, websiteStructures, websites } from "@/lib/db/schema";
 import { makeInitialDraft, siteDraftSchema } from "@/lib/editor/site-draft";
+import { siteStructureSchema } from "@/lib/site-structure/structure";
 import { publishActionSchema, publishSettingsSchema } from "@/lib/publishing/publishing";
 
 export const runtime = "nodejs";
