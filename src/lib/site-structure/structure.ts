@@ -67,6 +67,24 @@ export function addPage(structure: SiteStructure, title: string): SiteStructure 
   return { ...structure, pages: [...structure.pages, page], navigationPageIds: structure.navigationPageIds.length < 12 ? [...structure.navigationPageIds, id] : structure.navigationPageIds };
 }
 
+export function setHomepage(structure: SiteStructure, pageId: string): SiteStructure {
+  const nextHomepage = structure.pages.find((page) => page.id === pageId);
+  if (!nextHomepage || pageId === structure.homePageId) return structure;
+  const currentHomepage = structure.pages.find((page) => page.id === structure.homePageId);
+  if (!currentHomepage) return structure;
+  return {
+    ...structure,
+    homePageId: pageId,
+    pages: structure.pages.map((page) =>
+      page.id === currentHomepage.id
+        ? { ...page, slug: nextHomepage.slug }
+        : page.id === nextHomepage.id
+          ? { ...page, slug: "" }
+          : page,
+    ),
+  };
+}
+
 export function removePage(structure: SiteStructure, pageId: string): SiteStructure {
   if (structure.pages.length <= 1 || pageId === structure.homePageId) return structure;
   return { ...structure, pages: structure.pages.filter((page) => page.id !== pageId), navigationPageIds: structure.navigationPageIds.filter((id) => id !== pageId) };
