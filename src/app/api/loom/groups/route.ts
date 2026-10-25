@@ -4,7 +4,6 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
-import { getCurrentUser } from "@/lib/auth/session";
 import { loomBusinessVerifications, loomGroupMemberships, loomGroups } from "@/lib/db/schema";
 
 export const runtime = "nodejs";
