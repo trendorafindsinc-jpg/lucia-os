@@ -117,3 +117,5 @@
 .loom-left-rail>button{display:block;width:100%;text-align:left;border:0;border-radius:10px;padding:.65rem .75rem;background:transparent;color:inherit;font:inherit;cursor:pointer}
 .loom-left-rail>button.loom-rail-active{background:rgba(70,115,160,.1);color:#234e77;font-weight:650}
 @media(max-width:520px){.loom-staff-card{padding:.9rem}.loom-staff-card dl{grid-template-columns:1fr;gap:.2rem}.loom-staff-card dd{margin-bottom:.55rem}}
+
+.loom-group-join{align-self:center;flex:0 0 auto;border:1px solid rgba(115,139,166,.25);border-radius:11px;padding:.65rem .85rem;background:#14263d;color:white;font:inherit;font-size:.82rem;font-weight:650;cursor:pointer}.loom-group-join:disabled{opacity:.55;cursor:wait}@media(max-width:520px){.loom-group-card{flex-wrap:wrap}.loom-group-join{margin-left:3.1rem}}
