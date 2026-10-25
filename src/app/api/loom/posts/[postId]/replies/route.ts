@@ -37,7 +37,7 @@ export async function POST(request: Request, context: Context) {
   if (origin && origin !== new URL(request.url).origin) return NextResponse.json({ error: "Invalid request origin." }, { status: 403 });
   const user = await getCurrentUser().catch(() => null);
   if (!user) return NextResponse.json({ error: "Sign in with LUCIA ID to reply." }, { status: 401 });
-  const restriction = await getLoomRestriction(user.id).catch(() => null);
+  const restriction = await getLoomRestriction(user.id);
   if (restriction) return NextResponse.json({ error: "Your Loom participation is currently restricted." }, { status: 403 });
   const { postId } = await context.params;
   if (!z.string().uuid().safeParse(postId).success) return NextResponse.json({ error: "Invalid post." }, { status: 400 });
