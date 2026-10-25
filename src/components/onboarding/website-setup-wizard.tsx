@@ -25,11 +25,6 @@ export function WebsiteSetupWizard() {
   const [draftLoaded, setDraftLoaded] = useState(false);
 
   useEffect(() => {
-    const requestedTemplate = new URLSearchParams(window.location.search).get("template");
-    if (requestedTemplate && getTemplateById(requestedTemplate)) setTemplateId(requestedTemplate);
-  }, []);
-
-  useEffect(() => {
     if (!slugEdited) setSiteSlug(makeSiteSlug(websiteName));
   }, [websiteName, slugEdited]);
 
@@ -51,6 +46,11 @@ export function WebsiteSetupWizard() {
           setSiteSlug(parsed.data.siteSlug);
           setSlugEdited(true);
         }
+      }
+      // A template selected from Loom Library must win over an older saved setup draft.
+      const requestedTemplate = new URLSearchParams(window.location.search).get("template");
+      if (requestedTemplate && getTemplateById(requestedTemplate)) {
+        setTemplateId(requestedTemplate);
       }
     } catch {
       window.localStorage.removeItem("lucia-os-website-setup-draft");
