@@ -1,8 +1,9 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
+import { getCurrentUser } from "@/lib/auth/session";
 import { loomBusinessVerifications, loomGroupMemberships, loomGroups } from "@/lib/db/schema";
 
 export const runtime = "nodejs";
@@ -16,6 +17,7 @@ const groupSchema = z.object({
 export async function GET() {
   try {
     const db = getDb();
+    const user = await getCurrentUser().catch(() => null);
     const groups = await db.select({
       id: loomGroups.id,
       name: loomGroups.name,
@@ -23,7 +25,10 @@ export async function GET() {
       description: loomGroups.description,
       createdAt: loomGroups.createdAt,
     }).from(loomGroups).where(and(eq(loomGroups.status, "active"), eq(loomGroups.visibility, "public"))).orderBy(desc(loomGroups.createdAt)).limit(100);
-    return NextResponse.json({ groups }, { headers: { "Cache-Control": "no-store" } });
+    const memberships = user && groups.length ? await db.select({ groupId: loomGroupMemberships.groupId, role: loomGroupMemberships.role })
+      .from(loomGroupMemberships).where(and(eq(loomGroupMemberships.userId, user.id), eq(loomGroupMemberships.status, "active"), inArray(loomGroupMemberships.groupId, groups.map(group => group.id)))) : [];
+    const membershipMap = new Map(memberships.map(item => [item.groupId, item.role]));
+    return NextResponse.json({ groups: groups.map(group => ({ ...group, isMember: membershipMap.has(group.id), memberRole: membershipMap.get(group.id) || null })) }, { headers: { "Cache-Control": "no-store" } });
   } catch {
     return NextResponse.json({ error: "Groups are temporarily unavailable." }, { status: 503 });
   }
