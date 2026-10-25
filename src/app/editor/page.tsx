@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { VisualSiteEditor } from "@/components/editor/visual-site-editor";
+import { VersionHistoryLauncher } from "@/components/editor/version-history-launcher";
 import "./editor.css";
 
 export const metadata: Metadata = {
@@ -8,5 +9,10 @@ export const metadata: Metadata = {
 };
 
 export default function VisualEditorPage() {
-  return <VisualSiteEditor />;
+  return (
+    <>
+      <VisualSiteEditor />
+      <VersionHistoryLauncher />
+    </>
+  );
 }
