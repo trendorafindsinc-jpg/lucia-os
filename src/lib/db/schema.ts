@@ -377,6 +377,7 @@ export const websiteStructures = pgTable("website_structures", {
   websiteId: uuid("website_id").notNull(),
   createdByUserId: uuid("created_by_user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
   structure: text("structure").notNull(),
+  publishedStructure: text("published_structure"),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 }, (table) => [
@@ -414,4 +415,56 @@ export const websiteSeoSettings = pgTable("website_seo_settings", {
   foreignKey({ name: "website_seo_settings_website_org_fk", columns: [table.organizationId, table.websiteId], foreignColumns: [websites.organizationId, websites.id] }).onDelete("cascade"),
   uniqueIndex("website_seo_settings_org_website_uq").on(table.organizationId, table.websiteId),
   uniqueIndex("website_seo_settings_org_id_id_uq").on(table.organizationId, table.id),
+]);
+
+
+/** Tenant-owned form configuration. Notification settings are preferences only until email delivery is integrated. */
+export const websiteForms = pgTable("website_forms", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
+  websiteId: uuid("website_id").notNull(),
+  formKey: text("form_key").notNull(),
+  definition: text("definition").notNull(),
+  notificationSettings: text("notification_settings").notNull(),
+  createdByUserId: uuid("created_by_user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+}, (table) => [
+  foreignKey({ name: "website_forms_website_org_fk", columns: [table.organizationId, table.websiteId], foreignColumns: [websites.organizationId, websites.id] }).onDelete("cascade"),
+  uniqueIndex("website_forms_org_website_key_uq").on(table.organizationId, table.websiteId, table.formKey),
+  uniqueIndex("website_forms_org_id_id_uq").on(table.organizationId, table.id),
+]);
+
+/** Form submissions have a bounded retention window; raw client IPs and user-agent strings are not stored. */
+export const websiteFormSubmissions = pgTable("website_form_submissions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
+  websiteId: uuid("website_id").notNull(),
+  formKey: text("form_key").notNull(),
+  values: text("submission_values").notNull(),
+  status: text("status").notNull().default("new"),
+  submittedAt: timestamp("submitted_at", { withTimezone: true }).notNull().defaultNow(),
+  retentionUntil: timestamp("retention_until", { withTimezone: true }).notNull().default(sql`now() + interval '90 days'`),
+}, (table) => [
+  foreignKey({ name: "website_form_submissions_website_org_fk", columns: [table.organizationId, table.websiteId], foreignColumns: [websites.organizationId, websites.id] }).onDelete("cascade"),
+  foreignKey({ name: "website_form_submissions_form_fk", columns: [table.organizationId, table.websiteId, table.formKey], foreignColumns: [websiteForms.organizationId, websiteForms.websiteId, websiteForms.formKey] }).onDelete("cascade"),
+  uniqueIndex("website_form_submissions_org_id_id_uq").on(table.organizationId, table.id),
+  index("website_form_submissions_org_website_submitted_idx").on(table.organizationId, table.websiteId, table.submittedAt),
+]);
+
+/** Privacy-minimised analytics events; no names, emails, IPs, or query-string values are persisted. */
+export const websiteAnalyticsEvents = pgTable("website_analytics_events", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
+  websiteId: uuid("website_id").notNull(),
+  eventName: text("event_name").notNull(),
+  sessionHash: text("session_hash").notNull(),
+  path: text("path").notNull(),
+  conversionKey: text("conversion_key"),
+  occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
+  createdAt: createdAt(),
+}, (table) => [
+  foreignKey({ name: "website_analytics_events_website_org_fk", columns: [table.organizationId, table.websiteId], foreignColumns: [websites.organizationId, websites.id] }).onDelete("cascade"),
+  uniqueIndex("website_analytics_events_org_id_id_uq").on(table.organizationId, table.id),
+  index("website_analytics_events_org_website_time_idx").on(table.organizationId, table.websiteId, table.occurredAt),
 ]);

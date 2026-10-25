@@ -5,6 +5,7 @@
 - LUCIA Core authenticates the user; LUCIA OS is authoritative for local organisation membership and website permissions.
 - `website_structures` stores the validated page map, homepage identity, navigation page IDs, and ordered reusable-section types as one versioned-by-replacement JSON document per website.
 - The structure record is separate from `website_pages.content`, editor drafts, and the last published version. Editing navigation must not overwrite page content or publish changes.
+- `published_structure` is a separate immutable-until-publish snapshot. Public rendering reads this snapshot, not the current editable structure, so changing navigation cannot change the live site before publishing.
 - A composite foreign key binds each structure record to the matching `(organization_id, website_id)`. A unique index permits one current structure per website.
 - RLS uses transaction-local `app.current_organization_id`; route handlers set this context only after local membership and action permission checks.
 
@@ -28,5 +29,5 @@
 - Run the migration on a disposable Neon branch and inspect rollback/recovery before production use.
 - Use a non-owner `LOGIN NOBYPASSRLS` role to prove missing-context and cross-tenant read/write denial.
 - Exercise authenticated/unauthenticated routes, permission denial, malformed payloads, duplicate slugs, refresh/reopen persistence, save failure, and concurrent updates.
-- Confirm saved structure drives public multi-page routes, navigation links, and the published renderer before considering Phase 10 complete.
+- The descendant Phase 15–16 integration now publishes the structure snapshot and creates/updates page rows in the same publish transaction; public routes read only the published structure and use validated internal page links. Browser acceptance and injected-failure rollback are still required before Phase 10 is accepted.
 - Do not run a production migration or deploy solely because this code has been merged.

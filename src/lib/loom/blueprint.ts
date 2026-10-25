@@ -72,7 +72,7 @@ export const loomBlueprintSchema = z.object({
   }).strict().refine((value) => value.mobileBreakpoint < value.tabletBreakpoint, "Responsive breakpoints must be ordered."),
   navigation: z.array(z.object({
     label: safeText(50),
-    href: z.string().regex(/^#[a-z0-9-]{1,64}$/),
+    href: z.string().regex(/^(?:#[a-z0-9-]{1,64}|\/$|\/[a-z0-9]+(?:-[a-z0-9]+)*(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)*)$/).max(180),
   }).strict()).max(12),
   pages: z.array(loomPageSchema).min(1).max(30),
 }).strict().superRefine((blueprint, ctx) => {

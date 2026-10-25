@@ -4,8 +4,9 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getOrganizationMembershipsForUser } from "@/lib/access/guards";
 import { hasOrganizationPermission } from "@/lib/access/policy";
 import { getDb } from "@/lib/db/client";
-import { memberships, websiteDomains, websitePages, websites } from "@/lib/db/schema";
+import { memberships, websiteDomains, websitePages, websiteStructures, websites } from "@/lib/db/schema";
 import { makeInitialDraft, siteDraftSchema } from "@/lib/editor/site-draft";
+import { siteStructureSchema } from "@/lib/site-structure/structure";
 import { publishActionSchema, publishSettingsSchema } from "@/lib/publishing/publishing";
 
 export const runtime = "nodejs";
@@ -73,6 +74,20 @@ export async function POST(request: Request) {
         if (!draftResult.success) throw new Error("The saved website draft is incomplete. Open the visual editor and save a valid draft first.");
         const snapshot = JSON.stringify(draftResult.data);
         const now = new Date();
+        const [savedStructureRow] = await tx.select({ id: websiteStructures.id, structure: websiteStructures.structure })
+          .from(websiteStructures)
+          .where(and(eq(websiteStructures.organizationId, org.id), eq(websiteStructures.websiteId, website.id)))
+          .limit(1);
+        let structureSnapshot: ReturnType<typeof siteStructureSchema.parse> | null = null;
+        if (savedStructureRow) {
+          let structureRaw: unknown;
+          try { structureRaw = JSON.parse(savedStructureRow.structure); } catch {
+            throw new Error("The saved page structure is invalid. Publishing was stopped and the live version was preserved.");
+          }
+          const checkedStructure = siteStructureSchema.safeParse(structureRaw);
+          if (!checkedStructure.success) throw new Error("The saved page structure failed validation. Publishing was stopped and the live version was preserved.");
+          structureSnapshot = checkedStructure.data;
+        }
 
         if (action === "save") {
           if (home) {
@@ -85,10 +100,42 @@ export async function POST(request: Request) {
           return { action, id: website.id, slug: website.slug, name: settings.siteName, status: website.status, savedAt: now.toISOString() };
         }
 
-        // The public renderer expects a validated site-draft snapshot for every
-        // published path. Previously only "/" received one, leaving seeded
-        // About/Services/Contact routes permanently 404 after publishing.
-        if (pages.length === 0) {
+        // The public renderer reads only the published structure snapshot. Editing
+        // page/navigation structure cannot alter the live site until this transaction publishes it.
+        if (structureSnapshot && savedStructureRow) {
+          const expectedPages = structureSnapshot.pages.map((page) => ({
+            title: page.title,
+            path: page.slug ? `/${page.slug}` : "/",
+          }));
+          for (const expected of expectedPages) {
+            const existingPage = pages.find((page) => page.path === expected.path);
+            if (existingPage) {
+              await tx.update(websitePages).set({
+                title: expected.title,
+                content: snapshot,
+                publishedContent: snapshot,
+                status: "published",
+                updatedAt: now,
+              }).where(and(
+                eq(websitePages.id, existingPage.id),
+                eq(websitePages.organizationId, org.id),
+                eq(websitePages.websiteId, website.id),
+              ));
+            } else {
+              await tx.insert(websitePages).values({
+                organizationId: org.id, websiteId: website.id, title: expected.title, path: expected.path,
+                status: "published", content: snapshot, publishedContent: snapshot, updatedAt: now,
+              });
+            }
+          }
+          for (const existingPage of pages) {
+            if (expectedPages.some((expected) => expected.path === existingPage.path)) continue;
+            await tx.update(websitePages).set({ status: "draft", publishedContent: null, updatedAt: now })
+              .where(and(eq(websitePages.id, existingPage.id), eq(websitePages.organizationId, org.id), eq(websitePages.websiteId, website.id)));
+          }
+          await tx.update(websiteStructures).set({ publishedStructure: savedStructureRow.structure, updatedAt: now })
+            .where(and(eq(websiteStructures.id, savedStructureRow.id), eq(websiteStructures.organizationId, org.id), eq(websiteStructures.websiteId, website.id)));
+        } else if (pages.length === 0) {
           await tx.insert(websitePages).values({
             organizationId: org.id, websiteId: website.id, title: "Home", path: "/", status: "published",
             content: snapshot, publishedContent: snapshot, updatedAt: now,

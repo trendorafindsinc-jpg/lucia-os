@@ -16,6 +16,7 @@ describe("site structure Loom adapter", () => {
     expect(blueprint.pages[0].title).toBe("Our Team");
     expect(blueprint.pages[0].sections.length).toBe(team.sectionTypes.length);
     expect(blueprint.navigation.map((item) => item.label)).toContain("Our Team");
+    expect(blueprint.navigation.find((item) => item.label === "Our Team")?.href).toBe("/our-team");
   });
 
   it("keeps homepage preview at the root path after switching home page", () => {

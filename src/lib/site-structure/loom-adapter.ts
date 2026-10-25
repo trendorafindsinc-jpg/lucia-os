@@ -60,7 +60,7 @@ export function siteStructurePageToBlueprint(draft: SiteDraft, structure: SiteSt
   const navigation = structure.navigationPageIds
     .map((id) => structure.pages.find((candidate) => candidate.id === id))
     .filter((candidate): candidate is NonNullable<typeof candidate> => Boolean(candidate))
-    .map((candidate) => ({ label: candidate.title, href: "#top" }));
+    .map((candidate) => ({ label: candidate.title, href: candidate.slug ? `/${candidate.slug}` : "/" }));
   return loomBlueprintSchema.parse({
     ...base,
     navigation,
