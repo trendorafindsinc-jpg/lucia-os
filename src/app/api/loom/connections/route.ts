@@ -60,6 +60,8 @@ export async function POST(request: Request) {
     const db = getDb();
     const [recipient] = await db.select({ id: appUsers.id }).from(appUsers).where(and(eq(appUsers.id, parsed.data.recipientUserId), eq(appUsers.active, true))).limit(1);
     if (!recipient) return NextResponse.json({ error: "Member not found." }, { status: 404 });
+    const recipientRestriction = await getLoomRestriction(recipient.id).catch(() => null);
+    if (recipientRestriction) return NextResponse.json({ error: "This member is not currently available for connections." }, { status: 403 });
     const [existing] = await db.select({ id: loomConnections.id }).from(loomConnections).where(or(
       and(eq(loomConnections.requesterUserId, user.id), eq(loomConnections.recipientUserId, recipient.id)),
       and(eq(loomConnections.requesterUserId, recipient.id), eq(loomConnections.recipientUserId, user.id)),
