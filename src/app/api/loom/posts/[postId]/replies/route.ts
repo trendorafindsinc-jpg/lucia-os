@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
-import { appUsers, loomBlocks, loomBusinessVerifications, loomNotifications, loomPosts, loomReplies } from "@/lib/db/schema";
+import { appUsers, loomBlocks, loomBusinessVerifications, loomGroupMemberships, loomGroups, loomNotifications, loomPosts, loomReplies } from "@/lib/db/schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,6 +19,13 @@ export async function GET(_request: Request, context: Context) {
     const currentUser = await getCurrentUser().catch(() => null);
     if (currentUser && (await getLoomRestriction(currentUser.id))?.status === "banned") return NextResponse.json({ error: "Loom access is unavailable for this account." }, { status: 403 });
     const db = getDb();
+    const [parent] = await db.select({ id: loomPosts.id, moderationStatus: loomPosts.moderationStatus, groupId: loomPosts.groupId })
+      .from(loomPosts).where(eq(loomPosts.id, postId)).limit(1);
+    if (!parent || parent.moderationStatus !== "visible") return NextResponse.json({ error: "That post could not be found." }, { status: 404 });
+    if (parent.groupId) {
+      const [group] = await db.select({ id: loomGroups.id }).from(loomGroups).where(and(eq(loomGroups.id, parent.groupId), eq(loomGroups.status, "active"), eq(loomGroups.visibility, "public"))).limit(1);
+      if (!group) return NextResponse.json({ error: "That post could not be found." }, { status: 404 });
+    }
     const replies = await db.select({
       id: loomReplies.id,
       postId: loomReplies.postId,
@@ -59,8 +66,12 @@ export async function POST(request: Request, context: Context) {
     const [verification] = await db.select({ status: loomBusinessVerifications.status })
       .from(loomBusinessVerifications).where(eq(loomBusinessVerifications.userId, user.id)).limit(1);
     if (verification?.status !== "verified") return NextResponse.json({ error: "Only verified businesses can reply. Request business verification in Loom.", code: "BUSINESS_VERIFICATION_REQUIRED" }, { status: 403 });
-    const [parent] = await db.select({ id: loomPosts.id, authorUserId: loomPosts.authorUserId, moderationStatus: loomPosts.moderationStatus }).from(loomPosts).where(eq(loomPosts.id, postId)).limit(1);
+    const [parent] = await db.select({ id: loomPosts.id, authorUserId: loomPosts.authorUserId, moderationStatus: loomPosts.moderationStatus, groupId: loomPosts.groupId }).from(loomPosts).where(eq(loomPosts.id, postId)).limit(1);
     if (!parent || parent.moderationStatus !== "visible") return NextResponse.json({ error: "That post could not be found." }, { status: 404 });
+    if (parent.groupId) {
+      const [membership] = await db.select({ id: loomGroupMemberships.id }).from(loomGroupMemberships).where(and(eq(loomGroupMemberships.groupId, parent.groupId), eq(loomGroupMemberships.userId, user.id), eq(loomGroupMemberships.status, "active"))).limit(1);
+      if (!membership) return NextResponse.json({ error: "Join this group before replying." }, { status: 403 });
+    }
     const [reply] = await db.insert(loomReplies).values({ postId, authorUserId: user.id, body: parsed.data.body }).returning({
       id: loomReplies.id, postId: loomReplies.postId, body: loomReplies.body, createdAt: loomReplies.createdAt, authorId: loomReplies.authorUserId,
     });
