@@ -59,7 +59,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       return NextResponse.json({ error: "Content payload exceeds the 5 MB limit." }, { status: 413 });
     }
     const body = await request.text();
-    if (body.length > 5_000_000) return NextResponse.json({ error: "Content payload exceeds the 5 MB limit." }, { status: 413 });
+    if (new TextEncoder().encode(body).byteLength > 5_000_000) return NextResponse.json({ error: "Content payload exceeds the 5 MB limit." }, { status: 413 });
     raw = JSON.parse(body);
   } catch {
     return NextResponse.json({ error: "Submit valid content data." }, { status: 400 });
