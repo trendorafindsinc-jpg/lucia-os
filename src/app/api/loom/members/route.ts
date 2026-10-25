@@ -21,11 +21,11 @@ export async function GET(request: Request) {
       website: loomProfiles.website,
     }).from(appUsers)
       .innerJoin(loomBusinessVerifications, eq(loomBusinessVerifications.userId, appUsers.id))
-      .leftJoin(loomProfiles, eq(loomProfiles.userId, appUsers.id))
-      .where(and(eq(appUsers.active, true), eq(loomBusinessVerifications.status, "verified"), ne(appUsers.id, user.id)));
+      .leftJoin(loomProfiles, eq(loomProfiles.userId, appUsers.id));
+    const filters = and(eq(appUsers.active, true), eq(loomBusinessVerifications.status, "verified"), ne(appUsers.id, user.id));
     const members = query
-      ? await base.where(and(eq(appUsers.active, true), eq(loomBusinessVerifications.status, "verified"), ne(appUsers.id, user.id), or(ilike(loomProfiles.businessName, `%${query}%`), ilike(loomProfiles.bio, `%${query}%`), ilike(appUsers.displayName, `%${query}%`)))).orderBy(asc(loomProfiles.businessName)).limit(100)
-      : await base.orderBy(asc(loomProfiles.businessName)).limit(100);
+      ? await base.where(and(filters, or(ilike(loomProfiles.businessName, `%${query}%`), ilike(loomProfiles.bio, `%${query}%`), ilike(appUsers.displayName, `%${query}%`)))).orderBy(asc(loomProfiles.businessName)).limit(100)
+      : await base.where(filters).orderBy(asc(loomProfiles.businessName)).limit(100);
     return NextResponse.json({ members }, { headers: { "Cache-Control": "no-store" } });
   } catch {
     return NextResponse.json({ error: "Member discovery is temporarily unavailable." }, { status: 503 });
