@@ -415,3 +415,29 @@ export const websiteSeoSettings = pgTable("website_seo_settings", {
   uniqueIndex("website_seo_settings_org_website_uq").on(table.organizationId, table.websiteId),
   uniqueIndex("website_seo_settings_org_id_id_uq").on(table.organizationId, table.id),
 ]);
+
+
+/** Public Loom community posts. Only public feed content is stored here. */
+export const loomPosts = pgTable(
+  "loom_posts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    authorUserId: uuid("author_user_id").notNull().references(() => appUsers.id, { onDelete: "cascade" }),
+    body: text("body").notNull(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [index("loom_posts_created_idx").on(table.createdAt), index("loom_posts_author_idx").on(table.authorUserId)],
+);
+
+export const loomReplies = pgTable(
+  "loom_replies",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    postId: uuid("post_id").notNull().references(() => loomPosts.id, { onDelete: "cascade" }),
+    authorUserId: uuid("author_user_id").notNull().references(() => appUsers.id, { onDelete: "cascade" }),
+    body: text("body").notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [index("loom_replies_post_created_idx").on(table.postId, table.createdAt), index("loom_replies_author_idx").on(table.authorUserId)],
+);
