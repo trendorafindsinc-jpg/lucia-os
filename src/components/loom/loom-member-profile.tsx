@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import type { FormEvent } from "react";
 import Link from "next/link";
 
 type Profile = { userId: string; displayName: string | null; businessName: string | null; bio: string; website: string | null; createdAt: string | null };
@@ -33,7 +34,7 @@ export function LoomMemberProfile({ userId }: { userId: string }) {
 
   useEffect(() => { void load(); }, [load]);
 
-  async function submitReport(event: React.FormEvent<HTMLFormElement>) {
+  async function submitReport(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (reportBusy) return;
     setReportBusy(true); setError(""); setNotice("");
