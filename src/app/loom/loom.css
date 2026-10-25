@@ -91,3 +91,6 @@
 .loom-member-actions button:disabled{opacity:.55;cursor:not-allowed}
 .loom-member-actions span{font-size:.8rem;color:var(--loom-muted,#64748b)}
 @media(max-width:480px){.loom-member-card{gap:.7rem;padding:.85rem}.loom-member-card .loom-post-avatar{flex:0 0 36px;width:36px;height:36px}}
+
+.loom-post-actions .loom-reacted{background:rgba(59,111,159,.12);border-color:rgba(59,111,159,.4);color:#234e77;font-weight:700}
+.loom-post-actions button:disabled{opacity:.6;cursor:wait}
