@@ -1,4 +1,5 @@
 import { and, asc, eq, isNull, or } from "drizzle-orm";
+import { consumeLoomRateLimit } from "@/lib/loom/rate-limit";
 import { getLoomRestriction } from "@/lib/loom/staff";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -87,6 +88,8 @@ export async function POST(request: Request) {
     if (await hasBlock(user.id, parsed.data.recipientUserId)) return NextResponse.json({ error: "Messaging is unavailable between these members." }, { status: 403 });
     if (!(await hasAcceptedConnection(user.id, parsed.data.recipientUserId))) return NextResponse.json({ error: "An accepted connection is required before messaging." }, { status: 403 });
     const db = getDb();
+    const rate = await consumeLoomRateLimit(user.id, "message", 30, 600000);
+    if (!rate.allowed) return NextResponse.json({ error: "Too many requests. Try again shortly." }, { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } });
     const [recipient] = await db.select({ id: appUsers.id }).from(appUsers).where(and(eq(appUsers.id, parsed.data.recipientUserId), eq(appUsers.active, true))).limit(1);
     if (!recipient) return NextResponse.json({ error: "Member not found." }, { status: 404 });
     const [message] = await db.insert(loomMessages).values({ senderUserId: user.id, recipientUserId: recipient.id, body: parsed.data.body }).returning({
