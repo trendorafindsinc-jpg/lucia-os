@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { templateCategories, websiteTemplates, type TemplateCategory, type WebsiteTemplate } from "@/lib/templates/catalogue";
+import { getTemplateSetupHref } from "@/lib/templates/navigation";
 
 type PreviewVariant = "editorial" | "split" | "gallery" | "storefront" | "service" | "hospitality";
 
@@ -59,7 +60,7 @@ export function TemplateGallery() {
         <h1>Find a look that<br /><span>feels like you.</span></h1>
         <p className="template-lede">Explore distinct design directions for organisations, creators and independent businesses. Each preview has its own composition—not just a different colour palette. Choose a starting point and customise it in the Studio.</p>
         <div className="template-count"><strong>{websiteTemplates.length} design concepts</strong><span> · {templateCategories.length - 1} categories · Loom Library</span></div>
-        <div className="template-start-link"><Link href="/create">Start guided website setup <span aria-hidden="true">→</span></Link><Link href="/editor">Open visual editor <span aria-hidden="true">↗</span></Link></div>
+        <div className="template-start-link"><Link href="/create">Start guided website setup <span aria-hidden="true">→</span></Link><Link href="/workspace/websites">Open saved websites <span aria-hidden="true">↗</span></Link></div>
       </section>
       <section className="template-controls" aria-label="Find a website template">
         <label className="template-search-label" htmlFor="template-search">Search templates</label>
@@ -83,7 +84,7 @@ export function TemplateGallery() {
               <div className="template-card-meta"><span>{template.category}</span><span>{template.style}</span></div>
               <h3>{template.name}</h3><p className="template-audience">{template.audience}</p><p className="template-description">{template.description}</p>
               <div className="template-sections" aria-label="Included section concepts">{template.sections.slice(0, 4).map((section) => <span key={section}>{section}</span>)}</div>
-              <Link className="template-action" href={`/editor?template=${encodeURIComponent(template.id)}`}>Customise this design <span aria-hidden="true">↗</span></Link>
+              <Link className="template-action" href={getTemplateSetupHref(template.id)}>Customise this design <span aria-hidden="true">↗</span></Link>
             </div>
           </article>;
         })}</div> : <div className="template-empty"><h3>No matching concepts</h3><p>Try another search or choose a different category.</p><button type="button" onClick={() => { setCategory("All"); setSearch(""); }}>Clear filters</button></div>}

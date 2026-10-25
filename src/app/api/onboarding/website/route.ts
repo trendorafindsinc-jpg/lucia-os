@@ -5,6 +5,7 @@ import { getDb } from "@/lib/db/client";
 import { memberships, organizations, websitePages, websites } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth/session";
 import { websiteSetupSchema, makeSiteSlug } from "@/lib/onboarding/website-setup";
+import { serializeInitialWebsiteDraft } from "@/lib/onboarding/initial-website-draft";
 import { getTemplateById } from "@/lib/templates/catalogue";
 
 export const runtime = "nodejs";
@@ -122,13 +123,16 @@ export async function POST(request: Request) {
         status: "draft",
       }).returning({ id: websites.id, name: websites.name, slug: websites.slug });
 
+      const serializedInitialDraft = serializeInitialWebsiteDraft(setup.templateId, setup.websiteName);
       await tx.insert(websitePages).values(template.sections.map((section, index) => ({
         organizationId: organization.id,
         websiteId: website.id,
         title: section,
         path: index === 0 ? "/" : `/${makeSiteSlug(section)}`,
         status: "draft",
-        content: "",
+        // Layer Studio loads the structured draft from the home page. Persist it
+        // now so the selected template and website name survive the handoff.
+        content: index === 0 ? serializedInitialDraft : "",
       })));
 
       return { organization, website, created: true, createdOrganization };
