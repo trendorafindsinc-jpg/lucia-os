@@ -93,8 +93,8 @@ export function VersionHistoryLauncher() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Couldn't save this checkpoint.");
-      setNotice("Checkpoint saved from the stored draft. Unsaved editor changes are not included.");
       await loadVersions();
+      setNotice("Checkpoint saved from the stored draft. Unsaved editor changes are not included.");
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Couldn't save a checkpoint.");
     } finally {
