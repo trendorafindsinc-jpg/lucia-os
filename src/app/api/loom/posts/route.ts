@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
-import { appUsers, loomPosts } from "@/lib/db/schema";
+import { appUsers, loomBusinessVerifications, loomPosts } from "@/lib/db/schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -37,6 +37,11 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: "Posts must contain 1–4,000 characters." }, { status: 422 });
   try {
     const db = getDb();
+    const [verification] = await db.select({ status: loomBusinessVerifications.status })
+      .from(loomBusinessVerifications).where(eq(loomBusinessVerifications.userId, user.id)).limit(1);
+    if (verification?.status !== "verified") {
+      return NextResponse.json({ error: "Publishing is reserved for verified businesses. Submit business registration or domain evidence in Loom to request verification.", code: "BUSINESS_VERIFICATION_REQUIRED" }, { status: 403 });
+    }
     const [post] = await db.insert(loomPosts).values({ authorUserId: user.id, body: parsed.data.body }).returning({
       id: loomPosts.id, body: loomPosts.body, createdAt: loomPosts.createdAt, authorId: loomPosts.authorUserId,
     });
