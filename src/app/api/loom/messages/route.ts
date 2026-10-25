@@ -1,4 +1,4 @@
-import { and, asc, eq, or } from "drizzle-orm";
+import { and, asc, eq, isNull, or } from "drizzle-orm";
 import { getLoomRestriction } from "@/lib/loom/staff";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -39,6 +39,11 @@ export async function GET(request: Request) {
     if (peerRestriction) return NextResponse.json({ error: "This member is not currently available for private messages." }, { status: 403 });
     if (!(await hasAcceptedConnection(user.id, peer!))) return NextResponse.json({ error: "An accepted connection is required before messaging." }, { status: 403 });
     const db = getDb();
+    await db.update(loomMessages).set({ readAt: new Date() }).where(and(
+      eq(loomMessages.senderUserId, peer!),
+      eq(loomMessages.recipientUserId, user.id),
+      isNull(loomMessages.readAt),
+    ));
     const messages = await db.select({
       id: loomMessages.id,
       senderUserId: loomMessages.senderUserId,
