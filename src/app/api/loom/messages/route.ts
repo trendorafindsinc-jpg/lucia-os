@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
-import { appUsers, loomBusinessVerifications, loomConnections, loomMessages, loomNotifications } from "@/lib/db/schema";
+import { appUsers, loomBlocks, loomBusinessVerifications, loomConnections, loomMessages, loomNotifications } from "@/lib/db/schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,6 +25,12 @@ async function isVerified(userId: string) {
   return row?.status === "verified";
 }
 
+async function hasBlock(first: string, second: string) {
+  const db = getDb();
+  const [row] = await db.select({ id: loomBlocks.id }).from(loomBlocks).where(or(and(eq(loomBlocks.blockerUserId, first), eq(loomBlocks.blockedUserId, second)), and(eq(loomBlocks.blockerUserId, second), eq(loomBlocks.blockedUserId, first)))).limit(1);
+  return Boolean(row);
+}
+
 export async function GET(request: Request) {
   const user = await getCurrentUser().catch(() => null);
   if (!user) return NextResponse.json({ error: "Sign in to access messages." }, { status: 401 });
@@ -37,6 +43,7 @@ export async function GET(request: Request) {
     if (!(await isVerified(peer!))) return NextResponse.json({ error: "This member is not currently available for private messages." }, { status: 403 });
     const peerRestriction = await getLoomRestriction(peer!);
     if (peerRestriction) return NextResponse.json({ error: "This member is not currently available for private messages." }, { status: 403 });
+    if (await hasBlock(user.id, peer!)) return NextResponse.json({ error: "Messaging is unavailable between these members." }, { status: 403 });
     if (!(await hasAcceptedConnection(user.id, peer!))) return NextResponse.json({ error: "An accepted connection is required before messaging." }, { status: 403 });
     const db = getDb();
     await db.update(loomMessages).set({ readAt: new Date() }).where(and(
@@ -77,6 +84,7 @@ export async function POST(request: Request) {
     if (!(await isVerified(parsed.data.recipientUserId))) return NextResponse.json({ error: "This member is not currently available for private messages." }, { status: 403 });
     const recipientRestriction = await getLoomRestriction(parsed.data.recipientUserId);
     if (recipientRestriction) return NextResponse.json({ error: "This member is not currently available for private messages." }, { status: 403 });
+    if (await hasBlock(user.id, parsed.data.recipientUserId)) return NextResponse.json({ error: "Messaging is unavailable between these members." }, { status: 403 });
     if (!(await hasAcceptedConnection(user.id, parsed.data.recipientUserId))) return NextResponse.json({ error: "An accepted connection is required before messaging." }, { status: 403 });
     const db = getDb();
     const [recipient] = await db.select({ id: appUsers.id }).from(appUsers).where(and(eq(appUsers.id, parsed.data.recipientUserId), eq(appUsers.active, true))).limit(1);
