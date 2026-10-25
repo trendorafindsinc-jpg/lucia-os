@@ -377,6 +377,7 @@ export const websiteStructures = pgTable("website_structures", {
   websiteId: uuid("website_id").notNull(),
   createdByUserId: uuid("created_by_user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
   structure: text("structure").notNull(),
+  publishedStructure: text("published_structure"),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 }, (table) => [
