@@ -21,6 +21,33 @@ export function normalizeOrganizationId(value: string): string {
   return normalized;
 }
 
+/** Validate the local LUCIA OS user ID used only as transaction-local RLS context. */
+export function normalizeUserId(value: string): string {
+  const normalized = value.trim().toLowerCase();
+  if (!UUID_PATTERN.test(normalized)) {
+    throw new Error("Invalid user identifier.");
+  }
+  return normalized;
+}
+
+/**
+ * Runs a query with transaction-local authenticated-user context.
+ * This is a database filter, not authentication: callers must obtain userId
+ * from the verified server-side session, never request data.
+ */
+export async function withUserScope<T>(
+  userId: string,
+  operation: (transaction: DatabaseTransaction) => Promise<T>,
+): Promise<T> {
+  const authenticatedUserId = normalizeUserId(userId);
+  return getDb().transaction(async (transaction) => {
+    await transaction.execute(
+      sql`select set_config('app.current_user_id', ${authenticatedUserId}, true)`,
+    );
+    return operation(transaction);
+  });
+}
+
 /**
  * Runs tenant queries in one transaction with transaction-local RLS context.
  * Callers MUST validate the authenticated session, active membership, and
