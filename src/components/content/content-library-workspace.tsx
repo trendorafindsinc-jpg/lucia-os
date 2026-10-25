@@ -66,7 +66,7 @@ export function ContentLibraryWorkspace() {
 
   function updatePost(update: Partial<BlogPost>) {
     if (!selectedPost) return;
-    setLibrary((current) => ({ ...current, posts: current.posts.map((post) => post.id === selectedPost.id ? { ...post, ...update, updatedAt: new Date().toISOString() } : post }));
+    setLibrary((current) => ({ ...current, posts: current.posts.map((post) => post.id === selectedPost.id ? { ...post, ...update, updatedAt: new Date().toISOString() } : post) }));
     setIsDirty(true);
     setNotice("");
   }
