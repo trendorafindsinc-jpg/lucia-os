@@ -3,11 +3,20 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
-import { appUsers, loomBusinessVerifications, loomMessages } from "@/lib/db/schema";
+import { appUsers, loomBusinessVerifications, loomConnections, loomMessages } from "@/lib/db/schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const messageSchema = z.object({ recipientUserId: z.string().uuid(), body: z.string().trim().min(1).max(4000) }).strict();
+
+async function hasAcceptedConnection(first: string, second: string) {
+  const db = getDb();
+  const [row] = await db.select({ id: loomConnections.id }).from(loomConnections).where(and(
+    eq(loomConnections.status, "accepted"),
+    or(and(eq(loomConnections.requesterUserId, first), eq(loomConnections.recipientUserId, second)), and(eq(loomConnections.requesterUserId, second), eq(loomConnections.recipientUserId, first))),
+  )).limit(1);
+  return Boolean(row);
+}
 
 async function isVerified(userId: string) {
   const db = getDb();
@@ -23,6 +32,7 @@ export async function GET(request: Request) {
   try {
     if (!(await isVerified(user.id))) return NextResponse.json({ error: "Business verification is required to use private messages." }, { status: 403 });
     if (!(await isVerified(peer!))) return NextResponse.json({ error: "This member is not currently available for private messages." }, { status: 403 });
+    if (!(await hasAcceptedConnection(user.id, peer!))) return NextResponse.json({ error: "An accepted connection is required before messaging." }, { status: 403 });
     const db = getDb();
     const messages = await db.select({
       id: loomMessages.id,
@@ -53,6 +63,7 @@ export async function POST(request: Request) {
   try {
     if (!(await isVerified(user.id))) return NextResponse.json({ error: "Business verification is required to send private messages." }, { status: 403 });
     if (!(await isVerified(parsed.data.recipientUserId))) return NextResponse.json({ error: "This member is not currently available for private messages." }, { status: 403 });
+    if (!(await hasAcceptedConnection(user.id, parsed.data.recipientUserId))) return NextResponse.json({ error: "An accepted connection is required before messaging." }, { status: 403 });
     const db = getDb();
     const [recipient] = await db.select({ id: appUsers.id }).from(appUsers).where(and(eq(appUsers.id, parsed.data.recipientUserId), eq(appUsers.active, true))).limit(1);
     if (!recipient) return NextResponse.json({ error: "Member not found." }, { status: 404 });
