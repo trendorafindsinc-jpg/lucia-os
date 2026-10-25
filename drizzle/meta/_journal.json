@@ -120,6 +120,13 @@
       "when": 1792969207000,
       "tag": "0016_loom_moderation_visibility",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1792969208000,
+      "tag": "0017_loom_member_restrictions",
+      "breakpoints": true
     }
   ]
 }
