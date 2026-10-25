@@ -441,3 +441,25 @@ export const loomReplies = pgTable(
   },
   (table) => [index("loom_replies_post_created_idx").on(table.postId, table.createdAt), index("loom_replies_author_idx").on(table.authorUserId)],
 );
+
+
+/** Loom business identity verification; only authorised staff may change status to verified. */
+export const loomBusinessVerifications = pgTable(
+  "loom_business_verifications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull().references(() => appUsers.id, { onDelete: "cascade" }),
+    evidenceType: text("evidence_type").notNull(),
+    evidenceReference: text("evidence_reference").notNull(),
+    status: text("status").notNull().default("pending"),
+    reviewNote: text("review_note"),
+    reviewedByUserId: uuid("reviewed_by_user_id").references(() => appUsers.id, { onDelete: "set null" }),
+    submittedAt: createdAt(),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    uniqueIndex("loom_business_verifications_user_uq").on(table.userId),
+    index("loom_business_verifications_status_submitted_idx").on(table.status, table.submittedAt),
+  ],
+);
