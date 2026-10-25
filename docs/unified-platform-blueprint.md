@@ -36,6 +36,14 @@ Supporting tools such as **Layouts**, **Domains**, and **Publishing** may appear
 - A control must execute a real action. No inert buttons, fake progress, placeholder success messages, or UI-only permission checks.
 - The user must understand what is saved, what is a draft, what is published/live, what failed, and what action can recover it.
 
+## 1.1 V1 release scope and navigation contract
+
+**V1 includes the website engine and Loom. Store, Portals, and Business Admin are not part of v1.** The long-term platform vision and later roadmap phases may describe these products, but that does not make them v1 commitments.
+
+The workspace may keep Store, Portals, and Business Admin visible for discoverability, but each must be clearly labelled **Unavailable in v1** or **Coming in a future version** and must not expose incomplete workflows, misleading success states, or apparent working routes. If selected, the item must produce a truthful unavailable explanation rather than pretending to open a functioning product. Loom is available in v1 as a first-class destination and must not be marked unavailable.
+
+The 30-phase roadmap remains the long-term sequence: Phases 26–28 (Store, Portals, Business Admin) are future-version work; Phase 29 (Loom) belongs to v1 scope. The website engine remains v1's primary focus; optional AI must not block manual/template website creation.
+
 ## 2. Product and service boundaries
 
 ### LUCIA Core / LUCIA ID
@@ -202,7 +210,8 @@ LUCIA OS owns its plan catalogue, trials, subscription state, invoices, discount
 
 ## 4. UI and interaction quality contract
 
-- Main navigation destinations are Overview, Websites, AI Studio, Store, Portals, Business Admin, Loom, and Plan & Billing, subject to role/entitlement visibility.
+- V1 available navigation destinations are Overview, Websites, AI Studio, Loom, and Plan & Billing, subject to role/entitlement visibility.
+- Store, Portals, and Business Admin may remain visible in the v1 navigation only with an unmistakable unavailable/future-version state. They must not open unfinished workflows or display fake functionality. Loom must remain available in v1.
 - Use a consistent shell and design system; allow each workspace to have a distinct information architecture suited to its purpose.
 - Make primary actions visible and reachable on mobile.
 - Every button, menu item, form, tab, dialog, and navigation affordance must have a real, tested behaviour.
