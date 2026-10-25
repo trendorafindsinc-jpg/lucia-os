@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { and, eq, sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getOrganizationMembershipsForUser } from "@/lib/access/guards";
 import { hasOrganizationPermission } from "@/lib/access/policy";
 import { getDb } from "@/lib/db/client";
-import { memberships, organizations, websiteDomains, websites } from "@/lib/db/schema";
+import { websiteDomains, websites } from "@/lib/db/schema";
 import { DomainManagementClient } from "@/components/domains/domain-management-client";
 import "./domains.css";
 
@@ -14,10 +15,7 @@ export default async function WorkspaceDomainsPage({ searchParams }: { searchPar
   if (!user) return <main className="workspace-shell"><section className="workspace-card workspace-denied"><span className="workspace-kicker">DOMAIN MANAGEMENT</span><h1>Sign in to continue.</h1><p>Use LUCIA ID to manage domains for your websites.</p><Link className="workspace-button workspace-button-primary" href="/api/auth/login">Sign in with LUCIA ID</Link></section></main>;
 
   const db = getDb();
-  const orgs = await db.select({
-    id: organizations.id, name: organizations.name, role: memberships.role, membershipStatus: memberships.status,
-  }).from(memberships).innerJoin(organizations, eq(memberships.organizationId, organizations.id))
-    .where(and(eq(memberships.userId, user.id), eq(memberships.status, "active"), eq(organizations.status, "active")));
+  const orgs = await getOrganizationMembershipsForUser(user.id);
 
   const manageable = orgs.filter((org) => hasOrganizationPermission({ role: org.role, status: org.membershipStatus }, "website.publish"));
   const groups = await Promise.all(manageable.map(async (org) => db.transaction(async (tx) => {
