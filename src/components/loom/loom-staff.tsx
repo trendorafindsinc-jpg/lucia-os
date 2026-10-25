@@ -15,6 +15,7 @@ export function LoomStaff() {
   const [busyId, setBusyId] = useState("");
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [hideContent, setHideContent] = useState<Record<string, boolean>>({});
+  const [memberActions, setMemberActions] = useState<Record<string, string>>({});
   const [notice, setNotice] = useState("");
 
   const load = useCallback(async () => {
@@ -64,7 +65,7 @@ export function LoomStaff() {
       const response = await fetch("/api/loom/staff/reports", {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ reportId: item.id, decision, hideContent: Boolean(hideContent[item.id]) }),
+        body: JSON.stringify({ reportId: item.id, decision, hideContent: Boolean(hideContent[item.id]), memberAction: memberActions[item.id] || "none" }),
       });
       const payload = await response.json() as { error?: string };
       if (!response.ok) throw new Error(payload.error || "Report decision could not be saved.");
