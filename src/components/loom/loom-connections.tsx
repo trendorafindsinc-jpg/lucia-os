@@ -10,6 +10,7 @@ export function LoomConnections() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState("");
+  const [blockBusyId, setBlockBusyId] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true); setError("");
@@ -45,11 +46,26 @@ export function LoomConnections() {
     }
   }
 
+  async function blockMember(item: Connection) {
+    const userId = item.direction === "incoming" ? item.requesterUserId : item.recipientUserId;
+    if (blockBusyId) return;
+    setBlockBusyId(userId); setError("");
+    try {
+      const response = await fetch("/api/loom/blocks", { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify({ userId }) });
+      const payload = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(payload.error || "Member could not be blocked.");
+      setItems(current => current.map(connection => connection.id === item.id ? { ...connection, status: "blocked" } : connection));
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Member could not be blocked.");
+    } finally {
+      setBlockBusyId("");
+    }
+  }
   return <main className="loom-page"><header className="loom-topbar"><Link className="loom-brand" href="/workspace"><span className="loom-brand-mark">L</span><span>LUCIA <b>LOOM</b></span></Link><nav><Link href="/loom">Feed</Link><span className="loom-nav-active">Connections</span></nav><Link className="loom-workspace-link" href="/workspace">Workspace ↗</Link></header>
     <div className="loom-section-layout"><aside className="loom-left-rail"><span className="loom-rail-label">YOUR LOOM</span><Link href="/loom">Community feed</Link><Link href="/loom/discover">Discover</Link><Link className="loom-rail-active" href="/loom/connections">Connections</Link><Link href="/loom/messages">Messages</Link></aside>
       <section className="loom-section-main"><span className="loom-eyebrow">YOUR NETWORK</span><h1>Connections</h1><p className="loom-section-description">Manage professional connection requests and build trusted relationships.</p><p><Link href="/loom/discover">Discover verified businesses ↗</Link></p>
         {error && <div className="loom-error" role="alert"><span>{error}</span><button type="button" onClick={() => void load()}>Retry</button></div>}
-        {loading ? <div className="loom-feed-state">Loading connections…</div> : items.length ? <div className="loom-connection-list">{items.map(item => <article className="loom-connection-card" key={item.id}><div className="loom-post-avatar">{(item.otherUserName || "L").trim().slice(0,1).toUpperCase()}</div><div className="loom-connection-info"><h2>{item.otherUserName || "LUCIA member"}</h2><p>{item.direction === "incoming" ? "Sent you a connection request" : "Connection request sent by you"}</p><span className="loom-connection-status">{item.status.replaceAll("_", " ")}</span></div>{item.direction === "incoming" && item.status === "pending" && <div className="loom-connection-actions"><button type="button" disabled={busyId === item.id} onClick={() => void respond(item.id, "accept")}>Accept</button><button type="button" disabled={busyId === item.id} onClick={() => void respond(item.id, "decline")}>Decline</button></div>}</article>)}</div> : <div className="loom-feed-state loom-empty"><h3>Your network starts here.</h3><p>Discover verified businesses and send a connection request to start building your network.</p><Link href="/loom/discover">Discover members ↗</Link></div>}
+        {loading ? <div className="loom-feed-state">Loading connections…</div> : items.length ? <div className="loom-connection-list">{items.map(item => <article className="loom-connection-card" key={item.id}><div className="loom-post-avatar">{(item.otherUserName || "L").trim().slice(0,1).toUpperCase()}</div><div className="loom-connection-info"><h2>{item.otherUserName || "LUCIA member"}</h2><p>{item.direction === "incoming" ? "Sent you a connection request" : "Connection request sent by you"}</p><span className="loom-connection-status">{item.status.replaceAll("_", " ")}</span></div>{item.direction === "incoming" && item.status === "pending" && <div className="loom-connection-actions"><button type="button" disabled={busyId === item.id} onClick={() => void respond(item.id, "accept")}>Accept</button><button type="button" disabled={busyId === item.id} onClick={() => void respond(item.id, "decline")}>Decline</button></div>}{item.status !== "blocked" && <button type="button" className="loom-block-button" disabled={blockBusyId === (item.direction === "incoming" ? item.requesterUserId : item.recipientUserId)} onClick={() => void blockMember(item)}>{blockBusyId === (item.direction === "incoming" ? item.requesterUserId : item.recipientUserId) ? "Blocking…" : "Block member"}</button>}</article>)}</div> : <div className="loom-feed-state loom-empty"><h3>Your network starts here.</h3><p>Discover verified businesses and send a connection request to start building your network.</p><Link href="/loom/discover">Discover members ↗</Link></div>}
       </section>
     </div>
   </main>;
