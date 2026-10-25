@@ -35,6 +35,8 @@ export async function GET(request: Request) {
   try {
     if (!(await isVerified(user.id))) return NextResponse.json({ error: "Business verification is required to use private messages." }, { status: 403 });
     if (!(await isVerified(peer!))) return NextResponse.json({ error: "This member is not currently available for private messages." }, { status: 403 });
+    const peerRestriction = await getLoomRestriction(peer!).catch(() => null);
+    if (peerRestriction) return NextResponse.json({ error: "This member is not currently available for private messages." }, { status: 403 });
     if (!(await hasAcceptedConnection(user.id, peer!))) return NextResponse.json({ error: "An accepted connection is required before messaging." }, { status: 403 });
     const db = getDb();
     const messages = await db.select({
@@ -68,6 +70,8 @@ export async function POST(request: Request) {
   try {
     if (!(await isVerified(user.id))) return NextResponse.json({ error: "Business verification is required to send private messages." }, { status: 403 });
     if (!(await isVerified(parsed.data.recipientUserId))) return NextResponse.json({ error: "This member is not currently available for private messages." }, { status: 403 });
+    const recipientRestriction = await getLoomRestriction(parsed.data.recipientUserId).catch(() => null);
+    if (recipientRestriction) return NextResponse.json({ error: "This member is not currently available for private messages." }, { status: 403 });
     if (!(await hasAcceptedConnection(user.id, parsed.data.recipientUserId))) return NextResponse.json({ error: "An accepted connection is required before messaging." }, { status: 403 });
     const db = getDb();
     const [recipient] = await db.select({ id: appUsers.id }).from(appUsers).where(and(eq(appUsers.id, parsed.data.recipientUserId), eq(appUsers.active, true))).limit(1);
