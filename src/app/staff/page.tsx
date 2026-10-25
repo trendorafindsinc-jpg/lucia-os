@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { desc, eq } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth/session";
+import { withPlatformStaffScope } from "@/lib/db/tenant-scope";
 import { getDb } from "@/lib/db/client";
 import { organizations, staffGrants, supportCases } from "@/lib/db/schema";
 import { hasStaffPermission } from "@/lib/access/policy";
@@ -20,16 +21,19 @@ export default async function StaffWorkspacePage() {
     return <main className="workspace-shell"><section className="workspace-card workspace-denied"><span className="workspace-kicker">RESTRICTED WORKSPACE</span><div className="workspace-lock" aria-hidden="true">⌑</div><h1>Staff access required</h1><p>Your LUCIA ID is recognised, but this account does not have an active staff grant for customer support operations.</p><Link className="workspace-button workspace-button-secondary" href="/">Return to LUCIA OS</Link></section></main>;
   }
 
-  const cases = await db.select({
-    id: supportCases.id,
-    subject: supportCases.subject,
-    category: supportCases.category,
-    priority: supportCases.priority,
-    status: supportCases.status,
-    updatedAt: supportCases.updatedAt,
-    organizationName: organizations.name,
-  }).from(supportCases).innerJoin(organizations, eq(supportCases.organizationId, organizations.id))
-    .orderBy(desc(supportCases.updatedAt)).limit(12);
+  // Establish staff context only after the grant and required permission above passed.
+  const cases = await withPlatformStaffScope(user.id, async (tx) =>
+    tx.select({
+      id: supportCases.id,
+      subject: supportCases.subject,
+      category: supportCases.category,
+      priority: supportCases.priority,
+      status: supportCases.status,
+      updatedAt: supportCases.updatedAt,
+      organizationName: organizations.name,
+    }).from(supportCases).innerJoin(organizations, eq(supportCases.organizationId, organizations.id))
+      .orderBy(desc(supportCases.updatedAt)).limit(12),
+  );
 
   const openCount = cases.filter((item) => !["resolved", "closed"].includes(item.status)).length;
   const urgentCount = cases.filter((item) => item.priority === "urgent" && !["resolved", "closed"].includes(item.status)).length;
