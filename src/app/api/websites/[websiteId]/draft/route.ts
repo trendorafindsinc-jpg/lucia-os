@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getOrganizationMembershipsForUser } from "@/lib/access/guards";
 import { getDb } from "@/lib/db/client";
-import { memberships, websitePages, websites } from "@/lib/db/schema";
+import { memberships, organizations, websitePages, websites } from "@/lib/db/schema";
 import { hasOrganizationPermission } from "@/lib/access/policy";
 import { siteDraftSchema, type SiteDraft } from "@/lib/editor/site-draft";
 import { z } from "zod";
@@ -26,6 +26,8 @@ async function locateWebsite(websiteId: string, userId: string, permission: stri
         .limit(1);
       if (!membership || !hasOrganizationPermission({ role: membership.role, status: membership.status }, permission)) return null;
       await tx.execute(sql`select set_config('app.current_organization_id', ${org.id}, true)`);
+      const [organization] = await tx.select({ status: organizations.status }).from(organizations).where(eq(organizations.id, org.id)).limit(1);
+      if (!organization || organization.status !== "active") return null;
       const [website] = await tx.select({
         id: websites.id,
         organizationId: websites.organizationId,
@@ -96,6 +98,8 @@ export async function PATCH(request: Request, context: RouteContext) {
       .limit(1);
     if (!membership || !hasOrganizationPermission({ role: membership.role, status: membership.status }, "website.edit")) return false;
     await tx.execute(sql`select set_config('app.current_organization_id', ${found.website.organizationId}, true)`);
+    const [organization] = await tx.select({ status: organizations.status }).from(organizations).where(eq(organizations.id, found.website.organizationId)).limit(1);
+    if (!organization || organization.status !== "active") return false;
     const [website] = await tx.select({ id: websites.id }).from(websites)
       .where(and(eq(websites.id, found.website.id), eq(websites.organizationId, found.website.organizationId))).limit(1);
     if (!website) return false;
