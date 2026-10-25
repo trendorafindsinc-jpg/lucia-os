@@ -27,6 +27,8 @@ export async function POST(request: Request) {
   try {
     const db = getDb();
     const rate = await consumeLoomRateLimit(user.id, "report", 5, 3600000);
+    if (!rate.allowed) return NextResponse.json({ error: "Too many reports. Try again later." }, { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } });
+    const rate = await consumeLoomRateLimit(user.id, "report", 5, 3600000);
     if (!rate.allowed) return NextResponse.json({ error: "Too many requests. Try again shortly." }, { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } });
     const target = parsed.data;
     if (target.targetType === "profile" && target.targetId === user.id) return NextResponse.json({ error: "This profile cannot be submitted as a report target." }, { status: 422 });
