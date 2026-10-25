@@ -4,13 +4,14 @@ import { and, eq, sql } from "drizzle-orm";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { getDb } from "@/lib/db/client";
-import { websiteDomains, websitePages, websiteStructures, websites } from "@/lib/db/schema";
+import { websitePages, websiteStructures } from "@/lib/db/schema";
 import { normalizeHostname } from "@/lib/domains/hostname";
 import { siteDraftSchema } from "@/lib/editor/site-draft";
 import { siteDraftToLoomBlueprint, type LoomBlueprint } from "@/lib/loom/blueprint";
 import { LoomRenderer } from "@/components/loom/loom-renderer";
 import { siteStructurePageToBlueprint } from "@/lib/site-structure/loom-adapter";
 import { siteStructureSchema } from "@/lib/site-structure/structure";
+import { resolvePublicWebsiteByHostname } from "@/lib/domains/public-lookup";
 
 export async function PublicWebsite({ path }: { path: string }) {
   const requestHeaders = await headers();
@@ -26,23 +27,7 @@ export async function PublicWebsite({ path }: { path: string }) {
 
   const cleanPath = path === "/" ? "/" : `/${path.split("/").filter(Boolean).join("/")}`;
   const db = getDb();
-  const [record] = await db
-    .select({
-      websiteId: websiteDomains.websiteId,
-      organizationId: websiteDomains.organizationId,
-    })
-    .from(websiteDomains)
-    .innerJoin(websites, and(
-      eq(websites.id, websiteDomains.websiteId),
-      eq(websites.organizationId, websiteDomains.organizationId),
-    ))
-    .where(and(
-      eq(websiteDomains.hostname, hostname),
-      eq(websiteDomains.status, "active"),
-      eq(websites.status, "published"),
-    ))
-    .limit(1);
-
+  const record = await resolvePublicWebsiteByHostname(hostname);
   if (!record) notFound();
 
   const pageData = await db.transaction(async (tx) => {
@@ -51,13 +36,13 @@ export async function PublicWebsite({ path }: { path: string }) {
       .from(websitePages)
       .where(and(
         eq(websitePages.organizationId, record.organizationId),
-        eq(websitePages.websiteId, record.websiteId),
+        eq(websitePages.websiteId, record.id),
         eq(websitePages.path, cleanPath),
         eq(websitePages.status, "published"),
       )).limit(1);
     const [savedStructure] = await tx.select({ structure: websiteStructures.publishedStructure })
       .from(websiteStructures)
-      .where(and(eq(websiteStructures.organizationId, record.organizationId), eq(websiteStructures.websiteId, record.websiteId)))
+      .where(and(eq(websiteStructures.organizationId, record.organizationId), eq(websiteStructures.websiteId, record.id)))
       .limit(1);
     return { page: page ?? null, publishedStructure: savedStructure?.structure ?? null };
   });
