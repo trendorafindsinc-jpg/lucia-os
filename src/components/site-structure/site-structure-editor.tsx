@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { addPage, addReusableSection, makeInitialStructure, moveReusableSection, removePage, reusableSectionLibrary, siteStructureSchema, toggleNavigationPage, type ReusableSectionType, type SitePage, type SiteStructure } from "@/lib/site-structure/structure";
+import { addPage, addReusableSection, makeInitialStructure, moveReusableSection, removePage, reusableSectionLibrary, setHomepage, siteStructureSchema, toggleNavigationPage, type ReusableSectionType, type SitePage, type SiteStructure } from "@/lib/site-structure/structure";
 
 export function SiteStructureEditor() {
   const [structure, setStructure] = useState<SiteStructure>(() => makeInitialStructure());
@@ -118,7 +118,7 @@ export function SiteStructureEditor() {
             {structure.pages.map((page) => <button type="button" key={page.id} className={page.id === selectedPage.id ? "structure-page-choice is-active" : "structure-page-choice"} onClick={() => { setSelectedPageId(page.id); setNotice(""); }}><span className="structure-page-icon" aria-hidden="true">▤</span><span className="structure-page-choice-copy"><strong>{page.title}</strong><small>{page.slug ? `/${page.slug}` : "/"}{page.id === structure.homePageId ? " · Homepage" : ""}</small></span><span aria-hidden="true">›</span></button>)}
           </div>
           <form className="structure-add-page" onSubmit={createPage}><label htmlFor="new-page-title">Add a page</label><input id="new-page-title" value={newPageTitle} onChange={(event) => setNewPageTitle(event.target.value)} maxLength={60} placeholder="e.g. Our team" /><button type="submit" disabled={structure.pages.length >= 50}>+ Add page</button></form>
-          <div className="structure-home-action"><button type="button" disabled={selectedPage.id === structure.homePageId} onClick={() => { setStructure((current) => ({ ...current, homePageId: selectedPage.id, pages: current.pages.map((page) => page.id === current.homePageId ? { ...page, slug: selectedPage.slug } : page.id === selectedPage.id ? { ...page, slug: "" } : page) })); setIsDirty(true); setNotice(`${selectedPage.title} is now the homepage in this draft.`); }}>Set as homepage</button><button type="button" className="structure-delete" disabled={selectedPage.id === structure.homePageId || structure.pages.length === 1} onClick={deletePage}>Delete page</button></div>
+          <div className="structure-home-action"><button type="button" disabled={selectedPage.id === structure.homePageId} onClick={() => { setStructure((current) => setHomepage(current, selectedPage.id)); setIsDirty(true); setNotice(`${selectedPage.title} is now the homepage in this draft.`); }}>Set as homepage</button><button type="button" className="structure-delete" disabled={selectedPage.id === structure.homePageId || structure.pages.length === 1} onClick={deletePage}>Delete page</button></div>
         </aside>
         <section className="structure-main">
           <div className="structure-editor-card">
