@@ -118,7 +118,7 @@ export function ContentLibraryWorkspace() {
           <label>Featured image<select value={selectedPost.featuredImageId ?? ""} onChange={(event) => updatePost({ featuredImageId: event.target.value || null })}><option value="">No featured image</option>{library.assets.filter((asset) => asset.kind === "image").map((asset) => <option key={asset.id} value={asset.id}>{asset.name}</option>)}</select></label>
           <label>Tags, comma separated<input value={selectedPost.tags.join(", ")} onChange={(event) => updatePost({ tags: [...new Set(event.target.value.split(",").map((tag) => tag.trim()).filter(Boolean))].slice(0, 12) })} placeholder="news, organisation, updates" /><small>Up to 12 tags.</small></label>
         </div>
-        <div className="content-editor-foot"><span>Last edited {new Date(selectedPost.updatedAt).toLocaleString()}</span><button type="button" className="content-danger-button" onClick={() => { setLibrary((current) => ({ ...current, posts: current.posts.filter((post) => post.id !== selectedPost.id) })); setSelectedPostId(null); setNotice("Post removed from this draft. Save to persist the change."); }}>Delete draft</button></div>
+        <div className="content-editor-foot"><span>Last edited {new Date(selectedPost.updatedAt).toLocaleString()}</span><button type="button" className="content-danger-button" onClick={() => { setLibrary((current) => ({ ...current, posts: current.posts.filter((post) => post.id !== selectedPost.id) })); setIsDirty(true); setSelectedPostId(null); setNotice("Post removed from this draft. Save to persist the change."); }}>Delete draft</button></div>
       </> : <div className="content-empty content-empty-large"><span aria-hidden="true">✎</span><strong>Choose a story or create a draft</strong><p>Choose a saved website to persist posts and media references.</p></div>}</div>
     </div> : <div className="content-media-layout">
       <section className="content-editor-panel"><div className="content-panel-heading"><div><span className="content-kicker">MEDIA RECORDS</span><h2>Register an existing asset</h2><p>Add an existing URL or future storage key. This form does not upload files.</p></div></div>
@@ -136,6 +136,6 @@ export function ContentLibraryWorkspace() {
       </section>
     </div>}
     {notice && <p className="content-notice" role="status">{notice}</p>}
-    <div className="content-validation"><span>{validation.success ? "Content checks passed" : "Check post slugs and featured media references"}</span><span>{websiteId ? (isDirty ? "Unsaved · Not published" : "Workspace data · Not published") : "Local only · Not saved or published"}</span></div>
+    <div className="content-validation"><span>{validation.success ? "Content checks passed" : "Check post slugs, media references and featured image links"}</span><span>{websiteId ? (isDirty ? "Unsaved · Not published" : "Workspace data · Not published") : "Local only · Not saved or published"}</span></div>
   </section>;
 }
