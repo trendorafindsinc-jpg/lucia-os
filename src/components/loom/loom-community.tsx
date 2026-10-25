@@ -160,7 +160,7 @@ export function LoomCommunity() {
     <main className="loom-page">
       <header className="loom-topbar">
         <Link className="loom-brand" href="/workspace"><span className="loom-brand-mark">L</span><span>LUCIA <b>LOOM</b></span></Link>
-        <nav><a className="loom-nav-active" href="#feed">Feed</a><a href="#compose">Start a discussion</a><a href="#verification">Business verification</a></nav>
+        <nav><a className="loom-nav-active" href="#feed">Feed</a><a href="#compose">Start a discussion</a><a href="#verification">Business verification</a><Link href="/loom/discover">Discover</Link></nav>
         <Link className="loom-workspace-link" href="/workspace">Workspace ↗</Link>
       </header>
       <div className="loom-layout">
