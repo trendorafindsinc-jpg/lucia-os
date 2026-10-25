@@ -56,6 +56,12 @@ This is the single source of truth for implementation order. Read it and the [Un
 | 29 | Loom community | Discussions, groups, directory, connections and trust/safety | Verification, representative authority, consent, blocking, moderation and privacy |
 | 30 | Premium access, ecosystem integration and release readiness | Consistent access gates and final product acceptance | Permission + entitlement enforcement, safe downgrade, E2E regression and explicit sign-off |
 
+## V1 release scope and navigation contract
+
+LUCIA OS v1 prioritises the website engine and includes Loom as a first-class community destination. **Store, Portals, and Business Admin are future-version products, not v1 features.** They may remain visible in the workspace navigation for product discoverability, but must be clearly marked **Unavailable in v1** / **Coming in a future version**, disabled or routed to a truthful explanatory state, and must not expose incomplete workflows or imply that they work. Do not add dead clickable controls: an unavailable item must communicate its status and provide no misleading success path. Do not gate Loom behind a future-version label.
+
+Phases 26–28 remain in the 30-phase long-term roadmap but are explicitly out of v1 scope. Phase 29 (Loom) is in v1 scope and must be delivered alongside the website-engine scope. The presence of a phase in this roadmap is not a promise that it ships in v1.
+
 ## Phase execution contract
 
 ### Phase 01 — Repository and product audit
@@ -131,16 +137,16 @@ Read `docs/phase-23-paystack-server-verification.md`. The server verifies paymen
 Read `docs/phase-24-atomic-paystack-settlement.md`. Ensure duplicate/replayed events cannot double-settle; partial failures are recoverable and auditable.
 
 ### Phase 25 — Unified workspace and navigation
-Connect Overview, Websites, AI Studio, Store, Portals, Business Admin, Loom and Plan & Billing through consistent navigation, organisation context, shared statuses and task handoffs. Layouts, Domains and Publishing may be contextual under Websites when clearer. Verify responsive/mobile access and real click-to-result behaviour.
+For v1, connect Overview, Websites, AI Studio, Loom and Plan & Billing through consistent navigation, organisation context, shared statuses and task handoffs. Store, Portals and Business Admin may appear in the navigation only as clearly marked unavailable future-version destinations; they must not expose unfinished product workflows or imply availability. Layouts, Domains and Publishing may be contextual under Websites when clearer. Verify responsive/mobile access and real click-to-result behaviour, including the unavailable-state behaviour.
 
-### Phase 26 — Store for sellers and buyers
-Build explicit slices: seller/store setup and catalogue; buyer discovery; cart/checkout; order/payment state; seller order operations; and any approved fulfilment capabilities. Storefront presentation may integrate with Websites, but visual edits must never mutate orders/payment records. Verify seller/buyer permission boundaries, price/stock validation, server-verified payment, idempotency and recovery. Do not claim unsupported shipping, tax or refund capabilities.
+### Phase 26 — Store for sellers and buyers (future version; not v1)
+This phase is explicitly out of v1 scope. In v1, Store may appear only as a clearly marked unavailable/future-version destination, without functional commerce workflows. When this future phase is authorised, build explicit slices: seller/store setup and catalogue; buyer discovery; cart/checkout; order/payment state; seller order operations; and any approved fulfilment capabilities. Storefront presentation may integrate with Websites, but visual edits must never mutate orders/payment records. Verify seller/buyer permission boundaries, price/stock validation, server-verified payment, idempotency and recovery. Do not claim unsupported shipping, tax or refund capabilities.
 
-### Phase 27 — Category-specific Portals
-Before each category, write/approve its requirements, data model, roles, protected workflows and acceptance tests. Build shared components only when they preserve category-specific rules. Verify resource/tenant isolation across APIs, public routes, preview, search and caches. Do not treat every portal as a generic skin.
+### Phase 27 — Category-specific Portals (future versions; not v1)
+This phase is explicitly out of v1 scope. In v1, Portals may appear only as a clearly marked unavailable/future-version destination, without functional portal workflows. Before each category in a future version, write/approve its requirements, data model, roles, protected workflows and acceptance tests. Build shared components only when they preserve category-specific rules. Verify resource/tenant isolation across APIs, public routes, preview, search and caches. Do not treat every portal as a generic skin.
 
-### Phase 28 — Business Admin
-Build the company day-to-day operations workspace: company overview, staff/invitations/roles, scoped delegation, organisation settings, operational entry points for Websites/Store/Portals, relevant reporting/audit, and plan status. Only add operational modules with defined scope. Verify owner/admin/staff boundaries and prompt revocation. Staff departure must not delete company-owned assets or records.
+### Phase 28 — Business Admin (future version; not v1)
+This phase is explicitly out of v1 scope. In v1, Business Admin may appear only as a clearly marked unavailable/future-version destination, without functional company-operations workflows. When this future phase is authorised, build the company day-to-day operations workspace: company overview, staff/invitations/roles, scoped delegation, organisation settings, operational entry points for Websites/Store/Portals, relevant reporting/audit, and plan status. Only add operational modules with defined scope. Verify owner/admin/staff boundaries and prompt revocation. Staff departure must not delete company-owned assets or records.
 
 ### Phase 29 — Loom community and social-collaboration UI
 Implement Loom as a first-class main-navigation destination—not a Business Admin subpage—with discussions, groups, public business directory, connections/messaging, collaboration spaces and trust/safety in the approved scope. Its visual direction is a **beautiful, original blend of GitHub's structured collaboration UI and Facebook's social discovery UI**: use GitHub-inspired clarity, topic structure, activity context, contribution affordances and information hierarchy alongside Facebook-inspired feed discovery, groups, people/business discovery and connection flows. Do not copy either product's branding or screen designs.
