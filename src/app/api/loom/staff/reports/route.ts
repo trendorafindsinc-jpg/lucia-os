@@ -55,6 +55,7 @@ export async function PATCH(request: Request) {
     const result = await db.transaction(async tx => {
       const [report] = await tx.select({
         id: loomReports.id,
+        reporterUserId: loomReports.reporterUserId,
         targetType: loomReports.targetType,
         targetId: loomReports.targetId,
         status: loomReports.status,
