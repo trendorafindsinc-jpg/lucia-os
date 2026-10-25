@@ -19,6 +19,7 @@ function safeFailure(request: Request, reason = "callback_failed") {
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
+  const secureCookies = process.env.NODE_ENV === "production" || requestUrl.protocol === "https:";
   const code = requestUrl.searchParams.get("code") ?? undefined;
   const state = requestUrl.searchParams.get("state") ?? undefined;
   const expectedState = request.headers.get("cookie")
@@ -160,21 +161,21 @@ export async function GET(request: Request) {
     const success = NextResponse.redirect(new URL(safeReturnTo, request.url));
     success.cookies.set(SESSION_COOKIE, rawSessionToken, {
       httpOnly: true,
-      secure: requestUrl.protocol === "https:",
+      secure: secureCookies,
       sameSite: "lax",
       path: "/",
       maxAge: SESSION_TTL_SECONDS,
     });
     success.cookies.set("lucia_os_return_to", "", {
       httpOnly: true,
-      secure: requestUrl.protocol === "https:",
+      secure: secureCookies,
       sameSite: "lax",
       path: "/api/auth",
       maxAge: 0,
     });
     success.cookies.set("lucia_os_oauth_state", "", {
       httpOnly: true,
-      secure: requestUrl.protocol === "https:",
+      secure: secureCookies,
       sameSite: "lax",
       path: "/api/auth",
       maxAge: 0,
