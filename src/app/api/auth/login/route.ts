@@ -11,17 +11,18 @@ export async function GET(request: Request) {
     const returnTo = requestedReturnTo && requestedReturnTo.startsWith("/") && !requestedReturnTo.startsWith("//") && !requestedReturnTo.includes("\\") && !requestedReturnTo.startsWith("/api/auth")
       ? requestedReturnTo
       : "/workspace";
+    const secureCookies = process.env.NODE_ENV === "production" || new URL(request.url).protocol === "https:";
     const response = NextResponse.redirect(buildAuthorizationUrl(state));
     response.cookies.set("lucia_os_return_to", returnTo, {
       httpOnly: true,
-      secure: new URL(request.url).protocol === "https:",
+      secure: secureCookies,
       sameSite: "lax",
       path: "/api/auth",
       maxAge: 300,
     });
     response.cookies.set("lucia_os_oauth_state", state, {
       httpOnly: true,
-      secure: new URL(request.url).protocol === "https:",
+      secure: secureCookies,
       sameSite: "lax",
       // The registered production callback is nested under /api/auth/lucia/callback.
       // Scope to /api/auth so the state cookie reaches both canonical and legacy handlers.
