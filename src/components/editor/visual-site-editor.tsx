@@ -176,8 +176,8 @@ export function VisualSiteEditor() {
             <p>Describe the website you imagine. Get a design proposal you can review before changing your draft.</p>
             <label className="loomifi-brief-label" htmlFor="loomifi-brief">What should your website do?</label>
             <textarea id="loomifi-brief" value={aiBrief} maxLength={4000} rows={4} placeholder="E.g. A calm, premium website for a Lagos architecture studio, with a strong portfolio, services and a clear enquiry path…" onChange={(event) => setAiBrief(event.target.value)} />
-            <div className="loomifi-card-footer"><span>{aiBrief.length}/4,000</span><button type="button" className="loomifi-generate" onClick={generateAIProposal} disabled={!websiteId || aiBusy || aiBrief.trim().length < 20}>{aiBusy ? "Creating…" : "Create proposal"} <span aria-hidden="true">↗</span></button></div>
-            {!websiteId && <p className="loomifi-helper">Open a saved website to enable AI design proposals.</p>}
+            <div className="loomifi-card-footer"><span>{aiBrief.length}/4,000</span><button type="button" className="loomifi-generate" onClick={generateAIProposal} disabled={aiBusy} aria-describedby="loomifi-button-help">{aiBusy ? "Creating…" : "Create proposal"} <span aria-hidden="true">↗</span></button></div>
+            <p className="loomifi-helper" id="loomifi-button-help">{!websiteId ? "Open a saved website to create a proposal for that website." : aiBrief.trim().length < 20 ? "Describe your website in at least 20 characters, then create your proposal." : "Your proposal will be shown for review. Nothing is saved or published automatically."}</p>
             {aiError && <p className="loomifi-error" role="alert">{aiError}</p>}
             {aiProposal && <p className="loomifi-helper" role="status">Proposal ready below. Nothing has been saved or published.</p>}
           </section>
