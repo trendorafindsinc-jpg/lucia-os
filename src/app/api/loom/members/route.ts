@@ -1,9 +1,9 @@
-import { and, asc, eq, ilike, or, ne } from "drizzle-orm";
+import { and, asc, eq, ilike, notInArray, or, ne } from "drizzle-orm";
 import { getLoomRestriction } from "@/lib/loom/staff";
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
-import { appUsers, loomBusinessVerifications, loomProfiles } from "@/lib/db/schema";
+import { appUsers, loomBlocks, loomBusinessVerifications, loomProfiles } from "@/lib/db/schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,7 +25,13 @@ export async function GET(request: Request) {
     }).from(appUsers)
       .innerJoin(loomBusinessVerifications, eq(loomBusinessVerifications.userId, appUsers.id))
       .leftJoin(loomProfiles, eq(loomProfiles.userId, appUsers.id));
-    const filters = and(eq(appUsers.active, true), eq(loomBusinessVerifications.status, "verified"), ne(appUsers.id, user.id));
+    const filters = and(
+      eq(appUsers.active, true),
+      eq(loomBusinessVerifications.status, "verified"),
+      ne(appUsers.id, user.id),
+      notInArray(appUsers.id, db.select({ userId: loomBlocks.blockedUserId }).from(loomBlocks).where(eq(loomBlocks.blockerUserId, user.id))),
+      notInArray(appUsers.id, db.select({ userId: loomBlocks.blockerUserId }).from(loomBlocks).where(eq(loomBlocks.blockedUserId, user.id))),
+    );
     const members = query
       ? await base.where(and(filters, or(ilike(loomProfiles.businessName, `%${query}%`), ilike(loomProfiles.bio, `%${query}%`), ilike(appUsers.displayName, `%${query}%`)))).orderBy(asc(loomProfiles.businessName)).limit(100)
       : await base.where(filters).orderBy(asc(loomProfiles.businessName)).limit(100);
