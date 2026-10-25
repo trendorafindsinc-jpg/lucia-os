@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
-import { appUsers, loomBusinessVerifications, loomConnections, loomMessages } from "@/lib/db/schema";
+import { appUsers, loomBusinessVerifications, loomConnections, loomMessages, loomNotifications } from "@/lib/db/schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -84,6 +84,7 @@ export async function POST(request: Request) {
     const [message] = await db.insert(loomMessages).values({ senderUserId: user.id, recipientUserId: recipient.id, body: parsed.data.body }).returning({
       id: loomMessages.id, senderUserId: loomMessages.senderUserId, recipientUserId: loomMessages.recipientUserId, body: loomMessages.body, readAt: loomMessages.readAt, createdAt: loomMessages.createdAt,
     });
+    try { await db.insert(loomNotifications).values({ userId: recipient.id, actorUserId: user.id, kind: "private_message", targetId: message.id, body: (user.displayName || "A Loom member") + " sent you a private message." }); } catch { /* Keep message delivery independent of notification delivery. */ }
     return NextResponse.json({ message }, { status: 201, headers: { "Cache-Control": "no-store" } });
   } catch {
     return NextResponse.json({ error: "Message could not be saved." }, { status: 503 });
