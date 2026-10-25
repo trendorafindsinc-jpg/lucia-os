@@ -46,20 +46,18 @@ A successful LUCIA ID sign-in does **not** grant access to every product or orga
 
 ### Websites
 
-The website engine is the foundation and first delivery priority. It owns website projects, saved Loom Blueprints, pages, assets, drafts, revisions, preview, domains, and publication state.
+The website engine is the foundation and first delivery priority. It owns website projects, saved Website Blueprints, pages, assets, drafts, revisions, preview, domains, and publication state.
 
 Canonical website terms:
 
-- **Loom** (website design/template) — a complete, reusable site composition.
-- **Loom Library** — catalogue for discovering designs.
-- **Layer Studio** — visual website creation/editing workspace.
-- **Loom Blueprint** — versioned, validated website definition; never a customer-facing raw-JSON editor.
-- **LoomifiAI** — optional AI assistant that proposes a Blueprint and uses the same validated save/preview workflow as all other creation paths.
-- **Layouts** — customer-facing template/layout library label where needed; avoid creating duplicate concepts that conflict with Loom Library.
+- **Layouts** — the template/design library. Each Layout is a complete, reusable website composition, not merely a colour variation.
+- **Layer Studio** — the visual website creation and editing workspace.
+- **Website Blueprint** — the versioned, validated website definition used by the engine; never expose raw JSON as the customer editor.
+- **loomifyAI** — the optional AI assistant that proposes a Website Blueprint and sends it through the same validation, save, and preview workflow as all other creation paths.
 - **Preview** — renders a draft without changing the live site.
-- **Go Live** — promotes a validated version to live delivery (working label; avoid inconsistent terminology).
+- **Go Live** — promotes a validated version to live delivery (working label; keep terminology consistent).
 
-The existing [Website Engine Blueprint](website-engine-blueprint.md) remains authoritative for the Blueprint schema principles, safe rendering, distinct design quality, AI flow, and live-version protection. This unified blueprint adds the wider product surfaces without weakening those requirements.
+**Naming precedence:** Loom is the business community product, not a website template. Earlier website-engine documents may use the legacy terms “Loom” (template), “Loom Library”, “Loom Studio”, “Loom Blueprint”, and “LoomifiAI”. Treat those as historical terminology when reading existing specifications. New UI, new documentation and new implementation should use the canonical terms above; update legacy references deliberately without breaking internal code identifiers or persisted data.
 
 ### Store — sellers and buyers
 
