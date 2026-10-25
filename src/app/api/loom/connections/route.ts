@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
-import { appUsers, loomBusinessVerifications, loomConnections } from "@/lib/db/schema";
+import { appUsers, loomBusinessVerifications, loomConnections, loomNotifications } from "@/lib/db/schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -57,6 +57,7 @@ export async function POST(request: Request) {
     )).limit(1);
     if (existing) return NextResponse.json({ error: "A connection already exists between these members." }, { status: 409 });
     const [connection] = await db.insert(loomConnections).values({ requesterUserId: user.id, recipientUserId: recipient.id, status: "pending" }).returning();
+    try { await db.insert(loomNotifications).values({ userId: recipient.id, actorUserId: user.id, kind: "connection_request", targetId: connection.id, body: `${user.displayName || "A Loom member"} sent you a connection request.` }); } catch { /* The connection request remains successful if notification delivery fails. */ }
     return NextResponse.json({ connection }, { status: 201, headers: { "Cache-Control": "no-store" } });
   } catch (cause) {
     if (typeof cause === "object" && cause !== null && "code" in cause && cause.code === "23505") return NextResponse.json({ error: "A connection request already exists." }, { status: 409 });
