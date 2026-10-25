@@ -16,7 +16,7 @@ export async function GET(request: Request) {
   const user = await getCurrentUser().catch(() => null);
   try {
     const db = getDb();
-    const [post] = await db.select({ id: loomPosts.id }).from(loomPosts).where(eq(loomPosts.id, postId!)).limit(1);
+    const [post] = await db.select({ id: loomPosts.id }).from(loomPosts).where(and(eq(loomPosts.id, postId!), eq(loomPosts.moderationStatus, "visible"))).limit(1);
     if (!post) return NextResponse.json({ error: "Post not found." }, { status: 404 });
     const [total] = await db.select({ count: count() }).from(loomReactions).where(eq(loomReactions.postId, postId!));
     const [mine] = user ? await db.select({ reaction: loomReactions.reaction }).from(loomReactions).where(and(eq(loomReactions.postId, postId!), eq(loomReactions.userId, user.id))).limit(1) : [];
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
     const db = getDb();
     const [verification] = await db.select({ status: loomBusinessVerifications.status }).from(loomBusinessVerifications).where(eq(loomBusinessVerifications.userId, user.id)).limit(1);
     if (verification?.status !== "verified") return NextResponse.json({ error: "Business verification is required to react to community posts." }, { status: 403 });
-    const [post] = await db.select({ id: loomPosts.id }).from(loomPosts).where(eq(loomPosts.id, parsed.data.postId)).limit(1);
+    const [post] = await db.select({ id: loomPosts.id }).from(loomPosts).where(and(eq(loomPosts.id, parsed.data.postId), eq(loomPosts.moderationStatus, "visible"))).limit(1);
     if (!post) return NextResponse.json({ error: "Post not found." }, { status: 404 });
     const [existing] = await db.select({ id: loomReactions.id, reaction: loomReactions.reaction }).from(loomReactions).where(and(eq(loomReactions.postId, post.id), eq(loomReactions.userId, user.id))).limit(1);
     if (existing?.reaction === parsed.data.reaction) {
