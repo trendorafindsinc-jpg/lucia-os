@@ -94,3 +94,26 @@
 
 .loom-post-actions .loom-reacted{background:rgba(59,111,159,.12);border-color:rgba(59,111,159,.4);color:#234e77;font-weight:700}
 .loom-post-actions button:disabled{opacity:.6;cursor:wait}
+
+.loom-staff-tabs{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin:1.3rem 0}
+.loom-staff-tabs button,.loom-staff-actions button{border:1px solid rgba(115,139,166,.25);border-radius:11px;padding:.7rem .9rem;background:rgba(255,255,255,.8);color:inherit;font:inherit;font-size:.84rem;cursor:pointer}
+.loom-staff-tabs button.loom-staff-tab-active{background:#14263d;border-color:#14263d;color:#fff}
+.loom-staff-list{display:grid;gap:1rem}
+.loom-staff-card{display:grid;gap:.8rem;padding:1.15rem;border:1px solid rgba(115,139,166,.22);border-radius:18px;background:rgba(255,255,255,.84);box-shadow:0 12px 32px rgba(30,48,72,.04)}
+.loom-staff-card-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem}
+.loom-staff-card h2{margin:.25rem 0 0;font-size:1.1rem;overflow-wrap:anywhere}
+.loom-staff-card dl{display:grid;grid-template-columns:minmax(110px,.4fr) minmax(0,1fr);gap:.45rem .8rem;margin:0;font-size:.84rem}
+.loom-staff-card dt{color:var(--loom-muted,#64748b)}
+.loom-staff-card dd{margin:0;overflow-wrap:anywhere}
+.loom-evidence-reference{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.8rem}
+.loom-staff-card>label{font-size:.84rem;font-weight:650}
+.loom-staff-card>textarea{width:100%;border:1px solid rgba(115,139,166,.28);border-radius:11px;padding:.75rem;background:white;color:inherit;font:inherit}
+.loom-staff-actions{display:flex;gap:.55rem;flex-wrap:wrap}
+.loom-staff-actions button:first-child{background:#14263d;color:white;border-color:#14263d;font-weight:650}
+.loom-staff-actions button.loom-staff-secondary{background:transparent}
+.loom-staff-actions button:disabled{opacity:.5;cursor:not-allowed}
+.loom-staff-checkbox{display:flex;align-items:flex-start;gap:.6rem;font-weight:500!important;line-height:1.5}
+.loom-staff-checkbox input{margin-top:.25rem}
+.loom-left-rail>button{display:block;width:100%;text-align:left;border:0;border-radius:10px;padding:.65rem .75rem;background:transparent;color:inherit;font:inherit;cursor:pointer}
+.loom-left-rail>button.loom-rail-active{background:rgba(70,115,160,.1);color:#234e77;font-weight:650}
+@media(max-width:520px){.loom-staff-card{padding:.9rem}.loom-staff-card dl{grid-template-columns:1fr;gap:.2rem}.loom-staff-card dd{margin-bottom:.55rem}}
