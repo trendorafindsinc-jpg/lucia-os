@@ -1,16 +1,62 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { defaultSeoSettings, getSeoChecks, seoSettingsSchema, type SeoSettings } from "@/lib/seo/seo-settings";
 
 export function SeoWorkspace() {
   const [settings, setSettings] = useState<SeoSettings>(defaultSeoSettings);
+  const [websiteId, setWebsiteId] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+  const [notice, setNotice] = useState("");
   const checks = useMemo(() => getSeoChecks(settings), [settings]);
   const valid = seoSettingsSchema.safeParse(settings).success;
-  const update = (patch: Partial<SeoSettings>) => setSettings((current) => ({ ...current, ...patch }));
+  const update = (patch: Partial<SeoSettings>) => { setSettings((current) => ({ ...current, ...patch })); setIsDirty(true); };
+
+  useEffect(() => {
+    const requestedWebsiteId = new URLSearchParams(window.location.search).get("websiteId");
+    if (!requestedWebsiteId) return;
+    setWebsiteId(requestedWebsiteId);
+    setIsLoading(true);
+    fetch(`/api/websites/${encodeURIComponent(requestedWebsiteId)}/seo`, { cache: "no-store" })
+      .then(async (response) => {
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || "Couldn't load SEO settings.");
+        const checked = seoSettingsSchema.safeParse(payload.settings);
+        if (!checked.success) throw new Error("Saved SEO settings failed validation. Saving is disabled to protect them.");
+        setSettings(checked.data);
+        setIsDirty(false);
+        setLoadFailed(false);
+      })
+      .catch((error: unknown) => {
+        setLoadFailed(true);
+        setNotice(error instanceof Error ? `${error.message} Saving is disabled until settings load safely.` : "Couldn't load saved SEO settings. Saving is disabled to protect existing data.");
+      })
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  async function saveSettings() {
+    if (!websiteId || isLoading || loadFailed || !valid) return;
+    setIsSaving(true);
+    setNotice("");
+    try {
+      const response = await fetch(`/api/websites/${encodeURIComponent(websiteId)}/seo`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" }, cache: "no-store", body: JSON.stringify(settings),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "Couldn't save SEO settings.");
+      setIsDirty(false);
+      setNotice("SEO settings saved to the website workspace. They are not applied to public output until publishing consumes them.");
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Couldn't save SEO settings. The last saved settings remain unchanged.");
+    } finally { setIsSaving(false); }
+  }
   const socialTitle = settings.socialTitle || settings.title || settings.pageName;
   const socialDescription = settings.socialDescription || settings.description;
   return <section className="seo-workspace" aria-label="SEO settings workspace">
+    <div className="content-validation"><span>{isLoading ? "Loading saved SEO settings…" : loadFailed ? "Saved SEO unavailable · saving disabled" : websiteId ? (isDirty ? "Unsaved SEO changes" : "Saved SEO settings") : "Local preview · not saved"}</span>{websiteId && <button type="button" className="content-primary-button" onClick={saveSettings} disabled={isLoading || loadFailed || isSaving || !isDirty || !valid}>{isSaving ? "Saving…" : "Save SEO"}</button>}</div>
     <div className="seo-workspace-head"><div><span className="seo-kicker">PAGE SETTINGS</span><h2>Search and sharing details</h2></div><span className="seo-validation-pill">{valid ? "Fields valid" : "Review URL or text fields"}</span></div>
     <div className="seo-workspace-grid">
       <div className="seo-form-panel">
@@ -31,6 +77,7 @@ export function SeoWorkspace() {
         <section className="seo-checklist"><div className="seo-preview-head"><span className="seo-kicker">READINESS CHECKS</span><span>{checks.filter((c) => c.status === "good").length}/{checks.length}</span></div>{checks.map((check) => <div className="seo-check" key={check.label}><span className={"seo-check-mark seo-check-mark--" + check.status}>{check.status === "good" ? "✓" : check.status === "error" ? "!" : "·"}</span><div><strong>{check.label}</strong><p>{check.detail}</p></div></div>)}</section>
       </aside>
     </div>
-    <div className="seo-workspace-foot"><span>{settings.indexable ? "Indexing allowed in preview" : "Preview will set noindex"}</span><span>Local state only · No metadata applied to a live page</span></div>
+    {notice && <p className="seo-preview-note" role="status">{notice}</p>}
+    <div className="seo-workspace-foot"><span>{settings.indexable ? "Indexing allowed in preview" : "Preview will set noindex"}</span><span>{websiteId ? (isDirty ? "Unsaved · not published" : "Workspace settings · not applied to live output") : "Local state only · No metadata applied to a live page"}</span></div>
   </section>;
 }
