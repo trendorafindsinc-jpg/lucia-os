@@ -1,10 +1,10 @@
-import { and, desc, eq, ilike } from "drizzle-orm";
+import { and, desc, eq, ilike, notInArray } from "drizzle-orm";
 import { getLoomRestriction } from "@/lib/loom/staff";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
-import { appUsers, loomBusinessVerifications, loomPosts } from "@/lib/db/schema";
+import { appUsers, loomBlocks, loomBusinessVerifications, loomPosts } from "@/lib/db/schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,9 +23,12 @@ export async function GET(request: Request) {
       authorId: appUsers.id,
       authorName: appUsers.displayName,
     }).from(loomPosts).innerJoin(appUsers, eq(loomPosts.authorUserId, appUsers.id));
-    const posts = query
-      ? await base.where(and(eq(loomPosts.moderationStatus, "visible"), ilike(loomPosts.body, `%${query}%`))).orderBy(desc(loomPosts.createdAt)).limit(50)
-      : await base.where(eq(loomPosts.moderationStatus, "visible")).orderBy(desc(loomPosts.createdAt)).limit(50);
+    const blockedAuthors = currentUser ? [
+      notInArray(loomPosts.authorUserId, db.select({ userId: loomBlocks.blockedUserId }).from(loomBlocks).where(eq(loomBlocks.blockerUserId, currentUser.id))),
+      notInArray(loomPosts.authorUserId, db.select({ userId: loomBlocks.blockerUserId }).from(loomBlocks).where(eq(loomBlocks.blockedUserId, currentUser.id))),
+    ] : [];
+    const posts = await base.where(and(eq(loomPosts.moderationStatus, "visible"), ...blockedAuthors, query ? ilike(loomPosts.body, `%${query}%`) : undefined))
+      .orderBy(desc(loomPosts.createdAt)).limit(50);
     return NextResponse.json({ posts, query: query || null }, { headers: { "Cache-Control": "no-store" } });
   } catch {
     return NextResponse.json({ error: "Loom community storage is not available. Please try again later." }, { status: 503, headers: { "Cache-Control": "no-store" } });
