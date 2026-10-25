@@ -1,4 +1,5 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
+import { consumeLoomRateLimit } from "@/lib/loom/rate-limit";
 import { getLoomRestriction } from "@/lib/loom/staff";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -49,6 +50,8 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: "Group name, slug, or description is invalid." }, { status: 422 });
   try {
     const db = getDb();
+    const rate = await consumeLoomRateLimit(user.id, "group_create", 3, 86400000);
+    if (!rate.allowed) return NextResponse.json({ error: "Too many requests. Try again tomorrow." }, { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } });
     const [verification] = await db.select({ status: loomBusinessVerifications.status }).from(loomBusinessVerifications).where(eq(loomBusinessVerifications.userId, user.id)).limit(1);
     if (verification?.status !== "verified") return NextResponse.json({ error: "Business verification is required to create groups." }, { status: 403 });
     const group = await db.transaction(async tx => {
