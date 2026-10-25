@@ -62,7 +62,6 @@ export async function PATCH(request: Request) {
       }).from(loomReports).where(eq(loomReports.id, parsed.data.reportId)).limit(1);
       if (!report) return { kind: "not_found" as const };
       if (report.status !== "open" && report.status !== "reviewing") return { kind: "already_reviewed" as const };
-      if (parsed.data.hideContent && report.targetType === "profile") return { kind: "unsupported_target" as const };
       if (parsed.data.memberAction !== "none") {
         let subjectUserId: string | null = null;
         if (report.targetType === "post") {
@@ -105,7 +104,7 @@ export async function PATCH(request: Request) {
         } else if (report.targetType === "message") {
           await tx.delete(loomMessages).where(eq(loomMessages.id, report.targetId));
         } else if (report.targetType === "profile") {
-          // Prevalidated before any writes.
+          await tx.update(loomProfiles).set({ moderationStatus: "hidden", updatedAt: now }).where(eq(loomProfiles.userId, report.targetId));
         }
       }
       await tx.update(loomReports).set({
@@ -129,7 +128,6 @@ export async function PATCH(request: Request) {
     if (result.kind === "already_reviewed") return NextResponse.json({ error: "This report has already been reviewed." }, { status: 409 });
     if (result.kind === "target_not_found") return NextResponse.json({ error: "The reported member could not be resolved." }, { status: 404 });
     if (result.kind === "cannot_restrict_self") return NextResponse.json({ error: "Staff cannot restrict their own account through a report." }, { status: 422 });
-    if (result.kind === "unsupported_target") return NextResponse.json({ error: "Profile moderation is not supported by hide-content. Resolve or dismiss the report without hiding the profile." }, { status: 422 });
     return NextResponse.json({ result }, { headers: { "Cache-Control": "no-store" } });
   } catch {
     return NextResponse.json({ error: "Moderation decision could not be saved." }, { status: 503 });
