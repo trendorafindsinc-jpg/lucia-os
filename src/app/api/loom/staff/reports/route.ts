@@ -86,8 +86,8 @@ export async function PATCH(request: Request) {
         if (parsed.data.memberAction === "lift") {
           await tx.update(loomMemberRestrictions).set({ status: "lifted", liftedAt: now, liftedByStaffUserId: access.user!.id, updatedAt: now }).where(eq(loomMemberRestrictions.userId, subjectUserId));
         } else {
-          await tx.insert(loomMemberRestrictions).values({ userId: subjectUserId, status: parsed.data.memberAction, reason: "Loom moderation action for report " + report.id, createdByStaffUserId: access.user!.id, updatedAt: now })
-            .onConflictDoUpdate({ target: loomMemberRestrictions.userId, set: { status: parsed.data.memberAction, reason: "Loom moderation action for report " + report.id, createdByStaffUserId: access.user!.id, expiresAt: null, liftedAt: null, liftedByStaffUserId: null, updatedAt: now } });
+          await tx.insert(loomMemberRestrictions).values({ userId: subjectUserId, status: parsed.data.memberAction === "ban" ? "banned" : "restricted", reason: "Loom moderation action for report " + report.id, createdByStaffUserId: access.user!.id, updatedAt: now })
+            .onConflictDoUpdate({ target: loomMemberRestrictions.userId, set: { status: parsed.data.memberAction === "ban" ? "banned" : "restricted", reason: "Loom moderation action for report " + report.id, createdByStaffUserId: access.user!.id, expiresAt: null, liftedAt: null, liftedByStaffUserId: null, updatedAt: now } });
         }
       }
       if (parsed.data.hideContent) {
