@@ -3,7 +3,10 @@ import { getPreferredTemplateId, getTemplateSetupHref } from "./navigation";
 
 describe("template setup navigation", () => {
   it("routes a selected design through durable setup before opening the editor", () => {
-    expect(getTemplateSetupHref("northstar-consulting")).toBe("/create?template=northstar-consulting");
+    expect(getTemplateSetupHref("northstar-consulting")).toEqual({
+      pathname: "/create",
+      query: { template: "northstar-consulting" },
+    });
   });
 
   it("prefers a valid URL-selected template over an older saved choice", () => {
@@ -16,7 +19,10 @@ describe("template setup navigation", () => {
     expect(getPreferredTemplateId("unknown-template", "northstar-consulting", (id) => knownTemplates.has(id))).toBe("northstar-consulting");
   });
 
-  it("encodes the template identifier as a query parameter", () => {
-    expect(getTemplateSetupHref("school house & studio")).toBe("/create?template=school%20house%20%26%20studio");
+  it("preserves special characters in the template query value", () => {
+    expect(getTemplateSetupHref("school house & studio")).toEqual({
+      pathname: "/create",
+      query: { template: "school house & studio" },
+    });
   });
 });
