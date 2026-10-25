@@ -2,10 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { LoomRenderer } from "@/components/loom/loom-renderer";
+import { makeInitialDraft } from "@/lib/editor/site-draft";
+import { siteStructurePageToBlueprint } from "@/lib/site-structure/loom-adapter";
 import { addPage, addReusableSection, makeInitialStructure, moveReusableSection, removePage, reusableSectionLibrary, setHomepage, siteStructureSchema, toggleNavigationPage, type ReusableSectionType, type SitePage, type SiteStructure } from "@/lib/site-structure/structure";
 
 export function SiteStructureEditor() {
   const [structure, setStructure] = useState<SiteStructure>(() => makeInitialStructure());
+  const [previewDraft, setPreviewDraft] = useState(() => makeInitialDraft("northstar-consulting"));
+  const [previewError, setPreviewError] = useState("");
   const [selectedPageId, setSelectedPageId] = useState("home");
   const [newPageTitle, setNewPageTitle] = useState("");
   const [notice, setNotice] = useState("");
@@ -16,12 +21,22 @@ export function SiteStructureEditor() {
   const [isDirty, setIsDirty] = useState(false);
   const selectedPage = structure.pages.find((page) => page.id === selectedPageId) ?? structure.pages[0];
   const validation = useMemo(() => siteStructureSchema.safeParse(structure), [structure]);
+  const previewBlueprint = useMemo(() => siteStructurePageToBlueprint(previewDraft, structure, selectedPageId), [previewDraft, structure, selectedPageId]);
 
   useEffect(() => {
     const requestedWebsiteId = new URLSearchParams(window.location.search).get("websiteId");
     if (!requestedWebsiteId) return;
     setWebsiteId(requestedWebsiteId);
     setIsLoading(true);
+    fetch(`/api/websites/${encodeURIComponent(requestedWebsiteId)}/draft`, { cache: "no-store" })
+      .then(async (response) => {
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || "Couldn't load the website's visual draft.");
+        const base = makeInitialDraft(payload.draft?.templateId || "northstar-consulting");
+        setPreviewDraft({ ...base, ...(payload.draft ?? {}), siteName: payload.draft?.siteName || payload.website?.name || base.siteName });
+        setPreviewError("");
+      })
+      .catch((error: unknown) => setPreviewError(error instanceof Error ? error.message : "The visual draft could not be loaded; preview uses a template placeholder."));
     fetch(`/api/websites/${encodeURIComponent(requestedWebsiteId)}/structure`, { cache: "no-store" })
       .then(async (response) => {
         const payload = await response.json();
@@ -140,6 +155,11 @@ export function SiteStructureEditor() {
           </div>
         </section>
       </div>
+      <section className="structure-editor-card" aria-label="Shared Loom page preview">
+        <div className="structure-card-heading"><div><span className="structure-kicker">LOOM PREVIEW</span><h2>{selectedPage.title}</h2><p>The selected page is rendered through Loom. Structure edits remain a draft until saved.</p></div></div>
+        {previewError && <p className="structure-notice" role="status">{previewError}</p>}
+        <LoomRenderer blueprint={previewBlueprint} preview />
+      </section>
       {notice && <p className="structure-notice" role="status">{notice}</p>}
       <footer className="structure-footer"><span>{structure.pages.length} pages</span><span>{structure.navigationPageIds.length} menu items</span><span>{validation.success ? "Structure checks passed" : "Review page addresses and navigation"}</span><span>{loadFailed ? "Load failed · Saving disabled" : websiteId ? (isDirty ? "Unsaved · Not published" : "Workspace draft · Not published") : "Local only · Nothing saved"}</span></footer>
     </main>
