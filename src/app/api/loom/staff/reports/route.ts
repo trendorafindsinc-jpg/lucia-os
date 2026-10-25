@@ -2,7 +2,7 @@ import { and, asc, eq, inArray } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getDb } from "@/lib/db/client";
-import { appUsers, loomGroups, loomMessages, loomPosts, loomReplies, loomReports, platformAuditEvents } from "@/lib/db/schema";
+import { appUsers, loomGroups, loomMemberRestrictions, loomMessages, loomPosts, loomProfiles, loomReplies, loomReports, platformAuditEvents } from "@/lib/db/schema";
 import { requireLoomStaff } from "@/lib/loom/staff";
 
 export const runtime = "nodejs";
@@ -11,6 +11,7 @@ const reviewSchema = z.object({
   reportId: z.string().uuid(),
   decision: z.enum(["resolved", "dismissed"]),
   hideContent: z.boolean().default(false),
+  memberAction: z.enum(["none", "restrict", "ban", "lift"]).default("none"),
 }).strict();
 
 export async function GET() {
@@ -60,6 +61,33 @@ export async function PATCH(request: Request) {
       }).from(loomReports).where(eq(loomReports.id, parsed.data.reportId)).limit(1);
       if (!report) return { kind: "not_found" as const };
       if (report.status !== "open" && report.status !== "reviewing") return { kind: "already_reviewed" as const };
+      if (parsed.data.memberAction !== "none") {
+        let subjectUserId: string | null = null;
+        if (report.targetType === "post") {
+          const [target] = await tx.select({ userId: loomPosts.authorUserId }).from(loomPosts).where(eq(loomPosts.id, report.targetId)).limit(1);
+          subjectUserId = target?.userId ?? null;
+        } else if (report.targetType === "reply") {
+          const [target] = await tx.select({ userId: loomReplies.authorUserId }).from(loomReplies).where(eq(loomReplies.id, report.targetId)).limit(1);
+          subjectUserId = target?.userId ?? null;
+        } else if (report.targetType === "profile") {
+          const [target] = await tx.select({ userId: loomProfiles.userId }).from(loomProfiles).where(eq(loomProfiles.userId, report.targetId)).limit(1);
+          subjectUserId = target?.userId ?? null;
+        } else if (report.targetType === "group") {
+          const [target] = await tx.select({ userId: loomGroups.createdByUserId }).from(loomGroups).where(eq(loomGroups.id, report.targetId)).limit(1);
+          subjectUserId = target?.userId ?? null;
+        } else if (report.targetType === "message") {
+          const [target] = await tx.select({ sender: loomMessages.senderUserId, recipient: loomMessages.recipientUserId }).from(loomMessages).where(eq(loomMessages.id, report.targetId)).limit(1);
+          subjectUserId = target ? (target.sender === report.reporterUserId ? target.recipient : target.sender) : null;
+        }
+        if (!subjectUserId) return { kind: "target_not_found" as const };
+        if (subjectUserId === access.user!.id) return { kind: "cannot_restrict_self" as const };
+        if (parsed.data.memberAction === "lift") {
+          await tx.update(loomMemberRestrictions).set({ status: "lifted", liftedAt: now, liftedByStaffUserId: access.user!.id, updatedAt: now }).where(eq(loomMemberRestrictions.userId, subjectUserId));
+        } else {
+          await tx.insert(loomMemberRestrictions).values({ userId: subjectUserId, status: parsed.data.memberAction, reason: "Loom moderation action for report " + report.id, createdByStaffUserId: access.user!.id, updatedAt: now })
+            .onConflictDoUpdate({ target: loomMemberRestrictions.userId, set: { status: parsed.data.memberAction, reason: "Loom moderation action for report " + report.id, createdByStaffUserId: access.user!.id, expiresAt: null, liftedAt: null, liftedByStaffUserId: null, updatedAt: now } });
+        }
+      }
       if (parsed.data.hideContent) {
         if (report.targetType === "post") {
           await tx.update(loomPosts).set({ moderationStatus: "hidden" }).where(eq(loomPosts.id, report.targetId));
@@ -86,12 +114,14 @@ export async function PATCH(request: Request) {
         targetId: report.targetId,
         purpose: "Review a community content report.",
         result: "success",
-        metadata: JSON.stringify({ reportId: report.id, decision: parsed.data.decision }),
+        metadata: JSON.stringify({ reportId: report.id, decision: parsed.data.decision, memberAction: parsed.data.memberAction, hideContent: parsed.data.hideContent }),
       });
       return { kind: "updated" as const, id: report.id, status: parsed.data.decision, contentHidden: parsed.data.hideContent };
     });
     if (result.kind === "not_found") return NextResponse.json({ error: "Report not found." }, { status: 404 });
     if (result.kind === "already_reviewed") return NextResponse.json({ error: "This report has already been reviewed." }, { status: 409 });
+    if (result.kind === "target_not_found") return NextResponse.json({ error: "The reported member could not be resolved." }, { status: 404 });
+    if (result.kind === "cannot_restrict_self") return NextResponse.json({ error: "Staff cannot restrict their own account through a report." }, { status: 422 });
     if (result.kind === "unsupported_target") return NextResponse.json({ error: "Profile moderation is not supported by hide-content. Resolve or dismiss the report without hiding the profile." }, { status: 422 });
     return NextResponse.json({ result }, { headers: { "Cache-Control": "no-store" } });
   } catch {
