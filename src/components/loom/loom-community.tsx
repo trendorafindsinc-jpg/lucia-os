@@ -1,12 +1,229 @@
 "use client";
+
 import { useCallback, useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
-type Post = { id:string; body:string; createdAt:string; authorId:string; authorName:string|null };
-export function LoomCommunity(){
- const [posts,setPosts]=useState<Post[]>([]),[body,setBody]=useState(""),[loading,setLoading]=useState(true),[posting,setPosting]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState("");
- const load=useCallback(async()=>{setLoading(true);setError("");try{const r=await fetch("/api/loom/posts",{cache:"no-store"});const p=await r.json() as {posts?:Post[];error?:string};if(!r.ok||!p.posts)throw new Error(p.error||"The Loom feed could not be loaded.");setPosts(p.posts)}catch(e){setError(e instanceof Error?e.message:"The Loom feed could not be loaded.")}finally{setLoading(false)}},[]);
- useEffect(()=>{void load()},[load]);
- async function submit(e:FormEvent<HTMLFormElement>){e.preventDefault();if(posting||!body.trim())return;setPosting(true);setError("");setNotice("");try{const r=await fetch("/api/loom/posts",{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({body})});const p=await r.json() as {post?:Post;error?:string};if(!r.ok||!p.post)throw new Error(p.error||"Your post could not be saved.");setPosts(v=>[p.post!,...v]);setBody("");setNotice("Your post is live in Loom.")}catch(e){setError(e instanceof Error?e.message:"Your post could not be saved.")}finally{setPosting(false)}}
- return <main className="loom-page"><header className="loom-topbar"><Link className="loom-brand" href="/workspace"><span className="loom-brand-mark">L</span><span>LUCIA <b>LOOM</b></span></Link><nav><a className="loom-nav-active" href="#feed">Feed</a><a href="#compose">Start a discussion</a></nav><Link className="loom-workspace-link" href="/workspace">Workspace ↗</Link></header><div className="loom-layout"><aside className="loom-left-rail"><span className="loom-rail-label">YOUR LOOM</span><a className="loom-rail-active" href="#feed">◉ Community feed</a><a href="#compose">＋ New discussion</a><div className="loom-rail-note"><strong>Build in the open.</strong><p>Share useful lessons, ask thoughtful questions, and learn alongside people building their next thing.</p></div></aside><section className="loom-feed-column" id="feed"><div className="loom-page-heading"><span className="loom-eyebrow">THE LUCIA COMMUNITY</span><h1>Good work grows<br/><em>when we share it.</em></h1><p>A place for builders, founders and teams to exchange ideas and learn from one another.</p></div><form className="loom-composer" id="compose" onSubmit={submit}><label htmlFor="loom-post-body">Start a conversation</label><textarea id="loom-post-body" value={body} onChange={e=>setBody(e.target.value)} maxLength={4000} placeholder="What are you building, learning, or trying to solve?" rows={4} required/><div className="loom-composer-bottom"><span>{body.length}/4000 characters · LUCIA ID required to publish</span><button type="submit" disabled={posting||!body.trim()}>{posting?"Publishing…":"Publish post ↗"}</button></div>{notice&&<p className="loom-notice" role="status">{notice}</p>}</form>{error&&<div className="loom-error" role="alert"><span>{error}</span><button type="button" onClick={()=>void load()}>Retry feed</button></div>}<div className="loom-feed-heading"><h2>Community conversations</h2><span>Latest first</span></div>{loading?<div className="loom-feed-state">Loading community posts…</div>:posts.length?<div className="loom-post-list">{posts.map(p=><article className="loom-post" key={p.id}><div className="loom-post-avatar">{(p.authorName||"L").trim().slice(0,1).toUpperCase()}</div><div className="loom-post-content"><div className="loom-post-meta"><strong>{p.authorName||"LUCIA member"}</strong><span>·</span><time dateTime={p.createdAt}>{new Date(p.createdAt).toLocaleString()}</time></div><p>{p.body}</p></div></article>)}</div>:<div className="loom-feed-state loom-empty"><h3>Start the first conversation.</h3><p>The feed reads saved community posts. Be the first to share a useful question, lesson, or idea.</p><a href="#compose">Write the first post ↓</a></div>}</section><aside className="loom-right-rail"><section className="loom-side-card"><span className="loom-eyebrow">COMMUNITY PRINCIPLES</span><h2>Make it useful.</h2><ul><li>Share what you have learned.</li><li>Give context when asking for help.</li><li>Respect people and their work.</li><li>Never post private customer information.</li></ul></section><section className="loom-side-card"><span className="loom-eyebrow">CONNECTED WORK</span><h2>Take ideas into action.</h2><p>Move from community inspiration to your website workspace.</p><Link href="/workspace/websites">Open your websites ↗</Link><Link href="/templates">Explore layouts ↗</Link></section><p className="loom-privacy-note">Posts are public to Loom visitors. Do not share passwords, private customer data, or confidential business information.</p></aside></div></main>;
+
+type Post = { id: string; body: string; createdAt: string; authorId: string; authorName: string | null };
+type Reply = { id: string; postId: string; body: string; createdAt: string; authorId: string; authorName: string | null };
+type Verification = { evidenceType: string; status: string; reviewNote: string | null; submittedAt: string; reviewedAt: string | null } | null;
+
+export function LoomCommunity() {
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [body, setBody] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [posting, setPosting] = useState(false);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [verification, setVerification] = useState<Verification>(null);
+  const [verificationLoaded, setVerificationLoaded] = useState(false);
+  const [evidenceType, setEvidenceType] = useState<"registration" | "domain">("registration");
+  const [evidenceReference, setEvidenceReference] = useState("");
+  const [verificationBusy, setVerificationBusy] = useState(false);
+  const [verificationMessage, setVerificationMessage] = useState("");
+  const [verificationError, setVerificationError] = useState("");
+  const [openReplies, setOpenReplies] = useState<Record<string, boolean>>({});
+  const [replies, setReplies] = useState<Record<string, Reply[]>>({});
+  const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
+  const [replyErrors, setReplyErrors] = useState<Record<string, string>>({});
+  const [replyBusy, setReplyBusy] = useState<Record<string, boolean>>({});
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const response = await fetch("/api/loom/posts", { cache: "no-store" });
+      const payload = await response.json() as { posts?: Post[]; error?: string };
+      if (!response.ok || !payload.posts) throw new Error(payload.error || "The Loom feed could not be loaded.");
+      setPosts(payload.posts);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "The Loom feed could not be loaded.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const loadVerification = useCallback(async () => {
+    try {
+      const response = await fetch("/api/loom/verification", { cache: "no-store" });
+      if (response.status === 401) {
+        setVerification(null);
+        return;
+      }
+      const payload = await response.json() as { verification?: Verification; error?: string };
+      if (response.ok) setVerification(payload.verification ?? null);
+    } catch {
+      // The feed remains readable when verification status cannot be loaded.
+    } finally {
+      setVerificationLoaded(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    void load();
+    void loadVerification();
+  }, [load, loadVerification]);
+
+  async function submitPost(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (posting || !body.trim()) return;
+    setPosting(true);
+    setError("");
+    setNotice("");
+    try {
+      const response = await fetch("/api/loom/posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ body }),
+      });
+      const payload = await response.json() as { post?: Post; error?: string };
+      if (!response.ok || !payload.post) throw new Error(payload.error || "Your post could not be saved.");
+      setPosts(current => [payload.post!, ...current]);
+      setBody("");
+      setNotice("Your post is live in Loom.");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Your post could not be saved.");
+    } finally {
+      setPosting(false);
+    }
+  }
+
+  async function requestVerification(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (verificationBusy || !evidenceReference.trim()) return;
+    setVerificationBusy(true);
+    setVerificationError("");
+    setVerificationMessage("");
+    try {
+      const response = await fetch("/api/loom/verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ evidenceType, evidenceReference }),
+      });
+      const payload = await response.json() as { status?: string; message?: string; error?: string };
+      if (!response.ok) throw new Error(payload.error || "Your verification request could not be submitted.");
+      setVerification({ evidenceType, status: payload.status || "pending", reviewNote: null, submittedAt: new Date().toISOString(), reviewedAt: null });
+      setVerificationMessage(payload.message || "Request submitted for review.");
+      setEvidenceReference("");
+    } catch (cause) {
+      setVerificationError(cause instanceof Error ? cause.message : "Your verification request could not be submitted.");
+    } finally {
+      setVerificationBusy(false);
+    }
+  }
+
+  async function toggleReplies(postId: string) {
+    const opening = !openReplies[postId];
+    setOpenReplies(current => ({ ...current, [postId]: opening }));
+    if (opening && !replies[postId]) {
+      setReplyErrors(current => ({ ...current, [postId]: "" }));
+      try {
+        const response = await fetch(`/api/loom/posts/${postId}/replies`, { cache: "no-store" });
+        const payload = await response.json() as { replies?: Reply[]; error?: string };
+        if (!response.ok || !payload.replies) throw new Error(payload.error || "Replies could not be loaded.");
+        setReplies(current => ({ ...current, [postId]: payload.replies! }));
+      } catch (cause) {
+        setReplyErrors(current => ({ ...current, [postId]: cause instanceof Error ? cause.message : "Replies could not be loaded." }));
+      }
+    }
+  }
+
+  async function submitReply(event: FormEvent<HTMLFormElement>, postId: string) {
+    event.preventDefault();
+    const replyBody = (replyDrafts[postId] || "").trim();
+    if (!replyBody || replyBusy[postId]) return;
+    setReplyBusy(current => ({ ...current, [postId]: true }));
+    setReplyErrors(current => ({ ...current, [postId]: "" }));
+    try {
+      const response = await fetch(`/api/loom/posts/${postId}/replies`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ body: replyBody }),
+      });
+      const payload = await response.json() as { reply?: Reply; error?: string };
+      if (!response.ok || !payload.reply) throw new Error(payload.error || "Your reply could not be saved.");
+      setReplies(current => ({ ...current, [postId]: [...(current[postId] || []), payload.reply!] }));
+      setReplyDrafts(current => ({ ...current, [postId]: "" }));
+    } catch (cause) {
+      setReplyErrors(current => ({ ...current, [postId]: cause instanceof Error ? cause.message : "Your reply could not be saved." }));
+    } finally {
+      setReplyBusy(current => ({ ...current, [postId]: false }));
+    }
+  }
+
+  const verified = verification?.status === "verified";
+
+  return (
+    <main className="loom-page">
+      <header className="loom-topbar">
+        <Link className="loom-brand" href="/workspace"><span className="loom-brand-mark">L</span><span>LUCIA <b>LOOM</b></span></Link>
+        <nav><a className="loom-nav-active" href="#feed">Feed</a><a href="#compose">Start a discussion</a><a href="#verification">Business verification</a></nav>
+        <Link className="loom-workspace-link" href="/workspace">Workspace ↗</Link>
+      </header>
+      <div className="loom-layout">
+        <aside className="loom-left-rail">
+          <span className="loom-rail-label">YOUR LOOM</span>
+          <a className="loom-rail-active" href="#feed">◉ Community feed</a>
+          <a href="#compose">＋ New discussion</a>
+          <a href="#verification">✓ Business verification</a>
+          <div className="loom-rail-note"><strong>Build in the open.</strong><p>Share useful lessons, ask thoughtful questions, and learn alongside people building their next thing.</p></div>
+        </aside>
+        <section className="loom-feed-column" id="feed">
+          <div className="loom-page-heading"><span className="loom-eyebrow">THE LUCIA COMMUNITY</span><h1>Good work grows<br/><em>when we share it.</em></h1><p>A place for builders, founders and teams to exchange ideas and learn from one another.</p></div>
+          <section className="loom-verification-card" id="verification" aria-labelledby="loom-verification-title">
+            <span className="loom-eyebrow">PARTICIPATION STATUS</span>
+            <h2 id="loom-verification-title">{verified ? "Verified business" : "Read, learn, then contribute"}</h2>
+            <p>{verified ? "Your account can publish posts and replies." : "Public discussions are open to read. Publishing and replying require business verification using formal registration or qualifying domain evidence. Requests are reviewed; submitting evidence does not automatically verify a business."}</p>
+            {!verificationLoaded ? <p>Loading your verification status…</p> : !verified && verification?.status === "pending" ? <p className="loom-notice" role="status">Verification request pending authorised review.</p> : null}
+            {!verified && verificationLoaded && verification?.status !== "pending" ? (
+              <form className="loom-verification-form" onSubmit={requestVerification}>
+                <label htmlFor="loom-evidence-type">Evidence type</label>
+                <select id="loom-evidence-type" value={evidenceType} onChange={event => setEvidenceType(event.target.value as "registration" | "domain")}>
+                  <option value="registration">Business registration</option>
+                  <option value="domain">Business domain</option>
+                </select>
+                <label htmlFor="loom-evidence-reference">{evidenceType === "registration" ? "Registration reference or secure evidence location" : "Business domain or secure evidence location"}</label>
+                <input id="loom-evidence-reference" value={evidenceReference} onChange={event => setEvidenceReference(event.target.value)} maxLength={500} minLength={3} required placeholder={evidenceType === "registration" ? "Registration number or evidence reference" : "yourbusiness.com"} />
+                <button type="submit" disabled={verificationBusy || !evidenceReference.trim()}>{verificationBusy ? "Submitting…" : "Request verification"}</button>
+                {verificationError && <p className="loom-error" role="alert">{verificationError}</p>}
+                {verificationMessage && <p className="loom-notice" role="status">{verificationMessage}</p>}
+              </form>
+            ) : null}
+            {verification?.status === "rejected" && verification.reviewNote && <p role="status">Review note: {verification.reviewNote}</p>}
+            {!verified && <p className="loom-privacy-note">Do not submit passwords or private account credentials. Staff must review evidence before access is granted.</p>}
+          </section>
+          <form className="loom-composer" id="compose" onSubmit={submitPost}>
+            <label htmlFor="loom-post-body">Start a conversation</label>
+            <textarea id="loom-post-body" value={body} onChange={event => setBody(event.target.value)} maxLength={4000} placeholder={verified ? "What are you building, learning, or trying to solve?" : "Public reading is available; verification is required to publish."} rows={4} required disabled={!verified} />
+            <div className="loom-composer-bottom"><span>{body.length}/4000 characters · {verified ? "Verified business" : "Read-only until verified"}</span><button type="submit" disabled={!verified || posting || !body.trim()}>{posting ? "Publishing…" : "Publish post ↗"}</button></div>
+            {notice && <p className="loom-notice" role="status">{notice}</p>}
+          </form>
+          {error && <div className="loom-error" role="alert"><span>{error}</span><button type="button" onClick={() => void load()}>Retry feed</button></div>}
+          <div className="loom-feed-heading"><h2>Community conversations</h2><span>Latest first</span></div>
+          {loading ? <div className="loom-feed-state">Loading community posts…</div> : posts.length ? (
+            <div className="loom-post-list">{posts.map(post => (
+              <article className="loom-post" key={post.id}>
+                <div className="loom-post-avatar">{(post.authorName || "L").trim().slice(0, 1).toUpperCase()}</div>
+                <div className="loom-post-content">
+                  <div className="loom-post-meta"><strong>{post.authorName || "LUCIA member"}</strong><span>·</span><time dateTime={post.createdAt}>{new Date(post.createdAt).toLocaleString()}</time></div>
+                  <p>{post.body}</p>
+                  <div className="loom-post-actions"><button type="button" onClick={() => void toggleReplies(post.id)}>{openReplies[post.id] ? "Hide replies" : `Replies ${replies[post.id] ? `(${replies[post.id].length})` : ""}`}</button><button type="button" onClick={() => void toggleReplies(post.id)}>Join discussion ↗</button></div>
+                  {openReplies[post.id] && <div className="loom-replies">
+                    {replyErrors[post.id] && <p className="loom-error" role="alert">{replyErrors[post.id]}</p>}
+                    {(replies[post.id] || []).map(reply => <div className="loom-reply" key={reply.id}><strong>{reply.authorName || "LUCIA member"}</strong><time dateTime={reply.createdAt}>{new Date(reply.createdAt).toLocaleString()}</time><p>{reply.body}</p></div>)}
+                    {verified ? <form onSubmit={event => void submitReply(event, post.id)} className="loom-reply-form"><textarea aria-label="Write a reply" rows={2} maxLength={2000} required value={replyDrafts[post.id] || ""} onChange={event => setReplyDrafts(current => ({ ...current, [post.id]: event.target.value }))} placeholder="Add a thoughtful reply…"/><button type="submit" disabled={replyBusy[post.id] || !(replyDrafts[post.id] || "").trim()}>{replyBusy[post.id] ? "Sending…" : "Reply"}</button></form> : <p className="loom-privacy-note">Business verification is required to reply.</p>}
+                  </div>}
+                </div>
+              </article>
+            ))}</div>
+          ) : <div className="loom-feed-state loom-empty"><h3>Start the first conversation.</h3><p>The feed reads saved community posts. Be the first to share a useful question, lesson, or idea.</p><a href="#compose">Write the first post ↓</a></div>}
+        </section>
+        <aside className="loom-right-rail">
+          <section className="loom-side-card"><span className="loom-eyebrow">COMMUNITY PRINCIPLES</span><h2>Make it useful.</h2><ul><li>Share what you have learned.</li><li>Give context when asking for help.</li><li>Respect people and their work.</li><li>Never post private customer information.</li></ul></section>
+          <section className="loom-side-card"><span className="loom-eyebrow">CONNECTED WORK</span><h2>Take ideas into action.</h2><p>Move from community inspiration to your website workspace.</p><Link href="/workspace/websites">Open your websites ↗</Link><Link href="/templates">Explore layouts ↗</Link></section>
+          <p className="loom-privacy-note">Posts are public to Loom visitors. Do not share passwords, private customer data, or confidential business information.</p>
+        </aside>
+      </div>
+    </main>
+  );
 }
