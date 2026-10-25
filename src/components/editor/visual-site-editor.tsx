@@ -261,7 +261,7 @@ export function VisualSiteEditor() {
           </section>
           <section className="loomifi-card" aria-labelledby="version-history-title">
             <div className="loomifi-card-top"><span className="editor-kicker">VERSION HISTORY</span><h3 id="version-history-title">Saved checkpoints</h3></div>
-            <p>Save a named checkpoint of the visual draft and related website metadata. Restoring changes the editor draft only; it never publishes.</p>
+            <p>Save a named checkpoint of the visual draft and related website metadata. Restore currently brings back visual editor fields only; pages, SEO settings and blog/media content are not restored. It never publishes.</p>
             <label className="editor-field">Checkpoint name<input value={versionLabel} maxLength={80} onChange={(event) => setVersionLabel(event.target.value)} /></label>
             <button type="button" className="loomifi-generate" onClick={saveVersionCheckpoint} disabled={!websiteId || isLoadingSaved || savedDraftUnavailable || isSaving || versionBusy || !validation.success}>{versionBusy ? "Saving checkpoint…" : "Save checkpoint"}</button>
             {versionError && <p className="loomifi-error" role="alert">{versionError}</p>}
