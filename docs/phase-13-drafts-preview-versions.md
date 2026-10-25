@@ -1,24 +1,37 @@
 # Phase 13 — Drafts, preview, version history and rollback
 
-## Delivered in this phase
+## Implemented
+
 - A draft-safety workspace at `/versions` with editable example website content and SEO copy.
-- Named version checkpoints with optional notes and timestamps.
-- A private visual preview of the current draft or a saved checkpoint.
-- Restore/rollback that copies the selected snapshot into the current working draft.
-- A pure, Zod-validated version-history module with immutable snapshots and a 25-version limit.
-- Unit tests for snapshot cloning, version ordering, rollback copy safety, history cap and validation.
+- A Zod-validated immutable snapshot helper and unit tests for cloning, ordering, rollback copy safety, retention limits, and invalid data.
+- A tenant-scoped `website_versions` database model and GET/POST API for named checkpoints.
+- Layer Studio checkpoint UI that requests the version API, lists saved checkpoints, and lets the user restore supported visual editor fields into the local draft.
+- API-side 25-checkpoint retention; the acceptance-hardening branch serializes concurrent checkpoint writes per website and rechecks active membership/action permission inside the version read/write transaction.
+- Restore does not auto-save or publish; the user must explicitly choose Save draft.
 
 ## Important boundaries
 
-- Website draft checkpoints and rollback history are editing/version-control features, not a commercial product catalogue. They must not be treated as subscription plans or as purchased software versions.
-- Commercial software versions are defined separately in `docs/commerce-model-one-time-purchases.md`: customers purchase a specific product/version once and retain its documented usage rights; a later version is a separate purchase unless explicitly bundled.
-- Phase 13 may preserve a site's draft/history independently of any paid software entitlement. Access to paid capabilities is checked separately by the server and must never be inferred from a website checkpoint.
-- The workspace and history are held in React memory for the current browser session. Refreshing the page clears them.
-- This is not durable database versioning, tenant-specific storage, audit logging, or cross-device restore.
-- Preview is a private illustrative view, not a deployed public website or a fully rendered page from the template engine.
-- Restore changes only the current in-memory draft. It does not publish, touch a live domain, or change production SEO.
-- The schema/helper is groundwork for later tenant-scoped persistence and publication integration. No Core endpoints were invented.
-- No production deployment, database migration, billing change, or School OS change was made.
+- Website draft checkpoints are editing/version-control history, not a commercial product catalogue or purchased software versions.
+- Commercial software versions are defined separately in `docs/commerce-model-one-time-purchases.md`. A purchase grants the documented rights to its exact product/version; later versions are separate purchases unless explicitly bundled.
+- Website history must remain independent of paid entitlements. A checkpoint never grants access to a paid capability.
+- The checkpoint snapshot currently stores visual draft fields, page-structure snapshot, SEO title/description summary, and blog post count. It does **not** yet contain complete restorable page structure, full SEO settings, blog post bodies, or media assets.
+- Restore currently applies visual editor fields only. Page structure, complete SEO settings, blog content and media are not fully restored.
+- The editor draft and checkpoint history must be loaded from server persistence when a saved website is opened. A browser refresh must not silently discard a server-saved checkpoint or draft.
+- Preview is not considered production-complete until it renders the selected snapshot through the actual website renderer privately, without publishing it.
+- No Core authentication endpoints are invented; LUCIA Core remains global authentication only.
+- No production migration, production data mutation, payment activation, or public feature launch is authorized by this phase document.
 
-## Acceptance still outstanding
-Production-grade completion requires durable tenant-isolated storage, permission checks on every read/write/restore, concurrency handling, audit events, retained version policy, server-rendered preview and integration/E2E tests. These are not claimed as complete by this prototype.
+## Phase 13 exit decision
+
+Phase 13 may exit **implementation and enter controlled beta** when the exact-head automated checks pass, code review covers the security and failure boundaries, and the interface accurately describes what restore does. It is not represented as production acceptance. This staged exit follows the project owner's instruction to use documented/code-reviewed evidence before beta, then capture runtime findings from the owner and beta testers.
+
+Pre-beta code-review criteria:
+
+1. Exact-head CI passes lint, typecheck, Drizzle migration consistency, unit tests and production build.
+2. Authentication, active membership and action-specific permissions are enforced server-side and rechecked in read/write transactions.
+3. Organization status and website existence are checked inside the relevant transaction; version writes serialize per website and prune history transactionally to 25.
+4. Invalid IDs and payloads are rejected; responses containing private draft/history data are not cached.
+5. Restore is accurately described as visual-fields-only; it never auto-saves or publishes. The live version is not modified by checkpoint creation or restore.
+6. Scope limits and the beta verification checklist are recorded in `docs/phase-13-version-history.md`.
+
+Beta follow-up remains open and must not be reported as already verified: cross-tenant denial using a non-owner `LOGIN NOBYPASSRLS` role; browser refresh and reauthentication persistence; permission revocation; concurrent retention; injected database failures; and preview privacy/rendering. Run those against a disposable staging environment. An owner-role query is not isolation evidence. Do not apply migrations to production, enable public commerce, or claim production readiness from this staged exit.
