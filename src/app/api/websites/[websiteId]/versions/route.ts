@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getOrganizationMembershipsForUser } from "@/lib/access/guards";
 import { hasOrganizationPermission } from "@/lib/access/policy";
 import { getDb } from "@/lib/db/client";
-import { memberships, websiteVersions, websites } from "@/lib/db/schema";
+import { memberships, organizations, websiteVersions, websites } from "@/lib/db/schema";
 import { websiteSnapshotSchema } from "@/lib/versions/version-history";
 
 export const runtime = "nodejs";
@@ -30,6 +30,8 @@ async function locateWebsite(websiteId: string, userId: string, permission: stri
         .limit(1);
       if (!membership || !hasOrganizationPermission({ role: membership.role, status: membership.status }, permission)) return null;
       await tx.execute(sql`select set_config('app.current_organization_id', ${org.id}, true)`);
+      const [organization] = await tx.select({ status: organizations.status }).from(organizations).where(eq(organizations.id, org.id)).limit(1);
+      if (!organization || organization.status !== "active") return null;
       const [website] = await tx.select({ id: websites.id, organizationId: websites.organizationId })
         .from(websites).where(and(eq(websites.id, websiteId), eq(websites.organizationId, org.id))).limit(1);
       return website ?? null;
@@ -55,6 +57,8 @@ export async function GET(_request: Request, context: RouteContext) {
       .limit(1);
     if (!membership || !hasOrganizationPermission({ role: membership.role, status: membership.status }, "website.read")) return null;
     await tx.execute(sql`select set_config('app.current_organization_id', ${website.organizationId}, true)`);
+    const [organization] = await tx.select({ status: organizations.status }).from(organizations).where(eq(organizations.id, website.organizationId)).limit(1);
+    if (!organization || organization.status !== "active") return null;
     return tx.select().from(websiteVersions)
       .where(and(eq(websiteVersions.websiteId, website.id), eq(websiteVersions.organizationId, website.organizationId)))
       .orderBy(desc(websiteVersions.createdAt)).limit(25);
