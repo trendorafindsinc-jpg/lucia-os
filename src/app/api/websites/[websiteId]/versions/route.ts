@@ -93,6 +93,8 @@ export async function POST(request: Request, context: RouteContext) {
       .limit(1);
     if (!membership || !hasOrganizationPermission({ role: membership.role, status: membership.status }, "website.edit")) return null;
     await tx.execute(sql`select set_config('app.current_organization_id', ${website.organizationId}, true)`);
+    const [organization] = await tx.select({ status: organizations.status }).from(organizations).where(eq(organizations.id, website.organizationId)).limit(1);
+    if (!organization || organization.status !== "active") return null;
     await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${website.id}))`);
     const [row] = await tx.insert(websiteVersions).values({
       organizationId: website.organizationId, websiteId: website.id, createdByUserId: user.id,
