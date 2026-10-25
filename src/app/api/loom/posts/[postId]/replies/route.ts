@@ -16,6 +16,8 @@ export async function GET(_request: Request, context: Context) {
   const { postId } = await context.params;
   if (!z.string().uuid().safeParse(postId).success) return NextResponse.json({ error: "Invalid post." }, { status: 400 });
   try {
+    const currentUser = await getCurrentUser().catch(() => null);
+    if (currentUser && (await getLoomRestriction(currentUser.id))?.status === "banned") return NextResponse.json({ error: "Loom access is unavailable for this account." }, { status: 403 });
     const db = getDb();
     const replies = await db.select({
       id: loomReplies.id,
