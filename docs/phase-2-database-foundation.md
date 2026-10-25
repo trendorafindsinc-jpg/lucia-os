@@ -30,6 +30,7 @@
 ## Verification recorded (2026-10-25)
 
 - Quality workflow #211 passed lint, TypeScript, Drizzle migration consistency, unit tests and production build on the original Phase 2 implementation head `68e137fd7e353a1eafb0173cfb28b0926bf810f5`.
+- Fresh Quality workflow #214 passed lint, TypeScript, Drizzle migration consistency, unit tests and production build on the current Phase 2 head `0cebaf3a8341e33ce3397b1ce8d0d937be778e14`.
 - On disposable Neon branch `phase-2-tenant-integrity-test`, the clean migration preflight passed and the composite ownership foreign key was added. A cross-organisation page/website insert was rejected by the composite foreign key.
 - On separate disposable branch `phase-2-preflight-failure-test`, a deliberately mismatched page row caused the migration preflight to fail with the expected ownership-integrity exception; the invalid row was not silently rewritten or deleted.
 - The RLS hardening migration applied on the disposable branch, and PostgreSQL reports RLS enabled for organisations, memberships, websites, pages, domains, billing, support, staff grants and audit events.
