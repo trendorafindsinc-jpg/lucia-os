@@ -91,7 +91,7 @@ The UI should use a premium, polished visual language, with a three-column deskt
 
 ### Remaining Phase 2 work
 - Finish block coverage for every remaining community surface and add tests for block/unblock, connection retries, and blocked content visibility; core block/unblock UI and API enforcement are implemented.
-- Add complete group discussion content workflows, group detail pages, profile reporting controls, and stronger abuse/rate limiting.
+- Add public-profile reporting controls and stronger abuse/rate limiting. Group detail pages, group posts/replies, group membership, and group-post reporting are now implemented.
 - Add automated route-level tests for unauthorised writes, private-message isolation, staff queue permissions, report actions, and restrictions.
 - Review verification evidence handling and ensure the staff queue workflow is operational with real authorised staff grants; evidence references are manually reviewed and do not automatically grant access.
 
@@ -101,7 +101,7 @@ The UI should use a premium, polished visual language, with a three-column deskt
 - Fix every current-head check failure before merging. The PR remains open and unmerged.
 
 ### Known limitations
-- No automated or beta-user acceptance test has been performed against the latest UI.
-- Content moderation currently supports hiding posts, replies, groups, and messages. Profile hiding is deliberately rejected because the current profile model has no moderation-visibility field.
+- No beta-user acceptance test has been performed against the latest UI. The latest CI run passes lint, TypeScript, Drizzle migration consistency, 205 unit tests, and the production build.
+- Content moderation supports hiding posts, replies, groups, and messages. Profile hiding and public-profile reporting are not yet implemented because the current profile model has no moderation-visibility field.
 - Staff restriction/removal actions and member-to-member block/unblock are implemented; broader abuse/rate limiting and some block-edge cases remain outstanding.
 - Do not call Loom complete until all three phases meet their exit criteria and the final report separates implemented behavior, verified behavior, and deployment state.
