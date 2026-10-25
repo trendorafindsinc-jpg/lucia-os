@@ -20,3 +20,10 @@
 .loom-privacy-note{font-size:.78rem;line-height:1.55;color:var(--loom-muted,#64748b)}
 .loom-notice{font-size:.85rem;color:#176b4d}
 @media(max-width:760px){.loom-verification-card{padding:1rem;border-radius:16px}.loom-post-actions{gap:1rem}.loom-reply-form button{width:100%}}
+
+.loom-search-form{display:flex;align-items:center;gap:.55rem;margin:1.25rem 0 .5rem}
+.loom-search-form input{flex:1;min-width:0;border:1px solid rgba(115,139,166,.28);border-radius:13px;padding:.8rem .95rem;background:rgba(255,255,255,.82);color:inherit;font:inherit}
+.loom-search-form button{border:1px solid rgba(115,139,166,.25);border-radius:12px;padding:.75rem .95rem;background:#14263d;color:#fff;font:inherit;font-weight:650;cursor:pointer}
+.loom-search-form button[type=button]{background:transparent;color:inherit}
+.loom-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:480px){.loom-search-form{flex-wrap:wrap}.loom-search-form input{flex-basis:100%}.loom-search-form button{flex:1}}
