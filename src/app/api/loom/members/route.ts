@@ -1,4 +1,5 @@
 import { and, asc, eq, ilike, or, ne } from "drizzle-orm";
+import { getLoomRestriction } from "@/lib/loom/staff";
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
@@ -10,6 +11,8 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   const user = await getCurrentUser().catch(() => null);
   if (!user) return NextResponse.json({ error: "Sign in to discover verified members." }, { status: 401 });
+  const restriction = await getLoomRestriction(user.id);
+  if (restriction?.status === "banned") return NextResponse.json({ error: "Loom access is unavailable for this account." }, { status: 403 });
   const query = new URL(request.url).searchParams.get("q")?.trim().slice(0, 100);
   try {
     const db = getDb();
