@@ -20,6 +20,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS website_structures_org_id_id_uq
 --> statement-breakpoint
 ALTER TABLE website_structures ENABLE ROW LEVEL SECURITY;
 --> statement-breakpoint
+DROP POLICY IF EXISTS website_structures_tenant_isolation ON website_structures;
+--> statement-breakpoint
 CREATE POLICY website_structures_tenant_isolation ON website_structures
   USING (organization_id = NULLIF(current_setting('app.current_organization_id', true), '')::uuid)
   WITH CHECK (organization_id = NULLIF(current_setting('app.current_organization_id', true), '')::uuid);
