@@ -3,8 +3,8 @@ import { makeInitialWebsiteDraft } from "./initial-website-draft";
 
 describe("initial website editor draft", () => {
   it("persists the selected template and requested website name", () => {
-    const draft = makeInitialWebsiteDraft("bright-school", "Bright Future Academy");
-    expect(draft.templateId).toBe("bright-school");
+    const draft = makeInitialWebsiteDraft("schoolhouse", "Bright Future Academy");
+    expect(draft.templateId).toBe("schoolhouse");
     expect(draft.siteName).toBe("Bright Future Academy");
     expect(draft.visibleSections.length).toBeGreaterThan(0);
   });
@@ -14,6 +14,6 @@ describe("initial website editor draft", () => {
   });
 
   it("rejects an invalid website name before persistence", () => {
-    expect(() => makeInitialWebsiteDraft("bright-school", "x")).toThrow();
+    expect(() => makeInitialWebsiteDraft("schoolhouse", "x")).toThrow();
   });
 });
