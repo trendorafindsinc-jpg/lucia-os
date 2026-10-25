@@ -25,6 +25,7 @@ describe("LUCIA Core OAuth helpers", () => {
     "lucia_os_return_to=%2F%2Fevil.example",
     "lucia_os_return_to=%2Fapi%2Fauth%2Flogout",
     "lucia_os_return_to=%2F%5C%5Cevil.example",
+    "lucia_os_return_to=%2F%5Cevil.example",
     "lucia_os_return_to=%E0%A4%A",
     "other=value",
   ])("falls back safely for invalid callback destination cookie (%s)", (cookie) => {
