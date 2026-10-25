@@ -20,8 +20,9 @@ export async function GET(request: Request) {
       authorId: appUsers.id,
       authorName: appUsers.displayName,
     }).from(loomPosts).innerJoin(appUsers, eq(loomPosts.authorUserId, appUsers.id));
-    const posts = await (query ? base.where(ilike(loomPosts.body, `%${query}%`)) : base)
-      .orderBy(desc(loomPosts.createdAt)).limit(50);
+    const posts = query
+      ? await base.where(ilike(loomPosts.body, `%${query}%`)).orderBy(desc(loomPosts.createdAt)).limit(50)
+      : await base.orderBy(desc(loomPosts.createdAt)).limit(50);
     return NextResponse.json({ posts, query: query || null }, { headers: { "Cache-Control": "no-store" } });
   } catch {
     return NextResponse.json({ error: "Loom community storage is not available. Please try again later." }, { status: 503, headers: { "Cache-Control": "no-store" } });
