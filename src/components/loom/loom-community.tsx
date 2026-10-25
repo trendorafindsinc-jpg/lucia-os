@@ -11,6 +11,8 @@ type Verification = { evidenceType: string; status: string; reviewNote: string |
 export function LoomCommunity() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [body, setBody] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [activeSearch, setActiveSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState("");
@@ -28,14 +30,15 @@ export function LoomCommunity() {
   const [replyErrors, setReplyErrors] = useState<Record<string, string>>({});
   const [replyBusy, setReplyBusy] = useState<Record<string, boolean>>({});
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (query = "") => {
     setLoading(true);
     setError("");
     try {
-      const response = await fetch("/api/loom/posts", { cache: "no-store" });
+      const response = await fetch(`/api/loom/posts${query ? `?q=${encodeURIComponent(query)}` : ""}`, { cache: "no-store" });
       const payload = await response.json() as { posts?: Post[]; error?: string };
       if (!response.ok || !payload.posts) throw new Error(payload.error || "The Loom feed could not be loaded.");
       setPosts(payload.posts);
+      setActiveSearch(query);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "The Loom feed could not be loaded.");
     } finally {
@@ -199,7 +202,8 @@ export function LoomCommunity() {
             {notice && <p className="loom-notice" role="status">{notice}</p>}
           </form>
           {error && <div className="loom-error" role="alert"><span>{error}</span><button type="button" onClick={() => void load()}>Retry feed</button></div>}
-          <div className="loom-feed-heading"><h2>Community conversations</h2><span>Latest first</span></div>
+          <form className="loom-search-form" role="search" onSubmit={event => { event.preventDefault(); void load(searchInput.trim()); }}><label className="loom-sr-only" htmlFor="loom-search">Search public discussions</label><input id="loom-search" value={searchInput} onChange={event => setSearchInput(event.target.value)} maxLength={100} placeholder="Search public discussions…" /><button type="submit">Search</button>{activeSearch && <button type="button" onClick={() => { setSearchInput(""); void load(""); }}>Clear</button>}</form>
+          <div className="loom-feed-heading"><h2>{activeSearch ? `Search results for “${activeSearch}”` : "Community conversations"}</h2><span>{activeSearch ? "Matching public posts" : "Latest first"}</span></div>
           {loading ? <div className="loom-feed-state">Loading community posts…</div> : posts.length ? (
             <div className="loom-post-list">{posts.map(post => (
               <article className="loom-post" key={post.id}>
@@ -216,7 +220,7 @@ export function LoomCommunity() {
                 </div>
               </article>
             ))}</div>
-          ) : <div className="loom-feed-state loom-empty"><h3>Start the first conversation.</h3><p>The feed reads saved community posts. Be the first to share a useful question, lesson, or idea.</p><a href="#compose">Write the first post ↓</a></div>}
+          ) : <div className="loom-feed-state loom-empty"><h3>{activeSearch ? "No matching conversations." : "Start the first conversation."}</h3><p>{activeSearch ? "Try another phrase or clear your search." : "The feed reads saved community posts. Be the first to share a useful question, lesson, or idea."}</p><a href="#compose">Write the first post ↓</a></div>}
         </section>
         <aside className="loom-right-rail">
           <section className="loom-side-card"><span className="loom-eyebrow">COMMUNITY PRINCIPLES</span><h2>Make it useful.</h2><ul><li>Share what you have learned.</li><li>Give context when asking for help.</li><li>Respect people and their work.</li><li>Never post private customer information.</li></ul></section>
