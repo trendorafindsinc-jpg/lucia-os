@@ -14,7 +14,7 @@ export async function GET() {
   const user = await getCurrentUser().catch(() => null);
   if (!user) return NextResponse.json({ error: "Sign in to manage blocked members." }, { status: 401 });
   const restriction = await getLoomRestriction(user.id);
-  if (restriction) return NextResponse.json({ error: "Your Loom participation is currently restricted." }, { status: 403 });
+  if (restriction?.status === "banned") return NextResponse.json({ error: "Loom access is unavailable for this account." }, { status: 403 });
   try {
     const db = getDb();
     const blocks = await db.select({
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
   const user = await getCurrentUser().catch(() => null);
   if (!user) return NextResponse.json({ error: "Sign in to block a member." }, { status: 401 });
   const restriction = await getLoomRestriction(user.id);
-  if (restriction) return NextResponse.json({ error: "Your Loom participation is currently restricted." }, { status: 403 });
+  if (restriction?.status === "banned") return NextResponse.json({ error: "Loom access is unavailable for this account." }, { status: 403 });
   let raw: unknown;
   try { raw = await request.json(); } catch { return NextResponse.json({ error: "Choose a member to block." }, { status: 400 }); }
   const parsed = inputSchema.safeParse(raw);
@@ -62,7 +62,7 @@ export async function DELETE(request: Request) {
   const user = await getCurrentUser().catch(() => null);
   if (!user) return NextResponse.json({ error: "Sign in to unblock a member." }, { status: 401 });
   const restriction = await getLoomRestriction(user.id);
-  if (restriction) return NextResponse.json({ error: "Your Loom participation is currently restricted." }, { status: 403 });
+  if (restriction?.status === "banned") return NextResponse.json({ error: "Loom access is unavailable for this account." }, { status: 403 });
   let raw: unknown;
   try { raw = await request.json(); } catch { return NextResponse.json({ error: "Choose a member to unblock." }, { status: 400 }); }
   const parsed = inputSchema.safeParse(raw);
