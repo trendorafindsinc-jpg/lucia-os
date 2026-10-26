@@ -25,9 +25,40 @@ describe("workspace tab routing", () => {
     });
   });
 
-  it("does not create app tabs for unregistered routes", () => {
+  it.each([
+    ["/pages", "Pages & navigation"],
+    ["/content", "Blog & media"],
+    ["/create", "Layout Studio setup"],
+    ["/workspace/websites", "Websites"],
+    ["/workspace/domains?websiteId=site-a", "Domains"],
+    ["/publish?websiteId=site-a", "Publishing"],
+    ["/analytics?websiteId=site-a", "Analytics"],
+    ["/billing", "Plan & billing"],
+    ["/forms?websiteId=site-a", "Forms"],
+    ["/seo?websiteId=site-a", "SEO"],
+    ["/versions?websiteId=site-a", "Versions"],
+    ["/support", "Help & support"],
+    ["/support/case-123", "Help & support"],
+    ["/workspace/team", "Team & access"],
+    ["/loom", "Loom"],
+  ])("registers the workspace route %s", (href, label) => {
+    const url = new URL(href, "https://workspace.invalid");
+    expect(describeWorkspaceRoute(url.pathname, url.search)).toMatchObject({ label });
+    expect(isSafeWorkspaceTabHref(href)).toBe(true);
+  });
+
+  it("keeps website-specific content in separate tabs", () => {
+    const pagesA = describeWorkspaceRoute("/pages", "?websiteId=site-a");
+    const pagesB = describeWorkspaceRoute("/pages", "?websiteId=site-b");
+    const contentA = describeWorkspaceRoute("/content", "?websiteId=site-a");
+    expect(getWorkspaceTabId(pagesA!)).not.toBe(getWorkspaceTabId(pagesB!));
+    expect(getWorkspaceTabId(pagesA!)).not.toBe(getWorkspaceTabId(contentA!));
+  });
+
+  it("does not create app tabs for the launcher or unregistered routes", () => {
     expect(describeWorkspaceRoute("/workspace", "")).toBeNull();
     expect(describeWorkspaceRoute("/not-an-app", "")).toBeNull();
+    expect(describeWorkspaceRoute("/staff", "")).toBeNull();
   });
 
   it("rejects external and unregistered destinations from persisted tab state", () => {
