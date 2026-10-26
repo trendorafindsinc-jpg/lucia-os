@@ -1,4 +1,4 @@
-import { loomBlueprintSchema, siteDraftToLoomBlueprint, type LoomBlueprint } from "@/lib/loom/blueprint";
+import { layoutBlueprintSchema, siteDraftToLayoutBlueprint, type LayoutBlueprint } from "@/lib/loom/blueprint";
 import type { SiteDraft } from "@/lib/editor/site-draft";
 import type { SiteStructure } from "./structure";
 
@@ -14,9 +14,9 @@ function safeId(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "section";
 }
 
-/** Build a safe, data-only Loom preview for the selected structured page. */
-export function siteStructurePageToBlueprint(draft: SiteDraft, structure: SiteStructure, pageId: string): LoomBlueprint {
-  const base = siteDraftToLoomBlueprint(draft);
+/** Build a safe, data-only Layout preview for the selected structured page. */
+export function siteStructurePageToBlueprint(draft: SiteDraft, structure: SiteStructure, pageId: string): LayoutBlueprint {
+  const base = siteDraftToLayoutBlueprint(draft);
   const page = structure.pages.find((candidate) => candidate.id === pageId)
     ?? structure.pages.find((candidate) => candidate.id === structure.homePageId)
     ?? structure.pages[0];
@@ -61,7 +61,7 @@ export function siteStructurePageToBlueprint(draft: SiteDraft, structure: SiteSt
     .map((id) => structure.pages.find((candidate) => candidate.id === id))
     .filter((candidate): candidate is NonNullable<typeof candidate> => Boolean(candidate))
     .map((candidate) => ({ label: candidate.title, href: "#top" }));
-  return loomBlueprintSchema.parse({
+  return layoutBlueprintSchema.parse({
     ...base,
     navigation,
     pages: [{ id: safeId(page.id), path: page.slug ? `/${page.slug}` : "/", title: page.title, sections }],
