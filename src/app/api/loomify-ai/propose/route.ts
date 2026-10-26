@@ -7,7 +7,7 @@ import { getOrganizationMembershipsForUser } from "@/lib/access/guards";
 import { getDb } from "@/lib/db/client";
 import { websites } from "@/lib/db/schema";
 import { getConfiguredLoomifyAIProvider } from "@/lib/loomify-ai/gateway";
-import { LoomifyAIError, proposeLoomBlueprint } from "@/lib/loomify-ai/provider";
+import { LoomifyAIError, proposeLayoutBlueprint } from "@/lib/loomify-ai/provider";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -85,7 +85,7 @@ export async function POST(request: Request) {
   if (!authorized) return errorResponse("Website not found or you do not have editing access.", 404);
 
   try {
-    const proposal = await proposeLoomBlueprint(getConfiguredLoomifyAIProvider(), parsed.data.brief);
+    const proposal = await proposeLayoutBlueprint(getConfiguredLoomifyAIProvider(), parsed.data.brief);
     return NextResponse.json({
       proposal: proposal.blueprint,
       provider: proposal.providerId,
