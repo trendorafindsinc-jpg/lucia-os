@@ -11,7 +11,7 @@ export const metadata = { title: "Workspace" };
 export default async function OrganizationWorkspacePage() {
   const user = await getCurrentUser();
   if (!user) {
-    return <main className="workspace-shell"><section className="workspace-card workspace-denied"><span className="workspace-kicker">YOUR WORKSPACE</span><h1>Sign in to continue.</h1><p>Sign in with LUCIA ID to open your workspace and the apps available to you.</p><Link className="workspace-button workspace-button-primary" href="/api/auth/login">Sign in with LUCIA ID</Link><Link className="workspace-back" href="/">Back to LUCIA OS</Link></section></main>;
+    return <main className="workspace-shell"><section className="workspace-card workspace-denied"><span className="workspace-kicker">YOUR WORKSPACE</span><h1>Sign in to continue.</h1><p>Sign in with LUCIA ID to open your workspace and the apps available to you.</p><Link className="workspace-button workspace-button-primary" href="/api/auth/login?returnTo=%2Fworkspace">Sign in with LUCIA ID</Link><Link className="workspace-back" href="/">Back to LUCIA OS</Link></section></main>;
   }
 
   // Keep the server-side membership lookup and tenant-scoped summary. The launcher
