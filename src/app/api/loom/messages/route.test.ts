@@ -64,4 +64,28 @@ describe("Loom private-message authorization boundaries", () => {
     expect(response.status).toBe(400);
     expect(mocks.getDb).not.toHaveBeenCalled();
   });
+
+  it("denies message history to verified members without an accepted connection", async () => {
+    const peerId = "9f01ed80-9900-4ed7-bf38-7df0b531eaf4";
+    const limit = vi.fn()
+      .mockResolvedValueOnce({ status: "verified" })
+      .mockResolvedValueOnce({ status: "verified" })
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined);
+    const chain = {
+      from: vi.fn(() => chain),
+      where: vi.fn(() => chain),
+      limit,
+    };
+    const db = {
+      select: vi.fn(() => chain),
+      update: vi.fn(() => ({ set: vi.fn(() => ({ where: vi.fn() })) })),
+    };
+    mocks.getDb.mockReturnValue(db);
+    const response = await GET(new Request("https://loom.example.test/api/loom/messages?with=" + peerId));
+    expect(response.status).toBe(403);
+    expect(await response.json()).toMatchObject({ error: "An accepted connection is required before messaging." });
+    expect(db.select).toHaveBeenCalledTimes(4);
+    expect(db.update).not.toHaveBeenCalled();
+  });
 });
