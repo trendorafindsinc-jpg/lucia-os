@@ -127,7 +127,7 @@ function WorkspaceTabShellInner({ children }: { children: ReactNode }) {
   function activateTab(tab: WorkspaceTab) {
     if (!isSafeWorkspaceTabHref(tab.href)) return;
     setActiveTabId(tab.id);
-    router.push(tab.href);
+    router.push(tab.href as Parameters<typeof router.push>[0]);
   }
 
   function closeTab(tab: WorkspaceTab) {
