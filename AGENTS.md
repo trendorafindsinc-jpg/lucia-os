@@ -2,48 +2,48 @@
 
 Before changing code in this repository, read these files in order:
 
-1. `docs/unified-platform-blueprint.md`
-2. `docs/implementation-roadmap-30-phases.md`
+1. `docs/lucia-os-product-vision.md` — canonical founder-approved product direction.
+2. `docs/implementation-roadmap-30-phases.md` — sequential delivery and acceptance gates.
 3. `docs/architecture.md`
 4. `docs/engineering-standards.md`
 5. `docs/security-baseline.md`
-6. The phase-specific document named by the roadmap.
-7. The relevant code, tests, migrations, and current Git status.
+6. The relevant focused specification, including `docs/website-engine-blueprint.md` where applicable.
+7. Relevant code, tests, migrations, active branches/PRs, and current Git status.
+
+The former `docs/unified-platform-blueprint.md` is retained as a historical pointer. It is not an independent product authority. The canonical product vision and current roadmap supersede conflicting assumptions in older phase-specific documents; reconcile any conflict before implementation rather than following stale wording silently.
 
 ## Required working method
 
-- The roadmap is the canonical phase order. Do one phase at a time.
-- First audit actual code and test evidence; never infer implementation completion from documentation, a PR title, or a successful build alone.
-- Before implementation, provide a concise baseline, the exact phase, the gaps, the files/areas likely to change, and the acceptance checks.
-- Keep changes narrowly scoped. Do not refactor unrelated systems or silently pull future-phase work into the current phase.
-- Every visible UI control must have real behaviour wired from UI event through server/API validation to persisted result and updated UI. Do not “fix” a dead button merely by changing environment variables or unrelated configuration.
-- Do not fake progress, success, data, metrics, or provider outcomes.
-- Test negative cases, tenant isolation, permission denial, retries, partial failure and recovery—not only the happy path.
+- Begin with Section 1: the signed-in, device-adaptive workspace. The signed-out welcome page is not the first task.
+- Audit actual code, tests, active branches/PRs, and behaviour before implementation. Identify the unwanted workspace design direction; do not treat it as approved just because it exists.
+- Work one phase at a time. Provide a concise baseline, exact phase, gaps, likely files/areas, risks, and acceptance checks.
+- Keep changes narrow. Do not refactor unrelated systems or silently pull later sections into the current phase.
+- Every visible control must have real behaviour from UI event through validated server/API action to persisted result and updated UI. No dead buttons, fake progress, fabricated data, or premature success.
+- Test negative cases, tenant isolation, permission denial, retries, partial failure, and recovery—not only happy paths.
 - Record actual commands/checks and outcomes. If a test was not run, say so.
-- Update the roadmap/progress checkpoint only from verified evidence.
-- Keep the existing working customer sites, data and live versions safe.
-- LUCIA Core is global authentication only. LUCIA OS owns local organisation membership, permissions, content, billing, subscriptions and entitlements.
-- Enforce authorization and tenant scope on the server for APIs, server actions, assets, rendering, jobs, webhooks and exports. Never trust client-selected tenant IDs or hostnames.
-- Premium access, user roles, and Loom business verification are separate concepts.
-- Website templates, AI-generated content and user-supplied Blueprint data are untrusted; validate against supported schemas and components. Never execute arbitrary generated code.
-- Payment state is server-verified and idempotent. A browser redirect is not proof of payment.
-- Preserve the previous known-good live website on save/publish failure.
-- Do not perform destructive migrations, production database resets, DNS changes, secret changes, production deployments, or live-domain operations without explicit user approval for that specific action.
-- Do not merge to `main` without complete phase verification and explicit merge approval.
-- Do not claim code was changed, tests passed, or deployment/merge succeeded unless the available tool results prove it.
+- Keep existing customer websites, data, purchase records, and live versions safe.
+- LUCIA Core / LUCIA ID provides global authentication only. LUCIA OS owns local organisation membership, permissions, product data, purchases, and entitlements.
+- Enforce authorisation and tenant scope on server actions, APIs, rendering, assets, background jobs, webhooks, and exports. Never trust client-selected tenant IDs or hostnames.
+- Roles, paid entitlements, payment state, and Loom verification are distinct concepts.
+- Standard website creation and publishing are free. Do not make the basic website flow depend on a subscription, paid Layout, or AI.
+- Layouts must be complete, polished, responsive and meaningfully different; a title/copy/colour change alone does not make a distinct Layout.
+- Loom is the professional network, never the website design library. Paid status or purchase cannot automatically grant a verified badge.
+- Store's default software model is a one-time licence for a specific version with its explicitly defined update period. White-label/resale rights are product-specific. Disclose external/runtime costs.
+- Website Blueprints, AI output, and user content are untrusted input. Validate against supported schemas/components; never execute arbitrary generated code.
+- Payment and entitlement state must be server-verified, idempotent, auditable, and recoverable.
+- Failed save/publish operations preserve the previous known-good live website.
+- Do not perform destructive migrations, production resets, DNS/secret changes, or production deployments without explicit approval for that specific action.
+- Do not merge to `main` without required verification and explicit merge approval.
+- Never claim code changed, tests passed, or deployment/merge succeeded unless tool results prove it.
 
-## Product navigation decisions
+## Product navigation and section order
 
-The approved first-class LUCIA OS destinations are Overview, Websites, AI Studio, Store, Portals, Business Admin, Loom, and Plan & Billing. Supporting tools (Layouts, Domains, Publishing) may be contextual within Websites if that is clearer. Loom is a standalone community destination, not a subsection of Business Admin, Store, or Portals.
+1. **Workspace** — device-adaptive signed-in operating environment and app launcher.
+2. **Website Engine and Layouts** — free standard website creation/publishing; curated finished designs with meaningful previews.
+3. **Loom** — professional discovery, verified membership, discussions, groups, business directory, connections, messaging, collaboration, and trust/safety.
+4. **LUCIA Store** — free and paid technology applications, version licences, one-year update window as the proposed standard, major-version upgrades, eligible white-label/resale rights, and purchasable services such as custom domains.
 
-- **Store:** tailored to sellers and buyers.
-- **Portals:** tailored to the requirements and workflows of each approved category.
-- **Business Admin:** tailored to companies managing day-to-day activities.
-- **Loom:** community, business discovery, discussions, groups, connections, messaging, collaboration and trust/safety.
-- **LUCIA ID/Core:** authentication only.
-- **loomifyAI:** optional AI creation assistant.
-- **Layer Studio:** website editing/creation workspace.
-- **Layouts:** discover reusable website compositions.
+First-class workspace icons include Overview, Website Engine, Layouts, Loom, LUCIA Store, installed applications, and Settings. App visibility/launch must respect availability, permissions, and licences. Portals and Business Admin are not v1 products and must not appear as functional capabilities.
 
 ## End-of-session report
 
@@ -54,4 +54,4 @@ Always report:
 4. Acceptance evidence and remaining gaps.
 5. Risks or blocked decisions.
 6. Next smallest safe action.
-7. Whether a merge/deploy happened (normally no unless explicitly approved).
+7. Whether merge/deploy happened (normally no unless explicitly approved).
