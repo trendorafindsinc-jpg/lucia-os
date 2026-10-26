@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { makeInitialDraft } from "@/lib/editor/site-draft";
-import { siteDraftToLoomBlueprint } from "@/lib/loom/blueprint";
+import { siteDraftToLayoutBlueprint } from "@/lib/loom/blueprint";
 
 const mocks = vi.hoisted(() => ({
   currentUser: vi.fn(),
@@ -14,7 +14,7 @@ vi.mock("@/lib/db/client", () => ({ getDb: mocks.getDb }));
 vi.mock("@/lib/loomify-ai/gateway", () => ({ getConfiguredLoomifyAIProvider: mocks.provider }));
 vi.mock("@/lib/loomify-ai/provider", async () => {
   const actual = await vi.importActual<typeof import("@/lib/loomify-ai/provider")>("@/lib/loomify-ai/provider");
-  return { ...actual, proposeLoomBlueprint: mocks.propose };
+  return { ...actual, proposeLayoutBlueprint: mocks.propose };
 });
 vi.mock("drizzle-orm", () => ({
   and: (...values: unknown[]) => values,
@@ -26,7 +26,7 @@ import { POST } from "./route";
 
 const websiteId = "b7c9a1f2-4d8e-4a6b-9c10-123456789abc";
 const brief = "Create a modern, accessible website for a local design studio.";
-const blueprint = siteDraftToLoomBlueprint(makeInitialDraft("northstar-consulting"));
+const blueprint = siteDraftToLayoutBlueprint(makeInitialDraft("northstar-consulting"));
 
 function request(body: unknown, origin = "https://preview.example.test") {
   return new Request("https://preview.example.test/api/loomify-ai/propose", {
