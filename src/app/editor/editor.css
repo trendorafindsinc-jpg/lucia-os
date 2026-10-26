@@ -73,28 +73,28 @@
 
 
 /* LoomifiAI — integrated, calm, responsive proposal workflow */
-.loomifi-card { margin:20px 14px 4px; padding:16px; border:1px solid #dfe4f0; border-radius:16px; background:linear-gradient(145deg,#f7f7ff 0%,#fff 72%); }
-.loomifi-card-top { display:flex; align-items:center; gap:10px; }
-.loomifi-spark { display:grid; place-items:center; width:36px; height:36px; flex:0 0 36px; border:1px solid #dcdafa; border-radius:12px; background:#efedff; color:#6556c8; font-size:21px; }
-.loomifi-card-top h3 { margin:3px 0 0; font-size:17px; letter-spacing:-.035em; }
-.loomifi-beta { margin-left:auto; border:1px solid #e0def6; border-radius:999px; padding:5px 8px; color:#6255b6; font-size:9px; font-weight:800; }
-.loomifi-card > p { margin:12px 0 14px; color:var(--color-muted); font-size:11px; line-height:1.65; }
-.loomifi-brief-label { display:block; margin-bottom:7px; color:var(--color-ink); font-size:11px; font-weight:800; }
-.loomifi-card textarea { display:block; width:100%; min-height:96px; resize:vertical; border:1px solid #dce0ed; border-radius:10px; padding:11px; outline:none; background:#fff; color:var(--color-ink); font:inherit; font-size:12px; line-height:1.6; }
-.loomifi-card textarea:focus { border-color:#8b80e4; box-shadow:0 0 0 3px #8174d51c; }
-.loomifi-card-footer { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:10px; color:var(--color-muted); font-size:10px; }
-.loomifi-generate { min-height:37px; border:0; border-radius:999px; padding:0 13px; background:#282344; color:white; font:inherit; font-size:11px; font-weight:800; cursor:pointer; }
-.loomifi-generate:disabled { opacity:.45; cursor:not-allowed; }
-.loomifi-card .loomifi-helper { margin:10px 0 0; font-size:10px; }
-.loomifi-card .loomifi-error { margin:10px 0 0; border-radius:9px; padding:9px; background:#fff0ef; color:#9c302b; font-size:11px; }
-.loomifi-proposal-review { margin:12px; overflow:hidden; border:1px solid #dcd9f6; border-radius:15px; background:#fff; box-shadow:0 8px 28px #332c6b0b; }
-.loomifi-review-heading { display:flex; justify-content:space-between; gap:14px; align-items:flex-start; padding:18px; background:linear-gradient(120deg,#f5f3ff,#fff); }
-.loomifi-review-heading h2 { margin:5px 0 3px; font-size:clamp(18px,3vw,26px); letter-spacing:-.045em; overflow-wrap:anywhere; }
-.loomifi-review-heading p { margin:0; color:var(--color-muted); font-size:11px; }
-.loomifi-dismiss { width:32px; height:32px; flex:0 0 32px; border:1px solid #e2def7; border-radius:50%; background:#fff; color:#514a75; font-size:22px; cursor:pointer; }
-.loomifi-proposal-canvas { max-height:760px; overflow:auto; padding:10px; background:#eef0f6; }
-.loomifi-proposal-canvas .loom-site { min-height:400px; }
-.loomifi-review-actions { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 16px; border-top:1px solid var(--color-line); }
-.loomifi-review-actions > span { max-width:360px; color:var(--color-muted); font-size:10px; line-height:1.5; }
-.loomifi-review-actions .editor-done { min-height:38px; flex:0 0 auto; border-radius:999px; padding:0 15px; cursor:pointer; }
-@media(max-width:700px) { .loomifi-card { margin:16px 10px 4px; padding:14px; } .loomifi-proposal-review { margin:8px; } .loomifi-review-actions { align-items:stretch; flex-direction:column; } .loomifi-review-actions .editor-done { min-height:42px; } .loomifi-proposal-canvas { padding:5px; } }
+.loomify-card { margin:20px 14px 4px; padding:16px; border:1px solid #dfe4f0; border-radius:16px; background:linear-gradient(145deg,#f7f7ff 0%,#fff 72%); }
+.loomify-card-top { display:flex; align-items:center; gap:10px; }
+.loomify-spark { display:grid; place-items:center; width:36px; height:36px; flex:0 0 36px; border:1px solid #dcdafa; border-radius:12px; background:#efedff; color:#6556c8; font-size:21px; }
+.loomify-card-top h3 { margin:3px 0 0; font-size:17px; letter-spacing:-.035em; }
+.loomify-beta { margin-left:auto; border:1px solid #e0def6; border-radius:999px; padding:5px 8px; color:#6255b6; font-size:9px; font-weight:800; }
+.loomify-card > p { margin:12px 0 14px; color:var(--color-muted); font-size:11px; line-height:1.65; }
+.loomify-brief-label { display:block; margin-bottom:7px; color:var(--color-ink); font-size:11px; font-weight:800; }
+.loomify-card textarea { display:block; width:100%; min-height:96px; resize:vertical; border:1px solid #dce0ed; border-radius:10px; padding:11px; outline:none; background:#fff; color:var(--color-ink); font:inherit; font-size:12px; line-height:1.6; }
+.loomify-card textarea:focus { border-color:#8b80e4; box-shadow:0 0 0 3px #8174d51c; }
+.loomify-card-footer { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:10px; color:var(--color-muted); font-size:10px; }
+.loomify-generate { min-height:37px; border:0; border-radius:999px; padding:0 13px; background:#282344; color:white; font:inherit; font-size:11px; font-weight:800; cursor:pointer; }
+.loomify-generate:disabled { opacity:.45; cursor:not-allowed; }
+.loomify-card .loomify-helper { margin:10px 0 0; font-size:10px; }
+.loomify-card .loomify-error { margin:10px 0 0; border-radius:9px; padding:9px; background:#fff0ef; color:#9c302b; font-size:11px; }
+.loomify-proposal-review { margin:12px; overflow:hidden; border:1px solid #dcd9f6; border-radius:15px; background:#fff; box-shadow:0 8px 28px #332c6b0b; }
+.loomify-review-heading { display:flex; justify-content:space-between; gap:14px; align-items:flex-start; padding:18px; background:linear-gradient(120deg,#f5f3ff,#fff); }
+.loomify-review-heading h2 { margin:5px 0 3px; font-size:clamp(18px,3vw,26px); letter-spacing:-.045em; overflow-wrap:anywhere; }
+.loomify-review-heading p { margin:0; color:var(--color-muted); font-size:11px; }
+.loomify-dismiss { width:32px; height:32px; flex:0 0 32px; border:1px solid #e2def7; border-radius:50%; background:#fff; color:#514a75; font-size:22px; cursor:pointer; }
+.loomify-proposal-canvas { max-height:760px; overflow:auto; padding:10px; background:#eef0f6; }
+.loomify-proposal-canvas .loom-site { min-height:400px; }
+.loomify-review-actions { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 16px; border-top:1px solid var(--color-line); }
+.loomify-review-actions > span { max-width:360px; color:var(--color-muted); font-size:10px; line-height:1.5; }
+.loomify-review-actions .editor-done { min-height:38px; flex:0 0 auto; border-radius:999px; padding:0 15px; cursor:pointer; }
+@media(max-width:700px) { .loomify-card { margin:16px 10px 4px; padding:14px; } .loomify-proposal-review { margin:8px; } .loomify-review-actions { align-items:stretch; flex-direction:column; } .loomify-review-actions .editor-done { min-height:42px; } .loomify-proposal-canvas { padding:5px; } }
