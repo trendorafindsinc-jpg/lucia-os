@@ -172,10 +172,10 @@ function WorkspaceTabShellInner({ children }: { children: ReactNode }) {
           <Link href="/workspace/websites" aria-current={pathname === "/workspace/websites" ? "page" : undefined}>Websites</Link>
           <Link href="/create" aria-current={pathname === "/create" ? "page" : undefined}>Create website</Link>
           <Link href="/templates" aria-current={pathname === "/templates" || pathname === "/layouts" ? "page" : undefined}>Layouts</Link>
-          <Link href={contextualHref("/pages")} aria-current={pathname === "/pages" ? "page" : undefined}>Pages &amp; navigation</Link>
-          <Link href={contextualHref("/content")} aria-current={pathname === "/content" ? "page" : undefined}>Blog &amp; media</Link>
-          <Link href={contextualHref("/workspace/domains")} aria-current={pathname === "/workspace/domains" ? "page" : undefined}>Domains</Link>
-          <Link href={contextualHref("/publish")} aria-current={pathname === "/publish" ? "page" : undefined}>Publishing</Link>
+          <Link href={contextualHref("/pages") as Parameters<typeof router.push>[0]} aria-current={pathname === "/pages" ? "page" : undefined}>Pages &amp; navigation</Link>
+          <Link href={contextualHref("/content") as Parameters<typeof router.push>[0]} aria-current={pathname === "/content" ? "page" : undefined}>Blog &amp; media</Link>
+          <Link href={contextualHref("/workspace/domains") as Parameters<typeof router.push>[0]} aria-current={pathname === "/workspace/domains" ? "page" : undefined}>Domains</Link>
+          <Link href={contextualHref("/publish") as Parameters<typeof router.push>[0]} aria-current={pathname === "/publish" ? "page" : undefined}>Publishing</Link>
         </nav>
       )}
       {children}
