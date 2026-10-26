@@ -126,7 +126,7 @@ describe("POST /api/loomify-ai/propose authorization boundary", () => {
     const response = await POST(request({ websiteId, brief }));
     expect(response.status).toBe(502);
     await expect(response.json()).resolves.toMatchObject({
-      error: "LoomifyAI could not create a safe proposal. Your existing draft and live site have not been changed.",
+      error: "loomifyAI could not create a safe proposal. Your existing draft and live site have not been changed.",
     });
     expect(mocks.propose).toHaveBeenCalledOnce();
     expect(response.headers.get("cache-control")).toBe("no-store");
