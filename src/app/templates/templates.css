@@ -61,7 +61,7 @@
 .template-action { text-decoration: none; cursor: pointer; }
 .template-action:hover { border-color: #c5cfe0; background: #f0f3fa; color: var(--color-ink); }
 
-/* Loom Library: genuinely different composition silhouettes per design family. */
+/* Layouts catalogue: genuinely different composition silhouettes per design family. */
 .preview-layout { position: relative; width: 91%; min-height: 186px; margin: 0 auto; padding: 12px; overflow: hidden; background: rgba(255,255,255,.84); box-shadow: 0 7px 22px rgba(30,40,60,.08); }
 .preview-site-nav { display:flex; align-items:center; gap:5px; height:12px; margin-bottom:16px; }
 .preview-logo-mark { width:9px; height:9px; border-radius:3px; background:var(--preview-ink); }
