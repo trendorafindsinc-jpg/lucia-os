@@ -6,7 +6,7 @@ export type WorkspaceApp = {
   description: string;
   href?: "/workspace" | "/workspace/websites" | "/templates";
   status: WorkspaceAppStatus;
-  icon: "overview" | "website" | "layouts" | "loom" | "store" | "portals" | "business";
+  icon: "overview" | "website" | "layouts" | "loom" | "store";
   reason?: string;
 };
 
@@ -50,23 +50,7 @@ export const WORKSPACE_APPS = [
     status: "unavailable",
     icon: "store",
     reason: "The Store is not available in this release.",
-  },
-  {
-    key: "portals",
-    label: "Portals",
-    description: "Connected portals",
-    status: "unavailable",
-    icon: "portals",
-    reason: "Portals are not available in v1.",
-  },
-  {
-    key: "business-admin",
-    label: "Business Admin",
-    description: "Business administration tools",
-    status: "unavailable",
-    icon: "business",
-    reason: "Business Admin is not available in v1.",
-  },
+  }
 ] as const satisfies readonly WorkspaceApp[];
 
 export const WORKSPACE_TOOLS = [

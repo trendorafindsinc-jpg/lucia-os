@@ -28,10 +28,6 @@ function AppGlyph({ icon }: { icon: WorkspaceApp["icon"] }) {
       return <svg {...common}><circle cx="16" cy="16" r="11" /><path d="M11 20V12l5 5 5-5v8M9 8l2 2M23 8l-2 2" strokeLinecap="round" strokeLinejoin="round" /></svg>;
     case "store":
       return <svg {...common}><path d="M6 13h20l-1.5 13h-17L6 13Z" strokeLinejoin="round" /><path d="M11 13V9a5 5 0 0 1 10 0v4M12 18h8" strokeLinecap="round" /></svg>;
-    case "portals":
-      return <svg {...common}><rect x="7" y="4.5" width="18" height="23" rx="3" /><path d="M12 10h8M12 15h8M12 20h5" strokeLinecap="round" /></svg>;
-    case "business":
-      return <svg {...common}><path d="M5 27V10l11-5 11 5v17M3 27h26M11 13h2M19 13h2M11 18h2M19 18h2M14 27v-5h4v5" strokeLinecap="round" strokeLinejoin="round" /></svg>;
   }
 }
 

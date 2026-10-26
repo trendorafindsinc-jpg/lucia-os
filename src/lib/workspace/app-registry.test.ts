@@ -17,12 +17,17 @@ describe("workspace app registry", () => {
   });
 
   it("does not expose unavailable v1 products as launchable routes", () => {
-    for (const key of ["store", "portals", "business-admin"]) {
+    for (const key of ["store"]) {
       const app = getWorkspaceApp(key);
       expect(app?.status).toBe("unavailable");
       expect(app?.href).toBeUndefined();
       expect(app?.reason).toBeTruthy();
     }
+  });
+
+  it("does not list Portals or Business Admin as launcher apps", () => {
+    expect(getWorkspaceApp("portals")).toBeUndefined();
+    expect(getWorkspaceApp("business-admin")).toBeUndefined();
   });
 
   it("uses unique stable app keys and labels", () => {
