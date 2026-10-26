@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { makeInitialDraft } from "@/lib/editor/site-draft";
-import { layoutBlueprintSchema, siteDraftToLayoutBlueprint } from "@/lib/loom/blueprint";
+import { layoutBlueprintSchema, siteDraftToLayoutBlueprint } from "@/lib/layout-blueprint/blueprint";
 
 describe("Layout Blueprint v1", () => {
   it("adapts a legacy saved draft without changing its source shape", () => {
