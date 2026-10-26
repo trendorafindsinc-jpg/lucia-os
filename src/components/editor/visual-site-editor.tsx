@@ -175,11 +175,11 @@ export function VisualSiteEditor() {
       if (!snapshot.success) throw new Error("This checkpoint did not pass validation. Your saved data is unchanged.");
       const response = await fetch(`/api/websites/${encodeURIComponent(websiteId)}/versions`, {
         method: "POST", headers: { "Content-Type": "application/json" }, cache: "no-store",
-        body: JSON.stringify({ label, notes: "Saved from Layer Studio", snapshot: snapshot.data }),
+        body: JSON.stringify({ label, notes: "Saved from Layout Studio", snapshot: snapshot.data }),
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "Couldn't save this checkpoint.");
-      setVersions((current) => [{ id: payload.id, label, notes: "Saved from Layer Studio", createdAt: payload.createdAt, snapshot: snapshot.data }, ...current].slice(0, 25));
+      setVersions((current) => [{ id: payload.id, label, notes: "Saved from Layout Studio", createdAt: payload.createdAt, snapshot: snapshot.data }, ...current].slice(0, 25));
       setVersionLabel("Checkpoint");
     } catch (error) {
       setVersionError(error instanceof Error ? error.message : "Couldn't save a checkpoint. Your saved draft remains unchanged.");
@@ -210,7 +210,7 @@ export function VisualSiteEditor() {
 
   async function generateAIProposal() {
     if (!websiteId) {
-      setAiError("Open a saved website first so LoomifiAI can verify your workspace access.");
+      setAiError("Open a saved website first so loomifyAI can verify your workspace access.");
       return;
     }
     if (aiBrief.trim().length < 20) {
@@ -221,7 +221,7 @@ export function VisualSiteEditor() {
     setAiError("");
     setAiProposal(null);
     try {
-      const response = await fetch("/api/loomifi-ai/propose", {
+      const response = await fetch("/api/loomify-ai/propose", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         cache: "no-store",
@@ -231,7 +231,7 @@ export function VisualSiteEditor() {
       if (!response.ok) {
         const message = typeof data === "object" && data !== null && "error" in data && typeof data.error === "string"
           ? data.error
-          : "LoomifiAI couldn't create a proposal. Your draft is unchanged.";
+          : "loomifyAI couldn't create a proposal. Your draft is unchanged.";
         throw new Error(message);
       }
       const candidate = typeof data === "object" && data !== null && "proposal" in data ? data.proposal : null;
@@ -239,7 +239,7 @@ export function VisualSiteEditor() {
       if (!checked.success) throw new Error("The design proposal didn't pass LUCIA's safety checks. Your draft is unchanged.");
       setAiProposal(checked.data);
     } catch (error) {
-      setAiError(error instanceof Error ? error.message : "LoomifiAI is temporarily unavailable. Your draft is unchanged.");
+      setAiError(error instanceof Error ? error.message : "loomifyAI is temporarily unavailable. Your draft is unchanged.");
     } finally {
       setAiBusy(false);
     }
@@ -304,23 +304,23 @@ export function VisualSiteEditor() {
       <div className="editor-workspace">
         <aside className="editor-panel" aria-label="Website editing controls">
           <div className="editor-panel-heading"><div><span className="editor-kicker">YOUR WEBSITE</span><h2>Content & style</h2></div><span className="editor-live-dot">Live preview</span></div>
-          <section className="loomifi-card" aria-labelledby="loomifi-title">
-            <div className="loomifi-card-top"><span className="loomifi-spark" aria-hidden="true">✳</span><div><span className="editor-kicker">DESIGN ASSISTANT</span><h3 id="loomifi-title">LoomifiAI</h3></div><span className="loomifi-beta">Preview</span></div>
+          <section className="loomify-card" aria-labelledby="loomify-title">
+            <div className="loomify-card-top"><span className="loomify-spark" aria-hidden="true">✳</span><div><span className="editor-kicker">DESIGN ASSISTANT</span><h3 id="loomify-title">loomifyAI</h3></div><span className="loomify-beta">Preview</span></div>
             <p>Describe the website you imagine. Get a design proposal you can review before changing your draft.</p>
-            <label className="loomifi-brief-label" htmlFor="loomifi-brief">What should your website do?</label>
-            <textarea id="loomifi-brief" value={aiBrief} maxLength={4000} rows={4} placeholder="E.g. A calm, premium website for a Lagos architecture studio, with a strong portfolio, services and a clear enquiry path…" onChange={(event) => setAiBrief(event.target.value)} />
-            <div className="loomifi-card-footer"><span>{aiBrief.length}/4,000</span><button type="button" className="loomifi-generate" onClick={generateAIProposal} disabled={aiBusy} aria-describedby="loomifi-button-help">{aiBusy ? "Creating…" : "Create proposal"} <span aria-hidden="true">↗</span></button></div>
-            <p className="loomifi-helper" id="loomifi-button-help">{!websiteId ? "Open a saved website to create a proposal for that website." : aiBrief.trim().length < 20 ? "Describe your website in at least 20 characters, then create your proposal." : "Your proposal will be shown for review. Nothing is saved or published automatically."}</p>
-            {aiError && <p className="loomifi-error" role="alert">{aiError}</p>}
-            {aiProposal && <p className="loomifi-helper" role="status">Proposal ready below. Nothing has been saved or published.</p>}
+            <label className="loomify-brief-label" htmlFor="loomify-brief">What should your website do?</label>
+            <textarea id="loomify-brief" value={aiBrief} maxLength={4000} rows={4} placeholder="E.g. A calm, premium website for a Lagos architecture studio, with a strong portfolio, services and a clear enquiry path…" onChange={(event) => setAiBrief(event.target.value)} />
+            <div className="loomify-card-footer"><span>{aiBrief.length}/4,000</span><button type="button" className="loomify-generate" onClick={generateAIProposal} disabled={aiBusy} aria-describedby="loomify-button-help">{aiBusy ? "Creating…" : "Create proposal"} <span aria-hidden="true">↗</span></button></div>
+            <p className="loomify-helper" id="loomify-button-help">{!websiteId ? "Open a saved website to create a proposal for that website." : aiBrief.trim().length < 20 ? "Describe your website in at least 20 characters, then create your proposal." : "Your proposal will be shown for review. Nothing is saved or published automatically."}</p>
+            {aiError && <p className="loomify-error" role="alert">{aiError}</p>}
+            {aiProposal && <p className="loomify-helper" role="status">Proposal ready below. Nothing has been saved or published.</p>}
           </section>
-          <section className="loomifi-card" aria-labelledby="version-history-title">
-            <div className="loomifi-card-top"><span className="editor-kicker">VERSION HISTORY</span><h3 id="version-history-title">Saved checkpoints</h3></div>
+          <section className="loomify-card" aria-labelledby="version-history-title">
+            <div className="loomify-card-top"><span className="editor-kicker">VERSION HISTORY</span><h3 id="version-history-title">Saved checkpoints</h3></div>
             <p>Save a named checkpoint of the visual draft and related website metadata. Restore currently brings back visual editor fields only; pages, SEO settings and blog/media content are not restored. It never publishes.</p>
             <label className="editor-field">Checkpoint name<input value={versionLabel} maxLength={80} onChange={(event) => setVersionLabel(event.target.value)} /></label>
-            <button type="button" className="loomifi-generate" onClick={saveVersionCheckpoint} disabled={!websiteId || isLoadingSaved || isLoadingVersions || savedDraftUnavailable || isSaving || versionBusy || !validation.success}>{versionBusy ? "Saving checkpoint…" : "Save checkpoint"}</button>
-            {versionError && <p className="loomifi-error" role="alert">{versionError}</p>}
-            {isLoadingVersions ? <p className="loomifi-helper">Loading saved checkpoints…</p> : versions.length ? <div className="editor-section-list">{versions.map((version) => <div className="editor-section-row" key={version.id}><div><strong>{version.label}</strong><small>{new Date(version.createdAt).toLocaleString()}</small></div><button type="button" onClick={() => restoreVisualDraft(version)} disabled={isLoadingSaved || isSaving || versionBusy}>Restore visual draft</button></div>)}</div> : <p className="loomifi-helper">{websiteId ? "No saved checkpoints yet." : "Open a saved website to enable checkpoints."}</p>}
+            <button type="button" className="loomify-generate" onClick={saveVersionCheckpoint} disabled={!websiteId || isLoadingSaved || isLoadingVersions || savedDraftUnavailable || isSaving || versionBusy || !validation.success}>{versionBusy ? "Saving checkpoint…" : "Save checkpoint"}</button>
+            {versionError && <p className="loomify-error" role="alert">{versionError}</p>}
+            {isLoadingVersions ? <p className="loomify-helper">Loading saved checkpoints…</p> : versions.length ? <div className="editor-section-list">{versions.map((version) => <div className="editor-section-row" key={version.id}><div><strong>{version.label}</strong><small>{new Date(version.createdAt).toLocaleString()}</small></div><button type="button" onClick={() => restoreVisualDraft(version)} disabled={isLoadingSaved || isSaving || versionBusy}>Restore visual draft</button></div>)}</div> : <p className="loomify-helper">{websiteId ? "No saved checkpoints yet." : "Open a saved website to enable checkpoints."}</p>}
           </section>
           <label className="editor-field">Starting design<select value={draft.templateId} onChange={(event) => { const next = makeInitialDraft(event.target.value); setDraft(next); if (snapshotKey) setSnapshot(snapshotKey, next); setSaveLabel("Unsaved changes"); setActiveTabDirty(true); setNotice(""); }}>{websiteTemplates.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
           <label className="editor-field">Website name<input value={draft.siteName} maxLength={80} onChange={(event) => update("siteName", event.target.value)} /></label>
@@ -335,10 +335,10 @@ export function VisualSiteEditor() {
         </aside>
         <section className="editor-preview-wrap" aria-label="Live website preview">
           <div className="editor-preview-toolbar"><span><i /> Preview</span><span>Desktop concept</span></div>
-          {aiProposal && <section className="loomifi-proposal-review" aria-label="LoomifiAI proposal review">
-            <div className="loomifi-review-heading"><div><span className="editor-kicker">YOUR PROPOSAL</span><h2>{aiProposal.site.name}</h2><p>AI-generated concept · Review before applying</p></div><button type="button" className="loomifi-dismiss" onClick={() => setAiProposal(null)} aria-label="Dismiss proposal">×</button></div>
-            <div className="loomifi-proposal-canvas"><LoomRenderer blueprint={aiProposal} preview /></div>
-            <div className="loomifi-review-actions"><span>Private preview only. Your live website is unchanged.</span><button type="button" className="editor-done" onClick={applyAIProposalToEditor}>Apply to editor</button></div>
+          {aiProposal && <section className="loomify-proposal-review" aria-label="loomifyAI proposal review">
+            <div className="loomify-review-heading"><div><span className="editor-kicker">YOUR PROPOSAL</span><h2>{aiProposal.site.name}</h2><p>AI-generated concept · Review before applying</p></div><button type="button" className="loomify-dismiss" onClick={() => setAiProposal(null)} aria-label="Dismiss proposal">×</button></div>
+            <div className="loomify-proposal-canvas"><LoomRenderer blueprint={aiProposal} preview /></div>
+            <div className="loomify-review-actions"><span>Private preview only. Your live website is unchanged.</span><button type="button" className="editor-done" onClick={applyAIProposalToEditor}>Apply to editor</button></div>
           </section>}
           <div className="editor-loom-preview"><LoomRenderer blueprint={previewBlueprint} preview /></div>
           <p className="editor-preview-caption">{websiteId ? "Changes can be saved to your organisation’s website draft. This preview is private; it is not a public website." : "Illustrative preview. Open a saved website from your Websites library to enable persistent saving."}</p>
