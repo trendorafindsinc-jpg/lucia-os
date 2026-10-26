@@ -1,0 +1,199 @@
+"use client";
+
+import {
+  createContext,
+  Suspense,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+
+type WorkspaceTab = {
+  id: string;
+  appKey: string;
+  label: string;
+  href: string;
+  dirty: boolean;
+};
+
+type WorkspaceContextValue = {
+  activeTabId: string | null;
+  setActiveTabDirty: (dirty: boolean) => void;
+  getSnapshot: <T,>(key: string) => T | undefined;
+  setSnapshot: (key: string, value: unknown) => void;
+  clearSnapshot: (key: string) => void;
+};
+
+const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
+const TAB_STORAGE_KEY = "lucia.workspace.tabs.v1";
+const SNAPSHOT_STORAGE_KEY = "lucia.workspace.snapshots.v1";
+
+function describeRoute(pathname: string, search: string) {
+  const params = new URLSearchParams(search);
+  const websiteId = params.get("websiteId");
+  const templateId = params.get("template");
+  if (pathname === "/templates" || pathname === "/layouts") {
+    return { appKey: "layouts", label: "Layouts", href: pathname + search, context: "catalogue" };
+  }
+  if (pathname === "/editor") {
+    const context = websiteId ? `website:${websiteId}` : `template:${templateId || "new"}`;
+    return { appKey: "website-editor", label: websiteId ? "Website editor" : "Website editor", href: pathname + search, context };
+  }
+  if (pathname === "/create") {
+    return { appKey: "website-create", label: "Website setup", href: pathname + search, context: templateId || "new" };
+  }
+  if (pathname === "/workspace/websites") {
+    return { appKey: "websites", label: "Websites", href: pathname + search, context: "library" };
+  }
+  if (pathname === "/workspace/domains") {
+    return { appKey: "domains", label: "Domains", href: pathname + search, context: websiteId || "library" };
+  }
+  if (pathname === "/workspace/team") {
+    return { appKey: "team", label: "Team & access", href: pathname + search, context: "team" };
+  }
+  if (pathname === "/loom") {
+    return { appKey: "loom", label: "Loom", href: pathname + search, context: "home" };
+  }
+  return null;
+}
+
+function WorkspaceTabShellInner({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const search = searchParams.toString();
+  const router = useRouter();
+  const route = useMemo(() => describeRoute(pathname, search ? `?${search}` : ""), [pathname, search]);
+  const [tabs, setTabs] = useState<WorkspaceTab[]>([]);
+  const [activeTabId, setActiveTabId] = useState<string | null>(null);
+  const [snapshots, setSnapshots] = useState<Record<string, unknown>>({});
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    try {
+      const savedTabs = JSON.parse(sessionStorage.getItem(TAB_STORAGE_KEY) || "[]") as WorkspaceTab[];
+      const savedSnapshots = JSON.parse(sessionStorage.getItem(SNAPSHOT_STORAGE_KEY) || "{}") as Record<string, unknown>;
+      if (Array.isArray(savedTabs)) setTabs(savedTabs.filter((tab) => tab && typeof tab.id === "string" && typeof tab.href === "string"));
+      if (savedSnapshots && typeof savedSnapshots === "object" && !Array.isArray(savedSnapshots)) setSnapshots(savedSnapshots);
+    } catch {
+      sessionStorage.removeItem(TAB_STORAGE_KEY);
+      sessionStorage.removeItem(SNAPSHOT_STORAGE_KEY);
+    }
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated || !route) return;
+    const id = `${route.appKey}:${route.context}`;
+    setTabs((current) => {
+      const existing = current.find((tab) => tab.id === id);
+      const nextTab = { id, appKey: route.appKey, label: route.label, href: route.href, dirty: existing?.dirty ?? false };
+      return existing
+        ? current.map((tab) => tab.id === id ? nextTab : tab)
+        : [...current, nextTab].slice(-12);
+    });
+    setActiveTabId(id);
+  }, [hydrated, route]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    sessionStorage.setItem(TAB_STORAGE_KEY, JSON.stringify(tabs));
+  }, [hydrated, tabs]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      sessionStorage.setItem(SNAPSHOT_STORAGE_KEY, JSON.stringify(snapshots));
+    } catch {
+      // If storage is full or disabled, keep the in-memory snapshot for this session.
+    }
+  }, [hydrated, snapshots]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    const hasDirtyTabs = tabs.some((tab) => tab.dirty);
+    if (!hasDirtyTabs) return;
+    const protectUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", protectUnload);
+    return () => window.removeEventListener("beforeunload", protectUnload);
+  }, [hydrated, tabs]);
+
+  const setActiveTabDirty = useCallback((dirty: boolean) => {
+    setTabs((current) => current.map((tab) => tab.id === activeTabId ? { ...tab, dirty } : tab));
+  }, [activeTabId]);
+
+  const getSnapshot = useCallback(<T,>(key: string) => snapshots[key] as T | undefined, [snapshots]);
+  const setSnapshot = useCallback((key: string, value: unknown) => setSnapshots((current) => ({ ...current, [key]: value })), []);
+  const clearSnapshot = useCallback((key: string) => setSnapshots((current) => {
+    const next = { ...current };
+    delete next[key];
+    return next;
+  }), []);
+
+  const value = useMemo(() => ({ activeTabId, setActiveTabDirty, getSnapshot, setSnapshot, clearSnapshot }), [activeTabId, setActiveTabDirty, getSnapshot, setSnapshot, clearSnapshot]);
+
+  function activateTab(tab: WorkspaceTab) {
+    setActiveTabId(tab.id);
+    router.push(tab.href);
+  }
+
+  function closeTab(tab: WorkspaceTab) {
+    if (tab.dirty && !window.confirm(`“${tab.label}” has unsaved changes. Close this workspace tab and discard those changes?`)) return;
+    const remaining = tabs.filter((item) => item.id !== tab.id);
+    setTabs(remaining);
+    if (activeTabId === tab.id) {
+      const next = remaining[remaining.length - 1];
+      if (next) activateTab(next);
+      else {
+        setActiveTabId(null);
+        router.push("/workspace");
+      }
+    }
+  }
+
+  return (
+    <WorkspaceContext.Provider value={value}>
+      {hydrated && route && (
+        <nav className="workspace-tabbar" aria-label="Open app workspaces">
+          <Link className="workspace-tab-home" href="/workspace" aria-label="Return to workspace launcher" title="Workspace launcher">⌂</Link>
+          <div className="workspace-tablist" role="tablist" aria-label="Workspace tabs">
+            {tabs.map((tab) => (
+              <div className={`workspace-tab ${tab.id === activeTabId ? "is-active" : ""}`} key={tab.id}>
+                <button type="button" role="tab" aria-selected={tab.id === activeTabId} onClick={() => activateTab(tab)} title={tab.dirty ? `${tab.label} — unsaved changes` : tab.label}>
+                  <span>{tab.label}</span>{tab.dirty && <span className="workspace-tab-dirty" aria-label="Unsaved changes">•</span>}
+                </button>
+                <button type="button" className="workspace-tab-close" aria-label={`Close ${tab.label} tab`} onClick={() => closeTab(tab)}>×</button>
+              </div>
+            ))}
+          </div>
+        </nav>
+      )}
+      {children}
+    </WorkspaceContext.Provider>
+  );
+}
+
+export function WorkspaceTabShell({ children }: { children: ReactNode }) {
+  return <Suspense fallback={children}><WorkspaceTabShellInner>{children}</WorkspaceTabShellInner></Suspense>;
+}
+
+export function useWorkspaceTab() {
+  const context = useContext(WorkspaceContext);
+  if (!context) {
+    return {
+      activeTabId: null,
+      setActiveTabDirty: (_dirty: boolean) => {},
+      getSnapshot: <T,>(_key: string) => undefined as T | undefined,
+      setSnapshot: (_key: string, _value: unknown) => {},
+      clearSnapshot: (_key: string) => {},
+    };
+  }
+  return context;
+}
