@@ -47,12 +47,22 @@ describe("workspace tab routing", () => {
     expect(isSafeWorkspaceTabHref(href)).toBe(true);
   });
 
-  it("keeps website-specific content in separate tabs", () => {
+  it("keeps one Layout Studio tab per website context across its routes", () => {
     const pagesA = describeWorkspaceRoute("/pages", "?websiteId=site-a");
-    const pagesB = describeWorkspaceRoute("/pages", "?websiteId=site-b");
     const contentA = describeWorkspaceRoute("/content", "?websiteId=site-a");
+    const publishA = describeWorkspaceRoute("/publish", "?websiteId=site-a");
+    const pagesB = describeWorkspaceRoute("/pages", "?websiteId=site-b");
+    expect(getWorkspaceTabId(pagesA!)).toBe(getWorkspaceTabId(contentA!));
+    expect(getWorkspaceTabId(pagesA!)).toBe(getWorkspaceTabId(publishA!));
     expect(getWorkspaceTabId(pagesA!)).not.toBe(getWorkspaceTabId(pagesB!));
-    expect(getWorkspaceTabId(pagesA!)).not.toBe(getWorkspaceTabId(contentA!));
+  });
+
+  it("shares the Layout Studio library tab across routes without a selected website", () => {
+    const pages = describeWorkspaceRoute("/pages", "");
+    const content = describeWorkspaceRoute("/content", "");
+    const websites = describeWorkspaceRoute("/workspace/websites", "");
+    expect(getWorkspaceTabId(pages!)).toBe(getWorkspaceTabId(content!));
+    expect(getWorkspaceTabId(pages!)).toBe(getWorkspaceTabId(websites!));
   });
 
   it("does not create app tabs for the launcher or unregistered routes", () => {
