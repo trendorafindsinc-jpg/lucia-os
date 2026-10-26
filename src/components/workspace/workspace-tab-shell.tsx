@@ -82,8 +82,12 @@ function WorkspaceTabShellInner({ children }: { children: ReactNode }) {
       if (Array.isArray(savedTabs)) setTabs(savedTabs.filter((tab) => tab && typeof tab.id === "string" && typeof tab.appKey === "string" && typeof tab.label === "string" && typeof tab.href === "string" && typeof tab.dirty === "boolean"));
       if (savedSnapshots && typeof savedSnapshots === "object" && !Array.isArray(savedSnapshots)) setSnapshots(savedSnapshots);
     } catch {
-      sessionStorage.removeItem(TAB_STORAGE_KEY);
-      sessionStorage.removeItem(SNAPSHOT_STORAGE_KEY);
+      try {
+        sessionStorage.removeItem(TAB_STORAGE_KEY);
+        sessionStorage.removeItem(SNAPSHOT_STORAGE_KEY);
+      } catch {
+        // Storage can be unavailable in restricted browsing contexts.
+      }
     }
     setHydrated(true);
   }, []);
@@ -103,7 +107,7 @@ function WorkspaceTabShellInner({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!hydrated) return;
-    sessionStorage.setItem(TAB_STORAGE_KEY, JSON.stringify(tabs));
+    try { sessionStorage.setItem(TAB_STORAGE_KEY, JSON.stringify(tabs)); } catch { /* Keep tab navigation usable when storage is unavailable. */ }
   }, [hydrated, tabs]);
 
   useEffect(() => {
@@ -135,12 +139,14 @@ function WorkspaceTabShellInner({ children }: { children: ReactNode }) {
   const getSnapshot = useCallback(<T,>(key: string) => snapshotsRef.current[key] as T | undefined, []);
   const setSnapshot = useCallback((key: string, value: unknown) => {
     snapshotsRef.current = { ...snapshotsRef.current, [key]: value };
+    try { sessionStorage.setItem(SNAPSHOT_STORAGE_KEY, JSON.stringify(snapshotsRef.current)); } catch { /* Keep the in-memory recovery copy. */ }
     setSnapshots(snapshotsRef.current);
   }, []);
   const clearSnapshot = useCallback((key: string) => {
     const next = { ...snapshotsRef.current };
     delete next[key];
     snapshotsRef.current = next;
+    try { sessionStorage.setItem(SNAPSHOT_STORAGE_KEY, JSON.stringify(next)); } catch { /* Keep the in-memory tab manager usable. */ }
     setSnapshots(next);
   }, []);
 
