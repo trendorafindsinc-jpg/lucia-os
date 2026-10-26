@@ -27,13 +27,13 @@ export function describeWorkspaceRoute(pathname: string, search: string): Worksp
     return { appKey: "website-engine", label: "Websites", href: pathname + search, context: "library" };
   }
   if (pathname === "/pages") {
-    return { appKey: "website-engine", label: "Pages & navigation", href: pathname + search, context: `pages:${websiteContext}` };
+    return { appKey: "website-engine", label: "Pages & navigation", href: pathname + search, context: websiteContext };
   }
   if (pathname === "/content") {
-    return { appKey: "website-engine", label: "Blog & media", href: pathname + search, context: `content:${websiteContext}` };
+    return { appKey: "website-engine", label: "Blog & media", href: pathname + search, context: websiteContext };
   }
   if (pathname === "/workspace/domains") {
-    return { appKey: "website-engine", label: "Domains", href: pathname + search, context: `domains:${websiteId || "library"}` };
+    return { appKey: "website-engine", label: "Domains", href: pathname + search, context: websiteContext };
   }
   if (pathname === "/workspace/team") {
     return { appKey: "workspace-tools", label: "Team & access", href: pathname + search, context: "team" };
