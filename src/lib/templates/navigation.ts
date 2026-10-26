@@ -3,7 +3,7 @@ export function getTemplateSetupHref(templateId: string): { pathname: "/create";
   return { pathname: "/create", query: { template: templateId } };
 }
 
-/** Prefer a valid template selected from Loom Library over an older saved setup choice. */
+/** Prefer a valid template selected from Layouts over an older saved setup choice. */
 export function getPreferredTemplateId(
   requestedTemplateId: string | null,
   savedTemplateId: string,
