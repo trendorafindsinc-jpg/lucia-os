@@ -1,10 +1,10 @@
-# LUCIA OS Website Engine Contract
+# LUCIA OS Layout Studio Contract
 
-**Status:** Website Engine product contract; implementation status must be verified from code and tests.  
+**Status:** Layout Studio product contract; implementation status must be verified from code and tests.  
 **Canonical product direction:** [LUCIA OS Product Vision and Contract](lucia-os-product-vision.md)  
 **Repository:** `trendorafindsinc-jpg/lucia-os`
 
-This document is a focused engineering contract for the Website Engine. The canonical product vision controls if any historical Website Engine assumptions conflict with it.
+This document is a focused engineering contract for the Layout Studio. The canonical product vision controls if any historical Layout Studio assumptions conflict with it.
 
 ## 1. Free website creation is a core acquisition strategy
 
@@ -18,9 +18,9 @@ This document is a focused engineering contract for the Website Engine. The cano
 
 ## 2. Canonical terminology
 
-- **Website Engine:** the free website creation and publishing capability; a first-class workspace icon.
+- **Layout Studio:** the free website creation and publishing capability; a first-class workspace icon.
 - **Layouts:** curated website designs. Do not use “templates” in new customer-facing UI.
-- **Layer Studio:** the visual website creation/editing workspace.
+- **Layout Studio:** the visual website creation/editing workspace.
 - **Website Blueprint:** the versioned, validated internal website definition. Do not expose raw JSON as the customer editor.
 - **loomifyAI:** optional AI assistance. It proposes content/structure but cannot bypass the normal validation and persistence pipeline.
 - **Preview:** renders the requested draft without changing the live website.
@@ -58,11 +58,11 @@ Layout selection, manual creation, and AI-assisted creation must converge on the
 
 ## 5. Workspace integration
 
-Website Engine and Layouts are discoverable from the signed-in workspace via clear icons/entries. The app shell adapts to mobile, desktop, and tablet as defined in the canonical product vision. Website projects, Layout selection, editing, preview, domains, and publishing should form one connected flow, not isolated tools.
+Layout Studio and Layouts are discoverable from the signed-in workspace via clear icons/entries. The app shell adapts to mobile, desktop, and tablet as defined in the canonical product vision. Website projects, Layout selection, editing, preview, domains, and publishing should form one connected flow, not isolated tools.
 
 ## 6. Acceptance evidence
 
-Before calling the Website Engine ready, record evidence for:
+Before calling the Layout Studio ready, record evidence for:
 - Free create/edit/preview/publish flow without AI or purchase.
 - Meaningfully distinct Layout previews and rendered websites at mobile/tablet/desktop widths.
 - Demo-content replacement without broken navigation or missing sections.
