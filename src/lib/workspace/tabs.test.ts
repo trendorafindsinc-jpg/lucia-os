@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canCloseWorkspaceTab, describeWorkspaceRoute, getWorkspaceTabId } from "./tabs";
+import { canCloseWorkspaceTab, describeWorkspaceRoute, getWorkspaceTabId, isSafeWorkspaceTabHref } from "./tabs";
 
 describe("workspace tab routing", () => {
   it("gives different website contexts independent editor tabs", () => {
@@ -28,6 +28,13 @@ describe("workspace tab routing", () => {
   it("does not create app tabs for unregistered routes", () => {
     expect(describeWorkspaceRoute("/workspace", "")).toBeNull();
     expect(describeWorkspaceRoute("/not-an-app", "")).toBeNull();
+  });
+
+  it("rejects external and unregistered destinations from persisted tab state", () => {
+    expect(isSafeWorkspaceTabHref("/editor?websiteId=site-a")).toBe(true);
+    expect(isSafeWorkspaceTabHref("https://example.com")).toBe(false);
+    expect(isSafeWorkspaceTabHref("//example.com")).toBe(false);
+    expect(isSafeWorkspaceTabHref("/admin/unregistered")).toBe(false);
   });
 
   it("requires confirmation before closing dirty tabs", () => {
