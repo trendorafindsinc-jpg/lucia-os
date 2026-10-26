@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
 import "./loom-renderer.css";
+import { WorkspaceTabShell } from "@/components/workspace/workspace-tab-shell";
 
 export const metadata: Metadata = {
   title: {
@@ -21,7 +22,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body><WorkspaceTabShell>{children}</WorkspaceTabShell></body>
     </html>
   );
 }
