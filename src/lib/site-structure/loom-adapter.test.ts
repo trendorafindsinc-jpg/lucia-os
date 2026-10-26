@@ -3,8 +3,8 @@ import { makeInitialDraft } from "@/lib/editor/site-draft";
 import { siteStructurePageToBlueprint } from "./loom-adapter";
 import { makeInitialStructure, addPage, setHomepage } from "./structure";
 
-describe("site structure Loom adapter", () => {
-  it("renders the selected saved page through the shared Loom blueprint contract", () => {
+describe("site structure Layout Blueprint adapter", () => {
+  it("renders the selected saved page through the shared Layout Blueprint contract", () => {
     let structure = makeInitialStructure();
     structure = addPage(structure, "Our Team");
     const team = structure.pages.find((page) => page.title === "Our Team");
