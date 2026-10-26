@@ -11,6 +11,7 @@ const reviewSchema = z.object({
   reportId: z.string().uuid(),
   decision: z.enum(["resolved", "dismissed"]),
   hideContent: z.boolean().default(false),
+  restoreProfile: z.boolean().default(false),
   memberAction: z.enum(["none", "restrict", "ban", "lift"]).default("none"),
 }).strict();
 
@@ -93,6 +94,9 @@ export async function PATCH(request: Request) {
           body: parsed.data.memberAction === "lift" ? "A Loom participation restriction has been lifted." : parsed.data.memberAction === "ban" ? "Your Loom access has been removed following staff review." : "Your Loom participation has been restricted following staff review.",
         });
       }
+      if (parsed.data.restoreProfile && report.targetType === "profile") {
+        await tx.insert(loomProfiles).values({ userId: report.targetId, moderationStatus: "visible", updatedAt: now }).onConflictDoUpdate({ target: loomProfiles.userId, set: { moderationStatus: "visible", updatedAt: now } });
+      }
       if (parsed.data.hideContent) {
         if (report.targetType === "post") {
           await tx.update(loomPosts).set({ moderationStatus: "hidden" }).where(eq(loomPosts.id, report.targetId));
@@ -119,9 +123,9 @@ export async function PATCH(request: Request) {
         targetId: report.targetId,
         purpose: "Review a community content report.",
         result: "success",
-        metadata: JSON.stringify({ reportId: report.id, decision: parsed.data.decision, memberAction: parsed.data.memberAction, hideContent: parsed.data.hideContent }),
+        metadata: JSON.stringify({ reportId: report.id, decision: parsed.data.decision, memberAction: parsed.data.memberAction, hideContent: parsed.data.hideContent, restoreProfile: parsed.data.restoreProfile }),
       });
-      return { kind: "updated" as const, id: report.id, status: parsed.data.decision, contentHidden: parsed.data.hideContent };
+      return { kind: "updated" as const, id: report.id, status: parsed.data.decision, contentHidden: parsed.data.hideContent, profileRestored: parsed.data.restoreProfile && report.targetType === "profile" };
     });
     if (result.kind === "not_found") return NextResponse.json({ error: "Report not found." }, { status: 404 });
     if (result.kind === "already_reviewed") return NextResponse.json({ error: "This report has already been reviewed." }, { status: 409 });
