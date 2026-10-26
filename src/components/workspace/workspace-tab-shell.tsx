@@ -79,7 +79,7 @@ function WorkspaceTabShellInner({ children }: { children: ReactNode }) {
     try {
       const savedTabs = JSON.parse(sessionStorage.getItem(TAB_STORAGE_KEY) || "[]") as WorkspaceTab[];
       const savedSnapshots = JSON.parse(sessionStorage.getItem(SNAPSHOT_STORAGE_KEY) || "{}") as Record<string, unknown>;
-      if (Array.isArray(savedTabs)) setTabs(savedTabs.filter((tab) => tab && typeof tab.id === "string" && typeof tab.href === "string"));
+      if (Array.isArray(savedTabs)) setTabs(savedTabs.filter((tab) => tab && typeof tab.id === "string" && typeof tab.appKey === "string" && typeof tab.label === "string" && typeof tab.href === "string" && typeof tab.dirty === "boolean"));
       if (savedSnapshots && typeof savedSnapshots === "object" && !Array.isArray(savedSnapshots)) setSnapshots(savedSnapshots);
     } catch {
       sessionStorage.removeItem(TAB_STORAGE_KEY);
@@ -153,6 +153,7 @@ function WorkspaceTabShellInner({ children }: { children: ReactNode }) {
 
   function closeTab(tab: WorkspaceTab) {
     if (tab.dirty && !window.confirm(`“${tab.label}” has unsaved changes. Close this workspace tab and discard those changes?`)) return;
+    if (tab.dirty) clearSnapshot(`editor-draft:${tab.id}`);
     const remaining = tabs.filter((item) => item.id !== tab.id);
     setTabs(remaining);
     if (activeTabId === tab.id) {
