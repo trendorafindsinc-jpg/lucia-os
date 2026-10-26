@@ -13,7 +13,7 @@ import {
 } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { canCloseWorkspaceTab, describeWorkspaceRoute, getWorkspaceTabId } from "@/lib/workspace/tabs";
+import { canCloseWorkspaceTab, describeWorkspaceRoute, getWorkspaceTabId, isSafeWorkspaceTabHref } from "@/lib/workspace/tabs";
 
 type WorkspaceTab = {
   id: string;
@@ -51,7 +51,7 @@ function WorkspaceTabShellInner({ children }: { children: ReactNode }) {
     try {
       const savedTabs = JSON.parse(sessionStorage.getItem(TAB_STORAGE_KEY) || "[]") as WorkspaceTab[];
       const savedSnapshots = JSON.parse(sessionStorage.getItem(SNAPSHOT_STORAGE_KEY) || "{}") as Record<string, unknown>;
-      if (Array.isArray(savedTabs)) setTabs(savedTabs.filter((tab) => tab && typeof tab.id === "string" && typeof tab.appKey === "string" && typeof tab.label === "string" && typeof tab.href === "string" && typeof tab.dirty === "boolean"));
+      if (Array.isArray(savedTabs)) setTabs(savedTabs.filter((tab) => tab && typeof tab.id === "string" && typeof tab.appKey === "string" && typeof tab.label === "string" && typeof tab.href === "string" && isSafeWorkspaceTabHref(tab.href) && typeof tab.dirty === "boolean"));
       if (savedSnapshots && typeof savedSnapshots === "object" && !Array.isArray(savedSnapshots)) setSnapshots(savedSnapshots);
     } catch {
       try {
@@ -125,6 +125,7 @@ function WorkspaceTabShellInner({ children }: { children: ReactNode }) {
   const value = useMemo(() => ({ activeTabId, setActiveTabDirty, getSnapshot, setSnapshot, clearSnapshot }), [activeTabId, setActiveTabDirty, getSnapshot, setSnapshot, clearSnapshot]);
 
   function activateTab(tab: WorkspaceTab) {
+    if (!isSafeWorkspaceTabHref(tab.href)) return;
     setActiveTabId(tab.id);
     router.push(tab.href);
   }
