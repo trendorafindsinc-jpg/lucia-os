@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { getTemplateById, websiteTemplates } from "@/lib/templates/catalogue";
 import { editorPalettes, makeInitialDraft, moveSection, siteDraftSchema, type EditorPaletteId, type SiteDraft } from "@/lib/editor/site-draft";
-import { loomBlueprintSchema, siteDraftToLoomBlueprint, type LoomBlueprint } from "@/lib/loom/blueprint";
-import { LoomRenderer } from "@/components/loom/loom-renderer";
+import { layoutBlueprintSchema, siteDraftToLayoutBlueprint, type LayoutBlueprint } from "@/lib/loom/blueprint";
+import { LayoutRenderer } from "@/components/loom/loom-renderer";
 import { websiteSnapshotSchema, type WebsiteSnapshot } from "@/lib/versions/version-history";
 import { useWorkspaceTab } from "@/components/workspace/workspace-tab-shell";
 
@@ -23,7 +23,7 @@ export function VisualSiteEditor() {
   const [saveLabel, setSaveLabel] = useState("Preview only");
   const [aiBrief, setAiBrief] = useState("");
   const [aiBusy, setAiBusy] = useState(false);
-  const [aiProposal, setAiProposal] = useState<LoomBlueprint | null>(null);
+  const [aiProposal, setAiProposal] = useState<LayoutBlueprint | null>(null);
   const [aiError, setAiError] = useState("");
   const [versions, setVersions] = useState<SavedWebsiteVersion[]>([]);
   const [isLoadingVersions, setIsLoadingVersions] = useState(false);
@@ -32,7 +32,7 @@ export function VisualSiteEditor() {
   const [versionError, setVersionError] = useState("");
   const template = getTemplateById(draft.templateId);
   const validation = useMemo(() => siteDraftSchema.safeParse(draft), [draft]);
-  const previewBlueprint = useMemo(() => siteDraftToLoomBlueprint(validation.success ? validation.data : makeInitialDraft(draft.templateId)), [draft, validation]);
+  const previewBlueprint = useMemo(() => siteDraftToLayoutBlueprint(validation.success ? validation.data : makeInitialDraft(draft.templateId)), [draft, validation]);
 
   useEffect(() => {
     if (!activeTabId) return;
@@ -235,7 +235,7 @@ export function VisualSiteEditor() {
         throw new Error(message);
       }
       const candidate = typeof data === "object" && data !== null && "proposal" in data ? data.proposal : null;
-      const checked = loomBlueprintSchema.safeParse(candidate);
+      const checked = layoutBlueprintSchema.safeParse(candidate);
       if (!checked.success) throw new Error("The design proposal didn't pass LUCIA's safety checks. Your draft is unchanged.");
       setAiProposal(checked.data);
     } catch (error) {
@@ -337,10 +337,10 @@ export function VisualSiteEditor() {
           <div className="editor-preview-toolbar"><span><i /> Preview</span><span>Desktop concept</span></div>
           {aiProposal && <section className="loomify-proposal-review" aria-label="loomifyAI proposal review">
             <div className="loomify-review-heading"><div><span className="editor-kicker">YOUR PROPOSAL</span><h2>{aiProposal.site.name}</h2><p>AI-generated concept · Review before applying</p></div><button type="button" className="loomify-dismiss" onClick={() => setAiProposal(null)} aria-label="Dismiss proposal">×</button></div>
-            <div className="loomify-proposal-canvas"><LoomRenderer blueprint={aiProposal} preview /></div>
+            <div className="loomify-proposal-canvas"><LayoutRenderer blueprint={aiProposal} preview /></div>
             <div className="loomify-review-actions"><span>Private preview only. Your live website is unchanged.</span><button type="button" className="editor-done" onClick={applyAIProposalToEditor}>Apply to editor</button></div>
           </section>}
-          <div className="editor-loom-preview"><LoomRenderer blueprint={previewBlueprint} preview /></div>
+          <div className="editor-layout-preview"><LayoutRenderer blueprint={previewBlueprint} preview /></div>
           <p className="editor-preview-caption">{websiteId ? "Changes can be saved to your organisation’s website draft. This preview is private; it is not a public website." : "Illustrative preview. Open a saved website from your Websites library to enable persistent saving."}</p>
         </section>
       </div>
