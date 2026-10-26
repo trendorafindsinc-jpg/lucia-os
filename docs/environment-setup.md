@@ -32,3 +32,10 @@ These names are a planning baseline and must be reconciled with actual library/p
 ## Deployment
 
 The intended host is Vercel, with preview deployments for review and production deployment only after acceptance. Domain mapping, Core callback registration, database access policy, storage CORS, and HTTPS must be configured and verified for each environment. No deployment or live resource provisioning is part of this phase.
+
+## Optional AI assistance
+
+- `AI_GATEWAY_API_KEY`: server-side Vercel AI Gateway credential for loomifyAI. Never expose it to browser code.
+- `LOOMIFYAI_MODEL`: model identifier selected for loomifyAI. If omitted, AI proposal generation remains unavailable; free manual website creation must continue to work.
+
+The canonical product name is **loomifyAI**. The former `LOOMIFIAI_MODEL` variable is accepted temporarily for compatibility, but new deployments should use `LOOMIFYAI_MODEL`.
