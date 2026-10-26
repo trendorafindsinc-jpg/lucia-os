@@ -37,7 +37,10 @@ export function VisualSiteEditor() {
   useEffect(() => {
     if (!activeTabId) return;
     let cancelled = false;
-    const cachedDraft = getSnapshot<SiteDraft>(`editor-draft:${activeTabId}`);
+    const cachedCandidate = getSnapshot<unknown>(`editor-draft:${activeTabId}`);
+    const cachedCheck = siteDraftSchema.safeParse(cachedCandidate);
+    const cachedDraft = cachedCheck.success ? cachedCheck.data : undefined;
+    if (cachedCandidate !== undefined && !cachedCheck.success) clearSnapshot(`editor-draft:${activeTabId}`);
     const params = new URLSearchParams(window.location.search);
     const requested = params.get("template");
     const savedWebsiteId = params.get("websiteId");
@@ -94,7 +97,7 @@ export function VisualSiteEditor() {
       })
       .finally(() => { if (!cancelled) setIsLoadingSaved(false); });
     return () => { cancelled = true; };
-  }, [activeTabId, getSnapshot, setActiveTabDirty]);
+  }, [activeTabId, getSnapshot, clearSnapshot, setActiveTabDirty]);
 
   function update<K extends keyof SiteDraft>(key: K, value: SiteDraft[K]) {
     const next = { ...draft, [key]: value };
