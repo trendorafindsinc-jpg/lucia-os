@@ -3,23 +3,23 @@ import { loomBlueprintSchema, type LoomBlueprint } from "@/lib/loom/blueprint";
 
 export const loomifyAIBriefSchema = z.string().trim().min(20, "Describe the website in a little more detail.").max(4_000, "Keep the website brief under 4,000 characters.");
 
-export type LoomifyAIProvider = {
+export type loomifyAIProvider = {
   /** Stable provider adapter identifier for diagnostics, not customer-facing model branding. */
   readonly id: string;
   /** Return untrusted structured data. The engine validates it before any save or render. */
   generateBlueprint(input: { brief: string; signal: AbortSignal }): Promise<unknown>;
 };
 
-export type LoomifyAIErrorCode = "invalid_brief" | "provider_unavailable" | "timeout" | "invalid_blueprint";
+export type loomifyAIErrorCode = "invalid_brief" | "provider_unavailable" | "timeout" | "invalid_blueprint";
 
-export class LoomifyAIError extends Error {
-  constructor(readonly code: LoomifyAIErrorCode, message: string) {
+export class loomifyAIError extends Error {
+  constructor(readonly code: loomifyAIErrorCode, message: string) {
     super(message);
-    this.name = "LoomifyAIError";
+    this.name = "loomifyAIError";
   }
 }
 
-export type LoomifyAIProposal = {
+export type loomifyAIProposal = {
   blueprint: LoomBlueprint;
   providerId: string;
 };
@@ -30,16 +30,16 @@ export type LoomifyAIProposal = {
  * the validated result through the normal website APIs after user review.
  */
 export async function proposeLoomBlueprint(
-  provider: LoomifyAIProvider | null,
+  provider: loomifyAIProvider | null,
   rawBrief: unknown,
   options: { timeoutMs?: number } = {},
-): Promise<LoomifyAIProposal> {
+): Promise<loomifyAIProposal> {
   const briefResult = loomifyAIBriefSchema.safeParse(rawBrief);
   if (!briefResult.success) {
-    throw new LoomifyAIError("invalid_brief", briefResult.error.issues[0]?.message ?? "Check your website brief.");
+    throw new loomifyAIError("invalid_brief", briefResult.error.issues[0]?.message ?? "Check your website brief.");
   }
   if (!provider) {
-    throw new LoomifyAIError("provider_unavailable", "LoomifyAI is not configured yet. You can still choose a Layout and build your website in Layout Studio.");
+    throw new loomifyAIError("provider_unavailable", "loomifyAI is not configured yet. You can still choose a Layout and build your website in Layout Studio.");
   }
 
   const timeoutMs = options.timeoutMs ?? 30_000;
@@ -51,18 +51,18 @@ export async function proposeLoomBlueprint(
       new Promise<never>((_, reject) => {
         timeout = setTimeout(() => {
           controller.abort();
-          reject(new LoomifyAIError("timeout", "LoomifyAI took too long. Your existing draft has not been changed."));
+          reject(new loomifyAIError("timeout", "loomifyAI took too long. Your existing draft has not been changed."));
         }, timeoutMs);
       }),
     ]);
     const parsed = loomBlueprintSchema.safeParse(rawOutput);
     if (!parsed.success) {
-      throw new LoomifyAIError("invalid_blueprint", "The proposed design did not pass LUCIA's website safety checks. Your existing draft has not been changed.");
+      throw new loomifyAIError("invalid_blueprint", "The proposed design did not pass LUCIA's website safety checks. Your existing draft has not been changed.");
     }
     return { blueprint: parsed.data, providerId: provider.id };
   } catch (error) {
-    if (error instanceof LoomifyAIError) throw error;
-    throw new LoomifyAIError("provider_unavailable", "LoomifyAI could not reach its provider. Your existing draft has not been changed.");
+    if (error instanceof loomifyAIError) throw error;
+    throw new loomifyAIError("provider_unavailable", "loomifyAI could not reach its provider. Your existing draft has not been changed.");
   } finally {
     if (timeout) clearTimeout(timeout);
   }
