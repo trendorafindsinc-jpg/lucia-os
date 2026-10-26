@@ -13,9 +13,9 @@ LUCIA is a technology provider building what comes next: a coherent operating en
 
 LUCIA OS must feel like one premium, integrated product—not a collection of disconnected dashboards. Its workspace is the home for first-party and approved applications. Apps purchased or otherwise acquired through LUCIA Store appear as launchable workspace icons and open a useful, connected experience.
 
-### Free Website Engine is the acquisition strategy
+### Free Layout Studio is the acquisition strategy
 
-**Creating and publishing a standard website through the LUCIA Website Engine is free.** This is a deliberate customer-acquisition strategy: remove the initial cost barrier, bring people into the LUCIA ecosystem, and let them experience the product before deciding whether they need paid technology.
+**Creating and publishing a standard website through the LUCIA Layout Studio is free.** This is a deliberate customer-acquisition strategy: remove the initial cost barrier, bring people into the LUCIA ecosystem, and let them experience the product before deciding whether they need paid technology.
 
 - Do not turn basic website creation into a subscription requirement.
 - Do not gate the basic ability to create and publish a standard website behind purchasing a layout, AI, Store product, or paid plan.
@@ -40,7 +40,7 @@ Device-adaptive interaction:
 - **Desktop:** a polished macOS-inspired environment with an intentional desktop workspace, navigation, app launcher, window/content conventions where useful, and keyboard support.
 - **Tablet:** an iPad-inspired adaptive layout that uses available space and touch interaction well; it must not be merely a stretched phone or cramped desktop.
 - These are original LUCIA designs inspired by familiar interaction patterns, not copies of Apple branding, assets, or screens.
-- Workspace navigation must retain clear access to Overview, Layouts, Loom, LUCIA Store, and installed/available applications. The Website Engine is itself a first-class workspace icon.
+- Workspace navigation must retain clear access to Overview, Layouts, Loom, LUCIA Store, and installed/available applications. The Layout Studio is itself a first-class workspace icon.
 - The interface should adapt by breakpoint/input capability and preserve the user's work and context across destinations. A mobile user should not be forced through a desktop-like sidebar, and desktop users should not get a phone screen stretched across a monitor.
 - Every icon/control must have a meaningful action, status, focus/pressed/loading/error states, and permission-aware destination. No fake app icons, dead buttons, simulated success, or inaccessible drag-only interactions.
 
@@ -92,7 +92,7 @@ Purchase and installation experience:
 3. After purchase or free acquisition, an eligible product appears as an icon in the customer's workspace, with an obvious setup/open/update action.
 4. The app opens into a connected LUCIA experience. Each app retains its own appropriate data model, permissions, tenant boundaries, and status.
 5. Customers can manage product versions, licences, updates, configuration, and available support from the Store/product detail experience.
-6. Website Engine is a workspace icon and remains free for standard website creation/publishing. Custom domains and other purchasable LUCIA services are discoverable and purchased through the Store.
+6. Layout Studio is a workspace icon and remains free for standard website creation/publishing. Custom domains and other purchasable LUCIA services are discoverable and purchased through the Store.
 
 Commercial model — version-based, not subscription-first:
 - The default model for purchasable software is a **one-time purchase of a specific version**, with the licence terms disclosed before purchase.
@@ -146,14 +146,14 @@ A valid LUCIA ID is not universal permission. Each protected action checks authe
 
 The workspace's first-class icons/destinations for this direction are:
 - **Home / Overview**
-- **Website Engine** (free website creation and publishing)
+- **Layout Studio** (free website creation and publishing)
 - **Layouts**
 - **Loom**
 - **LUCIA Store**
 - **Installed applications** (catalogue-driven, permission/licence-aware)
 - **Settings** (profile, workspace, security and application preferences)
 
-AI assistance may be available inside the Website Engine and other eligible applications, but AI is optional and must not be a mandatory standalone gate to basic website creation.
+AI assistance may be available inside the Layout Studio and other eligible applications, but AI is optional and must not be a mandatory standalone gate to basic website creation.
 
 The founder has previously specified that Portals and Business Admin are not part of v1. They must not be presented as functioning v1 products. If retained for future discoverability, label them clearly as unavailable in v1 and do not expose incomplete workflows. The Store vision is documented here, but its delivery timing and available catalogue must be represented truthfully; documentation does not imply that Store is already implemented or that all catalogue categories are available.
 
@@ -164,7 +164,7 @@ The signed-out welcome/marketing page is not the first task in this initiative. 
 1. **Section 1 — Workspace foundation:** audit the current app and unwanted design branch; establish the responsive mobile/desktop/tablet shell, icon system, settings, navigation, app-launch contract, and interaction/accessibility baseline. Do not start by redesigning the signed-out welcome page.
 2. **Section 2 — Layouts:** audit the existing catalogue and preview flow; define a design-quality rubric; build and verify genuinely distinct, ready-made designs; preserve free website creation/publishing.
 3. **Section 3 — Loom:** audit existing Loom docs/code; define spectator vs verified member permissions, evidence criteria, interview workflow, undecided badge colours, safety, and staff auditability before implementing verification.
-4. **Section 4 — Store:** define product catalogue, free vs paid products, version licence and one-year update entitlement, upgrades/migrations, white-label/resale rights, and infrastructure-cost disclosures. Integrate Store purchases with workspace app icons and the free Website Engine.
+4. **Section 4 — Store:** define product catalogue, free vs paid products, version licence and one-year update entitlement, upgrades/migrations, white-label/resale rights, and infrastructure-cost disclosures. Integrate Store purchases with workspace app icons and the free Layout Studio.
 5. Cross-section integration: test end-to-end identity, workspace context, app installation/launch, tenant isolation, purchase/entitlement, website publish, Loom verification, upgrade/data migration, accessibility, and failure recovery.
 
 Each task must record current phase/status, files changed, actual tests and outcomes, acceptance evidence, unresolved decisions, risks, and whether merge/deployment occurred. Do not claim implementation or verification based on this document alone. Inspect the code first, make narrow changes, run appropriate checks, and do not merge/deploy or make destructive production changes without the required explicit approval.
