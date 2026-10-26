@@ -2,7 +2,7 @@
 
 LUCIA OS is a connected, device-adaptive technology workspace. Its product vision combines free website creation and publishing, premium ready-made Layouts, Loom's verified professional network, and LUCIA Store's technology marketplace. Customers can acquire eligible applications and launch them from workspace icons; selected products may support white-label and commercial deployment under explicit licences.
 
-**The standard Website Engine is free.** This is a deliberate customer-acquisition strategy. Paid products and services—such as custom domains, optional costly AI, and separately licensed software—must be clearly distinguished from the free website offer.
+**The standard Layout Studio is free.** This is a deliberate customer-acquisition strategy. Paid products and services—such as custom domains, optional costly AI, and separately licensed software—must be clearly distinguished from the free website offer.
 
 One application deployment serves many organisations; customer-specific deployments are not the architecture.
 
@@ -10,7 +10,7 @@ One application deployment serves many organisations; customer-specific deployme
 
 - [LUCIA OS Product Vision and Contract](docs/lucia-os-product-vision.md) — **canonical** product scope, four sections, terminology, free website strategy, Layout quality, Loom verification, Store version/licence model, and delivery order.
 - [Implementation Roadmap](docs/implementation-roadmap-30-phases.md) — sequential delivery and acceptance checkpoints, subordinate to the canonical vision.
-- [Website Engine Contract](docs/website-engine-blueprint.md) — focused free website creation, Layout, validation, and publishing rules.
+- [Layout Studio Contract](docs/website-engine-blueprint.md) — focused free website creation, Layout, validation, and publishing rules.
 - [Unified Platform Blueprint — historical pointer](docs/unified-platform-blueprint.md) — retained for old links; canonical requirements are in the product vision.
 - [Architecture](docs/architecture.md) — system boundaries and technical baseline.
 - [LUCIA Core authentication-only boundary](docs/core-auth-only-boundary.md) — Core authenticates; LUCIA OS owns local authorisation and product data.
@@ -21,7 +21,7 @@ Before code changes, read [AGENTS.md](AGENTS.md), the canonical vision, roadmap,
 ## Workspace destinations
 
 - **Home / Overview** — context, activity, and next actions.
-- **Website Engine** — free website creation and publishing.
+- **Layout Studio** — free website creation and publishing.
 - **Layouts** — genuinely distinct, polished, ready-to-personalise website designs.
 - **Loom** — professional discovery and connections with a separate, evidence-based verification process.
 - **LUCIA Store** — free and paid technology products, version licences, updates/upgrades, custom domains, and eligible white-label/commercial software.
