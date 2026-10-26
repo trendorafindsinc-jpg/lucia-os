@@ -11,9 +11,9 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/lib/auth/session", () => ({ getCurrentUser: mocks.currentUser }));
 vi.mock("@/lib/db/client", () => ({ getDb: mocks.getDb }));
-vi.mock("@/lib/loomifi-ai/gateway", () => ({ getConfiguredLoomifiAIProvider: mocks.provider }));
-vi.mock("@/lib/loomifi-ai/provider", async () => {
-  const actual = await vi.importActual<typeof import("@/lib/loomifi-ai/provider")>("@/lib/loomifi-ai/provider");
+vi.mock("@/lib/loomify-ai/gateway", () => ({ getConfiguredLoomifyAIProvider: mocks.provider }));
+vi.mock("@/lib/loomify-ai/provider", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/loomify-ai/provider")>("@/lib/loomify-ai/provider");
   return { ...actual, proposeLoomBlueprint: mocks.propose };
 });
 vi.mock("drizzle-orm", () => ({
@@ -29,7 +29,7 @@ const brief = "Create a modern, accessible website for a local design studio.";
 const blueprint = siteDraftToLoomBlueprint(makeInitialDraft("northstar-consulting"));
 
 function request(body: unknown, origin = "https://preview.example.test") {
-  return new Request("https://preview.example.test/api/loomifi-ai/propose", {
+  return new Request("https://preview.example.test/api/loomify-ai/propose", {
     method: "POST",
     headers: { "content-type": "application/json", origin },
     body: JSON.stringify(body),
@@ -67,7 +67,7 @@ function configureDb(membership: { organizationId: string; role: string; status:
   return { tx };
 }
 
-describe("POST /api/loomifi-ai/propose authorization boundary", () => {
+describe("POST /api/loomify-ai/propose authorization boundary", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.currentUser.mockResolvedValue({ id: "b8e95a60-fbde-4c37-93e6-a2916c7b13d4", displayName: "Test editor" });
@@ -126,7 +126,7 @@ describe("POST /api/loomifi-ai/propose authorization boundary", () => {
     const response = await POST(request({ websiteId, brief }));
     expect(response.status).toBe(502);
     await expect(response.json()).resolves.toMatchObject({
-      error: "LoomifiAI could not create a safe proposal. Your existing draft and live site have not been changed.",
+      error: "LoomifyAI could not create a safe proposal. Your existing draft and live site have not been changed.",
     });
     expect(mocks.propose).toHaveBeenCalledOnce();
     expect(response.headers.get("cache-control")).toBe("no-store");
