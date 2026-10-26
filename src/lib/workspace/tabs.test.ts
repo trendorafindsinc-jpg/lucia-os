@@ -5,7 +5,7 @@ describe("workspace tab routing", () => {
   it("gives different website contexts independent editor tabs", () => {
     const first = describeWorkspaceRoute("/editor", "?websiteId=site-a");
     const second = describeWorkspaceRoute("/editor", "?websiteId=site-b");
-    expect(first?.appKey).toBe("website-editor");
+    expect(first?.appKey).toBe("website-engine");
     expect(getWorkspaceTabId(first!)).not.toBe(getWorkspaceTabId(second!));
   });
 
