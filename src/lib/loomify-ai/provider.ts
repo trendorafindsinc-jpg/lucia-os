@@ -67,3 +67,6 @@ export async function proposeLayoutBlueprint(
     if (timeout) clearTimeout(timeout);
   }
 }
+
+// Compatibility alias for older internal callers during the naming migration.
+export const proposeLoomBlueprint = proposeLayoutBlueprint;
