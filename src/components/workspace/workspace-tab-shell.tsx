@@ -13,6 +13,7 @@ import {
 } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { canCloseWorkspaceTab, describeWorkspaceRoute, getWorkspaceTabId } from "@/lib/workspace/tabs";
 
 type WorkspaceTab = {
   id: string;
@@ -34,41 +35,12 @@ const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
 const TAB_STORAGE_KEY = "lucia.workspace.tabs.v1";
 const SNAPSHOT_STORAGE_KEY = "lucia.workspace.snapshots.v1";
 
-function describeRoute(pathname: string, search: string) {
-  const params = new URLSearchParams(search);
-  const websiteId = params.get("websiteId");
-  const templateId = params.get("template");
-  if (pathname === "/templates" || pathname === "/layouts") {
-    return { appKey: "layouts", label: "Layouts", href: pathname + search, context: "catalogue" };
-  }
-  if (pathname === "/editor") {
-    const context = websiteId ? `website:${websiteId}` : `template:${templateId || "new"}`;
-    return { appKey: "website-editor", label: websiteId ? "Website editor" : "Website editor", href: pathname + search, context };
-  }
-  if (pathname === "/create") {
-    return { appKey: "website-create", label: "Website setup", href: pathname + search, context: templateId || "new" };
-  }
-  if (pathname === "/workspace/websites") {
-    return { appKey: "websites", label: "Websites", href: pathname + search, context: "library" };
-  }
-  if (pathname === "/workspace/domains") {
-    return { appKey: "domains", label: "Domains", href: pathname + search, context: websiteId || "library" };
-  }
-  if (pathname === "/workspace/team") {
-    return { appKey: "team", label: "Team & access", href: pathname + search, context: "team" };
-  }
-  if (pathname === "/loom") {
-    return { appKey: "loom", label: "Loom", href: pathname + search, context: "home" };
-  }
-  return null;
-}
-
 function WorkspaceTabShellInner({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const search = searchParams.toString();
   const router = useRouter();
-  const route = useMemo(() => describeRoute(pathname, search ? `?${search}` : ""), [pathname, search]);
+  const route = useMemo(() => describeWorkspaceRoute(pathname, search ? `?${search}` : ""), [pathname, search]);
   const [tabs, setTabs] = useState<WorkspaceTab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [snapshots, setSnapshots] = useState<Record<string, unknown>>({});
@@ -94,7 +66,7 @@ function WorkspaceTabShellInner({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!hydrated || !route) return;
-    const id = `${route.appKey}:${route.context}`;
+    const id = getWorkspaceTabId(route);
     setTabs((current) => {
       const existing = current.find((tab) => tab.id === id);
       const nextTab = { id, appKey: route.appKey, label: route.label, href: route.href, dirty: existing?.dirty ?? false };
@@ -158,7 +130,8 @@ function WorkspaceTabShellInner({ children }: { children: ReactNode }) {
   }
 
   function closeTab(tab: WorkspaceTab) {
-    if (tab.dirty && !window.confirm(`“${tab.label}” has unsaved changes. Close this workspace tab and discard those changes?`)) return;
+    const confirmed = !tab.dirty || window.confirm(`“${tab.label}” has unsaved changes. Close this workspace tab and discard those changes?`);
+    if (!canCloseWorkspaceTab(tab.dirty, confirmed)) return;
     if (tab.dirty) clearSnapshot(`editor-draft:${tab.id}`);
     const remaining = tabs.filter((item) => item.id !== tab.id);
     setTabs(remaining);
