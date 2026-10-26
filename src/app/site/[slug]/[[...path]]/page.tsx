@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 import { getDb } from "@/lib/db/client";
 import { websitePages, websites } from "@/lib/db/schema";
 import { siteDraftSchema } from "@/lib/editor/site-draft";
-import { siteDraftToLayoutBlueprint, type LayoutBlueprint } from "@/lib/loom/blueprint";
-import { LayoutRenderer } from "@/components/loom/loom-renderer";
+import { siteDraftToLayoutBlueprint, type LayoutBlueprint } from "@/lib/layout-blueprint/blueprint";
+import { LayoutRenderer } from "@/components/layout-studio/layout-renderer";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
