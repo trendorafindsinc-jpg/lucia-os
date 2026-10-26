@@ -2,12 +2,12 @@ import type { CSSProperties } from "react";
 import type { LayoutBlueprint, LayoutSection } from "@/lib/loom/blueprint";
 
 const layoutClass: Record<LayoutBlueprint["theme"]["layout"], string> = {
-  editorial: "layout-layout-editorial",
-  split: "layout-layout-split",
-  gallery: "layout-layout-gallery",
-  cards: "layout-layout-cards",
-  storefront: "layout-layout-storefront",
-  classic: "layout-layout-classic",
+  editorial: "layout-editorial",
+  split: "layout-split",
+  gallery: "layout-gallery",
+  cards: "layout-cards",
+  storefront: "layout-storefront",
+  classic: "layout-classic",
 };
 
 export function LayoutRenderer({ blueprint, preview = false }: { blueprint: LayoutBlueprint; preview?: boolean }) {
