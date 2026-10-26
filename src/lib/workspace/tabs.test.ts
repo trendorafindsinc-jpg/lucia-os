@@ -25,9 +25,50 @@ describe("workspace tab routing", () => {
     });
   });
 
-  it("does not create app tabs for unregistered routes", () => {
+  it.each([
+    ["/pages", "Pages & navigation"],
+    ["/content", "Blog & media"],
+    ["/create", "Layout Studio setup"],
+    ["/workspace/websites", "Websites"],
+    ["/workspace/domains?websiteId=site-a", "Domains"],
+    ["/publish?websiteId=site-a", "Publishing"],
+    ["/analytics?websiteId=site-a", "Analytics"],
+    ["/billing", "Plan & billing"],
+    ["/forms?websiteId=site-a", "Forms"],
+    ["/seo?websiteId=site-a", "SEO"],
+    ["/versions?websiteId=site-a", "Versions"],
+    ["/support", "Help & support"],
+    ["/support/case-123", "Help & support"],
+    ["/workspace/team", "Team & access"],
+    ["/loom", "Loom"],
+  ])("registers the workspace route %s", (href, label) => {
+    const url = new URL(href, "https://workspace.invalid");
+    expect(describeWorkspaceRoute(url.pathname, url.search)).toMatchObject({ label });
+    expect(isSafeWorkspaceTabHref(href)).toBe(true);
+  });
+
+  it("keeps one Layout Studio tab per website context across its routes", () => {
+    const pagesA = describeWorkspaceRoute("/pages", "?websiteId=site-a");
+    const contentA = describeWorkspaceRoute("/content", "?websiteId=site-a");
+    const publishA = describeWorkspaceRoute("/publish", "?websiteId=site-a");
+    const pagesB = describeWorkspaceRoute("/pages", "?websiteId=site-b");
+    expect(getWorkspaceTabId(pagesA!)).toBe(getWorkspaceTabId(contentA!));
+    expect(getWorkspaceTabId(pagesA!)).toBe(getWorkspaceTabId(publishA!));
+    expect(getWorkspaceTabId(pagesA!)).not.toBe(getWorkspaceTabId(pagesB!));
+  });
+
+  it("shares the Layout Studio library tab across routes without a selected website", () => {
+    const pages = describeWorkspaceRoute("/pages", "");
+    const content = describeWorkspaceRoute("/content", "");
+    const websites = describeWorkspaceRoute("/workspace/websites", "");
+    expect(getWorkspaceTabId(pages!)).toBe(getWorkspaceTabId(content!));
+    expect(getWorkspaceTabId(pages!)).toBe(getWorkspaceTabId(websites!));
+  });
+
+  it("does not create app tabs for the launcher or unregistered routes", () => {
     expect(describeWorkspaceRoute("/workspace", "")).toBeNull();
     expect(describeWorkspaceRoute("/not-an-app", "")).toBeNull();
+    expect(describeWorkspaceRoute("/staff", "")).toBeNull();
   });
 
   it("rejects external and unregistered destinations from persisted tab state", () => {

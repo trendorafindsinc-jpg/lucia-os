@@ -733,3 +733,13 @@ h1 span { color: #6979c9; }
 .workspace-tab button:focus-visible,.workspace-tab-home:focus-visible{outline:2px solid #4b63cf;outline-offset:2px}
 @media(max-width:680px){.workspace-tabbar{gap:7px;padding:6px 9px;min-height:44px}.workspace-tab{max-width:170px}.workspace-tab>button[role=tab]{font-size:11px}.workspace-tab-home{flex-basis:32px;width:32px;height:32px}}
 @media(prefers-reduced-motion:reduce){.workspace-tabbar *{scroll-behavior:auto!important;transition:none!important}}
+
+
+/* Shared workspace navigation for the core website-building routes. */
+.workspace-route-navigation{display:flex;align-items:center;gap:6px;min-width:0;overflow-x:auto;padding:8px 14px;border-bottom:1px solid rgba(111,127,151,.18);background:rgba(255,255,255,.82);scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.workspace-route-navigation a{display:inline-flex;align-items:center;flex:0 0 auto;min-height:38px;padding:0 12px;border:1px solid transparent;border-radius:10px;color:#52617a;text-decoration:none;font-size:12px;font-weight:650;white-space:nowrap}
+.workspace-route-navigation a:hover{background:#f1f4fb;color:#273d88}
+.workspace-route-navigation a[aria-current=page]{border-color:#dce4f7;background:#edf1ff;color:#3348a6}
+.workspace-route-navigation a:focus-visible{outline:2px solid #4b63cf;outline-offset:2px}
+@media(max-width:680px){.workspace-route-navigation{gap:4px;padding:7px 9px}.workspace-route-navigation a{min-height:40px;padding:0 10px;font-size:12px}}
+@media(prefers-reduced-motion:reduce){.workspace-route-navigation *{scroll-behavior:auto!important;transition:none!important}}

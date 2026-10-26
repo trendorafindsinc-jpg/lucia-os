@@ -11,6 +11,8 @@ export function describeWorkspaceRoute(pathname: string, search: string): Worksp
   const params = new URLSearchParams(search);
   const websiteId = params.get("websiteId");
   const templateId = params.get("template");
+  const websiteContext = websiteId ? `website:${websiteId}` : "library";
+
   if (pathname === "/templates" || pathname === "/layouts") {
     return { appKey: "layouts", label: "Layouts", href: pathname + search, context: "catalogue" };
   }
@@ -22,13 +24,40 @@ export function describeWorkspaceRoute(pathname: string, search: string): Worksp
     return { appKey: "website-engine", label: "Layout Studio setup", href: pathname + search, context: `setup:${templateId || "new"}` };
   }
   if (pathname === "/workspace/websites") {
-    return { appKey: "website-engine", label: "Layout Studio · Websites", href: pathname + search, context: "library" };
+    return { appKey: "website-engine", label: "Websites", href: pathname + search, context: "library" };
+  }
+  if (pathname === "/pages") {
+    return { appKey: "website-engine", label: "Pages & navigation", href: pathname + search, context: websiteContext };
+  }
+  if (pathname === "/content") {
+    return { appKey: "website-engine", label: "Blog & media", href: pathname + search, context: websiteContext };
   }
   if (pathname === "/workspace/domains") {
-    return { appKey: "website-engine", label: "Layout Studio · Domains", href: pathname + search, context: `domains:${websiteId || "library"}` };
+    return { appKey: "website-engine", label: "Domains", href: pathname + search, context: websiteContext };
   }
   if (pathname === "/workspace/team") {
     return { appKey: "workspace-tools", label: "Team & access", href: pathname + search, context: "team" };
+  }
+  if (pathname === "/publish") {
+    return { appKey: "website-engine", label: "Publishing", href: pathname + search, context: websiteContext };
+  }
+  if (pathname === "/analytics") {
+    return { appKey: "workspace-tools", label: "Analytics", href: pathname + search, context: websiteContext };
+  }
+  if (pathname === "/billing") {
+    return { appKey: "workspace-tools", label: "Plan & billing", href: pathname + search, context: "account" };
+  }
+  if (pathname === "/forms") {
+    return { appKey: "website-engine", label: "Forms", href: pathname + search, context: websiteContext };
+  }
+  if (pathname === "/seo") {
+    return { appKey: "website-engine", label: "SEO", href: pathname + search, context: websiteContext };
+  }
+  if (pathname === "/versions") {
+    return { appKey: "website-engine", label: "Versions", href: pathname + search, context: websiteContext };
+  }
+  if (pathname === "/support" || pathname.startsWith("/support/")) {
+    return { appKey: "workspace-tools", label: "Help & support", href: pathname + search, context: pathname === "/support" ? "home" : pathname.slice("/support/".length) };
   }
   if (pathname === "/loom") {
     return { appKey: "loom", label: "Loom", href: pathname + search, context: "home" };
