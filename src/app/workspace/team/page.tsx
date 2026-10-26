@@ -11,7 +11,7 @@ export const metadata = { title: "People & access | LUCIA OS" };
 
 export default async function WorkspaceTeamPage() {
   const user = await getCurrentUser();
-  if (!user) return <main className="workspace-shell"><section className="workspace-card workspace-denied"><span className="workspace-kicker">PEOPLE & ACCESS</span><h1>Sign in to continue.</h1><p>Use LUCIA ID to view the people connected to your organisations.</p><Link className="workspace-button workspace-button-primary" href="/api/auth/login">Sign in with LUCIA ID</Link></section></main>;
+  if (!user) return <main className="workspace-shell"><section className="workspace-card workspace-denied"><span className="workspace-kicker">PEOPLE & ACCESS</span><h1>Sign in to continue.</h1><p>Use LUCIA ID to view the people connected to your organisations.</p><Link className="workspace-button workspace-button-primary" href="/api/auth/login?returnTo=%2Fworkspace%2Fteam">Sign in with LUCIA ID</Link></section></main>;
 
   const ownOrgs = await getOrganizationMembershipsForUser(user.id);
   const visibleOrgs = ownOrgs.filter((org) => hasOrganizationPermission({ role: org.role, status: org.membershipStatus }, "members.read"));
