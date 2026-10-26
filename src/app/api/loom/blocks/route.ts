@@ -71,6 +71,8 @@ export async function DELETE(request: Request) {
   const parsed = inputSchema.safeParse(raw);
   if (!parsed.success) return NextResponse.json({ error: "Choose a valid member." }, { status: 422 });
   try {
+    const rate = await consumeLoomRateLimit(user.id, "block", 30, 86400000);
+    if (!rate.allowed) return NextResponse.json({ error: "Too many requests. Try again later." }, { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } });
     const db = getDb();
     await db.delete(loomBlocks).where(and(eq(loomBlocks.blockerUserId, user.id), eq(loomBlocks.blockedUserId, parsed.data.userId)));
     return NextResponse.json({ ok: true });
