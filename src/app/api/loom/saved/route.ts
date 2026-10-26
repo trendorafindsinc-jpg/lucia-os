@@ -1,5 +1,6 @@
 import { and, desc, eq, notInArray } from "drizzle-orm";
 import { getLoomRestriction } from "@/lib/loom/staff";
+import { consumeLoomRateLimit } from "@/lib/loom/rate-limit";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -52,6 +53,8 @@ export async function POST(request: Request) {
   const parsed = inputSchema.safeParse(raw);
   if (!parsed.success) return NextResponse.json({ error: "Invalid post." }, { status: 422 });
   try {
+    const rate = await consumeLoomRateLimit(user.id, "saved_post", 60, 86400000);
+    if (!rate.allowed) return NextResponse.json({ error: "Too many saved-post changes. Try again later." }, { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } });
     const db = getDb();
     const [post] = await db.select({ id: loomPosts.id }).from(loomPosts).where(and(eq(loomPosts.id, parsed.data.postId), eq(loomPosts.moderationStatus, "visible"))).limit(1);
     if (!post) return NextResponse.json({ error: "Post not found." }, { status: 404 });
@@ -74,6 +77,8 @@ export async function DELETE(request: Request) {
   const parsed = inputSchema.safeParse(raw);
   if (!parsed.success) return NextResponse.json({ error: "Invalid post." }, { status: 422 });
   try {
+    const rate = await consumeLoomRateLimit(user.id, "saved_post", 60, 86400000);
+    if (!rate.allowed) return NextResponse.json({ error: "Too many saved-post changes. Try again later." }, { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } });
     const db = getDb();
     await db.delete(loomSavedPosts).where(and(eq(loomSavedPosts.userId, user.id), eq(loomSavedPosts.postId, parsed.data.postId)));
     return NextResponse.json({ ok: true });
