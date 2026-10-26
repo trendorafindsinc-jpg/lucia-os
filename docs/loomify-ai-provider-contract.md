@@ -1,8 +1,8 @@
-# LoomifyAI provider contract
+# loomifyAI provider contract
 
 ## Purpose
 
-LoomifyAI is an optional website-creation assistant. It proposes a Loom Blueprint; LUCIA OS remains responsible for validation, tenant authorization, persistence, rendering, preview, and Go Live.
+loomifyAI is an optional website-creation assistant. It proposes a Layout Blueprint; LUCIA OS remains responsible for validation, tenant authorization, persistence, rendering, preview, and Go Live.
 
 ## Current foundation and proposal API
 
@@ -10,9 +10,9 @@ LoomifyAI is an optional website-creation assistant. It proposes a Loom Blueprin
 - `src/lib/loomify-ai/gateway.ts` adapts the Vercel AI Gateway OpenAI-compatible endpoint. The API key and model are server-only deployment settings: `AI_GATEWAY_API_KEY` and `LOOMIFYAI_MODEL`.
 - `POST /api/loomify-ai/propose` requires a signed-in LUCIA OS session, an active organisation membership with `website.edit`, and a website belonging to that organisation.
 - Provider output is validated against `loomBlueprintSchema` before being returned.
-- The Loom Studio UI displays the proposal through the real Loom renderer. The user must explicitly choose **Apply to editor**; that changes unsaved editor fields only. Saving a draft and publishing remain separate actions.
+- The Layout Studio UI displays the proposal through the real Layout renderer. The user must explicitly choose **Apply to editor**; that changes unsaved editor fields only. Saving a draft and publishing remain separate actions.
 - The proposal endpoint does not persist a draft, create a version, or publish a website. Responses are marked `persisted: false` and `published: false`, with `Cache-Control: no-store`.
-- Without Gateway settings, the endpoint returns a recoverable provider-unavailable error. Loom Library and non-AI Studio editing remain available.
+- Without Gateway settings, the endpoint returns a recoverable provider-unavailable error. Layouts catalogue and non-AI Studio editing remain available.
 
 ## Verification completed
 
