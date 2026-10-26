@@ -2,14 +2,15 @@
 
 ## Scope
 
-The v1 workspace should make the primary supported workflows easy to find and should preserve organisation context across the user's work. Overview, Websites, and Domains now share the same primary navigation structure. The navigation links must lead to working destinations; unfinished future-version products must not look active.
+The v1 workspace should make the primary supported workflows easy to find and should preserve organisation context across the user's work. Overview, Layout Studio, Layouts, loomifyAI, Loom, and contextual Domains now follow the canonical product names and distinct responsibilities. The navigation links must lead to working destinations; unfinished future-version products must not look active.
 
 ## v1 destinations
 
 - **Overview** — organisation membership and a concise workspace summary.
 - **Websites** — durable website list and entry to create/edit, domains and publishing.
-- **AI Studio** — website creation and AI proposal entry through the existing setup flow. Do not imply that an AI action succeeded until its result is returned.
-- **Loom** — the existing website template/design library at `/templates`.
+- **loomifyAI** — optional AI website-proposal assistant. Do not imply that an AI action succeeded until its result is returned; manual website creation must remain available without AI configuration.
+- **Layouts** — the website design catalogue at `/templates` (legacy route retained for compatibility).
+- **Loom** — the professional community/network. It is not the website design catalogue or editor.
 - **Plan & Billing** — the existing billing workspace at `/billing`.
 - **Domains and Publishing** — contextual tools linked to a selected website where possible.
 - **Help & Support** — existing support route.
