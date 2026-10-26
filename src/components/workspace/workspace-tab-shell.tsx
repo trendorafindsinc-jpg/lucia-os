@@ -41,6 +41,7 @@ function WorkspaceTabShellInner({ children }: { children: ReactNode }) {
   const search = searchParams.toString();
   const router = useRouter();
   const route = useMemo(() => describeWorkspaceRoute(pathname, search ? `?${search}` : ""), [pathname, search]);
+  const showWorkspaceQuickNavigation = ["/pages", "/content", "/create", "/editor", "/templates", "/layouts"].includes(pathname);
   const [tabs, setTabs] = useState<WorkspaceTab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [snapshots, setSnapshots] = useState<Record<string, unknown>>({});
@@ -161,6 +162,18 @@ function WorkspaceTabShellInner({ children }: { children: ReactNode }) {
               </div>
             ))}
           </div>
+        </nav>
+      )}
+      {hydrated && route && showWorkspaceQuickNavigation && (
+        <nav className="workspace-route-navigation" aria-label="Workspace navigation">
+          <Link href="/workspace" aria-label="Workspace overview">Overview</Link>
+          <Link href="/workspace/websites" aria-current={pathname === "/workspace/websites" ? "page" : undefined}>Websites</Link>
+          <Link href="/create" aria-current={pathname === "/create" ? "page" : undefined}>Create website</Link>
+          <Link href="/templates" aria-current={pathname === "/templates" || pathname === "/layouts" ? "page" : undefined}>Layouts</Link>
+          <Link href="/pages" aria-current={pathname === "/pages" ? "page" : undefined}>Pages &amp; navigation</Link>
+          <Link href="/content" aria-current={pathname === "/content" ? "page" : undefined}>Blog &amp; media</Link>
+          <Link href="/workspace/domains" aria-current={pathname === "/workspace/domains" ? "page" : undefined}>Domains</Link>
+          <Link href="/publish" aria-current={pathname === "/publish" ? "page" : undefined}>Publishing</Link>
         </nav>
       )}
       {children}
