@@ -6,8 +6,8 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getOrganizationMembershipsForUser } from "@/lib/access/guards";
 import { getDb } from "@/lib/db/client";
 import { websites } from "@/lib/db/schema";
-import { getConfiguredloomifyAIProvider } from "@/lib/loomify-ai/gateway";
-import { loomifyAIError, proposeLoomBlueprint } from "@/lib/loomify-ai/provider";
+import { getConfiguredLoomifyAIProvider } from "@/lib/loomify-ai/gateway";
+import { LoomifyAIError, proposeLoomBlueprint } from "@/lib/loomify-ai/provider";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -85,7 +85,7 @@ export async function POST(request: Request) {
   if (!authorized) return errorResponse("Website not found or you do not have editing access.", 404);
 
   try {
-    const proposal = await proposeLoomBlueprint(getConfiguredloomifyAIProvider(), parsed.data.brief);
+    const proposal = await proposeLoomBlueprint(getConfiguredLoomifyAIProvider(), parsed.data.brief);
     return NextResponse.json({
       proposal: proposal.blueprint,
       provider: proposal.providerId,
@@ -93,7 +93,7 @@ export async function POST(request: Request) {
       published: false,
     }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
-    if (error instanceof loomifyAIError) {
+    if (error instanceof LoomifyAIError) {
       const status = error.code === "invalid_brief" ? 422
         : error.code === "provider_unavailable" ? 503
         : error.code === "timeout" ? 504
