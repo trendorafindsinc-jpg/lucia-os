@@ -1,45 +1,47 @@
 # LUCIA OS
 
-LUCIA OS is a multi-tenant product operating system for organisations and people to create and publish websites, sell and buy through Store, use category-specific Portals, manage company day-to-day activities through Business Admin, and participate in the Loom business community.
+LUCIA OS is a connected, device-adaptive technology workspace. Its product vision combines free website creation and publishing, premium ready-made Layouts, Loom's verified professional network, and LUCIA Store's technology marketplace. Customers can acquire eligible applications and launch them from workspace icons; selected products may support white-label and commercial deployment under explicit licences.
 
-One application deployment serves many organisations; customer-specific deployments are not the design.
+**The standard Website Engine is free.** This is a deliberate customer-acquisition strategy. Paid products and services—such as custom domains, optional costly AI, and separately licensed software—must be clearly distinguished from the free website offer.
 
-## Governing product documentation
+One application deployment serves many organisations; customer-specific deployments are not the architecture.
 
-- [Unified Platform Blueprint](docs/unified-platform-blueprint.md) — canonical product boundaries, navigation, Store, Portals, Business Admin, Loom, security, entitlements, and acceptance principles.
-- [30-Phase Implementation Roadmap](docs/implementation-roadmap-30-phases.md) — implementation order, dependencies, acceptance gates, and Codex checkpoint format.
-- [Website Engine Blueprint](docs/website-engine-blueprint.md) — Loom Library, Loom Blueprint, Layer Studio, LoomifiAI, preview, save and publishing contract.
+## Governing documentation
+
+- [LUCIA OS Product Vision and Contract](docs/lucia-os-product-vision.md) — **canonical** product scope, four sections, terminology, free website strategy, Layout quality, Loom verification, Store version/licence model, and delivery order.
+- [Implementation Roadmap](docs/implementation-roadmap-30-phases.md) — sequential delivery and acceptance checkpoints, subordinate to the canonical vision.
+- [Website Engine Contract](docs/website-engine-blueprint.md) — focused free website creation, Layout, validation, and publishing rules.
+- [Unified Platform Blueprint — historical pointer](docs/unified-platform-blueprint.md) — retained for old links; canonical requirements are in the product vision.
 - [Architecture](docs/architecture.md) — system boundaries and technical baseline.
-- [LUCIA Core authentication-only boundary](docs/core-auth-only-boundary.md) — Core authenticates; LUCIA OS owns local authorization and product data.
+- [LUCIA Core authentication-only boundary](docs/core-auth-only-boundary.md) — Core authenticates; LUCIA OS owns local authorisation and product data.
 - [Engineering Standards](docs/engineering-standards.md) and [Security Baseline](docs/security-baseline.md).
 
-Repository-wide agent instructions are in [AGENTS.md](AGENTS.md). Codex and other coding agents must read these instructions and the governing blueprint/roadmap before changing code.
+Before code changes, read [AGENTS.md](AGENTS.md), the canonical vision, roadmap, architecture/security standards, the relevant focused spec, and the actual code/tests.
 
-## Product navigation
+## Workspace destinations
 
-The approved first-class destinations are:
+- **Home / Overview** — context, activity, and next actions.
+- **Website Engine** — free website creation and publishing.
+- **Layouts** — genuinely distinct, polished, ready-to-personalise website designs.
+- **Loom** — professional discovery and connections with a separate, evidence-based verification process.
+- **LUCIA Store** — free and paid technology products, version licences, updates/upgrades, custom domains, and eligible white-label/commercial software.
+- **Installed applications** — purchased or free apps surfaced as launchable workspace icons.
+- **Settings** — profile, workspace, security, and app preferences.
 
-- **Overview** — workspace status and next actions.
-- **Websites** — Layouts, Layer Studio, pages, drafts, domains, preview and publishing.
-- **AI Studio** — optional loomifyAI assistance; AI is not required to create or operate a website.
-- **Store** — tailored to sellers and buyers.
-- **Portals** — tailored to the workflows and controls of each approved category.
-- **Business Admin** — tailored to companies managing day-to-day activities.
-- **Loom** — a first-class business community for discussions, groups, business discovery, connections, messaging and collaboration.
-- **Plan & Billing** — subscriptions, usage and premium entitlements, subject to permissions.
+The workspace must adapt intentionally to mobile (iOS-inspired), desktop (macOS-inspired), and tablet (iPad-inspired) interaction patterns without copying third-party branding or screens. Portals and Business Admin are not v1 products and must not be represented as available.
 
-Supporting tools may appear contextually inside Websites where that creates a clearer connected experience.
+## Non-negotiable rules
 
-## Non-negotiable product boundaries
-
-- LUCIA Core / LUCIA ID provides global authentication only. LUCIA OS owns its organisations, memberships, roles, permissions, tenant data, billing, subscriptions and entitlements.
-- A valid LUCIA ID does not automatically grant access to an organisation, portal, Store operation, or premium capability.
-- Tenant isolation and authorization are enforced server-side for every protected read, write, render, job, webhook, and export.
-- Roles, paid entitlements, and Loom business verification are separate concepts.
-- Website creation by template, manual editing, or AI must use the same validated Blueprint, persistence, preview and publication pipeline.
-- No inert controls, fake progress, simulated success, client-trusted payment state, or silent cross-tenant access.
-- Failed save/publish operations preserve the last known-good live site. Commerce/payment operations must be idempotent and recoverable.
-- Features are not production-ready merely because documentation exists or a build passes; follow the roadmap acceptance gates.
+- LUCIA Core / LUCIA ID provides global authentication only. LUCIA OS owns local organisation membership, roles, permissions, tenant data, purchases, and entitlements.
+- A valid LUCIA ID is not universal permission; enforce authorisation and tenant scope on the server.
+- Standard website creation and publishing remain free; do not make basic website creation depend on subscriptions, paid layouts, or AI.
+- Layouts must be genuinely different in structure and design, not just title/copy/colour variations.
+- Loom verification, payment status, and user roles are separate concepts. Payment alone cannot buy a verification badge.
+- Store's default software model is a one-time purchase of a specific version with the listed update period; do not silently introduce subscription expiry or undisclosed runtime fees.
+- White-label/resale rights are product-specific and must be explicitly licensed.
+- Failed website save/publish preserves the previous known-good live version. Purchase and version-upgrade operations must be idempotent, auditable, and recoverable.
+- No inert controls, fake progress, fabricated data, client-trusted payment state, or success before server confirmation.
+- Documentation does not prove implementation. Record actual tests and acceptance evidence.
 
 ## Technology baseline
 
@@ -60,8 +62,8 @@ cp .env.example .env.local
 npm run dev
 ```
 
-The app should start without production credentials. Features requiring external services must fail safely and explain configuration requirements; do not add fake production data or silently bypass authorization.
+The app should start without production credentials. Features requiring external services must fail safely and explain configuration requirements; do not add fake production data or silently bypass authorisation.
 
-## Phase and release discipline
+## Delivery discipline
 
-The [30-phase roadmap](docs/implementation-roadmap-30-phases.md) is the single index for phase order and acceptance. Audit actual code and test evidence before updating phase status. Work in narrow, reviewable slices; test before merge. Do not perform destructive migrations, production resets, DNS changes, or deployments without explicit approval. Do not merge to `main` until required verification is complete and the user explicitly authorises the merge.
+Audit actual code and test evidence before updating status. Work in narrow, reviewable slices. Do not perform destructive migrations, production resets, DNS changes, secret changes, or deployments without explicit approval. Do not merge to `main` until required verification is complete and the user explicitly authorises the merge.
