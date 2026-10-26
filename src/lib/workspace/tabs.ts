@@ -16,19 +16,19 @@ export function describeWorkspaceRoute(pathname: string, search: string): Worksp
   }
   if (pathname === "/editor") {
     const context = websiteId ? `website:${websiteId}` : `template:${templateId || "new"}`;
-    return { appKey: "website-editor", label: "Website editor", href: pathname + search, context };
+    return { appKey: "website-engine", label: "Website editor", href: pathname + search, context };
   }
   if (pathname === "/create") {
-    return { appKey: "website-create", label: "Website setup", href: pathname + search, context: templateId || "new" };
+    return { appKey: "website-engine", label: "Website setup", href: pathname + search, context: `setup:${templateId || "new"}` };
   }
   if (pathname === "/workspace/websites") {
-    return { appKey: "websites", label: "Websites", href: pathname + search, context: "library" };
+    return { appKey: "website-engine", label: "Websites", href: pathname + search, context: "library" };
   }
   if (pathname === "/workspace/domains") {
-    return { appKey: "domains", label: "Domains", href: pathname + search, context: websiteId || "library" };
+    return { appKey: "website-engine", label: "Domains", href: pathname + search, context: `domains:${websiteId || "library"}` };
   }
   if (pathname === "/workspace/team") {
-    return { appKey: "team", label: "Team & access", href: pathname + search, context: "team" };
+    return { appKey: "workspace-tools", label: "Team & access", href: pathname + search, context: "team" };
   }
   if (pathname === "/loom") {
     return { appKey: "loom", label: "Loom", href: pathname + search, context: "home" };
