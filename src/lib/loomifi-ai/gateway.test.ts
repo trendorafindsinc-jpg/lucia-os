@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-import { createVercelAIGatewayProvider, getConfiguredLoomifiAIProvider } from "./gateway";
+import { createVercelAIGatewayProvider, getConfiguredLoomifyAIProvider } from "./gateway";
 
 function response(payload: unknown, init: ResponseInit = {}): Response {
   return new Response(JSON.stringify(payload), {
@@ -76,11 +76,11 @@ describe("Vercel AI Gateway adapter", () => {
 
   it("does not configure the provider unless both server-side values exist", () => {
     vi.stubEnv("AI_GATEWAY_API_KEY", "");
-    vi.stubEnv("LOOMIFIAI_MODEL", "test/model");
-    expect(getConfiguredLoomifiAIProvider()).toBeNull();
+    vi.stubEnv("LOOMIFYAI_MODEL", "test/model");
+    expect(getConfiguredLoomifyAIProvider()).toBeNull();
 
     vi.stubEnv("AI_GATEWAY_API_KEY", "test-secret");
-    vi.stubEnv("LOOMIFIAI_MODEL", "");
-    expect(getConfiguredLoomifiAIProvider()).toBeNull();
+    vi.stubEnv("LOOMIFYAI_MODEL", "");
+    expect(getConfiguredLoomifyAIProvider()).toBeNull();
   });
 });
