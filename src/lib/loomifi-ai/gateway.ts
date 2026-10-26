@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { LoomifiAIProvider } from "@/lib/loomifi-ai/provider";
+import type { LoomifyAIProvider } from "@/lib/loomify-ai/provider";
 
 /**
  * Vercel AI Gateway's OpenAI-compatible endpoint. The model is deployment
@@ -14,7 +14,7 @@ type FetchLike = typeof fetch;
 export function createVercelAIGatewayProvider(
   config: GatewayConfig,
   fetchImpl: FetchLike = fetch,
-): LoomifiAIProvider {
+): LoomifyAIProvider {
   return {
     id: "vercel-ai-gateway",
     async generateBlueprint({ brief, signal }) {
@@ -76,9 +76,9 @@ export function createVercelAIGatewayProvider(
   };
 }
 
-export function getConfiguredLoomifiAIProvider(): LoomifiAIProvider | null {
+export function getConfiguredLoomifyAIProvider(): LoomifyAIProvider | null {
   const apiKey = process.env.AI_GATEWAY_API_KEY?.trim();
-  const model = process.env.LOOMIFIAI_MODEL?.trim();
+  const model = process.env.LOOMIFYAI_MODEL?.trim() || process.env.LOOMIFIAI_MODEL?.trim();
   if (!apiKey || !model) return null;
   return createVercelAIGatewayProvider({ apiKey, model });
 }
