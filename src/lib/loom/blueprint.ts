@@ -3,12 +3,12 @@ import { editorPalettes, type SiteDraft } from "@/lib/editor/site-draft";
 import { getTemplateById } from "@/lib/templates/catalogue";
 
 /**
- * Loom Blueprint v1 is the validated, versioned description of a website.
+ * Layout Blueprint v1 (legacy schema ID retained) is the validated, versioned description of a website.
  * Keep this data-only: renderers own markup and must never evaluate user code.
  */
 const safeText = (max: number) => z.string().trim().min(1).max(max);
 
-export const loomSectionSchema = z.discriminatedUnion("type", [
+export const layoutSectionSchema = z.discriminatedUnion("type", [
   z.object({
     id: z.string().regex(/^[a-z0-9][a-z0-9-]{0,63}$/),
     type: z.literal("hero"),
@@ -43,14 +43,14 @@ export const loomSectionSchema = z.discriminatedUnion("type", [
   }).strict(),
 ]);
 
-export const loomPageSchema = z.object({
+export const layoutPageSchema = z.object({
   id: z.string().regex(/^[a-z0-9][a-z0-9-]{0,63}$/),
   path: z.string().regex(/^\/$|^\/[a-z0-9]+(?:-[a-z0-9]+)*(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)*$/).max(180),
   title: safeText(120),
-  sections: z.array(loomSectionSchema).min(1).max(24),
+  sections: z.array(layoutSectionSchema).min(1).max(24),
 }).strict();
 
-export const loomBlueprintSchema = z.object({
+export const layoutBlueprintSchema = z.object({
   schema: z.literal("lucia.loom-blueprint"),
   version: z.literal(1),
   site: z.object({
@@ -74,7 +74,7 @@ export const loomBlueprintSchema = z.object({
     label: safeText(50),
     href: z.string().regex(/^#[a-z0-9-]{1,64}$/),
   }).strict()).max(12),
-  pages: z.array(loomPageSchema).min(1).max(30),
+  pages: z.array(layoutPageSchema).min(1).max(30),
 }).strict().superRefine((blueprint, ctx) => {
   const pagePaths = new Set<string>();
   for (const [index, page] of blueprint.pages.entries()) {
@@ -88,8 +88,8 @@ export const loomBlueprintSchema = z.object({
   }
 });
 
-export type LoomBlueprint = z.infer<typeof loomBlueprintSchema>;
-export type LoomSection = z.infer<typeof loomSectionSchema>;
+export type LayoutBlueprint = z.infer<typeof layoutBlueprintSchema>;
+export type LayoutSection = z.infer<typeof layoutSectionSchema>;
 
 function slugify(value: string, fallback: string): string {
   const slug = value.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 64);
@@ -97,7 +97,7 @@ function slugify(value: string, fallback: string): string {
 }
 
 /** Backward-compatible adapter for existing saved SiteDraft records. */
-export function siteDraftToLoomBlueprint(draft: SiteDraft): LoomBlueprint {
+export function siteDraftToLayoutBlueprint(draft: SiteDraft): LayoutBlueprint {
   const template = getTemplateById(draft.templateId);
   const palette = editorPalettes[draft.palette];
   const layout = template?.category === "Portfolio" || template?.category === "Creative"
@@ -142,7 +142,7 @@ export function siteDraftToLoomBlueprint(draft: SiteDraft): LoomBlueprint {
     heading: hasContact ? "Start a conversation" : draft.buttonLabel,
     body: hasContact ? "Reach out to learn more about our work and next steps." : draft.description,
   }];
-  return loomBlueprintSchema.parse({
+  return layoutBlueprintSchema.parse({
     schema: "lucia.loom-blueprint",
     version: 1,
     site: {
@@ -165,3 +165,11 @@ export function siteDraftToLoomBlueprint(draft: SiteDraft): LoomBlueprint {
     }],
   });
 }
+
+// Compatibility aliases: preserve callers that still use the historical module contract.
+export const loomSectionSchema = layoutSectionSchema;
+export const loomPageSchema = layoutPageSchema;
+export const loomBlueprintSchema = layoutBlueprintSchema;
+export type LoomBlueprint = LayoutBlueprint;
+export type LoomSection = LayoutSection;
+export const siteDraftToLoomBlueprint = siteDraftToLayoutBlueprint;
