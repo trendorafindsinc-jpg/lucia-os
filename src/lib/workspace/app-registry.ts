@@ -41,7 +41,7 @@ export const WORKSPACE_APPS = [
     description: "AI assistance for creating and improving your work",
     status: "unavailable",
     icon: "loomify-ai",
-    reason: "loomifyAI is not available in this workspace release.",
+    reason: "loomifyAI integration is not available in this workspace release.",
   },
   {
     key: "loom",

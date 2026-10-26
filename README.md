@@ -2,7 +2,7 @@
 
 LUCIA OS is a connected, device-adaptive technology workspace. Its product vision combines free website creation and publishing, premium ready-made Layouts, Loom's verified professional network, and LUCIA Store's technology marketplace. Customers can acquire eligible applications and launch them from workspace icons; selected products may support white-label and commercial deployment under explicit licences.
 
-**The standard Website Engine is free.** This is a deliberate customer-acquisition strategy. Paid products and services—such as custom domains, optional costly AI, and separately licensed software—must be clearly distinguished from the free website offer.
+**The standard Layout Studio is free.** This is a deliberate customer-acquisition strategy. Paid products and services—such as custom domains, optional costly AI, and separately licensed software—must be clearly distinguished from the free website offer.
 
 One application deployment serves many organisations; customer-specific deployments are not the architecture.
 
@@ -10,7 +10,7 @@ One application deployment serves many organisations; customer-specific deployme
 
 - [LUCIA OS Product Vision and Contract](docs/lucia-os-product-vision.md) — **canonical** product scope, four sections, terminology, free website strategy, Layout quality, Loom verification, Store version/licence model, and delivery order.
 - [Implementation Roadmap](docs/implementation-roadmap-30-phases.md) — sequential delivery and acceptance checkpoints, subordinate to the canonical vision.
-- [Website Engine Contract](docs/website-engine-blueprint.md) — focused free website creation, Layout, validation, and publishing rules.
+- [Layout Studio Contract](docs/website-engine-blueprint.md) — focused free website creation, Layout, validation, and publishing rules.
 - [Unified Platform Blueprint — historical pointer](docs/unified-platform-blueprint.md) — retained for old links; canonical requirements are in the product vision.
 - [Architecture](docs/architecture.md) — system boundaries and technical baseline.
 - [LUCIA Core authentication-only boundary](docs/core-auth-only-boundary.md) — Core authenticates; LUCIA OS owns local authorisation and product data.
@@ -21,7 +21,7 @@ Before code changes, read [AGENTS.md](AGENTS.md), the canonical vision, roadmap,
 ## Workspace destinations
 
 - **Home / Overview** — context, activity, and next actions.
-- **Website Engine** — free website creation and publishing.
+- **Layout Studio** — free website creation and publishing.
 - **Layouts** — genuinely distinct, polished, ready-to-personalise website designs.
 - **Loom** — professional discovery and connections with a separate, evidence-based verification process.
 - **LUCIA Store** — free and paid technology products, version licences, updates/upgrades, custom domains, and eligible white-label/commercial software.
@@ -67,3 +67,17 @@ The app should start without production credentials. Features requiring external
 ## Delivery discipline
 
 Audit actual code and test evidence before updating status. Work in narrow, reviewable slices. Do not perform destructive migrations, production resets, DNS changes, secret changes, or deployments without explicit approval. Do not merge to `main` until required verification is complete and the user explicitly authorises the merge.
+
+## Canonical product names
+
+- **LUCIA OS** — the unified workspace.
+- **Layout Studio** — create, edit, and publish websites; standard creation and publishing are free.
+- **Layouts** — website design catalogue; `/templates` remains a legacy-compatible route.
+- **loomifyAI** — optional AI assistant for website proposals.
+- **Loom** — professional community/network; never use this name for website layouts or the editor.
+- **LUCIA Store** — marketplace for apps and products. Portals and Business Admin are future products, not v1 launcher apps.
+- **LUCIA Core / LUCIA ID** — global authentication only; LUCIA OS owns local authorization and tenant data.
+
+Internal legacy identifiers and URLs (including `website-engine`, `/templates`, and the current blueprint schema identifier) are compatibility contracts, not customer-facing product names. Rename them only through explicit migrations or compatibility-safe aliases.
+
+Canonical implementation paths are `src/lib/layout-blueprint/blueprint.ts`, `src/components/layout-studio/layout-renderer.tsx`, `src/lib/site-structure/layout-adapter.ts`, and `src/lib/loomify-ai/`. The former `src/lib/loom/`, `src/components/loom/`, `src/lib/site-structure/loom-adapter.ts`, `src/app/loom-renderer.css`, and `/api/loomifi-ai/propose` locations are compatibility shims only; new code should import and call the canonical paths.
