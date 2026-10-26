@@ -39,7 +39,7 @@ export async function proposeLoomBlueprint(
     throw new LoomifyAIError("invalid_brief", briefResult.error.issues[0]?.message ?? "Check your website brief.");
   }
   if (!provider) {
-    throw new LoomifyAIError("provider_unavailable", "LoomifyAI is not configured yet. You can still choose a Loom and build your website in Studio.");
+    throw new LoomifyAIError("provider_unavailable", "LoomifyAI is not configured yet. You can still choose a Layout and build your website in Layout Studio.");
   }
 
   const timeoutMs = options.timeoutMs ?? 30_000;
