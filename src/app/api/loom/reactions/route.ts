@@ -42,8 +42,6 @@ export async function POST(request: Request) {
     const db = getDb();
     const rate = await consumeLoomRateLimit(user.id, "reaction", 60, 600000);
     if (!rate.allowed) return NextResponse.json({ error: "Too many requests. Try again shortly." }, { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } });
-    const rate = await consumeLoomRateLimit(user.id, "reaction", 60, 600000);
-    if (!rate.allowed) return NextResponse.json({ error: "Too many requests. Try again shortly." }, { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } });
     const [verification] = await db.select({ status: loomBusinessVerifications.status }).from(loomBusinessVerifications).where(eq(loomBusinessVerifications.userId, user.id)).limit(1);
     if (verification?.status !== "verified") return NextResponse.json({ error: "Business verification is required to react to community posts." }, { status: 403 });
     const [post] = await db.select({ id: loomPosts.id }).from(loomPosts).where(and(eq(loomPosts.id, parsed.data.postId), eq(loomPosts.moderationStatus, "visible"))).limit(1);
