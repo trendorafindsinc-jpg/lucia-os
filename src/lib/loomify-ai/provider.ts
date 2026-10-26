@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { layoutBlueprintSchema, type LayoutBlueprint } from "@/lib/loom/blueprint";
+import { layoutBlueprintSchema, type LayoutBlueprint } from "@/lib/layout-blueprint/blueprint";
 
 export const loomifyAIBriefSchema = z.string().trim().min(20, "Describe the website in a little more detail.").max(4_000, "Keep the website brief under 4,000 characters.");
 
