@@ -68,10 +68,10 @@ describe("Loom private-message authorization boundaries", () => {
   it("denies message history to verified members without an accepted connection", async () => {
     const peerId = "9f01ed80-9900-4ed7-bf38-7df0b531eaf4";
     const limit = vi.fn()
-      .mockResolvedValueOnce({ status: "verified" })
-      .mockResolvedValueOnce({ status: "verified" })
-      .mockResolvedValueOnce(undefined)
-      .mockResolvedValueOnce(undefined);
+      .mockResolvedValueOnce([{ status: "verified" }])
+      .mockResolvedValueOnce([{ status: "verified" }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]);
     const chain = {
       from: vi.fn(() => chain),
       where: vi.fn(() => chain),
