@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { makeInitialDraft } from "@/lib/editor/site-draft";
-import { siteStructurePageToBlueprint } from "./loom-adapter";
+import { siteStructurePageToBlueprint } from "./layout-adapter";
 import { makeInitialStructure, addPage, setHomepage } from "./structure";
 
 describe("site structure Layout Blueprint adapter", () => {
