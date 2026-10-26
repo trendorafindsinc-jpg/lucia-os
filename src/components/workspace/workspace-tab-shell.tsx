@@ -7,6 +7,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -71,6 +72,7 @@ function WorkspaceTabShellInner({ children }: { children: ReactNode }) {
   const [tabs, setTabs] = useState<WorkspaceTab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [snapshots, setSnapshots] = useState<Record<string, unknown>>({});
+  const snapshotsRef = useRef(snapshots);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -105,6 +107,7 @@ function WorkspaceTabShellInner({ children }: { children: ReactNode }) {
   }, [hydrated, tabs]);
 
   useEffect(() => {
+    snapshotsRef.current = snapshots;
     if (!hydrated) return;
     try {
       sessionStorage.setItem(SNAPSHOT_STORAGE_KEY, JSON.stringify(snapshots));
@@ -129,13 +132,17 @@ function WorkspaceTabShellInner({ children }: { children: ReactNode }) {
     setTabs((current) => current.map((tab) => tab.id === activeTabId ? { ...tab, dirty } : tab));
   }, [activeTabId]);
 
-  const getSnapshot = useCallback(<T,>(key: string) => snapshots[key] as T | undefined, [snapshots]);
-  const setSnapshot = useCallback((key: string, value: unknown) => setSnapshots((current) => ({ ...current, [key]: value })), []);
-  const clearSnapshot = useCallback((key: string) => setSnapshots((current) => {
-    const next = { ...current };
+  const getSnapshot = useCallback(<T,>(key: string) => snapshotsRef.current[key] as T | undefined, []);
+  const setSnapshot = useCallback((key: string, value: unknown) => {
+    snapshotsRef.current = { ...snapshotsRef.current, [key]: value };
+    setSnapshots(snapshotsRef.current);
+  }, []);
+  const clearSnapshot = useCallback((key: string) => {
+    const next = { ...snapshotsRef.current };
     delete next[key];
-    return next;
-  }), []);
+    snapshotsRef.current = next;
+    setSnapshots(next);
+  }, []);
 
   const value = useMemo(() => ({ activeTabId, setActiveTabDirty, getSnapshot, setSnapshot, clearSnapshot }), [activeTabId, setActiveTabDirty, getSnapshot, setSnapshot, clearSnapshot]);
 
