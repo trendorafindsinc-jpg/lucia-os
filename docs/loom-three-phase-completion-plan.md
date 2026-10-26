@@ -77,12 +77,12 @@ The UI should use a premium, polished visual language, with a three-column deskt
 
 ## Implementation status (live tracking)
 
-**Current phase: Phase 2 — working community features and trust. Phase 2 is in progress, not complete.**
+**Current phase: Phase 2 — working community features and trust. Phase 1 implementation is in place; Phase 2 is in progress and not complete.**
 
 ### Implemented on the current feature branch
 - Responsive Loom feed with public search, publishing composer, replies, reporting controls, and post reactions backed by database APIs.
 - Business verification request/status flow plus a staff-only verification queue. Approval/rejection requires a database-backed staff grant, creates an audit event, and notifies the requesting member.
-- Report review queue with staff permission checks, audited report resolution/dismissal, explicit content hiding for posts/replies/groups/messages, and member restriction records.
+- Report review queue with staff permission checks, audited report resolution/dismissal, explicit content hiding for posts/replies/groups/messages/profiles, profile visibility restoration, and member restriction records.
 - Server-side access checks for verified participation and member restrictions across post creation, replies, reactions, group creation/joining, connection requests, and private messaging.
 - Profile editing, verified-member discovery, connection request/accept/decline, saved-post management, notifications/read state, group creation plus join/leave controls, and a private messages interface for accepted connections.
 - Private messages are scoped to the two participants; messages are marked read when the recipient opens the conversation.
@@ -91,8 +91,8 @@ The UI should use a premium, polished visual language, with a three-column deskt
 
 ### Remaining Phase 2 work
 - Finish block coverage for every remaining community surface and add tests for block/unblock, connection retries, and blocked content visibility; core block/unblock UI and API enforcement are implemented.
-- Add public-profile reporting controls and stronger abuse/rate limiting. Group detail pages, group posts/replies, group membership, and group-post reporting are now implemented.
-- Add automated route-level tests for unauthorised writes, private-message isolation, staff queue permissions, report actions, and restrictions.
+- Public-profile reporting and profile hiding/restoration controls are implemented. Post, reply, reaction, report, message, group-post, connection, block, group-creation, and verification writes use database-backed rate limits.
+- Route-level tests now cover anonymous/cross-origin/unverified post publishing and non-staff moderation access. Add tests for private-message isolation, block/unblock edge cases, report actions, and restriction changes.
 - Review verification evidence handling and ensure the staff queue workflow is operational with real authorised staff grants; evidence references are manually reviewed and do not automatically grant access.
 
 ### Phase 3 — stabilisation and delivery
@@ -101,7 +101,7 @@ The UI should use a premium, polished visual language, with a three-column deskt
 - Fix every current-head check failure before merging. The PR remains open and unmerged.
 
 ### Known limitations
-- No beta-user acceptance test has been performed against the latest UI. The latest CI run passes lint, TypeScript, Drizzle migration consistency, 205 unit tests, and the production build.
-- Content moderation supports hiding posts, replies, groups, and messages. Profile hiding and public-profile reporting are not yet implemented because the current profile model has no moderation-visibility field.
+- No beta-user acceptance test has been performed against the latest UI. The latest source changes include fixes for duplicate rate-limit declarations that failed TypeScript; a fresh full CI run is still required on the final branch head.
+- Content moderation supports hiding posts, replies, groups, messages, and profiles; staff can restore a profile’s visibility through an audited moderation action.
 - Staff restriction/removal actions and member-to-member block/unblock are implemented; broader abuse/rate limiting and some block-edge cases remain outstanding.
 - Do not call Loom complete until all three phases meet their exit criteria and the final report separates implemented behavior, verified behavior, and deployment state.
