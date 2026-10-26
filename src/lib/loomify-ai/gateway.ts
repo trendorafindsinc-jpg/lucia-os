@@ -34,7 +34,7 @@ export function createVercelAIGatewayProvider(
             {
               role: "system",
               content: [
-                "You create safe, polished single-page website proposals for LUCIA Loom.",
+                "You create safe, polished single-page website proposals for LUCIA Layout Studio.",
                 "Return one JSON object only, matching the lucia.loom-blueprint version 1 shape.",
                 "Required top-level keys: schema, version, site, theme, responsive, navigation, pages.",
                 "schema must be lucia.loom-blueprint and version must be 1.",
