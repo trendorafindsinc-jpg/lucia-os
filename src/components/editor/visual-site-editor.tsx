@@ -40,7 +40,15 @@ export function VisualSiteEditor() {
     const params = new URLSearchParams(window.location.search);
     const requested = params.get("template");
     const savedWebsiteId = params.get("websiteId");
-    if (requested && getTemplateById(requested)) setDraft(cachedDraft ?? makeInitialDraft(requested));
+    if (cachedDraft) {
+      setDraft(cachedDraft);
+      setSaveLabel("Unsaved changes");
+      setActiveTabDirty(true);
+      setNotice("Your unsaved editor work was restored in this workspace tab.");
+    } else if (requested && getTemplateById(requested)) {
+      setDraft(makeInitialDraft(requested));
+      setSaveLabel("Preview only");
+    }
     if (!savedWebsiteId) return;
     setWebsiteId(savedWebsiteId);
     setIsLoadingSaved(true);
@@ -63,10 +71,12 @@ export function VisualSiteEditor() {
         if (cachedDraft) {
           setSavedDraftUnavailable(false);
           setSaveLabel("Unsaved changes");
+          setActiveTabDirty(true);
           setNotice("Your unsaved editor work was restored in this workspace tab. Save draft to keep it in your website.");
         } else if (data.draft) {
           setSavedDraftUnavailable(false);
           setSaveLabel("Saved draft loaded");
+          setActiveTabDirty(false);
         } else {
           setSavedDraftUnavailable(true);
           setSaveLabel("Draft needs recovery");
@@ -81,10 +91,6 @@ export function VisualSiteEditor() {
       .finally(() => setIsLoadingSaved(false));
   }, [activeTabId, getSnapshot]);
 
-  useEffect(() => {
-    setActiveTabDirty(saveLabel === "Unsaved changes");
-  }, [saveLabel, setActiveTabDirty]);
-
   function update<K extends keyof SiteDraft>(key: K, value: SiteDraft[K]) {
     setDraft((current) => {
       const next = { ...current, [key]: value };
@@ -92,6 +98,7 @@ export function VisualSiteEditor() {
       return next;
     });
     setSaveLabel("Unsaved changes");
+    setActiveTabDirty(true);
     setNotice("");
   }
 
@@ -189,6 +196,8 @@ export function VisualSiteEditor() {
     setDraft(checked.data);
     if (snapshotKey) setSnapshot(snapshotKey, checked.data);
     setSaveLabel("Unsaved changes");
+    setActiveTabDirty(true);
+    setActiveTabDirty(true);
     setNotice("Visual draft restored into the editor only. Choose Save draft to persist it; publishing is not triggered.");
     setAiProposal(null);
     setVersionError("");
@@ -307,7 +316,7 @@ export function VisualSiteEditor() {
             {versionError && <p className="loomifi-error" role="alert">{versionError}</p>}
             {isLoadingVersions ? <p className="loomifi-helper">Loading saved checkpoints…</p> : versions.length ? <div className="editor-section-list">{versions.map((version) => <div className="editor-section-row" key={version.id}><div><strong>{version.label}</strong><small>{new Date(version.createdAt).toLocaleString()}</small></div><button type="button" onClick={() => restoreVisualDraft(version)} disabled={isLoadingSaved || isSaving || versionBusy}>Restore visual draft</button></div>)}</div> : <p className="loomifi-helper">{websiteId ? "No saved checkpoints yet." : "Open a saved website to enable checkpoints."}</p>}
           </section>
-          <label className="editor-field">Starting design<select value={draft.templateId} onChange={(event) => { const next = makeInitialDraft(event.target.value); setDraft(next); if (snapshotKey) setSnapshot(snapshotKey, next); setSaveLabel("Unsaved changes"); setNotice(""); }}>{websiteTemplates.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
+          <label className="editor-field">Starting design<select value={draft.templateId} onChange={(event) => { const next = makeInitialDraft(event.target.value); setDraft(next); if (snapshotKey) setSnapshot(snapshotKey, next); setSaveLabel("Unsaved changes"); setActiveTabDirty(true); setNotice(""); }}>{websiteTemplates.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}</select></label>
           <label className="editor-field">Website name<input value={draft.siteName} maxLength={80} onChange={(event) => update("siteName", event.target.value)} /></label>
           <label className="editor-field">Main headline<input value={draft.headline} maxLength={100} onChange={(event) => update("headline", event.target.value)} /></label>
           <label className="editor-field">Introduction<textarea value={draft.description} maxLength={220} rows={4} onChange={(event) => update("description", event.target.value)} /></label>
@@ -316,7 +325,7 @@ export function VisualSiteEditor() {
           <fieldset className="editor-sections-field"><legend>Page sections</legend><p>Show, hide and reorder the sections on your page.</p><div className="editor-section-list">{Array.from(new Set([...(template?.sections ?? []), ...draft.visibleSections])).map((section) => { const index = draft.visibleSections.indexOf(section); const visible = index !== -1; return <div className={visible ? "editor-section-row" : "editor-section-row is-hidden"} key={section}><label><input type="checkbox" checked={visible} onChange={() => toggleSection(section)} /><span>{section}</span></label><div><button type="button" aria-label={`Move ${section} up`} disabled={!visible || index === 0} onClick={() => update("visibleSections", moveSection(draft.visibleSections, index, -1))}>↑</button><button type="button" aria-label={`Move ${section} down`} disabled={!visible || index === draft.visibleSections.length - 1} onClick={() => update("visibleSections", moveSection(draft.visibleSections, index, 1))}>↓</button></div></div>; })}</div></fieldset>
           {notice && <p className="editor-notice" role="status">{notice}</p>}
           {!validation.success && <p className="editor-notice" role="status">Some fields need a little more text before this draft can be considered valid.</p>}
-          <div className="editor-panel-actions"><button type="button" className="editor-reset" onClick={() => { const next = makeInitialDraft(draft.templateId); setDraft(next); if (snapshotKey) setSnapshot(snapshotKey, next); setSaveLabel("Unsaved changes"); setNotice("The editor preview was reset. Save to update the stored draft."); }}>Reset design</button><button type="button" className="editor-done" onClick={saveDraft} disabled={!websiteId || isLoadingSaved || savedDraftUnavailable || isSaving || !validation.success}>{isSaving ? "Saving…" : "Save draft"}</button></div>
+          <div className="editor-panel-actions"><button type="button" className="editor-reset" onClick={() => { const next = makeInitialDraft(draft.templateId); setDraft(next); if (snapshotKey) setSnapshot(snapshotKey, next); setSaveLabel("Unsaved changes"); setActiveTabDirty(true); setNotice("The editor preview was reset. Save to update the stored draft."); }}>Reset design</button><button type="button" className="editor-done" onClick={saveDraft} disabled={!websiteId || isLoadingSaved || savedDraftUnavailable || isSaving || !validation.success}>{isSaving ? "Saving…" : "Save draft"}</button></div>
         </aside>
         <section className="editor-preview-wrap" aria-label="Live website preview">
           <div className="editor-preview-toolbar"><span><i /> Preview</span><span>Desktop concept</span></div>
