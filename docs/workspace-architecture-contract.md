@@ -7,7 +7,7 @@
 
 ## 1. Core concept
 
-The signed-in workspace is a **device-adaptive app-launch environment**, not a marketing page and not a dashboard-first admin panel. It gives the customer one coherent place to launch Website Engine, Layouts, Loom, available installed apps, and Settings.
+The signed-in workspace is a **device-adaptive app-launch environment**, not a marketing page and not a dashboard-first admin panel. It gives the customer one coherent place to launch Layout Studio, Layouts, Loom, available installed apps, and Settings.
 
 The workspace shell is presentation and navigation. It is not an authorization boundary. Every protected route and data operation keeps its current server-side authentication, local membership/permission checks and tenant scoping. LUCIA Core/LUCIA ID authenticates the identity; LUCIA OS decides what the user may access.
 
@@ -17,7 +17,7 @@ The workspace shell is presentation and navigation. It is not an authorization b
 
 - `/workspace`: authenticated workspace home/app launcher; signed-out users are sent through the existing LUCIA ID login flow with a safe return-to path.
 - `/workspace/websites`: existing website projects and drafts.
-- `/create`: standard free Website Engine create flow. The entry must work without AI/provider configuration.
+- `/create`: standard free Layout Studio create flow. The entry must work without AI/provider configuration.
 - `/templates`: preserve as a compatibility route for the existing catalogue while customer-facing labels migrate to **Layouts**. Avoid breaking old links/bookmarks. A canonical `/layouts` route may be added later with a redirect/alias only after route tests confirm behavior.
 - `/editor?websiteId=...`: contextual editor launch with server-side ownership/permission validation; missing, invalid or cross-tenant website IDs fail safely.
 - `/workspace/domains?websiteId=...`: contextual domain management. Custom-domain purchase must not be fabricated; domain ownership, payment entitlement and activation remain separate server-verified states.
@@ -53,7 +53,7 @@ Use a typed, centralized route/app registry for labels, icons, status and destin
 
 ### Tab semantics
 
-- A workspace tab represents one app workspace/context, such as Website Engine, Loom, or an entitled purchased portal. It is not a general-purpose browser tab and does not imply that LUCIA is implementing a browser engine.
+- A workspace tab represents one app workspace/context, such as Layout Studio, Loom, or an entitled purchased portal. It is not a general-purpose browser tab and does not imply that LUCIA is implementing a browser engine.
 - The user can open an app workspace, activate another tab, close a tab, and return to the launcher. Closing a tab must not silently discard known unsaved edits; use the app's dirty-state signal and an honest confirmation/recovery path.
 - Switching tabs must not reset an app simply because it became inactive. Each app declares its state adapter and restoration guarantees. Preserve active in-memory state for ordinary switches; durable drafts and reload restoration are guaranteed only where implemented and tested.
 - A tab contains stable app identity plus validated context (for example a website ID). Context identifiers are inputs, never authorization. Every destination rechecks identity, local membership, entitlement, permission, and tenant scope on the server.
@@ -102,14 +102,14 @@ Breakpoints are implementation details to be chosen from actual content and test
 
 Initial visible destinations:
 1. **Overview** — workspace home/app launcher.
-2. **Website Engine** — free create/manage/edit/publish.
-3. **Layouts** — browse website designs; selecting one feeds the same Website Engine create/edit pipeline.
+2. **Layout Studio** — free create/manage/edit/publish.
+3. **Layouts** — browse website designs; selecting one feeds the same Layout Studio create/edit pipeline.
 4. **Loom** — independent professional network; until the route is implemented on main, label it unavailable rather than linking it to the catalogue.
 5. **LUCIA Store** — unavailable until actual Store implementation exists.
 6. **Installed apps** — only actual entitled/installed products; no invented inventory.
 7. **Settings** — introduce only when the supported settings route/actions exist.
 
-Website Engine must remain usable without buying an app, paid Layout, subscription or AI. Layouts may be free or paid only according to actual product policy; the basic creation/publishing path cannot be paywalled.
+Layout Studio must remain usable without buying an app, paid Layout, subscription or AI. Layouts may be free or paid only according to actual product policy; the basic creation/publishing path cannot be paywalled.
 
 For each registry item, record:
 - stable internal app key;
@@ -167,7 +167,7 @@ Do not add a database migration for cosmetic layout preferences in the first she
 - App tabs open one app workspace each; switching does not needlessly discard app state, and closing known dirty work is protected.
 - Split view works for two eligible workspaces on desktop/laptop and capable tablets; phone navigation uses an app switcher.
 - Assistive Orb opens and closes accessibly, does not obstruct critical controls, and only exposes real permitted actions.
-- Website Engine create/edit/preview/publish remains free and independent of AI/provider uptime.
+- Layout Studio create/edit/preview/publish remains free and independent of AI/provider uptime.
 - Permission revocation, cross-tenant IDs and unauthorized roles fail closed.
 
 ### Device/accessibility
