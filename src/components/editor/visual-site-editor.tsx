@@ -36,6 +36,7 @@ export function VisualSiteEditor() {
 
   useEffect(() => {
     if (!activeTabId) return;
+    let cancelled = false;
     const cachedDraft = getSnapshot<SiteDraft>(`editor-draft:${activeTabId}`);
     const params = new URLSearchParams(window.location.search);
     const requested = params.get("template");
@@ -56,15 +57,17 @@ export function VisualSiteEditor() {
     fetch(`/api/websites/${encodeURIComponent(savedWebsiteId)}/versions`, { cache: "no-store" })
       .then(async (response) => {
         const payload = await response.json();
+        if (cancelled) return;
         if (!response.ok) throw new Error(payload.error || "Couldn't load version history.");
         setVersions(Array.isArray(payload.versions) ? payload.versions : []);
         setVersionError("");
       })
-      .catch((error: unknown) => setVersionError(error instanceof Error ? error.message : "Version history is temporarily unavailable."))
-      .finally(() => setIsLoadingVersions(false));
+      .catch((error: unknown) => { if (!cancelled) setVersionError(error instanceof Error ? error.message : "Version history is temporarily unavailable."); })
+      .finally(() => { if (!cancelled) setIsLoadingVersions(false); });
     fetch(`/api/websites/${encodeURIComponent(savedWebsiteId)}/draft`, { cache: "no-store" })
       .then(async (response) => {
         const data = await response.json();
+        if (cancelled) return;
         if (!response.ok) throw new Error(data.error || "Couldn't open this saved website.");
         const base = makeInitialDraft(data.draft?.templateId || requested || "northstar-consulting");
         setDraft(cachedDraft ?? { ...base, ...(data.draft ?? {}), siteName: data.draft?.siteName || data.website?.name || base.siteName });
@@ -84,12 +87,14 @@ export function VisualSiteEditor() {
         }
       })
       .catch((error: unknown) => {
+        if (cancelled) return;
         setSavedDraftUnavailable(true);
         setSaveLabel("Couldn't load saved draft");
         setNotice(error instanceof Error ? `${error.message} Saving is disabled until the saved draft can be loaded.` : "Couldn't load this website draft. Saving is disabled until the saved draft can be loaded.");
       })
-      .finally(() => setIsLoadingSaved(false));
-  }, [activeTabId, getSnapshot]);
+      .finally(() => { if (!cancelled) setIsLoadingSaved(false); });
+    return () => { cancelled = true; };
+  }, [activeTabId, getSnapshot, setActiveTabDirty]);
 
   function update<K extends keyof SiteDraft>(key: K, value: SiteDraft[K]) {
     const next = { ...draft, [key]: value };
