@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 import { getDb } from "@/lib/db/client";
 import { websitePages, websites } from "@/lib/db/schema";
 import { siteDraftSchema } from "@/lib/editor/site-draft";
-import { siteDraftToLoomBlueprint, type LoomBlueprint } from "@/lib/loom/blueprint";
-import { LoomRenderer } from "@/components/loom/loom-renderer";
+import { siteDraftToLayoutBlueprint, type LayoutBlueprint } from "@/lib/loom/blueprint";
+import { LayoutRenderer } from "@/components/loom/loom-renderer";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,9 +42,9 @@ export default async function PublishedWebsitePage({ params }: PageProps) {
     const parsed = siteDraftSchema.safeParse(raw);
     if (!parsed.success) notFound();
 
-    let blueprint: LoomBlueprint;
+    let blueprint: LayoutBlueprint;
     try {
-      blueprint = siteDraftToLoomBlueprint({
+      blueprint = siteDraftToLayoutBlueprint({
         ...parsed.data,
         ...(page.path !== "/" ? { headline: page.title } : {}),
       });
@@ -52,7 +52,7 @@ export default async function PublishedWebsitePage({ params }: PageProps) {
       notFound();
     }
 
-    return <LoomRenderer blueprint={blueprint} />;
+    return <LayoutRenderer blueprint={blueprint} />;
   } catch (error) {
     if (error && typeof error === "object" && "digest" in error) throw error;
     notFound();
