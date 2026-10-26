@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { makeInitialDraft } from "@/lib/editor/site-draft";
 import { siteDraftToLoomBlueprint } from "@/lib/loom/blueprint";
-import { LoomifiAIError, proposeLoomBlueprint, type LoomifiAIProvider } from "./provider";
+import { LoomifyAIError, proposeLoomBlueprint, type LoomifyAIProvider } from "./provider";
 
 const validBlueprint = siteDraftToLoomBlueprint(makeInitialDraft("northstar-consulting"));
-const provider = (generateBlueprint: LoomifiAIProvider["generateBlueprint"]): LoomifiAIProvider => ({
+const provider = (generateBlueprint: LoomifyAIProvider["generateBlueprint"]): LoomifyAIProvider => ({
   id: "test-provider",
   generateBlueprint,
 });
 
-describe("LoomifiAI provider-neutral proposal boundary", () => {
+describe("LoomifyAI provider-neutral proposal boundary", () => {
   it("returns a validated proposal without persisting or publishing it", async () => {
     const result = await proposeLoomBlueprint(provider(async () => validBlueprint), "Create a modern consulting website for small businesses.");
     expect(result.providerId).toBe("test-provider");
