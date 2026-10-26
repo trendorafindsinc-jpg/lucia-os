@@ -1,14 +1,14 @@
-# LoomifiAI provider contract
+# LoomifyAI provider contract
 
 ## Purpose
 
-LoomifiAI is an optional website-creation assistant. It proposes a Loom Blueprint; LUCIA OS remains responsible for validation, tenant authorization, persistence, rendering, preview, and Go Live.
+LoomifyAI is an optional website-creation assistant. It proposes a Loom Blueprint; LUCIA OS remains responsible for validation, tenant authorization, persistence, rendering, preview, and Go Live.
 
 ## Current foundation and proposal API
 
-- `src/lib/loomifi-ai/provider.ts` defines the provider-neutral adapter contract, brief validation, timeout handling, and safe error normalization.
-- `src/lib/loomifi-ai/gateway.ts` adapts the Vercel AI Gateway OpenAI-compatible endpoint. The API key and model are server-only deployment settings: `AI_GATEWAY_API_KEY` and `LOOMIFIAI_MODEL`.
-- `POST /api/loomifi-ai/propose` requires a signed-in LUCIA OS session, an active organisation membership with `website.edit`, and a website belonging to that organisation.
+- `src/lib/loomify-ai/provider.ts` defines the provider-neutral adapter contract, brief validation, timeout handling, and safe error normalization.
+- `src/lib/loomify-ai/gateway.ts` adapts the Vercel AI Gateway OpenAI-compatible endpoint. The API key and model are server-only deployment settings: `AI_GATEWAY_API_KEY` and `LOOMIFYAI_MODEL`.
+- `POST /api/loomify-ai/propose` requires a signed-in LUCIA OS session, an active organisation membership with `website.edit`, and a website belonging to that organisation.
 - Provider output is validated against `loomBlueprintSchema` before being returned.
 - The Loom Studio UI displays the proposal through the real Loom renderer. The user must explicitly choose **Apply to editor**; that changes unsaved editor fields only. Saving a draft and publishing remain separate actions.
 - The proposal endpoint does not persist a draft, create a version, or publish a website. Responses are marked `persisted: false` and `published: false`, with `Cache-Control: no-store`.
@@ -24,7 +24,7 @@ LoomifiAI is an optional website-creation assistant. It proposes a Loom Blueprin
 
 ## Remaining release gates
 
-1. Configure `AI_GATEWAY_API_KEY` and `LOOMIFIAI_MODEL` in Vercel Preview first, then test a real provider request. Keep the key server-side and never commit it.
+1. Configure `AI_GATEWAY_API_KEY` and `LOOMIFYAI_MODEL` in Vercel Preview first, then test a real provider request. Keep the key server-side and never commit it.
 2. Perform a signed-in end-to-end test against a saved website: generate a proposal, inspect it, apply it, verify the draft remains unsaved until the user saves, and confirm the live site is unchanged until an explicit publish.
 3. Complete interactive visual review at mobile and desktop sizes, including loading, provider-unavailable, timeout, and malformed-output states.
 4. Re-run the quality checks and preview smoke test after any resulting changes.
