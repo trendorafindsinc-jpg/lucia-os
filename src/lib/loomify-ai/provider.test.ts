@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { makeInitialDraft } from "@/lib/editor/site-draft";
-import { siteDraftToLayoutBlueprint } from "@/lib/loom/blueprint";
+import { siteDraftToLayoutBlueprint } from "@/lib/layout-blueprint/blueprint";
 import { LoomifyAIError, proposeLayoutBlueprint, type LoomifyAIProvider } from "./provider";
 
 const validBlueprint = siteDraftToLayoutBlueprint(makeInitialDraft("northstar-consulting"));
