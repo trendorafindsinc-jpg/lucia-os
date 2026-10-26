@@ -6,8 +6,8 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getOrganizationMembershipsForUser } from "@/lib/access/guards";
 import { getDb } from "@/lib/db/client";
 import { websites } from "@/lib/db/schema";
-import { getConfiguredLoomifiAIProvider } from "@/lib/loomifi-ai/gateway";
-import { LoomifiAIError, proposeLoomBlueprint } from "@/lib/loomifi-ai/provider";
+import { getConfiguredLoomifyAIProvider } from "@/lib/loomify-ai/gateway";
+import { LoomifyAIError, proposeLoomBlueprint } from "@/lib/loomify-ai/provider";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
   }
 
   const user = await getCurrentUser().catch(() => null);
-  if (!user) return errorResponse("Sign in with LUCIA ID before using LoomifiAI.", 401);
+  if (!user) return errorResponse("Sign in with LUCIA ID before using LoomifyAI.", 401);
 
   let raw: unknown;
   try {
@@ -85,7 +85,7 @@ export async function POST(request: Request) {
   if (!authorized) return errorResponse("Website not found or you do not have editing access.", 404);
 
   try {
-    const proposal = await proposeLoomBlueprint(getConfiguredLoomifiAIProvider(), parsed.data.brief);
+    const proposal = await proposeLoomBlueprint(getConfiguredLoomifyAIProvider(), parsed.data.brief);
     return NextResponse.json({
       proposal: proposal.blueprint,
       provider: proposal.providerId,
@@ -93,13 +93,13 @@ export async function POST(request: Request) {
       published: false,
     }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
-    if (error instanceof LoomifiAIError) {
+    if (error instanceof LoomifyAIError) {
       const status = error.code === "invalid_brief" ? 422
         : error.code === "provider_unavailable" ? 503
         : error.code === "timeout" ? 504
         : 502;
       return errorResponse(error.message, status);
     }
-    return errorResponse("LoomifiAI could not create a safe proposal. Your existing draft and live site have not been changed.", 502);
+    return errorResponse("LoomifyAI could not create a safe proposal. Your existing draft and live site have not been changed.", 502);
   }
 }
