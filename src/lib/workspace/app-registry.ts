@@ -6,7 +6,7 @@ export type WorkspaceApp = {
   description: string;
   href?: "/workspace" | "/workspace/websites" | "/templates";
   status: WorkspaceAppStatus;
-  icon: "overview" | "website" | "layouts" | "loom" | "store";
+  icon: "overview" | "website" | "layouts" | "loomify-ai" | "loom" | "store";
   reason?: string;
 };
 
@@ -21,7 +21,7 @@ export const WORKSPACE_APPS = [
   },
   {
     key: "website-engine",
-    label: "Website Engine",
+    label: "Layout Studio",
     description: "Create, edit and publish websites for free",
     href: "/workspace/websites",
     status: "available",
@@ -34,6 +34,14 @@ export const WORKSPACE_APPS = [
     href: "/templates",
     status: "available",
     icon: "layouts",
+  },
+  {
+    key: "loomify-ai",
+    label: "loomifyAI",
+    description: "AI assistance for creating and improving your work",
+    status: "unavailable",
+    icon: "loomify-ai",
+    reason: "loomifyAI is not available in this workspace release.",
   },
   {
     key: "loom",

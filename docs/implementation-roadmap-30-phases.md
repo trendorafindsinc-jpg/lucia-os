@@ -2,7 +2,7 @@
 
 **Status:** Required implementation sequence; all completion states must be based on evidence.  
 **Canonical product requirements:** [LUCIA OS Product Vision and Contract](lucia-os-product-vision.md)  
-**Focused website requirements:** [Website Engine Contract](website-engine-blueprint.md)
+**Focused website requirements:** [Layout Studio Contract](website-engine-blueprint.md)
 
 This roadmap replaces conflicting product sequencing and scope assumptions in the earlier roadmap. Existing phase-specific documents may contain useful technical details, but if they conflict with the canonical product vision, pause and reconcile them before implementation. Do not infer that code exists because a phase document describes it.
 
@@ -33,7 +33,7 @@ This roadmap replaces conflicting product sequencing and scope assumptions in th
 Inspect main, active branches/PRs, current workspace, existing design work, routes, data flows, tests, and the current docs. Identify the unwanted design direction and safe reusable foundations without merging it. Record a baseline and regression risks.
 
 ### Phase 2 — Workspace architecture and navigation foundation
-Foundation contract: [Workspace Architecture Contract](workspace-architecture-contract.md). Define and test the pre-UI architecture required for a coherent, device-adaptive app workspace. This phase is foundation work, not the visual redesign. Specify the shared shell boundaries, responsive capability rules, typed app registry, route/access rules, workspace-tab lifecycle, app-state preservation contract, split-view capability contract, and Assistive Orb integration boundary. A workspace tab represents one app workspace (for example Website Engine or a purchased portal), not an arbitrary browser URL. Users can open, activate, close, and return to the launcher from tabs without needlessly losing each app's work. Split view is supported on desktop/laptop and capable tablets; phones use a full-screen app switcher. Define keyboard, touch, accessibility, reduced-motion, and safe-area requirements. Keep the signed-out welcome page and full visual redesign out of scope. Do not start Phase 3 until Phase 2 foundation acceptance is explicitly recorded.
+Foundation contract: [Workspace Architecture Contract](workspace-architecture-contract.md). Define and test the pre-UI architecture required for a coherent, device-adaptive app workspace. This phase is foundation work, not the visual redesign. Specify the shared shell boundaries, responsive capability rules, typed app registry, route/access rules, workspace-tab lifecycle, app-state preservation contract, split-view capability contract, and Assistive Orb integration boundary. A workspace tab represents one app workspace (for example Layout Studio or a purchased portal), not an arbitrary browser URL. Users can open, activate, close, and return to the launcher from tabs without needlessly losing each app's work. Split view is supported on desktop/laptop and capable tablets; phones use a full-screen app switcher. Define keyboard, touch, accessibility, reduced-motion, and safe-area requirements. Keep the signed-out welcome page and full visual redesign out of scope. Do not start Phase 3 until Phase 2 foundation acceptance is explicitly recorded.
 
 ### Phase 3 — Shared visual and interaction foundation
 After Phase 2 is accepted, create the visual language for the workspace shell and its primitives: typography, surfaces, spacing, focus, motion, loading/empty/error/disabled states, touch targets, tabs, split-view affordances, and the Assistive Orb's compact/expanded states. Do not copy proprietary Apple UI or branding. This phase establishes the design system; it does not replace the need for Phase 4/5 device-specific implementation.
@@ -48,7 +48,7 @@ Implement the desktop/laptop workspace composition with app tabs, reliable open/
 Implement a deliberate tablet composition using tablet space and touch affordances. Verify portrait and landscape; avoid simply scaling mobile or squeezing desktop. Support split view only when the viewport, app capabilities, and interaction density make both panes usable; otherwise retain the app switcher.
 
 ### Phase 7 — App and workspace registry
-Define stable app identifiers, labels, original icon assets, launch destinations, availability states, and capability/entitlement metadata. The registry also declares whether an app supports split view, how it saves/restores workspace state, and its contextual requirements. Initial first-class entries include Overview, Website Engine, Layouts, Loom, Store, installed applications, and Settings. Portals and Business Admin are future Store products, not unavailable launcher apps. No fake installed apps or dead icons.
+Define stable app identifiers, labels, original icon assets, launch destinations, availability states, and capability/entitlement metadata. The registry also declares whether an app supports split view, how it saves/restores workspace state, and its contextual requirements. Initial first-class entries include Overview, Layout Studio, Layouts, Loom, Store, installed applications, and Settings. Portals and Business Admin are future Store products, not unavailable launcher apps. No fake installed apps or dead icons.
 
 ### Phase 8 — Settings and workspace context
 Connect profile/workspace preferences, security entry points, organisation context where applicable, and persisted layout/icon preferences. Do not duplicate LUCIA Core authentication.
@@ -59,9 +59,9 @@ Ensure navigation between workspace destinations preserves context and unsaved w
 ### Phase 10 — Workspace acceptance gate
 Verify real click/touch/keyboard flows at phone, tablet portrait/landscape, laptop, and large desktop sizes; app-tab lifecycle and state preservation; close-with-unsaved-changes handling; split view with two independently navigable eligible apps; fallback when an app cannot split; phone app switching; Assistive Orb open/close and non-obstructive behavior; accessibility and reduced motion; reload/persisted preferences; permission-denied/error/empty states; no horizontal overflow; and no regressions in sign-in or existing customer work. Only then proceed to Layouts.
 
-## Section 2 — Free Website Engine and Layouts (Phases 11–19)
+## Section 2 — Free Layout Studio and Layouts (Phases 11–19)
 
-### Phase 11 — Website Engine baseline and free-offer audit
+### Phase 11 — Layout Studio baseline and free-offer audit
 Audit create/edit/preview/publish, domains, layouts, data persistence, entitlement checks, and current pricing gates. Remove any unsupported assumption that standard website creation/publishing requires a subscription, paid Layout, or AI purchase.
 
 ### Phase 12 — Layout catalogue design rubric and inventory

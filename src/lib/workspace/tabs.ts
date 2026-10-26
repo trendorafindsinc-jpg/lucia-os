@@ -16,16 +16,16 @@ export function describeWorkspaceRoute(pathname: string, search: string): Worksp
   }
   if (pathname === "/editor") {
     const context = websiteId ? `website:${websiteId}` : `template:${templateId || "new"}`;
-    return { appKey: "website-engine", label: "Website editor", href: pathname + search, context };
+    return { appKey: "website-engine", label: "Layout Studio editor", href: pathname + search, context };
   }
   if (pathname === "/create") {
-    return { appKey: "website-engine", label: "Website setup", href: pathname + search, context: `setup:${templateId || "new"}` };
+    return { appKey: "website-engine", label: "Layout Studio setup", href: pathname + search, context: `setup:${templateId || "new"}` };
   }
   if (pathname === "/workspace/websites") {
-    return { appKey: "website-engine", label: "Websites", href: pathname + search, context: "library" };
+    return { appKey: "website-engine", label: "Layout Studio · Websites", href: pathname + search, context: "library" };
   }
   if (pathname === "/workspace/domains") {
-    return { appKey: "website-engine", label: "Domains", href: pathname + search, context: `domains:${websiteId || "library"}` };
+    return { appKey: "website-engine", label: "Layout Studio · Domains", href: pathname + search, context: `domains:${websiteId || "library"}` };
   }
   if (pathname === "/workspace/team") {
     return { appKey: "workspace-tools", label: "Team & access", href: pathname + search, context: "team" };

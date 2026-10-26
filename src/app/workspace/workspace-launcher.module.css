@@ -79,3 +79,8 @@
 }
 @media (max-width: 350px) { .appGrid { grid-template-columns: 1fr; } .appTile { min-height: 140px; } }
 @media (prefers-reduced-motion: reduce) { .appTile { transition: none; } .appTile[href]:hover { transform: none; } }
+
+.icon_loomify-ai {
+  color: var(--lucia-accent, #8b7cff);
+  background: linear-gradient(145deg, rgba(139, 124, 255, 0.22), rgba(77, 209, 191, 0.14));
+}
