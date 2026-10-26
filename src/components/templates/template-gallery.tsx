@@ -56,21 +56,21 @@ export function TemplateGallery() {
         <Link className="template-back" href="/workspace">Back to workspace <span aria-hidden="true">←</span></Link>
       </header>
       <section className="template-intro">
-        <p className="eyebrow">LOOM LIBRARY · WEBSITE DESIGN</p>
+        <p className="eyebrow">LAYOUTS · WEBSITE DESIGN</p>
         <h1>Find a look that<br /><span>feels like you.</span></h1>
         <p className="template-lede">Explore distinct design directions for organisations, creators and independent businesses. Each preview has its own composition—not just a different colour palette. Choose a starting point and customise it in the Studio.</p>
-        <div className="template-count"><strong>{websiteTemplates.length} design concepts</strong><span> · {templateCategories.length - 1} categories · Loom Library</span></div>
+        <div className="template-count"><strong>{websiteTemplates.length} website layouts</strong><span> · {templateCategories.length - 1} categories · Layouts</span></div>
         <div className="template-start-link"><Link href="/create">Start guided website setup <span aria-hidden="true">→</span></Link><Link href="/workspace/websites">Open saved websites <span aria-hidden="true">↗</span></Link></div>
       </section>
-      <section className="template-controls" aria-label="Find a website template">
-        <label className="template-search-label" htmlFor="template-search">Search templates</label>
+      <section className="template-controls" aria-label="Find a website layout">
+        <label className="template-search-label" htmlFor="template-search">Search layouts</label>
         <input id="template-search" className="template-search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Try “school”, “portfolio”, or “shop”" />
-        <div className="template-filters" aria-label="Filter by category">
+        <div className="template-filters" aria-label="Filter layouts by category">
           {templateCategories.map((item) => <button key={item} type="button" className={category === item ? "template-filter is-active" : "template-filter"} onClick={() => setCategory(item)} aria-pressed={category === item}>{item}</button>)}
         </div>
       </section>
       <section className="template-results" aria-live="polite">
-        <div className="template-results-heading"><h2>{category === "All" ? "Explore all concepts" : category + " concepts"}</h2><span>{visibleTemplates.length} shown</span></div>
+        <div className="template-results-heading"><h2>{category === "All" ? "Explore all layouts" : category + " layouts"}</h2><span>{visibleTemplates.length} shown</span></div>
         {visibleTemplates.length ? <div className="template-grid">{visibleTemplates.map((template) => {
           const variant = getPreviewVariant(template);
           return <article className="template-card" key={template.id}>
@@ -83,13 +83,13 @@ export function TemplateGallery() {
             <div className="template-card-body">
               <div className="template-card-meta"><span>{template.category}</span><span>{template.style}</span></div>
               <h3>{template.name}</h3><p className="template-audience">{template.audience}</p><p className="template-description">{template.description}</p>
-              <div className="template-sections" aria-label="Included section concepts">{template.sections.slice(0, 4).map((section) => <span key={section}>{section}</span>)}</div>
+              <div className="template-sections" aria-label="Included section layouts">{template.sections.slice(0, 4).map((section) => <span key={section}>{section}</span>)}</div>
               <Link className="template-action" href={getTemplateSetupHref(template.id)}>Customise this design <span aria-hidden="true">↗</span></Link>
             </div>
           </article>;
-        })}</div> : <div className="template-empty"><h3>No matching concepts</h3><p>Try another search or choose a different category.</p><button type="button" onClick={() => { setCategory("All"); setSearch(""); }}>Clear filters</button></div>}
+        })}</div> : <div className="template-empty"><h3>No matching layouts</h3><p>Try another search or choose a different category.</p><button type="button" onClick={() => { setCategory("All"); setSearch(""); }}>Clear filters</button></div>}
       </section>
-      <footer className="template-footer"><span>Designs are starting points, not locked-in layouts.</span><span>Edits and publishing remain subject to the Studio’s save and publish safeguards.</span></footer>
+      <footer className="template-footer"><span>Layouts are starting points, not locked-in designs.</span><span>Edits and publishing remain subject to the Studio’s save and publish safeguards.</span></footer>
     </main>
   );
 }
