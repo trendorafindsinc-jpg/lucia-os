@@ -2,22 +2,23 @@ import { describe, expect, it } from "vitest";
 import { getWorkspaceApp, WORKSPACE_APPS, WORKSPACE_TOOLS } from "./app-registry";
 
 describe("workspace app registry", () => {
-  it("routes the standard Website Engine entry to the website library", () => {
+  it("routes the Layout Studio entry to the website library", () => {
     expect(getWorkspaceApp("website-engine")).toMatchObject({
-      label: "Website Engine",
+      label: "Layout Studio",
       href: "/workspace/websites",
       status: "available",
     });
   });
 
-  it("keeps Layouts separate from Loom and preserves the legacy catalogue route", () => {
+  it("keeps Layouts, loomifyAI, and Loom as distinct workspace apps", () => {
     expect(getWorkspaceApp("layouts")).toMatchObject({ label: "Layouts", href: "/templates", status: "available" });
+    expect(getWorkspaceApp("loomify-ai")).toMatchObject({ label: "loomifyAI", status: "unavailable" });
     expect(getWorkspaceApp("loom")).toMatchObject({ label: "Loom", status: "unavailable" });
     expect(getWorkspaceApp("loom")?.href).toBeUndefined();
   });
 
   it("does not expose unavailable v1 products as launchable routes", () => {
-    for (const key of ["store"]) {
+    for (const key of ["loomify-ai", "store"]) {
       const app = getWorkspaceApp(key);
       expect(app?.status).toBe("unavailable");
       expect(app?.href).toBeUndefined();
