@@ -43,3 +43,13 @@ export function getWorkspaceTabId(route: WorkspaceTabIdentity): string {
 export function canCloseWorkspaceTab(isDirty: boolean, userConfirmedDiscard: boolean): boolean {
   return !isDirty || userConfirmedDiscard;
 }
+
+export function isSafeWorkspaceTabHref(href: string): boolean {
+  if (!href.startsWith("/") || href.startsWith("//")) return false;
+  try {
+    const url = new URL(href, "https://workspace.invalid");
+    return url.origin === "https://workspace.invalid" && describeWorkspaceRoute(url.pathname, url.search) !== null;
+  } catch {
+    return false;
+  }
+}
