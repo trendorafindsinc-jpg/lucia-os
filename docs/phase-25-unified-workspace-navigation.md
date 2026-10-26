@@ -22,7 +22,7 @@ Store, Portals, and Business Admin are intentionally not v1 features. If shown i
 ## Acceptance checklist
 
 - [x] Organisation overview, website list, and domain management have a shared, consistent set of primary destinations.
-- [x] AI Studio and Loom point to existing routes (`/create` and `/templates`); Plan & Billing points to `/billing`.
+- [x] Layout Studio and Layouts point to the existing website creation and catalogue routes (`/create` and `/templates`); Plan & Billing points to `/billing`.
 - [x] Store, Portals, and Business Admin are visibly unavailable and not clickable.
 - [x] The existing responsive workspace navigation styles collapse to a horizontal, scrollable strip on narrow screens.
 - [x] The links use real Next.js routes and retain standard keyboard focus treatment.
