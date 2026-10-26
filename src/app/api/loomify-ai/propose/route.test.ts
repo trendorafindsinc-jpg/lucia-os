@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { makeInitialDraft } from "@/lib/editor/site-draft";
-import { siteDraftToLayoutBlueprint } from "@/lib/loom/blueprint";
+import { siteDraftToLayoutBlueprint } from "@/lib/layout-blueprint/blueprint";
 
 const mocks = vi.hoisted(() => ({
   currentUser: vi.fn(),
