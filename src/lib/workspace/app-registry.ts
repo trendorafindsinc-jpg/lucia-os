@@ -4,7 +4,7 @@ export type WorkspaceApp = {
   key: string;
   label: string;
   description: string;
-  href?: string;
+  href?: "/workspace" | "/workspace/websites" | "/templates";
   status: WorkspaceAppStatus;
   icon: "overview" | "website" | "layouts" | "loom" | "store" | "portals" | "business";
   reason?: string;
