@@ -79,3 +79,5 @@ Audit actual code and test evidence before updating status. Work in narrow, revi
 - **LUCIA Core / LUCIA ID** — global authentication only; LUCIA OS owns local authorization and tenant data.
 
 Internal legacy identifiers and URLs (including `website-engine`, `/templates`, and the current blueprint schema identifier) are compatibility contracts, not customer-facing product names. Rename them only through explicit migrations or compatibility-safe aliases.
+
+Canonical implementation paths are `src/lib/layout-blueprint/blueprint.ts`, `src/components/layout-studio/layout-renderer.tsx`, `src/lib/site-structure/layout-adapter.ts`, and `src/lib/loomify-ai/`. The former `src/lib/loom/`, `src/components/loom/`, `src/lib/site-structure/loom-adapter.ts`, `src/app/loom-renderer.css`, and `/api/loomifi-ai/propose` locations are compatibility shims only; new code should import and call the canonical paths.
