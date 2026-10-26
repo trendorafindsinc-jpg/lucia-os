@@ -142,7 +142,7 @@ export function WebsiteSetupWizard() {
               <div><span>Main goal</span><strong>{goal}</strong></div>
               <div><span>Country</span><strong>{country}</strong></div>
             </div>
-            <div className="setup-actions">{savedWebsite && <Link className="setup-button setup-button--primary" href={`/editor?websiteId=${encodeURIComponent(savedWebsite.id)}`}>Open Layer Studio</Link>}<Link className="setup-button setup-button--secondary" href="/workspace/websites">Open saved websites</Link><button className="setup-button setup-button--secondary" type="button" onClick={() => { setSubmitted(false); setStep(0); setAttempted(false); }}>Edit setup</button></div>
+            <div className="setup-actions">{savedWebsite && <Link className="setup-button setup-button--primary" href={`/editor?websiteId=${encodeURIComponent(savedWebsite.id)}`}>Open Layout Studio</Link>}<Link className="setup-button setup-button--secondary" href="/workspace/websites">Open saved websites</Link><button className="setup-button setup-button--secondary" type="button" onClick={() => { setSubmitted(false); setStep(0); setAttempted(false); }}>Edit setup</button></div>
           </div>
         ) : (
           <>
