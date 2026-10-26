@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { loomBlueprintSchema, type LoomBlueprint } from "@/lib/loom/blueprint";
+import { layoutBlueprintSchema, type LayoutBlueprint } from "@/lib/loom/blueprint";
 
 export const loomifyAIBriefSchema = z.string().trim().min(20, "Describe the website in a little more detail.").max(4_000, "Keep the website brief under 4,000 characters.");
 
@@ -20,7 +20,7 @@ export class LoomifyAIError extends Error {
 }
 
 export type LoomifyAIProposal = {
-  blueprint: LoomBlueprint;
+  blueprint: LayoutBlueprint;
   providerId: string;
 };
 
@@ -29,7 +29,7 @@ export type LoomifyAIProposal = {
  * renders arbitrary code, or publishes a site. Callers must authorise and save
  * the validated result through the normal website APIs after user review.
  */
-export async function proposeLoomBlueprint(
+export async function proposeLayoutBlueprint(
   provider: LoomifyAIProvider | null,
   rawBrief: unknown,
   options: { timeoutMs?: number } = {},
@@ -55,7 +55,7 @@ export async function proposeLoomBlueprint(
         }, timeoutMs);
       }),
     ]);
-    const parsed = loomBlueprintSchema.safeParse(rawOutput);
+    const parsed = layoutBlueprintSchema.safeParse(rawOutput);
     if (!parsed.success) {
       throw new LoomifyAIError("invalid_blueprint", "The proposed design did not pass LUCIA's website safety checks. Your existing draft has not been changed.");
     }
