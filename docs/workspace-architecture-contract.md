@@ -42,10 +42,40 @@ Implement the shell as small, accessible modules rather than copying markup into
 - `WorkspaceEmptyState`: honest states for no memberships, no websites, or no installed apps; no fabricated counts or activity.
 - `WorkspaceErrorState`: recoverable loading/query errors with retry only when retry is actually wired.
 - `WorkspacePreferences`: only after persistence semantics are specified; never pretend local-only changes are saved across devices.
+- `WorkspaceTabManager`: owns the app-workspace tab list, active tab, open/activate/close behavior, and safe close flow for dirty work. It stores app keys and validated context identifiers, not trusted permission claims.
+- `WorkspaceStateAdapter`: a narrow contract each app can implement to preserve and restore its route, selection, drafts, and editor state. Declare which state is in-memory only and which is durably saved; never claim all state survives reload unless tested.
+- `WorkspaceSplitView`: displays two eligible app workspaces on desktop/laptop and capable tablets, with independent navigation, focus, and context. It is unavailable on phone layouts and falls back to the app switcher when either app does not support split view.
+- `WorkspaceAssistiveOrb`: compact floating shortcut surface that expands on activation. It may offer launcher, tab switching, and permitted navigation, but is never the only way to navigate and never bypasses route permissions.
 
 Use a typed, centralized route/app registry for labels, icons, status and destinations. The registry is not a permissions source; the server remains authoritative.
 
-## 4. Device-specific compositions
+## 4. Workspace tabs, state, and split view
+
+### Tab semantics
+
+- A workspace tab represents one app workspace/context, such as Website Engine, Loom, or an entitled purchased portal. It is not a general-purpose browser tab and does not imply that LUCIA is implementing a browser engine.
+- The user can open an app workspace, activate another tab, close a tab, and return to the launcher. Closing a tab must not silently discard known unsaved edits; use the app's dirty-state signal and an honest confirmation/recovery path.
+- Switching tabs must not reset an app simply because it became inactive. Each app declares its state adapter and restoration guarantees. Preserve active in-memory state for ordinary switches; durable drafts and reload restoration are guaranteed only where implemented and tested.
+- A tab contains stable app identity plus validated context (for example a website ID). Context identifiers are inputs, never authorization. Every destination rechecks identity, local membership, entitlement, permission, and tenant scope on the server.
+- Browser back/forward, refresh, direct links, and return-to-launcher navigation remain functional. The tab model must not hijack browser navigation or make a route inaccessible without client-side state.
+- Limit tab restoration to safe, validated metadata. Do not put secrets, tokens, sensitive records, or trusted permission decisions in tab state or URL parameters.
+
+### Split view
+
+- Supported targets: desktop/laptop and capable tablets. Phones use a full-screen app switcher instead of side-by-side panes.
+- Each pane hosts an eligible app workspace with independent navigation, focus, and validated context. Split view is optional; apps that cannot support the pane constraints open full-screen instead.
+- Capability and entitlement checks remain independent for both panes. Split view does not allow an app to access another app's private data, bypass permissions, or assume arbitrary pages can be safely embedded.
+- Define responsive minimum pane widths from tested content. When the viewport becomes too narrow or the user rotates a tablet, fall back predictably to a single active workspace without losing the active context.
+- Phase 2 defines the contract and seams; Phase 3 designs its visual treatment; Phase 5 implements desktop behavior; Phase 6 implements tablet adaptation.
+
+### Assistive Orb
+
+- A small floating orb is a global shortcut affordance, with compact and expanded states. Its final visual treatment belongs to the UI phases.
+- Initial contract: launcher/home, switch open workspace tabs, show the app switcher, and close the expanded menu. Other actions are added only when they have real, permission-aware destinations.
+- It must be dismissible, keyboard accessible, screen-reader labelled, touch-friendly, safe-area aware, and respectful of reduced motion. It must not obscure primary actions, trap focus, or be the only navigation method.
+- The orb does not impersonate Siri or claim native OS privileges. A future Capacitor wrapper may provide platform-specific integration, but the web implementation must work without native plugins.
+
+## 5. Device-specific compositions
 
 Use shared product concepts but distinct interaction layouts, not one desktop layout squeezed onto all screens.
 
@@ -68,7 +98,7 @@ Use shared product concepts but distinct interaction layouts, not one desktop la
 
 Breakpoints are implementation details to be chosen from actual content and tested viewport widths, not copied blindly from Apple. Define tokens and test behavior at the breakpoints, including rotation and narrow desktop windows.
 
-## 5. Navigation and app registry contract
+## 6. Navigation and app registry contract
 
 Initial visible destinations:
 1. **Overview** — workspace home/app launcher.
@@ -92,7 +122,7 @@ For each registry item, record:
 
 No future item should be shown as enabled merely because its route string exists.
 
-## 6. Data and authorization flow
+## 7. Data and authorization flow
 
 1. Request reaches the server-rendered workspace route.
 2. Resolve current local session via existing LUCIA ID integration.
@@ -105,7 +135,7 @@ No future item should be shown as enabled merely because its route string exists
 
 Do not add a database migration for cosmetic layout preferences in the first shell slice unless a tested product requirement requires persistence. First deliver a coherent, functional, keyboard/touch accessible shell with deterministic defaults.
 
-## 7. Interaction rules
+## 8. Interaction rules
 
 - Navigation links use semantic links and work with keyboard, touch, browser back and refresh.
 - Buttons are reserved for actions; navigation should not be implemented as inert buttons.
@@ -116,7 +146,7 @@ Do not add a database migration for cosmetic layout preferences in the first she
 - Color is not the only indicator of active state, verification, availability or errors.
 - Focus indicators, screen-reader names, heading hierarchy, contrast and keyboard order must be verified.
 
-## 8. CSS and component strategy
+## 9. CSS and component strategy
 
 - Keep the current global CSS stable initially; do not append another large, broad redesign block to `src/app/globals.css`.
 - Prefer a scoped workspace stylesheet or CSS module and small component styles; use named design tokens for surfaces, spacing, typography, radii, focus, and motion.
@@ -125,7 +155,7 @@ Do not add a database migration for cosmetic layout preferences in the first she
 - Avoid Unicode glyphs as final app icons. Use a documented original icon set/component abstraction so assets can be swapped without changing routes.
 - Do not add dependencies until native CSS/React primitives are insufficient and the need is justified.
 
-## 9. Acceptance gates before visual implementation is considered complete
+## 10. Acceptance gates before visual implementation is considered complete
 
 ### Behavior
 - Signed-in user sees the workspace, not the public welcome page.
@@ -133,7 +163,10 @@ Do not add a database migration for cosmetic layout preferences in the first she
 - Zero/one/multiple membership states are honest and usable.
 - Every enabled icon opens the correct destination and preserves necessary context.
 - Layouts never route to Loom; Loom never aliases to the catalogue.
-- Store, Portals and Business Admin remain unavailable in v1.
+- Store remains unavailable until its real implementation is ready. Portals and Business Admin are future products to be discovered/purchased through LUCIA Store; do not show them as unavailable launcher apps.
+- App tabs open one app workspace each; switching does not needlessly discard app state, and closing known dirty work is protected.
+- Split view works for two eligible workspaces on desktop/laptop and capable tablets; phone navigation uses an app switcher.
+- Assistive Orb opens and closes accessibly, does not obstruct critical controls, and only exposes real permitted actions.
 - Website Engine create/edit/preview/publish remains free and independent of AI/provider uptime.
 - Permission revocation, cross-tenant IDs and unauthorized roles fail closed.
 
@@ -150,6 +183,16 @@ Do not add a database migration for cosmetic layout preferences in the first she
 - Lint, typecheck, migration consistency, unit tests and production build pass on the exact proposed commit.
 - Browser/E2E and tenant-isolation acceptance evidence is recorded separately from build status.
 
-## 10. Delivery boundary
+## 11. Delivery boundary
 
-This contract defines architecture and acceptance; it does not approve a visual design or implement UI. The next code change should be a narrow workspace foundation slice: typed app registry + shared shell + responsive layout, backed by route/component tests. Do not include Loom implementation, Store commerce, Portals, Business Admin, billing redesign, schema migrations, or global CSS redesign in that slice.
+This contract defines architecture and acceptance; it does not approve a visual design or implement the full UI. Phase 2 may implement only narrow, testable foundation seams needed by the approved plan: typed app registry, shared shell/navigation contracts, tab lifecycle/state adapter interfaces, split-view capability declarations, and Assistive Orb action contract. The full visual redesign and device-specific interaction implementation belong to Phases 3–6. Do not include Loom implementation, Store commerce, Portal/Business Admin product implementation, billing redesign, schema migrations, or global CSS redesign in Phase 2.
+
+
+## 12. Phase ownership and implementation boundary
+
+- **Phase 2:** architecture/contracts and narrow foundation seams for app tabs, app-state preservation, split-view capability, responsive capability detection, and Assistive Orb actions. Do not redesign the visual UI here.
+- **Phase 3:** shared visual language and component states for tabs, split view, and orb.
+- **Phase 4:** phone workspace and app switcher; no phone split view.
+- **Phase 5:** desktop/laptop tabs and split workspace.
+- **Phase 6:** capable-tablet composition and split-view fallback across portrait/landscape.
+- **Acceptance:** no phase is complete merely because a contract is documented. Record implementation, tests, device evidence, and unresolved limits separately.
