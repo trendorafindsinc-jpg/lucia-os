@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
-import "./loom-renderer.css";
+import "./layout-renderer.css";
 import { WorkspaceTabShell } from "@/components/workspace/workspace-tab-shell";
 
 export const metadata: Metadata = {
