@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
 import { getLoomRestriction } from "@/lib/loom/staff";
+import { consumeLoomRateLimit } from "@/lib/loom/rate-limit";
 import { loomBusinessVerifications, loomGroupMemberships, loomGroups } from "@/lib/db/schema";
 
 export const runtime = "nodejs";
@@ -27,6 +28,8 @@ export async function POST(request: Request, routeContext: Context) {
   const restriction = await getLoomRestriction(user.id);
   if (restriction) return NextResponse.json({ error: "Your Loom participation is currently restricted." }, { status: 403 });
   try {
+    const rate = await consumeLoomRateLimit(user.id, "group_membership", 30, 86400000);
+    if (!rate.allowed) return NextResponse.json({ error: "Too many group membership changes. Try again later." }, { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } });
     const db = getDb();
     const [verification] = await db.select({ status: loomBusinessVerifications.status }).from(loomBusinessVerifications).where(eq(loomBusinessVerifications.userId, user.id)).limit(1);
     if (verification?.status !== "verified") return NextResponse.json({ error: "Business verification is required to join groups." }, { status: 403 });
@@ -45,6 +48,8 @@ export async function DELETE(request: Request, routeContext: Context) {
   if ("response" in state) return state.response;
   const { user, groupId } = state;
   try {
+    const rate = await consumeLoomRateLimit(user.id, "group_membership", 30, 86400000);
+    if (!rate.allowed) return NextResponse.json({ error: "Too many group membership changes. Try again later." }, { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } });
     const db = getDb();
     const [membership] = await db.select({ id: loomGroupMemberships.id, role: loomGroupMemberships.role }).from(loomGroupMemberships)
       .where(and(eq(loomGroupMemberships.groupId, groupId), eq(loomGroupMemberships.userId, user.id), eq(loomGroupMemberships.status, "active"))).limit(1);
