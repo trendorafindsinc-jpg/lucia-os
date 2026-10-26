@@ -19,6 +19,13 @@ describe("LUCIA OS staff access policy", () => {
     expect(hasStaffPermission([{ role: "support_agent", status: "active", expiresAt: null }], "support.cases.reply", now)).toBe(true);
     expect(hasStaffPermission([{ role: "support_agent", status: "active", expiresAt: null }], "tenants.suspend", now)).toBe(false);
   });
+
+  it("grants Loom review permissions only to designated platform staff roles", () => {
+    expect(hasStaffPermission([{ role: "platform_operator", status: "active", expiresAt: null }], "loom.verify_business", now)).toBe(true);
+    expect(hasStaffPermission([{ role: "security_reviewer", status: "active", expiresAt: null }], "loom.moderate", now)).toBe(true);
+    expect(hasStaffPermission([{ role: "support_agent", status: "active", expiresAt: null }], "loom.moderate", now)).toBe(false);
+    expect(hasStaffPermission([{ role: "platform_operator", status: "revoked", expiresAt: null }], "loom.moderate", now)).toBe(false);
+  });
 });
 
 describe("LUCIA OS organisation permissions", () => {

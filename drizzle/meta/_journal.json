@@ -92,6 +92,69 @@
       "when": 1792969203000,
       "tag": "0012_force_rls_billing_ledger",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792969204000,
+      "tag": "0013_loom_community",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792969205000,
+      "tag": "0014_loom_business_verification",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1792969206000,
+      "tag": "0015_loom_community_features",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1792969207000,
+      "tag": "0016_loom_moderation_visibility",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1792969208000,
+      "tag": "0017_loom_member_restrictions",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1792969209000,
+      "tag": "0018_loom_member_blocks",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1792969210000,
+      "tag": "0019_loom_group_discussions",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1792969211000,
+      "tag": "0020_loom_profile_moderation",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1792969212000,
+      "tag": "0021_loom_action_limits",
+      "breakpoints": true
     }
   ]
 }
