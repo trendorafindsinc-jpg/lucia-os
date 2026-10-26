@@ -52,8 +52,8 @@ export function TemplateGallery() {
   return (
     <main className="template-page">
       <header className="template-topbar">
-        <Link className="wordmark" href="/" aria-label="LUCIA OS home"><span className="brand-mark" aria-hidden="true">L</span><span>LUCIA <span className="muted-word">OS</span></span></Link>
-        <Link className="template-back" href="/">Platform overview <span aria-hidden="true">↗</span></Link>
+        <Link className="wordmark" href="/workspace" aria-label="Return to LUCIA OS workspace"><span className="brand-mark" aria-hidden="true">L</span><span>LUCIA <span className="muted-word">OS</span></span></Link>
+        <Link className="template-back" href="/workspace">Back to workspace <span aria-hidden="true">←</span></Link>
       </header>
       <section className="template-intro">
         <p className="eyebrow">LOOM LIBRARY · WEBSITE DESIGN</p>
