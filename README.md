@@ -67,3 +67,15 @@ The app should start without production credentials. Features requiring external
 ## Delivery discipline
 
 Audit actual code and test evidence before updating status. Work in narrow, reviewable slices. Do not perform destructive migrations, production resets, DNS changes, secret changes, or deployments without explicit approval. Do not merge to `main` until required verification is complete and the user explicitly authorises the merge.
+
+## Canonical product names
+
+- **LUCIA OS** — the unified workspace.
+- **Layout Studio** — create, edit, and publish websites; standard creation and publishing are free.
+- **Layouts** — website design catalogue; `/templates` remains a legacy-compatible route.
+- **loomifyAI** — optional AI assistant for website proposals.
+- **Loom** — professional community/network; never use this name for website layouts or the editor.
+- **LUCIA Store** — marketplace for apps and products. Portals and Business Admin are future products, not v1 launcher apps.
+- **LUCIA Core / LUCIA ID** — global authentication only; LUCIA OS owns local authorization and tenant data.
+
+Internal legacy identifiers and URLs (including `website-engine`, `/templates`, and the current blueprint schema identifier) are compatibility contracts, not customer-facing product names. Rename them only through explicit migrations or compatibility-safe aliases.
