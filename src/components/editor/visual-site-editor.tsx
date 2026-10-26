@@ -92,11 +92,9 @@ export function VisualSiteEditor() {
   }, [activeTabId, getSnapshot]);
 
   function update<K extends keyof SiteDraft>(key: K, value: SiteDraft[K]) {
-    setDraft((current) => {
-      const next = { ...current, [key]: value };
-      if (snapshotKey) setSnapshot(snapshotKey, next);
-      return next;
-    });
+    const next = { ...draft, [key]: value };
+    setDraft(next);
+    if (snapshotKey) setSnapshot(snapshotKey, next);
     setSaveLabel("Unsaved changes");
     setActiveTabDirty(true);
     setNotice("");
@@ -197,7 +195,6 @@ export function VisualSiteEditor() {
     if (snapshotKey) setSnapshot(snapshotKey, checked.data);
     setSaveLabel("Unsaved changes");
     setActiveTabDirty(true);
-    setActiveTabDirty(true);
     setNotice("Visual draft restored into the editor only. Choose Save draft to persist it; publishing is not triggered.");
     setAiProposal(null);
     setVersionError("");
@@ -270,6 +267,7 @@ export function VisualSiteEditor() {
     setDraft(checked.data);
     if (snapshotKey) setSnapshot(snapshotKey, checked.data);
     setSaveLabel("Unsaved changes");
+    setActiveTabDirty(true);
     setNotice("Proposal applied to the editor only. Review the fields, then choose Save draft when you're ready.");
     setAiProposal(null);
     setAiError("");
