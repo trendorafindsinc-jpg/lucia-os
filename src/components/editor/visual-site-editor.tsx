@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { getTemplateById, websiteTemplates } from "@/lib/templates/catalogue";
 import { editorPalettes, makeInitialDraft, moveSection, siteDraftSchema, type EditorPaletteId, type SiteDraft } from "@/lib/editor/site-draft";
-import { layoutBlueprintSchema, siteDraftToLayoutBlueprint, type LayoutBlueprint } from "@/lib/loom/blueprint";
-import { LayoutRenderer } from "@/components/loom/loom-renderer";
+import { layoutBlueprintSchema, siteDraftToLayoutBlueprint, type LayoutBlueprint } from "@/lib/layout-blueprint/blueprint";
+import { LayoutRenderer } from "@/components/layout-studio/layout-renderer";
 import { websiteSnapshotSchema, type WebsiteSnapshot } from "@/lib/versions/version-history";
 import { useWorkspaceTab } from "@/components/workspace/workspace-tab-shell";
 
