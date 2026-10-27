@@ -58,7 +58,7 @@ export function LoomifyAIWorkspace({ websites, initialWebsiteId = "" }: { websit
   }
 
   return (
-    <main className="loomify-workspace">
+    <div className="loomify-workspace">
       <header className="loomify-workspace-header">
         <Link href="/workspace" className="loomify-brand"><span aria-hidden="true">✳</span><span>LUCIA OS <small>loomifyAI</small></span></Link>
         <nav aria-label="loomifyAI navigation"><Link href="/workspace">Workspace</Link><Link href="/workspace/websites">Websites</Link><Link href="/templates">Layouts</Link></nav>
@@ -85,6 +85,6 @@ export function LoomifyAIWorkspace({ websites, initialWebsiteId = "" }: { websit
         <div className="loomify-workspace-preview"><LayoutRenderer blueprint={proposal} preview /></div>
         <div className="loomify-workspace-proposal-footer"><p>Choose “Apply to Layout Studio” to review this proposal alongside your existing draft. It will not overwrite anything until you confirm the next step in Layout Studio.</p><button type="button" onClick={sendToLayoutStudio} disabled={!selectedWebsite}>Apply to Layout Studio</button></div>
       </section>}
-    </main>
+    </div>
   );
 }
