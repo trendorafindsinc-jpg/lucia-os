@@ -41,6 +41,7 @@ describe("workspace tab routing", () => {
     ["/support/case-123", "Help & support"],
     ["/workspace/team", "Team & access"],
     ["/loom", "Loom"],
+    ["/loomify-ai?websiteId=site-a", "loomifyAI"],
   ])("registers the workspace route %s", (href, label) => {
     const url = new URL(href, "https://workspace.invalid");
     expect(describeWorkspaceRoute(url.pathname, url.search)).toMatchObject({ label });

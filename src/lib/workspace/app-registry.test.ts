@@ -12,13 +12,13 @@ describe("workspace app registry", () => {
 
   it("keeps Layouts, loomifyAI, and Loom as distinct workspace apps", () => {
     expect(getWorkspaceApp("layouts")).toMatchObject({ label: "Layouts", href: "/templates", status: "available" });
-    expect(getWorkspaceApp("loomify-ai")).toMatchObject({ label: "loomifyAI", status: "unavailable" });
+    expect(getWorkspaceApp("loomify-ai")).toMatchObject({ label: "loomifyAI", href: "/loomify-ai", status: "available" });
     expect(getWorkspaceApp("loom")).toMatchObject({ label: "Loom", status: "unavailable" });
     expect(getWorkspaceApp("loom")?.href).toBeUndefined();
   });
 
-  it("does not expose unavailable v1 products as launchable routes", () => {
-    for (const key of ["loomify-ai", "store"]) {
+  it("keeps only implemented v1 apps launchable", () => {
+    for (const key of ["store"]) {
       const app = getWorkspaceApp(key);
       expect(app?.status).toBe("unavailable");
       expect(app?.href).toBeUndefined();

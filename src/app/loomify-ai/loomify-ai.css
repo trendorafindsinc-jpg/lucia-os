@@ -1,0 +1,29 @@
+.loomify-workspace { width:min(1160px,calc(100% - 32px)); margin:0 auto; padding-bottom:40px; color:var(--color-ink); }
+.loomify-workspace-header { min-height:76px; display:flex; align-items:center; justify-content:space-between; gap:20px; border-bottom:1px solid var(--color-line); }
+.loomify-brand { display:flex; align-items:center; gap:10px; color:inherit; text-decoration:none; font-weight:850; }
+.loomify-brand > span:first-child { display:grid; place-items:center; width:38px; height:38px; border:1px solid #dcdafa; border-radius:13px; background:#efedff; color:#6556c8; font-size:24px; }
+.loomify-brand small { display:block; margin-top:3px; color:#6556c8; font-size:10px; letter-spacing:.08em; }
+.loomify-workspace-header nav { display:flex; flex-wrap:wrap; gap:18px; }
+.loomify-workspace-header nav a { color:var(--color-muted); font-size:12px; font-weight:750; text-decoration:none; }
+.loomify-workspace-intro { padding:42px 0 24px; }
+.loomify-workspace-kicker { margin:0 0 9px; color:#6556c8; font-size:10px; font-weight:850; letter-spacing:.16em; }
+.loomify-workspace-intro h1 { margin:0; font-size:clamp(34px,6vw,58px); letter-spacing:-.06em; }
+.loomify-workspace-intro > p:last-child { max-width:700px; color:var(--color-muted); font-size:14px; line-height:1.75; }
+.loomify-workspace-panel { display:grid; gap:10px; max-width:760px; padding:22px; border:1px solid var(--color-line); border-radius:20px; background:white; box-shadow:var(--shadow-soft); }
+.loomify-workspace-panel label { margin-top:5px; font-size:12px; font-weight:800; }
+.loomify-workspace-panel select,.loomify-workspace-panel textarea { width:100%; border:1px solid #dce0ed; border-radius:11px; padding:12px; background:white; color:var(--color-ink); font:inherit; font-size:13px; }
+.loomify-workspace-panel textarea { resize:vertical; line-height:1.65; }
+.loomify-workspace-actions { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; color:var(--color-muted); font-size:11px; }
+.loomify-workspace-actions button,.loomify-workspace-proposal-footer button { min-height:44px; border:0; border-radius:999px; padding:0 18px; background:#282344; color:white; font:inherit; font-size:12px; font-weight:800; cursor:pointer; }
+.loomify-workspace-actions button:disabled,.loomify-workspace-proposal-footer button:disabled { opacity:.45; cursor:not-allowed; }
+.loomify-workspace-help,.loomify-workspace-error { margin:0; color:var(--color-muted); font-size:11px; line-height:1.6; }
+.loomify-workspace-error { border-radius:10px; padding:10px; background:#fff0ef; color:#9c302b; }
+.loomify-workspace-proposal { margin-top:24px; overflow:hidden; border:1px solid #dcd9f6; border-radius:20px; background:white; box-shadow:var(--shadow-soft); }
+.loomify-workspace-proposal-heading { display:flex; justify-content:space-between; gap:16px; align-items:flex-start; padding:22px; background:linear-gradient(120deg,#f5f3ff,#fff); }
+.loomify-workspace-proposal-heading h2 { margin:0 0 5px; font-size:clamp(22px,4vw,32px); letter-spacing:-.045em; overflow-wrap:anywhere; }
+.loomify-workspace-proposal-heading p:last-child { margin:0; color:var(--color-muted); font-size:12px; }
+.loomify-workspace-proposal-heading > button { width:36px; height:36px; border:1px solid #e2def7; border-radius:50%; background:white; font-size:22px; cursor:pointer; }
+.loomify-workspace-preview { max-height:820px; overflow:auto; padding:12px; background:#eef0f6; }
+.loomify-workspace-proposal-footer { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:18px 22px; border-top:1px solid var(--color-line); }
+.loomify-workspace-proposal-footer p { max-width:620px; margin:0; color:var(--color-muted); font-size:11px; line-height:1.65; }
+@media(max-width:640px) { .loomify-workspace-header { align-items:flex-start; flex-direction:column; padding:16px 0; } .loomify-workspace-intro { padding-top:28px; } .loomify-workspace-panel { padding:16px; } .loomify-workspace-proposal-footer { align-items:stretch; flex-direction:column; padding:16px; } .loomify-workspace-proposal-footer button { min-height:46px; } .loomify-workspace-preview { padding:5px; } }
