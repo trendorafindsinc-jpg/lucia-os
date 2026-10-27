@@ -126,7 +126,12 @@ export async function POST(request: Request) {
       return { grant };
     });
 
-    if ("error" in result) return errorResponse(result.error, typeof result.status === "number" ? result.status : 500);
+    if ("error" in result && typeof result.error === "string") {
+      return errorResponse(result.error, typeof result.status === "number" ? result.status : 500);
+    }
+    if (!("grant" in result) || !result.grant) {
+      return errorResponse("Staff access update did not return a grant record.", 500);
+    }
     return NextResponse.json({ grant: result.grant }, { status: input.action === "grant" ? 201 : 200, headers: { "Cache-Control": "no-store" } });
   } catch {
     return errorResponse("Staff access could not be updated. No success was reported; check the audit log before retrying.", 500);
