@@ -9,7 +9,7 @@ import "./loomify-ai.css";
 
 export const metadata = { title: "loomifyAI · LUCIA OS" };
 
-export default async function LoomifyAIPage() {
+export default async function LoomifyAIPage({ searchParams }: { searchParams: Promise<{ websiteId?: string | string[] }> }) {
   const user = await getCurrentUser();
   if (!user) {
     return <main className="loomify-workspace"><section className="loomify-workspace-panel"><h1>Sign in to use loomifyAI.</h1><p>Your website access is verified before any proposal is generated.</p><Link href="/api/auth/login?returnTo=%2Floomify-ai">Sign in with LUCIA ID</Link></section></main>;
@@ -23,5 +23,8 @@ export default async function LoomifyAIPage() {
       .from(websiteTable).where(eq(websiteTable.organizationId, organization.id));
   })));
   const options = grouped.flat().map((website) => ({ id: website.id, name: website.name }));
-  return <LoomifyAIWorkspace websites={options} />;
+  const params = await searchParams;
+  const requestedWebsiteId = Array.isArray(params.websiteId) ? params.websiteId[0] : params.websiteId;
+  const initialWebsiteId = requestedWebsiteId && options.some((website) => website.id === requestedWebsiteId) ? requestedWebsiteId : "";
+  return <LoomifyAIWorkspace websites={options} initialWebsiteId={initialWebsiteId} />;
 }
