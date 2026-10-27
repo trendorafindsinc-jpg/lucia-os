@@ -59,6 +59,9 @@ export function describeWorkspaceRoute(pathname: string, search: string): Worksp
   if (pathname === "/support" || pathname.startsWith("/support/")) {
     return { appKey: "workspace-tools", label: "Help & support", href: pathname + search, context: pathname === "/support" ? "home" : pathname.slice("/support/".length) };
   }
+  if (pathname === "/loomify-ai") {
+    return { appKey: "loomify-ai", label: "loomifyAI", href: pathname + search, context: websiteId ? `website:${websiteId}` : "library" };
+  }
   if (pathname === "/loom") {
     return { appKey: "loom", label: "Loom", href: pathname + search, context: "home" };
   }
