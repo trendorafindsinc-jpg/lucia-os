@@ -11,6 +11,7 @@ describe("LUCIA wildcard subdomain routing", () => {
     ["lucia.name.ng", "lucia.name.ng"],
     ["os.lucia.name.ng", "lucia.name.ng"],
     ["api.lucia.name.ng", "lucia.name.ng"],
+    ["staff.lucia.name.ng", "lucia.name.ng"],
     ["nested.northstar.lucia.name.ng", "lucia.name.ng"],
     ["northstar.lucia.name.ng.attacker.test", "lucia.name.ng"],
     ["northstar.vercel.app", "lucia.name.ng"],
@@ -21,6 +22,7 @@ describe("LUCIA wildcard subdomain routing", () => {
 
   it("reserves platform-owned labels", () => {
     expect(isReservedSiteSlug("OS")).toBe(true);
+    expect(isReservedSiteSlug("staff")).toBe(true);
     expect(isReservedSiteSlug("northstar")).toBe(false);
   });
 });
