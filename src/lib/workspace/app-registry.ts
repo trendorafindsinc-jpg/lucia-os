@@ -4,7 +4,7 @@ export type WorkspaceApp = {
   key: string;
   label: string;
   description: string;
-  href?: "/workspace" | "/workspace/websites" | "/templates";
+  href?: "/workspace" | "/workspace/websites" | "/templates" | "/loomify-ai";
   status: WorkspaceAppStatus;
   icon: "overview" | "website" | "layouts" | "loomify-ai" | "loom" | "store";
   reason?: string;
@@ -38,10 +38,10 @@ export const WORKSPACE_APPS = [
   {
     key: "loomify-ai",
     label: "loomifyAI",
-    description: "AI assistance for creating and improving your work",
-    status: "unavailable",
+    description: "Create AI design proposals and send them to Layout Studio",
+    href: "/loomify-ai",
+    status: "available",
     icon: "loomify-ai",
-    reason: "loomifyAI integration is not available in this workspace release.",
   },
   {
     key: "loom",
