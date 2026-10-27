@@ -139,23 +139,29 @@ export async function GET(request: Request) {
 
     failureStage = "session_persistence";
     const db = getDb();
-    const [user] = await db
-      .insert(appUsers)
-      .values({
-        coreSubjectId: coreUser.id,
-        displayName: coreUser.displayName,
-        active: true,
-      })
-      .onConflictDoUpdate({
-        target: appUsers.coreSubjectId,
-        set: { displayName: coreUser.displayName, active: true, updatedAt: new Date() },
-      })
-      .returning({ id: appUsers.id });
-
     const rawSessionToken = randomBytes(32).toString("base64url");
     const tokenHash = createHash("sha256").update(rawSessionToken).digest("hex");
     const expiresAt = new Date(Date.now() + SESSION_TTL_SECONDS * 1000);
-    await db.insert(sessions).values({ userId: user.id, tokenHash, expiresAt });
+
+    // Keep local identity mapping and session creation atomic. Core remains the
+    // authentication authority; the local user row is only a verified subject map.
+    const user = await db.transaction(async (tx) => {
+      const [mappedUser] = await tx
+        .insert(appUsers)
+        .values({
+          coreSubjectId: coreUser.id as string,
+          displayName: coreUser.displayName as string,
+          active: true,
+        })
+        .onConflictDoUpdate({
+          target: appUsers.coreSubjectId,
+          set: { displayName: coreUser.displayName as string, active: true, updatedAt: new Date() },
+        })
+        .returning({ id: appUsers.id });
+
+      await tx.insert(sessions).values({ userId: mappedUser.id, tokenHash, expiresAt });
+      return mappedUser;
+    });
 
     const success = NextResponse.redirect(new URL(safeReturnTo, request.url));
     success.cookies.set(SESSION_COOKIE, rawSessionToken, {
