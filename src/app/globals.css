@@ -743,3 +743,20 @@ h1 span { color: #6979c9; }
 .workspace-route-navigation a:focus-visible{outline:2px solid #4b63cf;outline-offset:2px}
 @media(max-width:680px){.workspace-route-navigation{gap:4px;padding:7px 9px}.workspace-route-navigation a{min-height:40px;padding:0 10px;font-size:12px}}
 @media(prefers-reduced-motion:reduce){.workspace-route-navigation *{scroll-behavior:auto!important;transition:none!important}}
+
+
+/* Staff access management controls */
+.workspace-team-manager{display:grid;gap:22px;padding:18px 0 0}
+.workspace-team-form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;padding:18px;border:1px solid #e1e6ef;border-radius:16px;background:#fbfcff}
+.workspace-field{display:grid;gap:7px;min-width:0;color:#526078;font-size:12px;font-weight:750}
+.workspace-field span{line-height:1.4}
+.workspace-field select,.workspace-field input{width:100%;min-height:42px;min-width:0;border:1px solid #dce3ee;border-radius:10px;background:#fff;padding:9px 11px;color:#17243b;font:inherit;font-weight:500}
+.workspace-field-reason{grid-column:span 2}
+.workspace-team-form>.workspace-button{align-self:end;min-height:42px;margin:0}
+.workspace-team-message{margin:0;padding:11px 13px;border:1px solid #dce3ee;border-radius:10px;background:#f7f9fd;color:#33415a;font-size:12px;line-height:1.6}
+.workspace-team-manager .workspace-panel-heading{margin-top:2px}
+.workspace-team-manager .workspace-panel-heading h3{margin:0;color:#18263e;font-size:16px}
+.workspace-team-manager .workspace-panel-heading p{margin:5px 0 0;color:#778399;font-size:12px;line-height:1.6}
+.workspace-team-manager button:disabled{opacity:.55;cursor:not-allowed}
+.workspace-team-manager .workspace-table-sub{display:block;max-width:250px;overflow-wrap:anywhere}
+@media(max-width:760px){.workspace-team-form{grid-template-columns:1fr}.workspace-field-reason{grid-column:auto}.workspace-team-form>.workspace-button{width:100%}}
