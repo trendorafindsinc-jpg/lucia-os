@@ -232,7 +232,7 @@ export function VisualSiteEditor() {
   }
 
   function applyAIProposalToEditor() {
-    if (!aiProposal) return;
+    if (!aiProposal || isLoadingSaved || savedDraftUnavailable) return;
     const page = aiProposal.pages.find((item) => item.path === "/") ?? aiProposal.pages[0];
     const hero = page?.sections.find((section) => section.type === "hero");
     const labels = page?.sections.flatMap((section) => {
@@ -315,7 +315,7 @@ export function VisualSiteEditor() {
           {aiProposal && <section className="loomify-proposal-review" aria-label="loomifyAI proposal review">
             <div className="loomify-review-heading"><div><span className="editor-kicker">YOUR PROPOSAL</span><h2>{aiProposal.site.name}</h2><p>AI-generated concept · Review before applying</p></div><button type="button" className="loomify-dismiss" onClick={() => setAiProposal(null)} aria-label="Dismiss proposal">×</button></div>
             <div className="loomify-proposal-canvas"><LayoutRenderer blueprint={aiProposal} preview /></div>{aiError && <p className="editor-notice" role="alert">{aiError}</p>}
-            <div className="loomify-review-actions"><span>Private preview only. Your live website is unchanged.</span><button type="button" className="editor-done" onClick={applyAIProposalToEditor}>Apply proposal to draft</button></div>
+            <div className="loomify-review-actions"><span>Private preview only. Your live website is unchanged.</span><button type="button" className="editor-done" onClick={applyAIProposalToEditor} disabled={isLoadingSaved || savedDraftUnavailable}>{isLoadingSaved ? "Loading saved draft…" : savedDraftUnavailable ? "Draft unavailable" : "Apply proposal to draft"}</button></div>
           </section>}
           <div className="editor-layout-preview"><LayoutRenderer blueprint={previewBlueprint} preview /></div>
           <p className="editor-preview-caption">{websiteId ? "Changes can be saved to your organisation’s website draft. This preview is private; it is not a public website." : "Illustrative preview. Open a saved website from your Websites library to enable persistent saving."}</p>
