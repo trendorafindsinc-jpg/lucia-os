@@ -131,7 +131,7 @@ export async function GET(request: Request) {
 
     // Keep local identity mapping and session creation atomic. Core remains the
     // authentication authority; the local user row is only a verified subject map.
-    await db.transaction(async (tx) => {
+    const localUserActive = await db.transaction(async (tx) => {
       const [mappedUser] = await tx
         .insert(appUsers)
         .values({
@@ -141,13 +141,20 @@ export async function GET(request: Request) {
         })
         .onConflictDoUpdate({
           target: appUsers.coreSubjectId,
-          set: { displayName: coreUser.displayName as string, active: true, updatedAt: new Date() },
+          // Preserve an OS-level deactivation. Core authentication must not
+          // silently re-enable a locally disabled account.
+          set: { displayName: coreUser.displayName as string, updatedAt: new Date() },
         })
-        .returning({ id: appUsers.id });
+        .returning({ id: appUsers.id, active: appUsers.active });
 
+      if (!mappedUser.active) return false;
       await tx.insert(sessions).values({ userId: mappedUser.id, tokenHash, expiresAt });
-      return mappedUser;
+      return true;
     });
+    if (!localUserActive) {
+      console.warn("[LUCIA_OS_OAUTH] disabled local user rejected");
+      return safeFailure(request);
+    }
 
     const success = NextResponse.redirect(new URL(safeReturnTo, request.url));
     success.cookies.set(SESSION_COOKIE, rawSessionToken, {
