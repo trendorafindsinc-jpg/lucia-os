@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { resolveLuciaSubdomain } from "@/lib/publishing/host";
 
 const PLATFORM_HOSTS = new Set([
   "lucia.name.ng",
@@ -8,16 +9,40 @@ const PLATFORM_HOSTS = new Set([
 ]);
 
 function isPlatformHost(hostname: string): boolean {
-  if (PLATFORM_HOSTS.has(hostname) || hostname.endsWith(".vercel.app")) return true;
+  if (PLATFORM_HOSTS.has(hostname)) return true;
   const configured = process.env.APP_BASE_URL;
   if (configured) {
     try {
       if (new URL(configured).hostname.toLowerCase() === hostname) return true;
     } catch {
-      // Invalid deployment configuration must not disable exact-host DB checks.
+      // Invalid configuration must not disable normal host checks.
     }
   }
-  return false;
+  const vercelUrl = process.env.VERCEL_URL?.toLowerCase().replace(/:\d+$/, "");
+  return Boolean(vercelUrl && hostname === vercelUrl);
+}
+
+function normalizeDomain(configuredDomain: string): string {
+  return configuredDomain.trim().toLowerCase().replace(/^\*\./, "").replace(/^\./, "").replace(/\.$/, "");
+}
+
+function isUnderSiteDomain(hostname: string, configuredDomain: string): boolean {
+  const domain = normalizeDomain(configuredDomain);
+  return Boolean(domain) && hostname.endsWith("." + domain);
+}
+
+function notFound() {
+  return new NextResponse("Not found", {
+    status: 404,
+    headers: { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" },
+  });
+}
+
+function isPrivatePath(pathname: string): boolean {
+  return pathname.startsWith("/api/") ||
+    pathname.startsWith("/site/") ||
+    pathname === "/tenant-site-internal" ||
+    pathname.startsWith("/tenant-site-internal/");
 }
 
 export function middleware(request: NextRequest) {
@@ -29,14 +54,23 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Customer hostnames never get access to the product's private API or auth routes.
-  if (pathname.startsWith("/api/") || pathname.startsWith("/site/")) {
-    return new NextResponse("Not found", { status: 404, headers: { "Cache-Control": "no-store" } });
+  const configuredSiteDomain = process.env.LUCIA_SITE_DOMAIN || "lucia.name.ng";
+  if (isUnderSiteDomain(hostname, configuredSiteDomain)) {
+    const slug = resolveLuciaSubdomain(hostname, configuredSiteDomain);
+    // Reserved or malformed LUCIA subdomains must not fall through as custom domains.
+    if (!slug || isPrivatePath(pathname)) return notFound();
+
+    const destination = request.nextUrl.clone();
+    destination.pathname = `/site/${slug}${pathname === "/" ? "" : pathname}`;
+    return NextResponse.rewrite(destination);
   }
 
-  const url = request.nextUrl.clone();
-  url.pathname = pathname === "/" ? "/tenant-site-internal" : `/tenant-site-internal${pathname}`;
-  return NextResponse.rewrite(url);
+  // Customer custom domains cannot reach product APIs or internal rewrite routes.
+  if (isPrivatePath(pathname)) return notFound();
+
+  const destination = request.nextUrl.clone();
+  destination.pathname = pathname === "/" ? "/tenant-site-internal" : `/tenant-site-internal${pathname}`;
+  return NextResponse.rewrite(destination);
 }
 
 export const config = {
