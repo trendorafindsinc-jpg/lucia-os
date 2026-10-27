@@ -18,6 +18,8 @@ describe("LUCIA OS staff access policy", () => {
   it("allows only explicitly assigned staff permissions", () => {
     expect(hasStaffPermission([{ role: "support_agent", status: "active", expiresAt: null }], "support.cases.reply", now)).toBe(true);
     expect(hasStaffPermission([{ role: "support_agent", status: "active", expiresAt: null }], "tenants.suspend", now)).toBe(false);
+    expect(hasStaffPermission([{ role: "support_lead", status: "active", expiresAt: null }], "staff.grants.manage", now)).toBe(false);
+    expect(hasStaffPermission([{ role: "platform_operator", status: "active", expiresAt: null }], "staff.grants.manage", now)).toBe(true);
   });
 });
 

@@ -81,6 +81,12 @@ export default function WorkspaceLauncher({ displayName, organizationCount, webs
             <span className={styles.summaryDivider} aria-hidden="true" />
             <span><strong>{websiteCount}</strong> {websiteCount === 1 ? "website" : "websites"}</span>
           </div>
+          {organizationCount === 0 ? (
+            <div className={styles.firstRun}>
+              <div><h2>Start with your first workspace</h2><p>Create your organisation and first draft website. LUCIA OS will connect the workspace to your LUCIA ID.</p></div>
+              <Link className={styles.firstRunAction} href="/create">Create your first website <span aria-hidden="true">↗</span></Link>
+            </div>
+          ) : null}
         </section>
 
         <section className={styles.appSection} aria-labelledby="apps-title">
