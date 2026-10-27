@@ -30,8 +30,9 @@ export async function GET(request: Request) {
     response.headers.set("Cache-Control", "no-store");
     return response;
   } catch {
+    console.error("[LUCIA_OS_OAUTH] login could not be initialized");
     return NextResponse.json(
-      { error: "AUTH_NOT_CONFIGURED", message: "LUCIA ID sign-in is not configured yet." },
+      { error: "SIGN_IN_UNAVAILABLE", message: "Sign-in is temporarily unavailable. Please try again shortly." },
       { status: 503, headers: { "Cache-Control": "no-store" } },
     );
   }
