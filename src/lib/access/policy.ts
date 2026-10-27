@@ -18,7 +18,9 @@ export interface StaffGrant {
 const staffPermissions: Record<StaffRole, ReadonlySet<string>> = {
   support_agent: new Set(["support.cases.read", "support.cases.reply", "support.cases.assign_self"]),
   support_lead: new Set(["support.cases.read", "support.cases.reply", "support.cases.assign_self", "support.cases.assign", "support.cases.resolve"]),
-  platform_operator: new Set(["platform.overview.read", "tenants.read", "tenants.suspend", "support.cases.read", "support.cases.reply", "support.cases.assign", "support.cases.resolve"]),
+  // Only an explicitly granted platform_operator may manage support-role grants.
+  // The grant API itself limits assignable roles to support_agent/support_lead.
+  platform_operator: new Set(["platform.overview.read", "tenants.read", "tenants.suspend", "support.cases.read", "support.cases.reply", "support.cases.assign", "support.cases.resolve", "staff.grants.manage"]),
   security_reviewer: new Set(["security.incidents.read", "audit.read", "staff.grants.read"]),
 };
 
