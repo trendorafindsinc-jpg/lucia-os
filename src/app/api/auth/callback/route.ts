@@ -183,6 +183,6 @@ export async function GET(request: Request) {
     return success;
   } catch (error) {
     console.error("[LUCIA_OS_OAUTH] callback exception", { stage: failureStage, errorName: error instanceof Error ? error.name : "UnknownError" });
-    return safeFailure(request, failureStage === "session_persistence" ? "session_persistence" : failureStage);
+    return safeFailure(request);
   }
 }
