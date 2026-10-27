@@ -27,7 +27,8 @@ export async function GET() {
 
   const users = await withPlatformStaffScope(operator.id, async (tx) =>
     tx.select({
-      id: appUsers.id,
+      userId: appUsers.id,
+      grantId: staffGrants.id,
       displayName: appUsers.displayName,
       active: appUsers.active,
       role: staffGrants.role,
