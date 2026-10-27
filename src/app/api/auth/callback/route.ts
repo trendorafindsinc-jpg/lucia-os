@@ -145,7 +145,7 @@ export async function GET(request: Request) {
 
     // Keep local identity mapping and session creation atomic. Core remains the
     // authentication authority; the local user row is only a verified subject map.
-    const user = await db.transaction(async (tx) => {
+    await db.transaction(async (tx) => {
       const [mappedUser] = await tx
         .insert(appUsers)
         .values({
