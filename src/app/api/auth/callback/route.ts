@@ -13,9 +13,12 @@ const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30;
 
 function safeFailure(request: Request) {
   // Keep implementation stage names in server logs only, never in browser URLs.
-  const response = NextResponse.redirect(new URL("/?auth=failed", request.url));
+  const requestUrl = new URL(request.url);
+  const response = NextResponse.redirect(new URL("/?auth=failed", requestUrl));
   response.headers.set("Cache-Control", "no-store");
   response.headers.set("Referrer-Policy", "no-referrer");
+  response.cookies.set("lucia_os_return_to", "", { httpOnly: true, secure: process.env.NODE_ENV === "production" || requestUrl.protocol === "https:", sameSite: "lax", path: "/api/auth", maxAge: 0 });
+  response.cookies.set("lucia_os_oauth_state", "", { httpOnly: true, secure: process.env.NODE_ENV === "production" || requestUrl.protocol === "https:", sameSite: "lax", path: "/api/auth", maxAge: 0 });
   return response;
 }
 
