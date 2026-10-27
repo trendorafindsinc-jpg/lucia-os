@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 
 type StaffRow = {
-  id: string;
+  userId: string;
+  grantId: string | null;
   displayName: string | null;
   active: boolean;
   role: string | null;
@@ -78,7 +79,7 @@ export function StaffTeamManager() {
 
   return <div className="workspace-team-manager">
     <form onSubmit={submit} className="workspace-team-form">
-      <label className="workspace-field"><span>Existing LUCIA OS user</span><select required value={userId} onChange={(event) => setUserId(event.target.value)}><option value="">Choose a user…</option>{users.map((user) => <option key={user.id} value={user.id}>{user.displayName || "Unnamed user"} · {user.id.slice(0, 8)}</option>)}</select></label>
+      <label className="workspace-field"><span>Existing LUCIA OS user</span><select required value={userId} onChange={(event) => setUserId(event.target.value)}><option value="">Choose a user…</option>{users.map((user) => <option key={user.id} value={user.userId}>{user.displayName || "Unnamed user"} · {user.userId.slice(0, 8)}</option>)}</select></label>
       <label className="workspace-field"><span>Role</span><select value={role} onChange={(event) => setRole(event.target.value as "support_agent" | "support_lead")}><option value="support_agent">Support agent</option><option value="support_lead">Support lead</option></select></label>
       <label className="workspace-field"><span>Action</span><select value={action} onChange={(event) => setAction(event.target.value as "grant" | "revoke")}><option value="grant">Grant access</option><option value="revoke">Revoke access</option></select></label>
       <label className="workspace-field workspace-field-reason"><span>Reason (required for audit)</span><input required minLength={5} maxLength={300} value={reason} onChange={(event) => setReason(event.target.value)} placeholder="e.g. Assigned to customer support team" /></label>
@@ -86,6 +87,6 @@ export function StaffTeamManager() {
     </form>
     {message ? <p role="status" className="workspace-team-message">{message}</p> : null}
     <div className="workspace-panel-heading"><div><h3>Current staff grants</h3><p>Users may have more than one role. Revocation is recorded, not deleted.</p></div><button type="button" className="workspace-button workspace-button-secondary" onClick={() => void loadUsers()} disabled={loading}>Refresh</button></div>
-    {loading ? <p>Loading staff directory…</p> : grants.length ? <div className="workspace-table-wrap"><table className="workspace-table"><thead><tr><th>Staff member</th><th>Role</th><th>Status</th><th>Reason</th></tr></thead><tbody>{grants.map((grant, index) => <tr key={grant.id || `${grant.id}-${grant.role}-${index}`}><td><strong>{grant.displayName || "Unnamed user"}</strong><span className="workspace-table-sub">{grant.id}</span></td><td>{grant.role?.replaceAll("_", " ")}</td><td><span className="workspace-status workspace-status-neutral">{grant.status}</span></td><td>{grant.reason || "—"}</td></tr>)}</tbody></table></div> : <div className="workspace-empty"><h3>No staff grants found</h3><p>Once eligible users have signed in, you can grant them a support role here.</p></div>}
+    {loading ? <p>Loading staff directory…</p> : grants.length ? <div className="workspace-table-wrap"><table className="workspace-table"><thead><tr><th>Staff member</th><th>Role</th><th>Status</th><th>Reason</th></tr></thead><tbody>{grants.map((grant, index) => <tr key={grant.grantId || `${grant.userId}-${grant.role}-${index}`}><td><strong>{grant.displayName || "Unnamed user"}</strong><span className="workspace-table-sub">{grant.userId}</span></td><td>{grant.role?.replaceAll("_", " ")}</td><td><span className="workspace-status workspace-status-neutral">{grant.status}</span></td><td>{grant.reason || "—"}</td></tr>)}</tbody></table></div> : <div className="workspace-empty"><h3>No staff grants found</h3><p>Once eligible users have signed in, you can grant them a support role here.</p></div>}
   </div>;
 }
