@@ -45,7 +45,7 @@ export function StaffTeamManager() {
 
   const users = useMemo(() => {
     const unique = new Map<string, StaffRow>();
-    for (const row of rows) if (!unique.has(row.id)) unique.set(row.id, row);
+    for (const row of rows) if (!unique.has(row.userId)) unique.set(row.userId, row);
     return [...unique.values()].filter((user) => user.active);
   }, [rows]);
 
@@ -79,7 +79,7 @@ export function StaffTeamManager() {
 
   return <div className="workspace-team-manager">
     <form onSubmit={submit} className="workspace-team-form">
-      <label className="workspace-field"><span>Existing LUCIA OS user</span><select required value={userId} onChange={(event) => setUserId(event.target.value)}><option value="">Choose a user…</option>{users.map((user) => <option key={user.id} value={user.userId}>{user.displayName || "Unnamed user"} · {user.userId.slice(0, 8)}</option>)}</select></label>
+      <label className="workspace-field"><span>Existing LUCIA OS user</span><select required value={userId} onChange={(event) => setUserId(event.target.value)}><option value="">Choose a user…</option>{users.map((user) => <option key={user.userId} value={user.userId}>{user.displayName || "Unnamed user"} · {user.userId.slice(0, 8)}</option>)}</select></label>
       <label className="workspace-field"><span>Role</span><select value={role} onChange={(event) => setRole(event.target.value as "support_agent" | "support_lead")}><option value="support_agent">Support agent</option><option value="support_lead">Support lead</option></select></label>
       <label className="workspace-field"><span>Action</span><select value={action} onChange={(event) => setAction(event.target.value as "grant" | "revoke")}><option value="grant">Grant access</option><option value="revoke">Revoke access</option></select></label>
       <label className="workspace-field workspace-field-reason"><span>Reason (required for audit)</span><input required minLength={5} maxLength={300} value={reason} onChange={(event) => setReason(event.target.value)} placeholder="e.g. Assigned to customer support team" /></label>
