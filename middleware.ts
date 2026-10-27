@@ -22,7 +22,7 @@ function isPlatformHost(hostname: string): boolean {
 }
 
 function isUnderSiteDomain(hostname: string, configuredDomain: string): boolean {
-  const domain = configuredDomain.trim().toLowerCase().replace(/^\\*\\./, "").replace(/^\\./, "").replace(/\\.$/, "");
+  const domain = configuredDomain.trim().toLowerCase().replace(/^\*\./, "").replace(/^\./, "").replace(/\.$/, "");
   return Boolean(domain) && hostname.endsWith("." + domain);
 }
 
@@ -51,7 +51,7 @@ export function middleware(request: NextRequest) {
 
   // Customer hostnames never get access to the product's private API or
   // implementation routes. These paths are not forwarded into tenant sites.
-  if (pathname.startsWith("/api/") || pathname.startsWith("/site/") || pathname.startsWith("/tenant-site-internal/")) {
+  if (pathname.startsWith("/api/") || pathname.startsWith("/site/") || (pathname === "/tenant-site-internal" || pathname.startsWith("/tenant-site-internal/"))) {
     return notFound();
   }
 
