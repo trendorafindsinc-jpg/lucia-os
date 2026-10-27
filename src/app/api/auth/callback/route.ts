@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db/client";
 import { appUsers, sessions } from "@/lib/db/schema";
 import { getCoreIssuer, matchesOAuthState } from "@/lib/auth/oauth";
+import { safeAuthReturnPath } from "@/lib/auth/return-to";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,7 +14,6 @@ const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30;
 function safeFailure(request: Request, reason = "callback_failed") {
   const destination = new URL("/", request.url);
   destination.searchParams.set("auth", "failed");
-  destination.searchParams.set("reason", reason);
   return NextResponse.redirect(destination);
 }
 
@@ -32,9 +32,7 @@ export async function GET(request: Request) {
     .map((part) => part.trim())
     .find((part) => part.startsWith("lucia_os_return_to="))
     ?.slice("lucia_os_return_to=".length);
-  const safeReturnTo = returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//") && !returnTo.includes("\\") && !returnTo.startsWith("/api/auth")
-    ? returnTo
-    : "/workspace";
+  const safeReturnTo = safeAuthReturnPath(returnTo);
 
   let failureStage = "state_validation";
   const response = safeFailure(request);

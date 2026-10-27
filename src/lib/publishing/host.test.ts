@@ -21,6 +21,8 @@ describe("LUCIA wildcard subdomain routing", () => {
 
   it("reserves platform-owned labels", () => {
     expect(isReservedSiteSlug("OS")).toBe(true);
+    expect(isReservedSiteSlug("staff")).toBe(true);
+    expect(isReservedSiteSlug("tenant-site-internal")).toBe(true);
     expect(isReservedSiteSlug("northstar")).toBe(false);
   });
 });
