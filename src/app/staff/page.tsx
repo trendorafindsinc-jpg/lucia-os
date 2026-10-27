@@ -10,7 +10,7 @@ export const metadata = { title: "LUCIA Staff" };
 export default async function StaffWorkspacePage() {
   const user = await getCurrentUser();
   if (!user) {
-    return <main className="workspace-shell"><section className="workspace-card workspace-denied"><span className="workspace-kicker">LUCIA OS · STAFF</span><h1>Sign in to continue</h1><p>Use your LUCIA ID to access the staff workspace.</p><Link className="workspace-button workspace-button-primary" href="/api/auth/login">Sign in with LUCIA ID</Link><Link className="workspace-back" href="/">Back to LUCIA OS</Link></section></main>;
+    return <main className="workspace-shell"><section className="workspace-card workspace-denied"><span className="workspace-kicker">LUCIA OS · STAFF</span><h1>Sign in to continue</h1><p>Use your LUCIA ID to access the staff workspace.</p><Link className="workspace-button workspace-button-primary" href="/api/auth/login?returnTo=%2Fstaff">Sign in with LUCIA ID</Link><Link className="workspace-back" href="/">Back to LUCIA OS</Link></section></main>;
   }
 
   const grants = await withUserScope(user.id, (tx) =>

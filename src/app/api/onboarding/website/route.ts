@@ -48,6 +48,10 @@ export async function POST(request: Request) {
   try {
     const db = getDb();
     const result = await db.transaction(async (tx) => {
+      // Serialize setup attempts for this authenticated user. A browser retry or
+      // concurrent double-submit must not create duplicate organisations/sites.
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${user.id}, 0))`);
+
       // This identity comes from the verified server session, never request data.
       await tx.execute(sql`select set_config('app.current_user_id', ${user.id}, true)`);
 
