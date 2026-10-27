@@ -67,9 +67,10 @@ export function StaffTeamManager() {
       });
       const data = await response.json() as { error?: string };
       if (!response.ok) throw new Error(data.error || "Staff access update failed.");
-      setMessage(action === "grant" ? "Support access granted." : "Support access revoked.");
+      const successMessage = action === "grant" ? "Support access granted." : "Support access revoked.";
       setReason("");
       await loadUsers();
+      setMessage(successMessage);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Staff access update failed.");
     } finally {
