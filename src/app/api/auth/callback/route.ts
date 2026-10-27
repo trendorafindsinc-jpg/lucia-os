@@ -40,23 +40,6 @@ export async function GET(request: Request) {
   const safeReturnTo = resolveSafeReturnTo(returnTo);
 
   let failureStage = "state_validation";
-  const response = safeFailure(request);
-  response.cookies.set("lucia_os_return_to", "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production" || requestUrl.protocol === "https:",
-    sameSite: "lax",
-    path: "/api/auth",
-    maxAge: 0,
-  });
-  response.cookies.set("lucia_os_oauth_state", "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production" || requestUrl.protocol === "https:",
-    sameSite: "lax",
-    path: "/api/auth",
-    maxAge: 0,
-  });
-  response.headers.set("Cache-Control", "no-store");
-
   if (!matchesOAuthState(expectedState, state) || !code) {
     console.error("[LUCIA_OS_OAUTH] callback rejected", {
       stage: failureStage,
