@@ -51,7 +51,7 @@ export function LoomifyAIWorkspace({ websites, initialWebsiteId = "" }: { websit
     if (!proposal || !selectedWebsite) return;
     try {
       sessionStorage.setItem("lucia.loomify.pending-proposal.v1", JSON.stringify({ websiteId, proposal }));
-      router.push(`/editor?websiteId=${encodeURIComponent(websiteId)}&loomifyProposal=1`);
+      router.push((`/editor?websiteId=${encodeURIComponent(websiteId)}&loomifyProposal=1`) as Parameters<typeof router.push>[0]);
     } catch {
       setError("This browser couldn't transfer the proposal safely. Your website draft is unchanged.");
     }
