@@ -72,21 +72,7 @@
 @media(max-width:700px) { .editor-page { width:calc(100% - 24px); } .editor-topbar { min-height:66px; } .editor-unsaved { display:none; } .editor-heading { padding:30px 0 20px; } .editor-workspace { grid-template-columns:1fr; } .editor-preview-wrap { grid-row:1; } .editor-panel { grid-row:2; } .editor-preview { margin:0 7px 7px; } .preview-hero { min-height:260px; } .preview-hero-art { width:50%; right:-16%; bottom:-20%; } .editor-page-footer { flex-direction:column; gap:6px; } }
 
 
-/* loomifyAI — integrated, calm, responsive proposal workflow */
-.loomify-card { margin:20px 14px 4px; padding:16px; border:1px solid #dfe4f0; border-radius:16px; background:linear-gradient(145deg,#f7f7ff 0%,#fff 72%); }
-.loomify-card-top { display:flex; align-items:center; gap:10px; }
-.loomify-spark { display:grid; place-items:center; width:36px; height:36px; flex:0 0 36px; border:1px solid #dcdafa; border-radius:12px; background:#efedff; color:#6556c8; font-size:21px; }
-.loomify-card-top h3 { margin:3px 0 0; font-size:17px; letter-spacing:-.035em; }
-.loomify-beta { margin-left:auto; border:1px solid #e0def6; border-radius:999px; padding:5px 8px; color:#6255b6; font-size:9px; font-weight:800; }
-.loomify-card > p { margin:12px 0 14px; color:var(--color-muted); font-size:11px; line-height:1.65; }
-.loomify-brief-label { display:block; margin-bottom:7px; color:var(--color-ink); font-size:11px; font-weight:800; }
-.loomify-card textarea { display:block; width:100%; min-height:96px; resize:vertical; border:1px solid #dce0ed; border-radius:10px; padding:11px; outline:none; background:#fff; color:var(--color-ink); font:inherit; font-size:12px; line-height:1.6; }
-.loomify-card textarea:focus { border-color:#8b80e4; box-shadow:0 0 0 3px #8174d51c; }
-.loomify-card-footer { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:10px; color:var(--color-muted); font-size:10px; }
-.loomify-generate { min-height:37px; border:0; border-radius:999px; padding:0 13px; background:#282344; color:white; font:inherit; font-size:11px; font-weight:800; cursor:pointer; }
-.loomify-generate:disabled { opacity:.45; cursor:not-allowed; }
-.loomify-card .loomify-helper { margin:10px 0 0; font-size:10px; }
-.loomify-card .loomify-error { margin:10px 0 0; border-radius:9px; padding:9px; background:#fff0ef; color:#9c302b; font-size:11px; }
+/* Proposal review received from the dedicated loomifyAI workspace. */
 .loomify-proposal-review { margin:12px; overflow:hidden; border:1px solid #dcd9f6; border-radius:15px; background:#fff; box-shadow:0 8px 28px #332c6b0b; }
 .loomify-review-heading { display:flex; justify-content:space-between; gap:14px; align-items:flex-start; padding:18px; background:linear-gradient(120deg,#f5f3ff,#fff); }
 .loomify-review-heading h2 { margin:5px 0 3px; font-size:clamp(18px,3vw,26px); letter-spacing:-.045em; overflow-wrap:anywhere; }
