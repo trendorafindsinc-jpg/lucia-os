@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db/client";
 import { appUsers, sessions } from "@/lib/db/schema";
 import { getCoreIssuer, matchesOAuthState } from "@/lib/auth/oauth";
+import { resolveSafeReturnTo } from "@/lib/auth/return-to";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,11 +11,15 @@ export const dynamic = "force-dynamic";
 const SESSION_COOKIE = "lucia_os_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30;
 
-function safeFailure(request: Request, reason = "callback_failed") {
-  const destination = new URL("/", request.url);
-  destination.searchParams.set("auth", "failed");
-  destination.searchParams.set("reason", reason);
-  return NextResponse.redirect(destination);
+function safeFailure(request: Request) {
+  // Never disclose internal OAuth stages in a browser-visible redirect.
+  const requestUrl = new URL(request.url);
+  const response = NextResponse.redirect(new URL("/?auth=failed", requestUrl));
+  response.headers.set("Cache-Control", "no-store");
+  response.headers.set("Referrer-Policy", "no-referrer");
+  response.cookies.set("lucia_os_return_to", "", { httpOnly: true, secure: process.env.NODE_ENV === "production" || requestUrl.protocol === "https:", sameSite: "lax", path: "/api/auth", maxAge: 0 });
+  response.cookies.set("lucia_os_oauth_state", "", { httpOnly: true, secure: process.env.NODE_ENV === "production" || requestUrl.protocol === "https:", sameSite: "lax", path: "/api/auth", maxAge: 0 });
+  return response;
 }
 
 export async function GET(request: Request) {
@@ -32,28 +37,9 @@ export async function GET(request: Request) {
     .map((part) => part.trim())
     .find((part) => part.startsWith("lucia_os_return_to="))
     ?.slice("lucia_os_return_to=".length);
-  const safeReturnTo = returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//") && !returnTo.includes("\\") && !returnTo.startsWith("/api/auth")
-    ? returnTo
-    : "/workspace";
+  const safeReturnTo = resolveSafeReturnTo(returnTo);
 
   let failureStage = "state_validation";
-  const response = safeFailure(request);
-  response.cookies.set("lucia_os_return_to", "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production" || requestUrl.protocol === "https:",
-    sameSite: "lax",
-    path: "/api/auth",
-    maxAge: 0,
-  });
-  response.cookies.set("lucia_os_oauth_state", "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production" || requestUrl.protocol === "https:",
-    sameSite: "lax",
-    path: "/api/auth",
-    maxAge: 0,
-  });
-  response.headers.set("Cache-Control", "no-store");
-
   if (!matchesOAuthState(expectedState, state) || !code) {
     console.error("[LUCIA_OS_OAUTH] callback rejected", {
       stage: failureStage,
@@ -62,7 +48,7 @@ export async function GET(request: Request) {
       hasStateQuery: Boolean(state),
       stateMatches: matchesOAuthState(expectedState, state),
     });
-    return safeFailure(request, "state_validation");
+    return safeFailure(request);
   }
 
   try {
@@ -72,7 +58,7 @@ export async function GET(request: Request) {
     const clientSecret = process.env.LUCIA_CORE_CLIENT_SECRET;
     const audience = process.env.LUCIA_CORE_AUDIENCE;
     const redirectUri = process.env.LUCIA_CORE_REDIRECT_URI;
-    if (!clientId || !clientSecret || !audience || !redirectUri) { console.error("[LUCIA_OS_OAUTH] callback configuration incomplete", { hasClientId: Boolean(clientId), hasClientSecret: Boolean(clientSecret), hasAudience: Boolean(audience), hasRedirectUri: Boolean(redirectUri) }); return safeFailure(request, "configuration"); }
+    if (!clientId || !clientSecret || !audience || !redirectUri) { console.error("[LUCIA_OS_OAUTH] callback configuration incomplete", { hasClientId: Boolean(clientId), hasClientSecret: Boolean(clientSecret), hasAudience: Boolean(audience), hasRedirectUri: Boolean(redirectUri) }); return safeFailure(request); }
 
     const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
     failureStage = "token_exchange";
@@ -104,21 +90,21 @@ export async function GET(request: Request) {
         }
       } catch { /* Keep only the safe fallback; never log response bodies. */ }
       console.error("[LUCIA_OS_OAUTH] token exchange rejected", { status: tokenResponse.status, coreError });
-      return safeFailure(request, "token_exchange");
+      return safeFailure(request);
     }
 
     failureStage = "token_payload";
     const tokenPayload: unknown = await tokenResponse.json();
-    if (!tokenPayload || typeof tokenPayload !== "object") { console.error("[LUCIA_OS_OAUTH] invalid token payload", { kind: typeof tokenPayload }); return safeFailure(request, "token_payload"); }
+    if (!tokenPayload || typeof tokenPayload !== "object") { console.error("[LUCIA_OS_OAUTH] invalid token payload", { kind: typeof tokenPayload }); return safeFailure(request); }
     const tokenData = tokenPayload as Record<string, unknown>;
     if (
       typeof tokenData.token !== "string" ||
       tokenData.tokenType !== "Bearer" ||
       typeof tokenData.expiresIn !== "number" ||
       !tokenData.user || typeof tokenData.user !== "object"
-    ) { console.error("[LUCIA_OS_OAUTH] unexpected token response shape", { hasToken: typeof tokenData.token === "string", tokenType: tokenData.tokenType, hasExpiresIn: typeof tokenData.expiresIn === "number", hasUser: Boolean(tokenData.user && typeof tokenData.user === "object") }); return safeFailure(request, "token_payload"); }
+    ) { console.error("[LUCIA_OS_OAUTH] unexpected token response shape", { hasToken: typeof tokenData.token === "string", tokenType: tokenData.tokenType, hasExpiresIn: typeof tokenData.expiresIn === "number", hasUser: Boolean(tokenData.user && typeof tokenData.user === "object") }); return safeFailure(request); }
     const coreUser = tokenData.user as Record<string, unknown>;
-    if (typeof coreUser.id !== "string" || typeof coreUser.displayName !== "string") { console.error("[LUCIA_OS_OAUTH] token user shape invalid", { hasId: typeof coreUser.id === "string", hasDisplayName: typeof coreUser.displayName === "string" }); return safeFailure(request, "token_payload"); }
+    if (typeof coreUser.id !== "string" || typeof coreUser.displayName !== "string") { console.error("[LUCIA_OS_OAUTH] token user shape invalid", { hasId: typeof coreUser.id === "string", hasDisplayName: typeof coreUser.displayName === "string" }); return safeFailure(request); }
 
     failureStage = "identity_lookup";
     const identityResponse = await fetch(new URL("/api/v1/consumer/identity", issuer), {
@@ -127,15 +113,15 @@ export async function GET(request: Request) {
       redirect: "error",
       signal: AbortSignal.timeout(8000),
     });
-    if (!identityResponse.ok) { console.error("[LUCIA_OS_OAUTH] identity lookup rejected", { status: identityResponse.status }); return safeFailure(request, "identity_lookup"); }
+    if (!identityResponse.ok) { console.error("[LUCIA_OS_OAUTH] identity lookup rejected", { status: identityResponse.status }); return safeFailure(request); }
     failureStage = "identity_payload";
     const identityPayload: unknown = await identityResponse.json();
-    if (!identityPayload || typeof identityPayload !== "object") { console.error("[LUCIA_OS_OAUTH] invalid identity payload", { kind: typeof identityPayload }); return safeFailure(request, "identity_payload"); }
+    if (!identityPayload || typeof identityPayload !== "object") { console.error("[LUCIA_OS_OAUTH] invalid identity payload", { kind: typeof identityPayload }); return safeFailure(request); }
     const identityRoot = identityPayload as Record<string, unknown>;
     const identityUser = identityRoot.user && typeof identityRoot.user === "object"
       ? identityRoot.user as Record<string, unknown>
       : identityRoot;
-    if (identityUser.id !== coreUser.id) { console.error("[LUCIA_OS_OAUTH] identity subject mismatch"); return safeFailure(request, "identity_mismatch"); }
+    if (identityUser.id !== coreUser.id) { console.error("[LUCIA_OS_OAUTH] identity subject mismatch"); return safeFailure(request); }
 
     failureStage = "session_persistence";
     const db = getDb();
@@ -189,6 +175,6 @@ export async function GET(request: Request) {
     return success;
   } catch (error) {
     console.error("[LUCIA_OS_OAUTH] callback exception", { stage: failureStage, errorName: error instanceof Error ? error.name : "UnknownError" });
-    return safeFailure(request, failureStage === "session_persistence" ? "session_persistence" : failureStage);
+    return safeFailure(request);
   }
 }
