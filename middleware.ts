@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { resolveLuciaSubdomain } from "@/lib/publishing/host";
 
 const PLATFORM_HOSTS = new Set([
   "lucia.name.ng",
@@ -22,15 +23,33 @@ function isPlatformHost(hostname: string): boolean {
 
 export function middleware(request: NextRequest) {
   const hostname = request.nextUrl.hostname.toLowerCase();
+  const pathname = request.nextUrl.pathname;
+
+  // Route customer subdomains before the platform-host bypass. Reserved names
+  // (including "os" and "staff") are excluded by resolveLuciaSubdomain.
+  const siteDomain = process.env.LUCIA_SITE_DOMAIN || "lucia.name.ng";
+  const siteSlug = resolveLuciaSubdomain(request.headers.get("host"), siteDomain);
+  if (siteSlug) {
+    if (pathname.startsWith("/_next/") || pathname === "/favicon.ico" || pathname === "/robots.txt") {
+      return NextResponse.next();
+    }
+    // Do not expose private platform API or implementation routes on customer hosts.
+    if (pathname.startsWith("/api/") || pathname.startsWith("/site/") || pathname.startsWith("/tenant-site-internal")) {
+      return new NextResponse("Not found", { status: 404, headers: { "Cache-Control": "no-store" } });
+    }
+    const url = request.nextUrl.clone();
+    url.pathname = "/site/" + siteSlug + (pathname === "/" ? "" : pathname);
+    return NextResponse.rewrite(url);
+  }
+
   if (isPlatformHost(hostname)) return NextResponse.next();
 
-  const pathname = request.nextUrl.pathname;
   if (pathname.startsWith("/_next/") || pathname === "/favicon.ico" || pathname === "/robots.txt") {
     return NextResponse.next();
   }
 
-  // Customer hostnames never get access to the product's private API or auth routes.
-  if (pathname.startsWith("/api/") || pathname.startsWith("/site/")) {
+  // Custom customer domains never get access to private API or internal routes.
+  if (pathname.startsWith("/api/") || pathname.startsWith("/site/") || pathname.startsWith("/tenant-site-internal")) {
     return new NextResponse("Not found", { status: 404, headers: { "Cache-Control": "no-store" } });
   }
 
