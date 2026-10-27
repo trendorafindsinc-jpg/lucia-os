@@ -309,6 +309,7 @@ export function VisualSiteEditor() {
         </aside>
         <section className="editor-preview-wrap" aria-label="Live website preview">
           <div className="editor-preview-toolbar"><span><i /> Preview</span><span>Desktop concept</span></div>
+          {aiError && !aiProposal && <p className="editor-notice" role="alert">{aiError}</p>}
           {aiProposal && <section className="loomify-proposal-review" aria-label="loomifyAI proposal review">
             <div className="loomify-review-heading"><div><span className="editor-kicker">YOUR PROPOSAL</span><h2>{aiProposal.site.name}</h2><p>AI-generated concept · Review before applying</p></div><button type="button" className="loomify-dismiss" onClick={() => setAiProposal(null)} aria-label="Dismiss proposal">×</button></div>
             <div className="loomify-proposal-canvas"><LayoutRenderer blueprint={aiProposal} preview /></div>{aiError && <p className="editor-notice" role="alert">{aiError}</p>}
