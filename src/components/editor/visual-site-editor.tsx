@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { getTemplateById, websiteTemplates } from "@/lib/templates/catalogue";
 import { editorPalettes, makeInitialDraft, moveSection, siteDraftSchema, type EditorPaletteId, type SiteDraft } from "@/lib/editor/site-draft";
 import { layoutBlueprintSchema, siteDraftToLayoutBlueprint, type LayoutBlueprint } from "@/lib/layout-blueprint/blueprint";
@@ -12,6 +13,7 @@ import { useWorkspaceTab } from "@/components/workspace/workspace-tab-shell";
 type SavedWebsiteVersion = { id: string; label: string; notes: string; createdAt: string; snapshot: WebsiteSnapshot };
 
 export function VisualSiteEditor() {
+  const router = useRouter();
   const [draft, setDraft] = useState<SiteDraft>(() => makeInitialDraft("northstar-consulting"));
   const { activeTabId, setActiveTabDirty, getSnapshot, setSnapshot, clearSnapshot } = useWorkspaceTab();
   const snapshotKey = activeTabId ? `editor-draft:${activeTabId}` : "";
@@ -278,7 +280,7 @@ export function VisualSiteEditor() {
     <main className="editor-page">
       <header className="editor-topbar">
         <Link className="wordmark" href="/" aria-label="LUCIA OS home"><span className="brand-mark" aria-hidden="true">L</span><span>LUCIA <span className="muted-word">OS</span></span></Link>
-        <div className="editor-topbar-actions"><span className="editor-unsaved">{isLoadingSaved ? "Opening saved draft…" : isSaving ? "Saving…" : websiteId ? saveLabel : "Preview only · Not saved"}</span><Link className="editor-back-link" href={websiteId ? `/pages?websiteId=${encodeURIComponent(websiteId)}` : "/pages"}>Pages & navigation ↗</Link>{websiteId ? <><Link className="editor-back-link" href={`/content?websiteId=${encodeURIComponent(websiteId)}`}>Blog & media ↗</Link><Link className="editor-back-link" href={`/seo?websiteId=${encodeURIComponent(websiteId)}`}>SEO & social ↗</Link><Link className="editor-back-link" href={`/publish?websiteId=${encodeURIComponent(websiteId)}`}>Publish website ↗</Link></> : null}<Link className="editor-back-link" href={websiteId ? `/loomify-ai?websiteId=${encodeURIComponent(websiteId)}` : "/loomify-ai"}>loomifyAI ↗</Link><Link className="editor-back-link" href="/workspace/websites">Back to Websites</Link></div>
+        <div className="editor-topbar-actions"><span className="editor-unsaved">{isLoadingSaved ? "Opening saved draft…" : isSaving ? "Saving…" : websiteId ? saveLabel : "Preview only · Not saved"}</span><Link className="editor-back-link" href={websiteId ? `/pages?websiteId=${encodeURIComponent(websiteId)}` : "/pages"}>Pages & navigation ↗</Link>{websiteId ? <><Link className="editor-back-link" href={`/content?websiteId=${encodeURIComponent(websiteId)}`}>Blog & media ↗</Link><Link className="editor-back-link" href={`/seo?websiteId=${encodeURIComponent(websiteId)}`}>SEO & social ↗</Link><Link className="editor-back-link" href={`/publish?websiteId=${encodeURIComponent(websiteId)}`}>Publish website ↗</Link></> : null}<Link className="editor-back-link" href={(websiteId ? `/loomify-ai?websiteId=${encodeURIComponent(websiteId)}` : "/loomify-ai") as Parameters<typeof router.push>[0]}>loomifyAI ↗</Link><Link className="editor-back-link" href="/workspace/websites">Back to Websites</Link></div>
       </header>
       <section className="editor-heading">
         <p className="eyebrow">VISUAL WEBSITE EDITOR</p>
