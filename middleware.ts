@@ -21,8 +21,12 @@ function isPlatformHost(hostname: string): boolean {
   return false;
 }
 
+function normalizeDomain(configuredDomain: string): string {
+  return configuredDomain.trim().toLowerCase().replace(/^\*\./, "").replace(/^\./, "").replace(/\.$/, "");
+}
+
 function isUnderSiteDomain(hostname: string, configuredDomain: string): boolean {
-  const domain = configuredDomain.trim().toLowerCase().replace(/^\*\./, "").replace(/^\./, "").replace(/\.$/, "");
+  const domain = normalizeDomain(configuredDomain);
   return Boolean(domain) && hostname.endsWith("." + domain);
 }
 
@@ -31,6 +35,13 @@ function notFound() {
     status: 404,
     headers: { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" },
   });
+}
+
+function isPrivatePath(pathname: string): boolean {
+  return pathname.startsWith("/api/") ||
+    pathname.startsWith("/site/") ||
+    pathname === "/tenant-site-internal" ||
+    pathname.startsWith("/tenant-site-internal/");
 }
 
 export function middleware(request: NextRequest) {
@@ -44,16 +55,20 @@ export function middleware(request: NextRequest) {
 
   const configuredSiteDomain = process.env.LUCIA_SITE_DOMAIN || "lucia.name.ng";
   if (isUnderSiteDomain(hostname, configuredSiteDomain)) {
+    const slug = resolveLuciaSubdomain(hostname, configuredSiteDomain);
     // Reserved or malformed LUCIA subdomains must not fall through and be
-    // treated as customer-owned custom domains (for example staff.*).
-    if (!resolveLuciaSubdomain(hostname, configuredSiteDomain)) return notFound();
+    // interpreted as customer-owned custom domains (for example staff.*).
+    if (!slug || isPrivatePath(pathname)) return notFound();
+
+    // Keep the customer's public URL while routing to its server-side site page.
+    const destination = request.nextUrl.clone();
+    destination.pathname = `/site/${slug}${pathname === "/" ? "" : pathname}`;
+    return NextResponse.rewrite(destination);
   }
 
-  // Customer hostnames never get access to the product's private API or
+  // Customer custom domains never get access to the product's private API or
   // implementation routes. These paths are not forwarded into tenant sites.
-  if (pathname.startsWith("/api/") || pathname.startsWith("/site/") || (pathname === "/tenant-site-internal" || pathname.startsWith("/tenant-site-internal/"))) {
-    return notFound();
-  }
+  if (isPrivatePath(pathname)) return notFound();
 
   // Internal rewrite stays server-side; the browser retains its public URL.
   const url = request.nextUrl.clone();
