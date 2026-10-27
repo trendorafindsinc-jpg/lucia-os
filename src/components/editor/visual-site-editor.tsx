@@ -21,8 +21,6 @@ export function VisualSiteEditor() {
   const [savedDraftUnavailable, setSavedDraftUnavailable] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveLabel, setSaveLabel] = useState("Preview only");
-  const [aiBrief, setAiBrief] = useState("");
-  const [aiBusy, setAiBusy] = useState(false);
   const [aiProposal, setAiProposal] = useState<LayoutBlueprint | null>(null);
   const [aiError, setAiError] = useState("");
   const [versions, setVersions] = useState<SavedWebsiteVersion[]>([]);
@@ -98,6 +96,29 @@ export function VisualSiteEditor() {
       .finally(() => { if (!cancelled) setIsLoadingSaved(false); });
     return () => { cancelled = true; };
   }, [activeTabId, getSnapshot, clearSnapshot, setActiveTabDirty]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("loomifyProposal") !== "1") return;
+    try {
+      const raw = sessionStorage.getItem("lucia.loomify.pending-proposal.v1");
+      if (!raw) return;
+      const pending: unknown = JSON.parse(raw);
+      if (typeof pending !== "object" || pending === null || !("websiteId" in pending) || !("proposal" in pending)) return;
+      if (typeof pending.websiteId !== "string" || pending.websiteId !== params.get("websiteId")) return;
+      const checked = layoutBlueprintSchema.safeParse(pending.proposal);
+      if (!checked.success) {
+        setAiError("The incoming loomifyAI proposal did not pass validation. Your draft is unchanged.");
+        return;
+      }
+      setAiProposal(checked.data);
+      setAiError("");
+      sessionStorage.removeItem("lucia.loomify.pending-proposal.v1");
+      setNotice("loomifyAI proposal received. Review it in the preview, then explicitly apply it to your draft.");
+    } catch {
+      setAiError("The incoming loomifyAI proposal could not be read. Your draft is unchanged.");
+    }
+  }, []);
 
   function update<K extends keyof SiteDraft>(key: K, value: SiteDraft[K]) {
     const next = { ...draft, [key]: value };
@@ -208,43 +229,6 @@ export function VisualSiteEditor() {
     setVersionError("");
   }
 
-  async function generateAIProposal() {
-    if (!websiteId) {
-      setAiError("Open a saved website first so loomifyAI can verify your workspace access.");
-      return;
-    }
-    if (aiBrief.trim().length < 20) {
-      setAiError("Add at least 20 characters describing the website you want.");
-      return;
-    }
-    setAiBusy(true);
-    setAiError("");
-    setAiProposal(null);
-    try {
-      const response = await fetch("/api/loomify-ai/propose", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        cache: "no-store",
-        body: JSON.stringify({ websiteId, brief: aiBrief.trim() }),
-      });
-      const data: unknown = await response.json();
-      if (!response.ok) {
-        const message = typeof data === "object" && data !== null && "error" in data && typeof data.error === "string"
-          ? data.error
-          : "loomifyAI couldn't create a proposal. Your draft is unchanged.";
-        throw new Error(message);
-      }
-      const candidate = typeof data === "object" && data !== null && "proposal" in data ? data.proposal : null;
-      const checked = layoutBlueprintSchema.safeParse(candidate);
-      if (!checked.success) throw new Error("The design proposal didn't pass LUCIA's safety checks. Your draft is unchanged.");
-      setAiProposal(checked.data);
-    } catch (error) {
-      setAiError(error instanceof Error ? error.message : "loomifyAI is temporarily unavailable. Your draft is unchanged.");
-    } finally {
-      setAiBusy(false);
-    }
-  }
-
   function applyAIProposalToEditor() {
     if (!aiProposal) return;
     const page = aiProposal.pages.find((item) => item.path === "/") ?? aiProposal.pages[0];
@@ -294,7 +278,7 @@ export function VisualSiteEditor() {
     <main className="editor-page">
       <header className="editor-topbar">
         <Link className="wordmark" href="/" aria-label="LUCIA OS home"><span className="brand-mark" aria-hidden="true">L</span><span>LUCIA <span className="muted-word">OS</span></span></Link>
-        <div className="editor-topbar-actions"><span className="editor-unsaved">{isLoadingSaved ? "Opening saved draft…" : isSaving ? "Saving…" : websiteId ? saveLabel : "Preview only · Not saved"}</span><Link className="editor-back-link" href={websiteId ? `/pages?websiteId=${encodeURIComponent(websiteId)}` : "/pages"}>Pages & navigation ↗</Link>{websiteId ? <><Link className="editor-back-link" href={`/content?websiteId=${encodeURIComponent(websiteId)}`}>Blog & media ↗</Link><Link className="editor-back-link" href={`/seo?websiteId=${encodeURIComponent(websiteId)}`}>SEO & social ↗</Link><Link className="editor-back-link" href={`/publish?websiteId=${encodeURIComponent(websiteId)}`}>Publish website ↗</Link></> : null}<Link className="editor-back-link" href="/workspace/websites">Back to Websites</Link></div>
+        <div className="editor-topbar-actions"><span className="editor-unsaved">{isLoadingSaved ? "Opening saved draft…" : isSaving ? "Saving…" : websiteId ? saveLabel : "Preview only · Not saved"}</span><Link className="editor-back-link" href={websiteId ? `/pages?websiteId=${encodeURIComponent(websiteId)}` : "/pages"}>Pages & navigation ↗</Link>{websiteId ? <><Link className="editor-back-link" href={`/content?websiteId=${encodeURIComponent(websiteId)}`}>Blog & media ↗</Link><Link className="editor-back-link" href={`/seo?websiteId=${encodeURIComponent(websiteId)}`}>SEO & social ↗</Link><Link className="editor-back-link" href={`/publish?websiteId=${encodeURIComponent(websiteId)}`}>Publish website ↗</Link></> : null}<Link className="editor-back-link" href={websiteId ? `/loomify-ai?websiteId=${encodeURIComponent(websiteId)}` : "/loomify-ai"}>loomifyAI ↗</Link><Link className="editor-back-link" href="/workspace/websites">Back to Websites</Link></div>
       </header>
       <section className="editor-heading">
         <p className="eyebrow">VISUAL WEBSITE EDITOR</p>
@@ -304,16 +288,6 @@ export function VisualSiteEditor() {
       <div className="editor-workspace">
         <aside className="editor-panel" aria-label="Website editing controls">
           <div className="editor-panel-heading"><div><span className="editor-kicker">YOUR WEBSITE</span><h2>Content & style</h2></div><span className="editor-live-dot">Live preview</span></div>
-          <section className="loomify-card" aria-labelledby="loomify-title">
-            <div className="loomify-card-top"><span className="loomify-spark" aria-hidden="true">✳</span><div><span className="editor-kicker">DESIGN ASSISTANT</span><h3 id="loomify-title">loomifyAI</h3></div><span className="loomify-beta">Preview</span></div>
-            <p>Describe the website you imagine. Get a design proposal you can review before changing your draft.</p>
-            <label className="loomify-brief-label" htmlFor="loomify-brief">What should your website do?</label>
-            <textarea id="loomify-brief" value={aiBrief} maxLength={4000} rows={4} placeholder="E.g. A calm, premium website for a Lagos architecture studio, with a strong portfolio, services and a clear enquiry path…" onChange={(event) => setAiBrief(event.target.value)} />
-            <div className="loomify-card-footer"><span>{aiBrief.length}/4,000</span><button type="button" className="loomify-generate" onClick={generateAIProposal} disabled={aiBusy} aria-describedby="loomify-button-help">{aiBusy ? "Creating…" : "Create proposal"} <span aria-hidden="true">↗</span></button></div>
-            <p className="loomify-helper" id="loomify-button-help">{!websiteId ? "Open a saved website to create a proposal for that website." : aiBrief.trim().length < 20 ? "Describe your website in at least 20 characters, then create your proposal." : "Your proposal will be shown for review. Nothing is saved or published automatically."}</p>
-            {aiError && <p className="loomify-error" role="alert">{aiError}</p>}
-            {aiProposal && <p className="loomify-helper" role="status">Proposal ready below. Nothing has been saved or published.</p>}
-          </section>
           <section className="loomify-card" aria-labelledby="version-history-title">
             <div className="loomify-card-top"><span className="editor-kicker">VERSION HISTORY</span><h3 id="version-history-title">Saved checkpoints</h3></div>
             <p>Save a named checkpoint of the visual draft and related website metadata. Restore currently brings back visual editor fields only; pages, SEO settings and blog/media content are not restored. It never publishes.</p>
@@ -337,8 +311,8 @@ export function VisualSiteEditor() {
           <div className="editor-preview-toolbar"><span><i /> Preview</span><span>Desktop concept</span></div>
           {aiProposal && <section className="loomify-proposal-review" aria-label="loomifyAI proposal review">
             <div className="loomify-review-heading"><div><span className="editor-kicker">YOUR PROPOSAL</span><h2>{aiProposal.site.name}</h2><p>AI-generated concept · Review before applying</p></div><button type="button" className="loomify-dismiss" onClick={() => setAiProposal(null)} aria-label="Dismiss proposal">×</button></div>
-            <div className="loomify-proposal-canvas"><LayoutRenderer blueprint={aiProposal} preview /></div>
-            <div className="loomify-review-actions"><span>Private preview only. Your live website is unchanged.</span><button type="button" className="editor-done" onClick={applyAIProposalToEditor}>Apply to editor</button></div>
+            <div className="loomify-proposal-canvas"><LayoutRenderer blueprint={aiProposal} preview /></div>{aiError && <p className="editor-notice" role="alert">{aiError}</p>}
+            <div className="loomify-review-actions"><span>Private preview only. Your live website is unchanged.</span><button type="button" className="editor-done" onClick={applyAIProposalToEditor}>Apply proposal to draft</button></div>
           </section>}
           <div className="editor-layout-preview"><LayoutRenderer blueprint={previewBlueprint} preview /></div>
           <p className="editor-preview-caption">{websiteId ? "Changes can be saved to your organisation’s website draft. This preview is private; it is not a public website." : "Illustrative preview. Open a saved website from your Websites library to enable persistent saving."}</p>
