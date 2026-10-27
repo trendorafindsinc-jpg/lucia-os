@@ -1,5 +1,5 @@
 export const reservedSiteSlugs = new Set([
-  "www", "os", "api", "auth", "id", "core", "secure", "school", "admin",
+  "www", "os", "api", "auth", "id", "core", "secure", "school", "admin", "staff", "tenant-site-internal",
   "app", "dashboard", "support", "status", "docs", "assets", "static", "cdn",
   "mail", "email", "billing", "account", "accounts", "login", "signup",
   "register", "help", "dev", "staging", "preview", "vercel",
