@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { buildAuthorizationUrl, createOAuthState } from "@/lib/auth/oauth";
+import { safeAuthReturnPath } from "@/lib/auth/return-to";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -8,9 +9,7 @@ export async function GET(request: Request) {
   try {
     const state = createOAuthState();
     const requestedReturnTo = new URL(request.url).searchParams.get("returnTo");
-    const returnTo = requestedReturnTo && requestedReturnTo.startsWith("/") && !requestedReturnTo.startsWith("//") && !requestedReturnTo.includes("\\") && !requestedReturnTo.startsWith("/api/auth")
-      ? requestedReturnTo
-      : "/workspace";
+    const returnTo = safeAuthReturnPath(requestedReturnTo);
     const response = NextResponse.redirect(buildAuthorizationUrl(state));
     response.cookies.set("lucia_os_return_to", returnTo, {
       httpOnly: true,
