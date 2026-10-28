@@ -1,3 +1,4 @@
+import React from "react";
 import Link from "next/link";
 import type { WorkspaceApp } from "@/lib/workspace/app-registry";
 import { WORKSPACE_APPS, WORKSPACE_TOOLS } from "@/lib/workspace/app-registry";
