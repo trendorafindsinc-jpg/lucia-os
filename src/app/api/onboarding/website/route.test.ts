@@ -37,19 +37,28 @@ function request(body: unknown = payload) {
   });
 }
 
-function configureTransaction(options: { failMembership?: boolean; failWebsite?: boolean } = {}) {
+function configureTransaction(options: {
+  failMembership?: boolean;
+  failWebsite?: boolean;
+  existingMembership?: boolean;
+  existingWebsite?: boolean;
+} = {}) {
   const writes: Array<{ table: unknown; values: unknown }> = [];
   const execute = vi.fn().mockResolvedValue([]);
   const membershipLookup = {
     from: vi.fn().mockReturnThis(),
     innerJoin: vi.fn().mockReturnThis(),
     where: vi.fn().mockReturnThis(),
-    limit: vi.fn().mockResolvedValue([]),
+    limit: vi.fn().mockResolvedValue(options.existingMembership
+      ? [{ id: organizationId, name: payload.organisationName, slug: "lucia-studio", status: "active" }]
+      : []),
   };
   const websiteLookup = {
     from: vi.fn().mockReturnThis(),
     where: vi.fn().mockReturnThis(),
-    limit: vi.fn().mockResolvedValue([]),
+    limit: vi.fn().mockResolvedValue(options.existingWebsite
+      ? [{ id: websiteId, name: payload.websiteName, slug: payload.siteSlug }]
+      : []),
   };
   const select = vi.fn()
     .mockReturnValueOnce(membershipLookup)
@@ -160,6 +169,25 @@ describe("POST /api/onboarding/website transaction boundary", () => {
     ]);
     expect(didCommit()).toBe(true);
     expect(response.headers.get("cache-control")).toBe("no-store");
+  });
+
+  it("reuses an existing owned organization and website on a repeated setup request", async () => {
+    const { tx, transaction, writes, didCommit } = configureTransaction({
+      existingMembership: true,
+      existingWebsite: true,
+    });
+    const response = await POST(request());
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      organization: { id: organizationId, name: payload.organisationName },
+      website: { id: websiteId, slug: payload.siteSlug },
+      reused: true,
+    });
+    expect(transaction).toHaveBeenCalledOnce();
+    expect(tx.execute).toHaveBeenCalledTimes(3);
+    expect(writes).toHaveLength(0);
+    expect(didCommit()).toBe(true);
   });
 
   it("returns a safe service error when database initialization fails", async () => {
