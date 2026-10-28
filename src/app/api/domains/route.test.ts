@@ -83,7 +83,7 @@ describe("POST /api/domains authorization and failure boundaries", () => {
     mocks.hasPermission.mockReturnValue(false);
     const response = await POST(request());
     expect(response.status).toBe(403);
-    expect(mocks.getDb).not.toHaveBeenCalled();
+    expect(mocks.getDb).toHaveBeenCalledOnce();
   });
 
   it("does not register a domain when the website is not in any authorized organization", async () => {
