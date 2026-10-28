@@ -61,7 +61,7 @@ function configureTransaction(options: { failMembership?: boolean; failWebsite?:
         return Promise.reject(new Error("injected owner membership failure"));
       }
       if (table === websites && options.failWebsite) {
-        return Promise.reject(new Error("injected website failure"));
+        return { returning: vi.fn().mockRejectedValue(new Error("injected website failure")) };
       }
       return {
         returning: vi.fn(async () => table === organizations
@@ -168,9 +168,10 @@ describe("POST /api/onboarding/website transaction boundary", () => {
     });
     const response = await POST(request());
     expect(response.status).toBe(500);
-    await expect(response.json()).resolves.toEqual({
+    const body = await response.json();
+    expect(body).toEqual({
       error: "We couldn't save your website yet. Please try again shortly.",
     });
-    expect((await response.text()).includes("private connection string details")).toBe(false);
+    expect(JSON.stringify(body)).not.toContain("private connection string details");
   });
 });
