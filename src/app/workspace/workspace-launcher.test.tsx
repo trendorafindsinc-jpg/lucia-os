@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
@@ -31,6 +32,15 @@ describe("workspace launcher acceptance", () => {
     expect(markup).toContain("Unavailable");
     expect(markup).not.toContain('href="/loom"');
     expect(markup).not.toContain('href="/store"');
+  });
+
+  it("defines desktop, tablet, mobile, focus-visible and reduced-motion styles", () => {
+    const css = readFileSync(new URL("./workspace-launcher.module.css", import.meta.url), "utf8");
+    expect(css).toContain("@media (min-width: 681px) and (max-width: 960px)");
+    expect(css).toContain("@media (max-width: 680px)");
+    expect(css).toContain("@media (max-width: 350px)");
+    expect(css).toContain(":focus-visible");
+    expect(css).toContain("@media (prefers-reduced-motion: reduce)");
   });
 
   it("keeps workspace tools as real navigation links", () => {
