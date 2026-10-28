@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createHash } from "node:crypto";
-import { and, eq, gt } from "drizzle-orm";
+import { and, eq, gt, sql } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { getDb } from "@/lib/db/client";
 import { appUsers, sessions } from "@/lib/db/schema";
@@ -12,11 +12,14 @@ export async function getCurrentUser() {
 
   const tokenHash = createHash("sha256").update(token).digest("hex");
   const db = getDb();
-  const [user] = await db
-    .select({ id: appUsers.id, displayName: appUsers.displayName })
-    .from(sessions)
-    .innerJoin(appUsers, eq(sessions.userId, appUsers.id))
-    .where(and(eq(sessions.tokenHash, tokenHash), gt(sessions.expiresAt, new Date()), eq(appUsers.active, true)))
-    .limit(1);
-  return user ?? null;
+  return db.transaction(async (tx) => {
+    await tx.execute(sql`select set_config('app.current_session_token_hash', ${tokenHash}, true)`);
+    const [user] = await tx
+      .select({ id: appUsers.id, displayName: appUsers.displayName })
+      .from(sessions)
+      .innerJoin(appUsers, eq(sessions.userId, appUsers.id))
+      .where(and(eq(sessions.tokenHash, tokenHash), gt(sessions.expiresAt, new Date()), eq(appUsers.active, true)))
+      .limit(1);
+    return user ?? null;
+  });
 }

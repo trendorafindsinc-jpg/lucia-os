@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db/client";
@@ -13,7 +13,10 @@ export async function POST(request: Request) {
   if (token) {
     const db = getDb();
     const tokenHash = createHash("sha256").update(token).digest("hex");
-    await db.delete(sessions).where(eq(sessions.tokenHash, tokenHash));
+    await db.transaction(async (tx) => {
+      await tx.execute(sql`select set_config('app.current_session_token_hash', ${tokenHash}, true)`);
+      await tx.delete(sessions).where(eq(sessions.tokenHash, tokenHash));
+    });
   }
 
   const response = NextResponse.redirect(new URL("/", request.url), { status: 303 });

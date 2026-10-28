@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
+import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { appUsers, sessions } from "@/lib/db/schema";
 import { getCoreIssuer, matchesOAuthState } from "@/lib/auth/oauth";
@@ -132,6 +133,7 @@ export async function GET(request: Request) {
     // Keep local identity mapping and session creation atomic. Core remains the
     // authentication authority; the local user row is only a verified subject map.
     const localUserActive = await db.transaction(async (tx) => {
+      await tx.execute(sql`select set_config('app.is_auth_callback', 'true', true)`);
       const [mappedUser] = await tx
         .insert(appUsers)
         .values({
