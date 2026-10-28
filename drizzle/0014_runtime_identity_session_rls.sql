@@ -8,6 +8,7 @@ DROP POLICY IF EXISTS app_users_session_read ON app_users;
 CREATE POLICY app_users_session_read ON app_users
   FOR SELECT USING (
     current_setting('app.is_auth_callback', true) = 'true'
+    OR current_setting('app.is_platform_staff', true) = 'true'
     OR EXISTS (
       SELECT 1 FROM app_sessions AS s
       WHERE s.user_id = app_users.id
