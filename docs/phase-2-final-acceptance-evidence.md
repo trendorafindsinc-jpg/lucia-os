@@ -26,9 +26,10 @@ Branch ID: `br-jolly-paper-ba034v2i`; database: `lucia_os`. Checks were read-onl
 ## Source review
 
 - `src/app/api/onboarding/website/route.ts` places the user advisory lock, organization creation, initial owner membership, website and initial pages inside one `db.transaction` callback. A thrown database error is caught outside that callback and the route returns a generic failure response, consistent with transaction rollback semantics.
-- The route has no dedicated route-level test file on `main`; schema validation tests alone do not prove transaction rollback, retry idempotency or the complete live onboarding flow.
+- Added `src/app/api/onboarding/website/route.test.ts` on this evidence branch. It covers unauthenticated, malformed JSON and invalid-input rejection before DB access; injected owner-membership and website failures; transaction callback non-commit on errors; successful organization/owner/website/page creation in one transaction; and safe handling of DB initialization failure. These are route-level mocked-transaction tests, not a substitute for a live PostgreSQL transaction test.
+- Added `src/app/workspace/workspace-launcher.test.tsx` on this evidence branch. Server-render tests cover the workspace summary, labelled sections, available app destinations, real workspace tool links, and the non-clickable unavailable-app treatment.
+- Source review of `src/app/workspace/workspace-launcher.module.css` confirms explicit desktop, tablet and mobile grid breakpoints, visible focus outlines, and reduced-motion overrides. These are CSS/source checks; no real browser viewport, keyboard, touch, screen-reader or reduced-motion session has been captured.
 - `src/lib/db/tenant-scope.test.ts` tests UUID validation and transaction-local context setup with mocked database transactions. Those unit tests are not database-level isolation proof.
-- `docs/phase-1-route-control-test-inventory.md` records that the repository has no browser/E2E suite and no dedicated responsive viewport, keyboard, touch or reduced-motion tests. These checks have not been newly demonstrated here.
 
 ## Acceptance matrix
 
@@ -39,15 +40,15 @@ Branch ID: `br-jolly-paper-ba034v2i`; database: `lucia_os`. Checks were read-onl
 | Non-bypass role and cross-tenant reads | PASS | Disposable branch, `phase2_rls_probe`, seven relation checks returned zero foreign rows |
 | Cross-tenant INSERT denial | PASS | Disposable branch, five RLS-denied insert probes; no rows committed |
 | Composite page/website ownership integrity | PASS (prior evidence) | Existing disposable-branch migration/FK checks |
-| Organization + initial-owner membership atomic rollback | **NOT PROVEN** | The attempted failure-injection probe was itself rejected by the organization INSERT policy before reaching the intended invalid-membership failure. This is an inconclusive fixture/setup result, not a passing rollback test. Re-run with a correctly scoped disposable-branch fixture and assert no organization or membership remains after injected failure. |
-| Retry/idempotency and full onboarding HTTP route | **NOT PROVEN** | Add/execute route-level failure-injection tests and exercise real transaction behavior |
+| Organization + initial-owner membership atomic rollback | PASS (database transaction semantics) / PARTIAL (runtime role) | On the disposable Neon branch, an organization INSERT followed by an intentional invalid owner-membership FK failed as expected; the enclosing PL/pgSQL exception subtransaction rolled back both, and follow-up counts showed zero orphan organizations/memberships. This ran under the database tool's owner context because the non-bypass probe role's organization INSERT was itself rejected by RLS; therefore it proves rollback semantics but does not independently prove this route's runtime role can complete the entire onboarding sequence. |
+| Retry/idempotency and full onboarding HTTP route | PARTIAL — tests added | New route tests inject owner-membership and website-write failures and assert the transaction callback does not commit; success path asserts organization, owner membership, website and pages are attempted in one transaction. The transaction is mocked; live HTTP + PostgreSQL retry/idempotency remains to be exercised. |
 | Protected-route negative cases across all tenant workflows | PARTIAL | Existing helper/AI/staff tests plus database read/insert probes; no complete route-by-route matrix yet |
 | Migration rollback/recovery | PARTIAL | Prior preflight/failure checks recorded; full migration rollback/recovery has not been evidenced in this final pass |
-| Workspace navigation, tabs and stale-state authorization | USER-REPORTED / PARTIAL | User previously reported tabs working; no current automated route/browser trace |
-| Responsive desktop/tablet/mobile, keyboard/touch accessibility, reduced motion | **NOT PROVEN** | No browser/E2E test harness or recorded device results |
+| Workspace navigation, tabs and stale-state authorization | PARTIAL — launcher tests added | New SSR tests assert registered available destinations, workspace tool links and disabled unavailable app tiles; all destination routes still need route-by-route live authorization/browser verification |
+| Responsive desktop/tablet/mobile, keyboard/touch accessibility, reduced motion | PARTIAL — source reviewed | Responsive CSS breakpoints, focus-visible styles and reduced-motion overrides exist; real-browser viewport/keyboard/touch/accessibility testing remains unproven |
 
 ## Decision
 
 **Phase 2 is not declared complete by this evidence record.** The cross-tenant read and INSERT-denial results are useful security evidence, but organization/owner rollback, full protected-route checks, migration recovery, and workspace browser/device acceptance still lack reproducible evidence. Marking the phase complete now would overstate what was tested.
 
-Next acceptance work is limited to Phase 2: correct and rerun the organization/owner rollback probe; add route-level failure/retry coverage; perform protected-route and browser/device checks; run fresh CI on the exact final candidate; then update this matrix with actual outputs. Phase 3 remains blocked until those gates are passed and recorded.
+Next acceptance work is limited to Phase 2: run the new route and launcher tests in fresh CI; add any needed fixes; finish the protected-route matrix and real-browser/device checks; verify onboarding retry/idempotency against a real disposable PostgreSQL transaction; then update this matrix with actual outputs. Phase 3 remains blocked until those gates are passed and recorded.
