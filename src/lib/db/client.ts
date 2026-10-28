@@ -10,9 +10,18 @@ const globalForDb = globalThis as typeof globalThis & {
 };
 
 function createDatabase() {
-  const connectionString = process.env.DATABASE_URL;
+  // Production must use the dedicated NOBYPASSRLS runtime role. Local and
+  // preview environments may continue to use DATABASE_URL until separately provisioned.
+  const connectionString =
+    process.env.VERCEL_ENV === "production"
+      ? process.env.DATABASE_URL_RUNTIME
+      : process.env.DATABASE_URL_RUNTIME ?? process.env.DATABASE_URL;
   if (!connectionString) {
-    throw new Error("DATABASE_URL is required for database access.");
+    throw new Error(
+      process.env.VERCEL_ENV === "production"
+        ? "DATABASE_URL_RUNTIME is required in production."
+        : "DATABASE_URL_RUNTIME or DATABASE_URL is required for database access.",
+    );
   }
 
   const sql = postgres(connectionString, {
