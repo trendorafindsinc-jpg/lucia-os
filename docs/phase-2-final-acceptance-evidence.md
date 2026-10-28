@@ -12,7 +12,7 @@ This record distinguishes directly observed results from source review and check
 
 - GitHub combined status for baseline `9c5d0bbbea12437c932baecda27e9ee8e3894796` reports Vercel success: [deployment](https://vercel.com/trendoraplc-5738/lucia-os/Hvbg8avZoeECFmisUWeb4e5E7GJ6).
 - The final acceptance candidate commit `24fde54541612babb26a6e1b77baab9413f1b159` passed GitHub Actions Quality checks run `40695212475` (run 634): lint, TypeScript, Drizzle migration consistency, **38 test files / 274 tests**, and production build all passed.
-- Vercel preview for the candidate's preceding application-code commit `c4da569c780db0bb7e553235292eba7a29cd9480` reached READY. A live preview fetch of `/workspace` returned the signed-out workspace view with a LUCIA ID sign-in link and no tenant data. This checks the unauthenticated server-rendered route, not a signed-in browser/device session.
+- Vercel preview for the candidate's application-code commit `c4da569c780db0bb7e553235292eba7a29cd9480` reached READY. Live preview fetches of `/workspace`, `/workspace/websites`, `/workspace/domains`, `/workspace/team`, and `/loomify-ai` returned signed-out server-rendered views with LUCIA ID sign-in links and no tenant data. `/templates` rendered the Layouts page. `/loom` returned HTTP 404, confirming the current Loom registry/route mismatch. These are HTTP/server-render checks, not signed-in browser/device sessions.
 - Founder staff-section access and denial for a newly verified ordinary account were reported by the user from live-browser tests. These are user-confirmed results, not independently reproduced by this record.
 - Source review confirms `/staff/team` requires `staff.grants.manage`; the staff-grant API checks the same permission independently and returns 403 when the guard does not return an authorized staff user. Unit tests cover unauthorised listing/mutation, malformed JSON, unsupported roles and missing audit reason.
 
@@ -30,7 +30,7 @@ Branch ID: `br-jolly-paper-ba034v2i`; database: `lucia_os`. Checks were read-onl
 - `src/app/api/onboarding/website/route.ts` places the user advisory lock, organization creation, initial owner membership, website and initial pages inside one `db.transaction` callback. A thrown database error is caught outside that callback and the route returns a generic failure response, consistent with transaction rollback semantics.
 - Added `src/app/api/onboarding/website/route.test.ts` on this evidence branch. It covers unauthenticated, malformed JSON and invalid-input rejection before DB access; injected owner-membership and website failures; transaction callback non-commit on errors; successful organization/owner/website/page creation in one transaction; repeated setup reuse without duplicate writes; and safe handling of DB initialization failure. These are route-level mocked-transaction tests, not a substitute for a live PostgreSQL transaction test.
 - Added `src/app/workspace/workspace-launcher.test.tsx` on this evidence branch. Server-render tests cover the workspace summary, labelled sections, available app destinations, real workspace tool links, and the non-clickable unavailable-app treatment.
-- Source review of `src/app/workspace/workspace-launcher.module.css` confirms explicit desktop, tablet and mobile grid breakpoints, visible focus outlines, and reduced-motion overrides. These are CSS/source checks; no real browser viewport, keyboard, touch, screen-reader or reduced-motion session has been captured.
+- Source review and the new CSS contract test for `src/app/workspace/workspace-launcher.module.css` confirm explicit desktop, tablet and mobile grid breakpoints, visible focus outlines, and reduced-motion overrides. These are CSS/source checks; no real browser viewport, keyboard, touch, screen-reader or reduced-motion session has been captured.
 - `src/lib/db/tenant-scope.test.ts` tests UUID validation and transaction-local context setup with mocked database transactions. Those unit tests are not database-level isolation proof.
 
 ## Acceptance matrix
@@ -39,7 +39,8 @@ Branch ID: `br-jolly-paper-ba034v2i`; database: `lucia_os`. Checks were read-onl
 | --- | --- | --- |
 | Production deployment status | PASS | Vercel status on baseline SHA |
 | Candidate CI | PASS | Run 634 on `24fde545`: lint, typecheck, Drizzle check, 38/38 test files (274/274 tests), production build |
-| Signed-out workspace route | PASS (server fetch) | READY Vercel preview returned signed-out workspace content and LUCIA ID sign-in link; not a browser/device test |
+| Signed-out protected routes | PASS (server fetch) | Workspace, websites, domains, team and loomifyAI returned signed-out views with LUCIA ID links and no tenant data; Layouts page rendered |
+| Loom v1 entry | **BLOCKER** | Product decision says Loom belongs in v1, but app registry marks it unavailable and preview `/loom` returns 404; needs an actual supported Loom route before launcher acceptance |
 | Founder staff access / ordinary verified-user denial | USER-CONFIRMED | Reported live browser test; not independently reproduced here |
 | Non-bypass role and cross-tenant reads | PASS | Disposable branch, `phase2_rls_probe`, seven relation checks returned zero foreign rows |
 | Cross-tenant INSERT denial | PASS | Disposable branch, five RLS-denied insert probes; no rows committed |
