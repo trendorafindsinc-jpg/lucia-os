@@ -18,10 +18,10 @@ describe("workspace launcher acceptance", () => {
   });
 
   it("keeps every available app linked to its registered destination", () => {
-    expect(markup).toContain('href="/workspace" aria-label="Overview"');
-    expect(markup).toContain('href="/workspace/websites" aria-label="Layout Studio"');
-    expect(markup).toContain('href="/templates" aria-label="Layouts"');
-    expect(markup).toContain('href="/loomify-ai" aria-label="loomifyAI"');
+    expect(markup).toContain('aria-label="Overview" href="/workspace"');
+    expect(markup).toContain('aria-label="Layout Studio" href="/workspace/websites"');
+    expect(markup).toContain('aria-label="Layouts" href="/templates"');
+    expect(markup).toContain('aria-label="loomifyAI" href="/loomify-ai"');
   });
 
   it("does not render unavailable apps as clickable links", () => {
