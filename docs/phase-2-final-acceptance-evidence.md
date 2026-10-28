@@ -11,6 +11,8 @@ This record distinguishes directly observed results from source review and check
 ### Production deployment and staff authorization
 
 - GitHub combined status for baseline `9c5d0bbbea12437c932baecda27e9ee8e3894796` reports Vercel success: [deployment](https://vercel.com/trendoraplc-5738/lucia-os/Hvbg8avZoeECFmisUWeb4e5E7GJ6).
+- The final acceptance candidate commit `24fde54541612babb26a6e1b77baab9413f1b159` passed GitHub Actions Quality checks run `40695212475` (run 634): lint, TypeScript, Drizzle migration consistency, **38 test files / 274 tests**, and production build all passed.
+- Vercel preview for the candidate's preceding application-code commit `c4da569c780db0bb7e553235292eba7a29cd9480` reached READY. A live preview fetch of `/workspace` returned the signed-out workspace view with a LUCIA ID sign-in link and no tenant data. This checks the unauthenticated server-rendered route, not a signed-in browser/device session.
 - Founder staff-section access and denial for a newly verified ordinary account were reported by the user from live-browser tests. These are user-confirmed results, not independently reproduced by this record.
 - Source review confirms `/staff/team` requires `staff.grants.manage`; the staff-grant API checks the same permission independently and returns 403 when the guard does not return an authorized staff user. Unit tests cover unauthorised listing/mutation, malformed JSON, unsupported roles and missing audit reason.
 
@@ -36,6 +38,8 @@ Branch ID: `br-jolly-paper-ba034v2i`; database: `lucia_os`. Checks were read-onl
 | Gate | Result | Evidence / remaining work |
 | --- | --- | --- |
 | Production deployment status | PASS | Vercel status on baseline SHA |
+| Candidate CI | PASS | Run 634 on `24fde545`: lint, typecheck, Drizzle check, 38/38 test files (274/274 tests), production build |
+| Signed-out workspace route | PASS (server fetch) | READY Vercel preview returned signed-out workspace content and LUCIA ID sign-in link; not a browser/device test |
 | Founder staff access / ordinary verified-user denial | USER-CONFIRMED | Reported live browser test; not independently reproduced here |
 | Non-bypass role and cross-tenant reads | PASS | Disposable branch, `phase2_rls_probe`, seven relation checks returned zero foreign rows |
 | Cross-tenant INSERT denial | PASS | Disposable branch, five RLS-denied insert probes; no rows committed |
@@ -44,7 +48,7 @@ Branch ID: `br-jolly-paper-ba034v2i`; database: `lucia_os`. Checks were read-onl
 | Retry/idempotency and full onboarding HTTP route | PARTIAL — tests added | New route tests inject owner-membership and website-write failures and assert the transaction callback does not commit; success path asserts organization, owner membership, website and pages are attempted in one transaction; repeated setup reuses an existing owned website without additional writes. The transaction is mocked; live HTTP + PostgreSQL retry/idempotency remains to be exercised. |
 | Protected-route negative cases across all tenant workflows | PARTIAL | Existing helper/AI/staff tests plus database read/insert probes; no complete route-by-route matrix yet |
 | Migration rollback/recovery | PARTIAL | Prior preflight/failure checks recorded; full migration rollback/recovery has not been evidenced in this final pass |
-| Workspace navigation, tabs and stale-state authorization | PARTIAL — launcher tests added | New SSR tests assert registered available destinations, workspace tool links and disabled unavailable app tiles; all destination routes still need route-by-route live authorization/browser verification |
+| Workspace navigation, tabs and stale-state authorization | PARTIAL — launcher tests added | SSR tests assert registered available destinations, workspace tool links and disabled unavailable app tiles; preview confirms signed-out route. Live signed-in route-by-route authorization/browser verification remains open. **Product decision mismatch found:** user specified Loom belongs in v1, but the current registry renders Loom as unavailable and has no Loom route. This needs resolution before workspace acceptance can be signed off. |
 | Responsive desktop/tablet/mobile, keyboard/touch accessibility, reduced motion | PARTIAL — source reviewed | Responsive CSS breakpoints, focus-visible styles and reduced-motion overrides exist; real-browser viewport/keyboard/touch/accessibility testing remains unproven |
 
 ## Decision
