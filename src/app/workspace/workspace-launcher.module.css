@@ -292,3 +292,20 @@
 /* Lattice is a compact workspace tool, not a promotional hero. */
 .workspace .desktopEntry{display:block;margin:0 0 24px;padding:0;border:0;border-radius:0;background:none;box-shadow:none;color:inherit}
 @media(max-width:680px){.workspace .desktopEntry{margin:0 0 18px}}
+
+/* Phase 6: dedicated tablet launcher: restrained Blue Glass command surface. */
+@media (min-width:681px) and (max-width:1279px){
+  .workspace:global(.lucia-workspace-theme){background:radial-gradient(ellipse at 82% 4%,#a9caff99,transparent 38rem),linear-gradient(150deg,#eef5ff,#e4eeff 55%,#f7f9ff)}
+  .header{min-height:68px;padding-inline:clamp(20px,4vw,50px)}
+  .content{width:min(100% - 48px,1100px);padding:clamp(22px,3vw,38px) 0 42px}
+  .welcome{padding-bottom:20px}
+  .welcome h1{font-size:clamp(27px,3.5vw,42px)}
+  .lead{margin-top:8px;font-size:14px}
+  .summary{margin-top:12px}
+  .appGrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+  .appTile{min-height:142px;padding:16px;border-radius:20px}
+  .toolsSection{margin-top:24px}
+  .toolsGrid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .appSection{margin-top:14px}
+}
+@media (min-width:960px) and (max-width:1279px){.appGrid{grid-template-columns:repeat(4,minmax(0,1fr))}}
