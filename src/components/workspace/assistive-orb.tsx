@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import styles from "./assistive-orb.module.css";
 
 /** Presentation-only assistant entry point. No microphone, AI or network action is implied. */
