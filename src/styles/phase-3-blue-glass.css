@@ -1,0 +1,79 @@
+/* LUCIA OS Phase 3 — opt-in blue glass visual foundation.
+   Import this stylesheet into the authenticated workspace shell when integrating.
+   Existing public pages remain unchanged. */
+.lucia-workspace-theme {
+  --lucia-navy: #0b1729;
+  --lucia-blue: #1f6bff;
+  --lucia-blue-light: #80b8ff;
+  --lucia-mist: #f2f7ff;
+  --lucia-ink: #132238;
+  --lucia-violet: #885cf6;
+  --lucia-success: #10b981;
+  --lucia-warning: #f59e0b;
+  --lucia-danger: #ef4444;
+  --lucia-glass-surface: rgba(255,255,255,.88);
+  --lucia-glass-border: rgba(255,255,255,.5);
+  --lucia-glass-shadow: 0 18px 48px rgba(11,23,41,.13);
+  color: var(--lucia-ink);
+  background: radial-gradient(ellipse at 20% 0%,rgba(128,184,255,.32),transparent 55%),var(--lucia-mist);
+}
+.lucia-workspace-theme .lucia-glass {
+  background: var(--lucia-glass-surface);
+  border: 1px solid var(--lucia-glass-border);
+  border-radius: 1.375rem;
+  box-shadow: var(--lucia-glass-shadow);
+}
+.lucia-workspace-theme .lucia-sidebar {
+  color: #f4f8ff;
+  background: var(--lucia-navy);
+}
+.lucia-workspace-theme .lucia-primary-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: .75rem 1.125rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: #1659dc;
+  color: #fff;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background-color 160ms ease,transform 160ms ease;
+}
+.lucia-workspace-theme .lucia-primary-action:hover:not(:disabled) { background: #104bbd; }
+.lucia-workspace-theme .lucia-primary-action:disabled { opacity: .55; cursor: not-allowed; }
+.lucia-workspace-theme .lucia-workspace-tab {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  padding: .625rem 1rem;
+  border-radius: 1rem;
+  color: var(--lucia-ink);
+}
+.lucia-workspace-theme .lucia-workspace-tab[aria-selected="true"] {
+  background: #e4efff;
+  color: #103f9c;
+  font-weight: 700;
+}
+.lucia-workspace-theme :where(a,button,input,select,textarea,[role="tab"]):focus-visible {
+  outline: 3px solid #1659dc;
+  outline-offset: 3px;
+}
+@supports (backdrop-filter: blur(12px)) {
+  .lucia-workspace-theme .lucia-glass {
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .lucia-workspace-theme .lucia-glass {
+    background: #fff;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lucia-workspace-theme .lucia-primary-action { transition: none; }
+}
