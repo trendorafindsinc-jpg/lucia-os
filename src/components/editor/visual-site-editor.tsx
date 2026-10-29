@@ -53,6 +53,8 @@ export function VisualSiteEditor({ embedded = false }: { embedded?: boolean } = 
     setIsLoadingVersions(false);
     setVersions([]);
     setVersionError("");
+    setAiProposal(null);
+    setAiError("");
     if (!cachedDraft && !requested) setDraft(makeInitialDraft("northstar-consulting"));
     if (cachedDraft) {
       setDraft(cachedDraft);

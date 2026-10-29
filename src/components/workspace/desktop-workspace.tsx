@@ -12,6 +12,20 @@ import { applyDesktopRequest, createDesktopState, DESKTOP_SNAPSHOT_KEY, DESKTOP_
 import { getWorkspaceTabId, isSafeWorkspaceTabHref } from "@/lib/workspace/tabs";
 import styles from "./desktop-workspace.module.css";
 
+/** Late completions from a closed/replaced app cannot mutate the next app in that slot. */
+function PaneSessionProvider({ adapter, tabId, children }: { adapter: Omit<WorkspaceContextValue, "activeTabId">; tabId: string; children: React.ReactNode }) {
+  const mounted=useRef(true);
+  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
+  const value=useMemo<WorkspaceContextValue>(()=>({
+    activeTabId:tabId,
+    getSnapshot:<T,>(key:string)=>adapter.getSnapshot<T>(key),
+    setSnapshot:(key,value)=>{if(mounted.current)adapter.setSnapshot(key,value);},
+    clearSnapshot:key=>{if(mounted.current)adapter.clearSnapshot(key);},
+    setActiveTabDirty:dirty=>{if(mounted.current)adapter.setActiveTabDirty(dirty);},
+  }),[adapter,tabId]);
+  return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>;
+}
+
 export function DesktopWorkspace({ userId, initialHref }: { userId: string; initialHref?: string }) {
   const { activeTabId: parentTabId, getSnapshot: getParentSnapshot, setSnapshot: setParentSnapshot, setActiveTabDirty: setParentDirty } = useWorkspaceTab();
   const router = useRouter();
@@ -139,13 +153,12 @@ export function DesktopWorkspace({ userId, initialHref }: { userId: string; init
       {state.order.map(id => {
         const pane = state.panes.find(item => item.id === id)!;
         const app = describeDesktopApp(pane.href)!;
-        const context = { ...adapters[id], activeTabId: getWorkspaceTabId(app) };
         return pane.open && <section key={id} id={`desktop-pane-${id}`} tabIndex={-1} ref={element => {paneRefs.current[id]=element;}} className={styles.pane} hidden={!split && activeId !== id} aria-label={`${app.appKey === "layouts" ? "Layouts" : "Layout Studio"} app pane`}>
           <header className={styles.paneHeader}><strong>{app.label}</strong><span>{pane.dirty ? "Unsaved changes" : app.context.startsWith("website:") ? "Website draft" : "App workspace"}</span><button type="button" onClick={() => { activate(id);update(current => ({ ...current, mode: "single" })); }}>Focus</button><button type="button" aria-label={`Close ${app.appKey === "layouts" ? "Layouts" : "Layout Studio"} pane`} onClick={() => closePane(id)}>×</button></header>
           <div className={styles.paneBody}>
-            <WorkspaceContext.Provider value={context}><AppNavigationProvider value={{ href: pane.href, navigate: href => navigate(id, href) }}>
+            <PaneSessionProvider key={pane.href} adapter={adapters[id]} tabId={getWorkspaceTabId(app)}><AppNavigationProvider value={{ href: pane.href, navigate: href => navigate(id, href) }}>
               {app.appKey === "layouts" ? <TemplateGallery embedded /> : <VisualSiteEditor embedded />}
-            </AppNavigationProvider></WorkspaceContext.Provider>
+            </AppNavigationProvider></PaneSessionProvider>
           </div>
         </section>;
       })}
