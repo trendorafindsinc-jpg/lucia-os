@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { WorkspaceApp } from "@/lib/workspace/app-registry";
 import { WORKSPACE_APPS, WORKSPACE_TOOLS } from "@/lib/workspace/app-registry";
 import styles from "./workspace-launcher.module.css";
+import { OpenAppLibraryButton } from "./open-app-library-button";
 import MobileExperience from "./mobile-experience";
 import { AssistiveOrb } from "@/components/workspace/assistive-orb";
 
@@ -64,6 +65,7 @@ export default function WorkspaceLauncher({ userId, displayName, organizationCou
 
   return (
     <main className={`${styles.workspace} lucia-workspace-theme`}>
+      <div data-lucia-launcher-background>
       <header className={styles.header}>
         <Link className={styles.brand} href="/workspace" aria-label="LUCIA OS workspace home">
           <span className={styles.brandMark} aria-hidden="true"><span /></span>
@@ -88,7 +90,7 @@ export default function WorkspaceLauncher({ userId, displayName, organizationCou
           <div className={styles.mobileStats} aria-label="Workspace at a glance">
             <Link href="/workspace" className={styles.mobileStat}><span aria-hidden="true">♧</span><strong>{organizationCount}</strong><small>Orgs</small></Link>
             <Link href="/workspace/websites" className={styles.mobileStat}><span aria-hidden="true">◎</span><strong>{websiteCount}</strong><small>Websites</small></Link>
-            <a href="#apps-title" className={styles.mobileStat}><span aria-hidden="true">▦</span><strong>{WORKSPACE_APPS.filter((app) => app.status === "available").length}</strong><small>Apps</small></a>
+            <OpenAppLibraryButton className={styles.mobileStat}><span aria-hidden="true">▦</span><strong>{WORKSPACE_APPS.filter((app) => app.status === "available").length}</strong><small>Apps</small></OpenAppLibraryButton>
             <Link href="/workspace/domains" className={styles.mobileStat}><span aria-hidden="true">↗</span><strong>↗</strong><small>Domains</small></Link>
           </div>
         </section>
@@ -109,7 +111,8 @@ export default function WorkspaceLauncher({ userId, displayName, organizationCou
         </section>
         <p className={styles.footerNote}>Your access is checked by LUCIA OS. Unavailable apps are shown for clarity and cannot be launched.</p>
       </div>
-      <MobileExperience userId={userId} />
+      </div>
+      <MobileExperience key={userId} userId={userId} />
       <AssistiveOrb />
     </main>
   );
