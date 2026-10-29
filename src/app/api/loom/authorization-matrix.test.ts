@@ -63,7 +63,7 @@ describe("Loom route-level authorization matrix", () => {
 
   it("denies anonymous member discovery and private profile, notification, saved-content routes", async () => {
     expect((await discoverMembers(request("/api/loom/members", "GET"))).status).toBe(401);
-    expect((await listConnections(request("/api/loom/connections", "GET"))).status).toBe(401);
+    expect((await listConnections()).status).toBe(401);
     expect((await listBlocks()).status).toBe(401);
     expect((await readMessages(request("/api/loom/messages?with=" + memberId, "GET"))).status).toBe(401);
     expect((await readVerification()).status).toBe(401);
