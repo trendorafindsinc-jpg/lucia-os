@@ -24,3 +24,16 @@
   .orb { width: 56px; height: 56px; touch-action: manipulation; }
 }
 @media (max-width: 350px) { .panel { padding: 14px; } }
+
+/* On the approved mobile launcher, the real Orb occupies the dock's centre slot. */
+@media (max-width:680px) {
+  body:has(.lucia-mobile-workspace-dock) .root {
+    left:50%;right:auto;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 10px);
+    transform:translateX(-50%);align-items:center;z-index:95;
+  }
+  body:has(.lucia-mobile-workspace-dock) .orb { width:52px;height:52px; }
+  body:has(.lucia-mobile-workspace-dock) .panel {
+    position:absolute;bottom:66px;left:50%;transform:translateX(-50%);
+    width:min(340px,calc(100vw - 24px));
+  }
+}

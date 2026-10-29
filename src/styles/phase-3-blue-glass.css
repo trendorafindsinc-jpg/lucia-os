@@ -144,3 +144,8 @@
   .lucia-mobile-switcher :is(button,a):focus-visible { outline: 3px solid #80b8ff; outline-offset: 2px; }
   .workspace-route-navigation { overflow-x: auto; max-width: 100%; overscroll-behavior-x: contain; }
 }
+
+/* Launcher owns its approved mobile header/dock; keep app switcher on inner app routes. */
+@media (max-width:680px) {
+  body:has(.lucia-mobile-workspace-dock) .lucia-mobile-switcher { display:none; }
+}
