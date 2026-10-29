@@ -17,6 +17,10 @@ vi.mock("@/lib/loom/staff", () => ({
 vi.mock("@/lib/loom/rate-limit", () => ({ consumeLoomRateLimit: mocks.rateLimit }));
 
 import { POST as createGroup } from "./groups/route";
+import { GET as listConnections, POST as createConnection, PATCH as decideConnection } from "./connections/route";
+import { GET as listBlocks, POST as blockMember, DELETE as unblockMember } from "./blocks/route";
+import { GET as readMessages, POST as sendMessage } from "./messages/route";
+import { GET as readVerification, POST as submitVerification } from "./verification/route";
 import { POST as joinGroup, DELETE as leaveGroup } from "./groups/[groupId]/membership/route";
 import { POST as createGroupPost, GET as listGroupPosts } from "./groups/[groupId]/posts/route";
 import { GET as discoverMembers } from "./members/route";
@@ -59,6 +63,10 @@ describe("Loom route-level authorization matrix", () => {
 
   it("denies anonymous member discovery and private profile, notification, saved-content routes", async () => {
     expect((await discoverMembers(request("/api/loom/members", "GET"))).status).toBe(401);
+    expect((await listConnections(request("/api/loom/connections", "GET"))).status).toBe(401);
+    expect((await listBlocks()).status).toBe(401);
+    expect((await readMessages(request("/api/loom/messages?with=" + memberId, "GET"))).status).toBe(401);
+    expect((await readVerification()).status).toBe(401);
     expect((await readProfile()).status).toBe(401);
     expect((await listNotifications()).status).toBe(401);
     expect((await listSaved()).status).toBe(401);
@@ -78,6 +86,12 @@ describe("Loom route-level authorization matrix", () => {
     expect((await updateReaction(request("/api/loom/reactions", "POST", { postId, reaction: "like" }))).status).toBe(401);
     expect((await createReport(request("/api/loom/reports", "POST", { targetType: "post", targetId: postId, reason: "spam" }))).status).toBe(401);
     expect((await savePost(request("/api/loom/saved", "POST", { postId }))).status).toBe(401);
+    expect((await sendMessage(request("/api/loom/messages", "POST", { recipientUserId: postId, body: "private" }))).status).toBe(401);
+    expect((await submitVerification(request("/api/loom/verification", "POST", { evidenceType: "domain", evidenceReference: "example.com" }))).status).toBe(401);
+    expect((await createConnection(request("/api/loom/connections", "POST", { userId: postId }))).status).toBe(401);
+    expect((await decideConnection(request("/api/loom/connections", "PATCH", { connectionId: postId, decision: "accepted" }))).status).toBe(401);
+    expect((await blockMember(request("/api/loom/blocks", "POST", { userId: postId }))).status).toBe(401);
+    expect((await unblockMember(request("/api/loom/blocks", "DELETE", { userId: postId }))).status).toBe(401);
     expect((await unsavePost(request("/api/loom/saved", "DELETE", { postId }))).status).toBe(401);
     expect(mocks.getDb).not.toHaveBeenCalled();
   });
