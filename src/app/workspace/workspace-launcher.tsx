@@ -84,7 +84,7 @@ export default function WorkspaceLauncher({ displayName, organizationCount, webs
             <span><strong>{websiteCount}</strong> {websiteCount === 1 ? "website" : "websites"}</span>
           </div>
           <div className={styles.mobileStats} aria-label="Workspace at a glance">
-            <Link href="/workspace/team" className={styles.mobileStat}><span aria-hidden="true">♧</span><strong>{organizationCount}</strong><small>Orgs</small></Link>
+            <Link href="/workspace" className={styles.mobileStat}><span aria-hidden="true">♧</span><strong>{organizationCount}</strong><small>Orgs</small></Link>
             <Link href="/workspace/websites" className={styles.mobileStat}><span aria-hidden="true">◎</span><strong>{websiteCount}</strong><small>Websites</small></Link>
             <a href="#apps-title" className={styles.mobileStat}><span aria-hidden="true">▦</span><strong>{WORKSPACE_APPS.filter((app) => app.status === "available").length}</strong><small>Apps</small></a>
             <Link href="/workspace/domains" className={styles.mobileStat}><span aria-hidden="true">↗</span><strong>↗</strong><small>Domains</small></Link>
@@ -107,7 +107,7 @@ export default function WorkspaceLauncher({ displayName, organizationCount, webs
         </section>
         <p className={styles.footerNote}>Your access is checked by LUCIA OS. Unavailable apps are shown for clarity and cannot be launched.</p>
       </div>
-      <nav className={styles.mobileDock} aria-label="Mobile workspace navigation">
+      <nav className={`${styles.mobileDock} lucia-mobile-workspace-dock`} aria-label="Mobile workspace navigation">
         <Link href="/workspace" aria-current="page"><span aria-hidden="true">⌂</span><small>Home</small></Link>
         <a href="#apps-title"><span aria-hidden="true">▦</span><small>Apps</small></a>
         <span className={styles.orbDockSpace} aria-hidden="true" />
