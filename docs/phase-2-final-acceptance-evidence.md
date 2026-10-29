@@ -109,3 +109,29 @@ Next acceptance work is limited to Phase 2: run the new route and launcher tests
 
 - Added a Vercel **Preview-only, branch-scoped** `DATABASE_URL_RUNTIME` environment variable for `phase-2-loom-route-and-runtime-acceptance`, pointing to disposable Neon branch `br-winter-dust-ba24kliv` using the non-bypass `lucia_os_runtime` role. Production and Development targets were not changed.
 - This environment change does not alter an already-running deployment. A fresh branch deployment is required before repeating the live API smoke. The next acceptance step is to verify the new deployment reports healthy `/api/loom/posts` and `/api/loom/groups` reads, then run signed-in fixture isolation checks only on this disposable branch.
+
+
+## 2026-10-29 follow-up — disposable-database HTTP and fresh browser acceptance
+
+### Real app process against disposable Neon
+
+- A fresh local Next.js development server was started in the isolated Vercel sandbox with `DATABASE_URL_RUNTIME` set only for that process to disposable Neon branch `br-winter-dust-ba24kliv`, database `lucia_os`, role `lucia_os_runtime`.
+- Before HTTP testing, a direct role probe confirmed `current_user=lucia_os_runtime`, `rolbypassrls=false`, `rolsuper=false`, and 15 Loom tables.
+- Real HTTP requests through that running Next.js process returned `200` for `GET /api/loom/posts` and `GET /api/loom/groups`; each returned a valid empty collection. This confirms the app can connect to and query the disposable branch with the non-bypass runtime role.
+- The same process returned `401` for unauthenticated `/api/loom/profile`, `/api/loom/messages`, `/api/loom/notifications`, `/api/loom/saved`, `/api/loom/staff/verification`, `/api/loom/staff/reports`, and `/api/loom/members`. Invalid reaction, group, and reply identifiers returned `400`. No HTTP writes were sent and no database rows were changed by this smoke run.
+- Separately, a branch-scoped Preview-only `DATABASE_URL_RUNTIME` was configured for `phase-2-loom-route-and-runtime-acceptance` to the same disposable Neon branch; production and development environment targets were not changed. A fresh preview deployment picked up this setting. The preview's database-backed posts/groups GETs now return `200`, with empty collections.
+
+### Genuine browser acceptance against the wired preview
+
+- Target: `https://lucia-mtrv14c8u-trendoraplc-5738.vercel.app` (protected Vercel Preview; not production).
+- Playwright + headless Chromium completed **29/29 checks** at `2026-10-29T10:48:19Z`; no failed assertions or uncaught page errors were recorded.
+- Checks covered the Loom feed landmark/title and navigation, the real route destinations (`/loom/discover`, `/loom/discussions`, `/loom/groups`, `/loom/connections`, `/loom/messages`, `/loom/notifications`, `/loom/saved`, `/loom/blocks`, `/loom/profile`, `/loom/staff`), desktop layout, tablet width 768px, mobile width 390px with no horizontal overflow, keyboard focus visibility, reduced-motion preference, and anonymous private-read/write denials.
+- Screenshots captured: `loom-disposable-desktop.png`, `loom-disposable-tablet.png`, `loom-disposable-mobile.png` in the temporary browser sandbox. They are retained in that sandbox snapshot, not committed as repository binaries. The report is `acceptance-disposable-report.json` in the same sandbox.
+- Browser coverage is signed-out. The expected unauthenticated API 401 responses appear in browser console as rejected fetches; no uncaught JavaScript page errors were observed.
+
+### Authorization matrix and current disposition
+
+- Expanded the route-level matrix with explicit unverified-member denials for group creation, profile editing and reactions, plus non-staff denial for business-verification review. The matrix also covers anonymous denials, cross-origin write rejection, malformed identifiers and the requirement that denied requests do not reach database access. Existing dedicated tests cover post publishing, private-message connection requirements, blocks and staff report moderation.
+- GitHub Actions Quality run **656** passed on head `1149ba4ef5a6ed6e977372d93da1cf5cc3162820`: lint, TypeScript, Drizzle consistency, **47 test files / 320 tests**, production build.
+- **Still open:** signed-in end-to-end browser sessions for unverified, verified and staff identities; two-user private-message/notification isolation through HTTP; and actual mutation/transaction behavior for those roles against disposable data. These are not proven by anonymous smoke tests or mocked route tests. No production schema migration or production data writes were performed.
+- **Disposition:** the database connection, anonymous HTTP gate, browser structural gate and source-level authorization matrix are now evidenced. Phase 2 remains **OPEN** until the authenticated multi-user privacy/role matrix is exercised end-to-end. Phase 3 remains blocked.
