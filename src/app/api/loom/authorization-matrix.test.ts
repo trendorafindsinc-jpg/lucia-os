@@ -133,4 +133,34 @@ describe("Loom route-level authorization matrix", () => {
     expect((await readReactions(request("/api/loom/reactions", "GET"))).status).toBe(400);
     expect(mocks.getDb).not.toHaveBeenCalled();
   });
+
+  it("denies authenticated but unverified members from verified-business actions", async () => {
+    mocks.currentUser.mockResolvedValue({ id: memberId, displayName: "Unverified member" });
+    const chain = {
+      from: vi.fn(),
+      where: vi.fn(),
+      limit: vi.fn().mockResolvedValue([]),
+    };
+    chain.from.mockReturnValue(chain);
+    chain.where.mockReturnValue(chain);
+    const db = { select: vi.fn(() => chain) };
+    mocks.getDb.mockReturnValue(db);
+
+    const group = await createGroup(request("/api/loom/groups", "POST", { name: "Test group", slug: "test-group" }));
+    const profile = await updateProfile(request("/api/loom/profile", "PUT", { businessName: "Test business" }));
+    const reaction = await updateReaction(request("/api/loom/reactions", "POST", { postId, reaction: "like" }));
+
+    expect([group.status, profile.status, reaction.status]).toEqual([403, 403, 403]);
+    expect(db.select).toHaveBeenCalledTimes(3);
+  });
+
+  it("denies signed-in non-staff users from business-verification review", async () => {
+    mocks.requireStaff.mockResolvedValue({ user: null, denied: "forbidden" });
+    expect((await listVerification()).status).toBe(403);
+    expect((await reviewVerification(request("/api/loom/staff/verification", "PATCH", {
+      verificationId: postId, decision: "verified",
+    }))).status).toBe(403);
+    expect(mocks.getDb).not.toHaveBeenCalled();
+  });
+
 });
