@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
-import { appUsers, loomBlocks, loomBusinessVerifications, loomConnections, loomMessages, loomNotifications } from "@/lib/db/schema";
+import { loomPublicAuthors, loomBlocks, loomBusinessVerifications, loomConnections, loomMessages, loomNotifications } from "@/lib/db/schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -90,7 +90,7 @@ export async function POST(request: Request) {
     const db = getDb();
     const rate = await consumeLoomRateLimit(user.id, "message", 30, 600000);
     if (!rate.allowed) return NextResponse.json({ error: "Too many messages. Try again shortly." }, { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } });
-    const [recipient] = await db.select({ id: appUsers.id }).from(appUsers).where(and(eq(appUsers.id, parsed.data.recipientUserId), eq(appUsers.active, true))).limit(1);
+    const [recipient] = await db.select({ id: loomPublicAuthors.id }).from(loomPublicAuthors).where(and(eq(loomPublicAuthors.id, parsed.data.recipientUserId), eq(loomPublicAuthors.active, true))).limit(1);
     if (!recipient) return NextResponse.json({ error: "Member not found." }, { status: 404 });
     const [message] = await db.insert(loomMessages).values({ senderUserId: user.id, recipientUserId: recipient.id, body: parsed.data.body }).returning({
       id: loomMessages.id, senderUserId: loomMessages.senderUserId, recipientUserId: loomMessages.recipientUserId, body: loomMessages.body, readAt: loomMessages.readAt, createdAt: loomMessages.createdAt,

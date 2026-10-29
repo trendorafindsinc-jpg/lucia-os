@@ -6,7 +6,7 @@ import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
 import { getLoomRestriction } from "@/lib/loom/staff";
-import { appUsers, loomBlocks, loomBusinessVerifications, loomConnections, loomNotifications } from "@/lib/db/schema";
+import { loomPublicAuthors, loomBlocks, loomBusinessVerifications, loomConnections, loomNotifications } from "@/lib/db/schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,8 +26,8 @@ export async function GET() {
     const restriction = await getLoomRestriction(user.id);
     if (restriction?.status === "banned") return NextResponse.json({ error: "Loom access is unavailable for this account." }, { status: 403 });
     const db = getDb();
-    const requester = alias(appUsers, "loom_requester");
-    const recipient = alias(appUsers, "loom_recipient");
+    const requester = alias(loomPublicAuthors, "loom_requester");
+    const recipient = alias(loomPublicAuthors, "loom_recipient");
     const rows = await db.select({
       id: loomConnections.id,
       requesterUserId: loomConnections.requesterUserId,
@@ -63,7 +63,7 @@ export async function POST(request: Request) {
     const db = getDb();
     const rate = await consumeLoomRateLimit(user.id, "connection", 20, 86400000);
     if (!rate.allowed) return NextResponse.json({ error: "Too many requests. Try again later." }, { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } });
-    const [recipient] = await db.select({ id: appUsers.id }).from(appUsers).where(and(eq(appUsers.id, parsed.data.recipientUserId), eq(appUsers.active, true))).limit(1);
+    const [recipient] = await db.select({ id: loomPublicAuthors.id }).from(loomPublicAuthors).where(and(eq(loomPublicAuthors.id, parsed.data.recipientUserId), eq(loomPublicAuthors.active, true))).limit(1);
     if (!recipient) return NextResponse.json({ error: "Member not found." }, { status: 404 });
     const recipientRestriction = await getLoomRestriction(recipient.id);
     if (recipientRestriction) return NextResponse.json({ error: "This member is not currently available for connections." }, { status: 403 });

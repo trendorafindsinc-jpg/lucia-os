@@ -169,6 +169,13 @@
       "when": 1793188809000,
       "tag": "0023_loom_action_limits",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1793188810000,
+      "tag": "0024_loom_public_authors",
+      "breakpoints": true
     }
   ]
 }

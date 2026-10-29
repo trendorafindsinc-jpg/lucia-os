@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
-import { appUsers, loomBusinessVerifications, loomGroups, loomMessages, loomPosts, loomReplies, loomReports } from "@/lib/db/schema";
+import { loomPublicAuthors, loomBusinessVerifications, loomGroups, loomMessages, loomPosts, loomReplies, loomReports } from "@/lib/db/schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     let exists = false;
     if (target.targetType === "post") exists = Boolean((await db.select({ id: loomPosts.id }).from(loomPosts).where(eq(loomPosts.id, target.targetId)).limit(1))[0]);
     if (target.targetType === "reply") exists = Boolean((await db.select({ id: loomReplies.id }).from(loomReplies).where(eq(loomReplies.id, target.targetId)).limit(1))[0]);
-    if (target.targetType === "profile") exists = Boolean((await db.select({ id: appUsers.id }).from(appUsers).innerJoin(loomBusinessVerifications, eq(loomBusinessVerifications.userId, appUsers.id)).where(and(eq(appUsers.id, target.targetId), eq(appUsers.active, true), eq(loomBusinessVerifications.status, "verified"))).limit(1))[0]);
+    if (target.targetType === "profile") exists = Boolean((await db.select({ id: loomPublicAuthors.id }).from(loomPublicAuthors).innerJoin(loomBusinessVerifications, eq(loomBusinessVerifications.userId, loomPublicAuthors.id)).where(and(eq(loomPublicAuthors.id, target.targetId), eq(loomPublicAuthors.active, true), eq(loomBusinessVerifications.status, "verified"))).limit(1))[0]);
     if (target.targetType === "group") exists = Boolean((await db.select({ id: loomGroups.id }).from(loomGroups).where(eq(loomGroups.id, target.targetId)).limit(1))[0]);
     if (target.targetType === "message") exists = Boolean((await db.select({ id: loomMessages.id }).from(loomMessages).where(and(
       eq(loomMessages.id, target.targetId),

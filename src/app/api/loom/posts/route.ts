@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
-import { appUsers, loomBlocks, loomBusinessVerifications, loomPosts } from "@/lib/db/schema";
+import { loomPublicAuthors, loomBlocks, loomBusinessVerifications, loomPosts } from "@/lib/db/schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,9 +21,9 @@ export async function GET(request: Request) {
       id: loomPosts.id,
       body: loomPosts.body,
       createdAt: loomPosts.createdAt,
-      authorId: appUsers.id,
-      authorName: appUsers.displayName,
-    }).from(loomPosts).innerJoin(appUsers, eq(loomPosts.authorUserId, appUsers.id));
+      authorId: loomPublicAuthors.id,
+      authorName: loomPublicAuthors.displayName,
+    }).from(loomPosts).innerJoin(loomPublicAuthors, eq(loomPosts.authorUserId, loomPublicAuthors.id));
     const blockedAuthors = currentUser ? [
       notInArray(loomPosts.authorUserId, db.select({ userId: loomBlocks.blockedUserId }).from(loomBlocks).where(eq(loomBlocks.blockerUserId, currentUser.id))),
       notInArray(loomPosts.authorUserId, db.select({ userId: loomBlocks.blockerUserId }).from(loomBlocks).where(eq(loomBlocks.blockedUserId, currentUser.id))),

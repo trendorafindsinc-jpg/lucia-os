@@ -2,7 +2,7 @@ import { and, asc, eq, inArray } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getDb } from "@/lib/db/client";
-import { appUsers, loomGroups, loomMemberRestrictions, loomMessages, loomNotifications, loomPosts, loomProfiles, loomReplies, loomReports, platformAuditEvents } from "@/lib/db/schema";
+import { loomPublicAuthors, loomGroups, loomMemberRestrictions, loomMessages, loomNotifications, loomPosts, loomProfiles, loomReplies, loomReports, platformAuditEvents } from "@/lib/db/schema";
 import { requireLoomStaff } from "@/lib/loom/staff";
 
 export const runtime = "nodejs";
@@ -24,14 +24,14 @@ export async function GET() {
     const reports = await db.select({
       id: loomReports.id,
       reporterUserId: loomReports.reporterUserId,
-      reporterName: appUsers.displayName,
+      reporterName: loomPublicAuthors.displayName,
       targetType: loomReports.targetType,
       targetId: loomReports.targetId,
       reason: loomReports.reason,
       details: loomReports.details,
       status: loomReports.status,
       createdAt: loomReports.createdAt,
-    }).from(loomReports).innerJoin(appUsers, eq(loomReports.reporterUserId, appUsers.id))
+    }).from(loomReports).innerJoin(loomPublicAuthors, eq(loomReports.reporterUserId, loomPublicAuthors.id))
       .where(inArray(loomReports.status, ["open", "reviewing"]))
       .orderBy(asc(loomReports.createdAt)).limit(100);
     return NextResponse.json({ reports }, { headers: { "Cache-Control": "no-store" } });

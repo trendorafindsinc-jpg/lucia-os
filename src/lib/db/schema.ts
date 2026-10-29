@@ -7,6 +7,7 @@ import {
   index,
   integer,
   pgTable,
+  pgView,
   text,
   timestamp,
   uniqueIndex,
@@ -33,6 +34,13 @@ export const appUsers = pgTable(
   },
   (table) => [uniqueIndex("app_users_core_subject_id_uq").on(table.coreSubjectId)],
 );
+
+/** Narrow read-only projection for Loom community reads; never expose Core subject IDs. */
+export const loomPublicAuthors = pgView("loom_public_authors", {
+  id: uuid("id"),
+  displayName: text("display_name"),
+  active: boolean("active"),
+}).existing();
 
 export const organizations = pgTable(
   "organizations",

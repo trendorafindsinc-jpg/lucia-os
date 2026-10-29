@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
-import { appUsers, loomBlocks, loomConnections } from "@/lib/db/schema";
+import { loomPublicAuthors, loomBlocks, loomConnections } from "@/lib/db/schema";
 import { getLoomRestriction } from "@/lib/loom/staff";
 
 export const runtime = "nodejs";
@@ -21,9 +21,9 @@ export async function GET() {
     const blocks = await db.select({
       id: loomBlocks.id,
       userId: loomBlocks.blockedUserId,
-      displayName: appUsers.displayName,
+      displayName: loomPublicAuthors.displayName,
       createdAt: loomBlocks.createdAt,
-    }).from(loomBlocks).innerJoin(appUsers, eq(loomBlocks.blockedUserId, appUsers.id))
+    }).from(loomBlocks).innerJoin(loomPublicAuthors, eq(loomBlocks.blockedUserId, loomPublicAuthors.id))
       .where(eq(loomBlocks.blockerUserId, user.id)).orderBy(desc(loomBlocks.createdAt)).limit(100);
     return NextResponse.json({ blocks }, { headers: { "Cache-Control": "no-store" } });
   } catch {
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     const db = getDb();
     const rate = await consumeLoomRateLimit(user.id, "block", 30, 86400000);
     if (!rate.allowed) return NextResponse.json({ error: "Too many requests. Try again later." }, { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } });
-    const [target] = await db.select({ id: appUsers.id }).from(appUsers).where(and(eq(appUsers.id, parsed.data.userId), eq(appUsers.active, true))).limit(1);
+    const [target] = await db.select({ id: loomPublicAuthors.id }).from(loomPublicAuthors).where(and(eq(loomPublicAuthors.id, parsed.data.userId), eq(loomPublicAuthors.active, true))).limit(1);
     if (!target) return NextResponse.json({ error: "Member not found." }, { status: 404 });
     const [block] = await db.insert(loomBlocks).values({ blockerUserId: user.id, blockedUserId: target.id }).onConflictDoNothing().returning({ id: loomBlocks.id });
     await db.update(loomConnections).set({ status: "blocked", updatedAt: new Date() }).where(or(

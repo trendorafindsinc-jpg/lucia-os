@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
-import { appUsers, loomBlocks, loomPosts, loomSavedPosts } from "@/lib/db/schema";
+import { loomPublicAuthors, loomBlocks, loomPosts, loomSavedPosts } from "@/lib/db/schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,10 +25,10 @@ export async function GET() {
       postId: loomPosts.id,
       body: loomPosts.body,
       postCreatedAt: loomPosts.createdAt,
-      authorId: appUsers.id,
-      authorName: appUsers.displayName,
+      authorId: loomPublicAuthors.id,
+      authorName: loomPublicAuthors.displayName,
     }).from(loomSavedPosts).innerJoin(loomPosts, eq(loomSavedPosts.postId, loomPosts.id))
-      .innerJoin(appUsers, eq(loomPosts.authorUserId, appUsers.id))
+      .innerJoin(loomPublicAuthors, eq(loomPosts.authorUserId, loomPublicAuthors.id))
       .where(and(
         eq(loomSavedPosts.userId, user.id),
         eq(loomPosts.moderationStatus, "visible"),

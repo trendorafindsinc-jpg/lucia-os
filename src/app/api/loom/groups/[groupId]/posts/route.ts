@@ -5,7 +5,7 @@ import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
 import { getLoomRestriction } from "@/lib/loom/staff";
-import { appUsers, loomBlocks, loomBusinessVerifications, loomGroupMemberships, loomGroups, loomNotifications, loomPosts } from "@/lib/db/schema";
+import { loomPublicAuthors, loomBlocks, loomBusinessVerifications, loomGroupMemberships, loomGroups, loomNotifications, loomPosts } from "@/lib/db/schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,9 +31,9 @@ export async function GET(request: Request, context: Context) {
       id: loomPosts.id,
       body: loomPosts.body,
       createdAt: loomPosts.createdAt,
-      authorId: appUsers.id,
-      authorName: appUsers.displayName,
-    }).from(loomPosts).innerJoin(appUsers, eq(loomPosts.authorUserId, appUsers.id))
+      authorId: loomPublicAuthors.id,
+      authorName: loomPublicAuthors.displayName,
+    }).from(loomPosts).innerJoin(loomPublicAuthors, eq(loomPosts.authorUserId, loomPublicAuthors.id))
       .where(and(eq(loomPosts.groupId, groupId), eq(loomPosts.moderationStatus, "visible"), ...blockedAuthors))
       .orderBy(desc(loomPosts.createdAt)).limit(100);
     return NextResponse.json({ group: { ...group, isMember: Boolean(membership), memberRole: membership?.role ?? null }, posts }, { headers: { "Cache-Control": "no-store" } });

@@ -4,7 +4,7 @@ import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
 import { getLoomRestriction } from "@/lib/loom/staff";
-import { appUsers, loomBlocks, loomBusinessVerifications, loomProfiles } from "@/lib/db/schema";
+import { loomPublicAuthors, loomBlocks, loomBusinessVerifications, loomProfiles } from "@/lib/db/schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,18 +25,18 @@ export async function GET(request: Request, context: Context) {
       if (block) return NextResponse.json({ error: "This profile is unavailable." }, { status: 404 });
     }
     const [profile] = await db.select({
-      userId: appUsers.id,
-      displayName: appUsers.displayName,
+      userId: loomPublicAuthors.id,
+      displayName: loomPublicAuthors.displayName,
       businessName: loomProfiles.businessName,
       bio: loomProfiles.bio,
       website: loomProfiles.website,
       createdAt: loomProfiles.createdAt,
-    }).from(appUsers)
-      .innerJoin(loomBusinessVerifications, eq(loomBusinessVerifications.userId, appUsers.id))
-      .leftJoin(loomProfiles, eq(loomProfiles.userId, appUsers.id))
+    }).from(loomPublicAuthors)
+      .innerJoin(loomBusinessVerifications, eq(loomBusinessVerifications.userId, loomPublicAuthors.id))
+      .leftJoin(loomProfiles, eq(loomProfiles.userId, loomPublicAuthors.id))
       .where(and(
-        eq(appUsers.id, userId),
-        eq(appUsers.active, true),
+        eq(loomPublicAuthors.id, userId),
+        eq(loomPublicAuthors.active, true),
         eq(loomBusinessVerifications.status, "verified"),
         or(isNull(loomProfiles.id), eq(loomProfiles.moderationStatus, "visible")),
       )).limit(1);

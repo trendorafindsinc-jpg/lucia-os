@@ -3,7 +3,7 @@ import { getLoomRestriction } from "@/lib/loom/staff";
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
-import { appUsers, loomBlocks, loomBusinessVerifications, loomProfiles } from "@/lib/db/schema";
+import { loomPublicAuthors, loomBlocks, loomBusinessVerifications, loomProfiles } from "@/lib/db/schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,24 +17,24 @@ export async function GET(request: Request) {
   try {
     const db = getDb();
     const base = db.select({
-      userId: appUsers.id,
-      displayName: appUsers.displayName,
+      userId: loomPublicAuthors.id,
+      displayName: loomPublicAuthors.displayName,
       businessName: loomProfiles.businessName,
       bio: loomProfiles.bio,
       website: loomProfiles.website,
-    }).from(appUsers)
-      .innerJoin(loomBusinessVerifications, eq(loomBusinessVerifications.userId, appUsers.id))
-      .leftJoin(loomProfiles, eq(loomProfiles.userId, appUsers.id));
+    }).from(loomPublicAuthors)
+      .innerJoin(loomBusinessVerifications, eq(loomBusinessVerifications.userId, loomPublicAuthors.id))
+      .leftJoin(loomProfiles, eq(loomProfiles.userId, loomPublicAuthors.id));
     const filters = and(
-      eq(appUsers.active, true),
+      eq(loomPublicAuthors.active, true),
       eq(loomBusinessVerifications.status, "verified"),
-      ne(appUsers.id, user.id),
+      ne(loomPublicAuthors.id, user.id),
       or(isNull(loomProfiles.id), eq(loomProfiles.moderationStatus, "visible")),
-      notInArray(appUsers.id, db.select({ userId: loomBlocks.blockedUserId }).from(loomBlocks).where(eq(loomBlocks.blockerUserId, user.id))),
-      notInArray(appUsers.id, db.select({ userId: loomBlocks.blockerUserId }).from(loomBlocks).where(eq(loomBlocks.blockedUserId, user.id))),
+      notInArray(loomPublicAuthors.id, db.select({ userId: loomBlocks.blockedUserId }).from(loomBlocks).where(eq(loomBlocks.blockerUserId, user.id))),
+      notInArray(loomPublicAuthors.id, db.select({ userId: loomBlocks.blockerUserId }).from(loomBlocks).where(eq(loomBlocks.blockedUserId, user.id))),
     );
     const members = query
-      ? await base.where(and(filters, or(ilike(loomProfiles.businessName, `%${query}%`), ilike(loomProfiles.bio, `%${query}%`), ilike(appUsers.displayName, `%${query}%`)))).orderBy(asc(loomProfiles.businessName)).limit(100)
+      ? await base.where(and(filters, or(ilike(loomProfiles.businessName, `%${query}%`), ilike(loomProfiles.bio, `%${query}%`), ilike(loomPublicAuthors.displayName, `%${query}%`)))).orderBy(asc(loomProfiles.businessName)).limit(100)
       : await base.where(filters).orderBy(asc(loomProfiles.businessName)).limit(100);
     return NextResponse.json({ members }, { headers: { "Cache-Control": "no-store" } });
   } catch {

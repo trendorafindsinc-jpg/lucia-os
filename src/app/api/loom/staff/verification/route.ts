@@ -2,7 +2,7 @@ import { and, asc, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getDb } from "@/lib/db/client";
-import { appUsers, loomBusinessVerifications, loomNotifications, platformAuditEvents } from "@/lib/db/schema";
+import { loomPublicAuthors, loomBusinessVerifications, loomNotifications, platformAuditEvents } from "@/lib/db/schema";
 import { requireLoomStaff } from "@/lib/loom/staff";
 
 export const runtime = "nodejs";
@@ -22,13 +22,13 @@ export async function GET() {
     const requests = await db.select({
       id: loomBusinessVerifications.id,
       userId: loomBusinessVerifications.userId,
-      displayName: appUsers.displayName,
+      displayName: loomPublicAuthors.displayName,
       evidenceType: loomBusinessVerifications.evidenceType,
       evidenceReference: loomBusinessVerifications.evidenceReference,
       status: loomBusinessVerifications.status,
       reviewNote: loomBusinessVerifications.reviewNote,
       submittedAt: loomBusinessVerifications.submittedAt,
-    }).from(loomBusinessVerifications).innerJoin(appUsers, eq(loomBusinessVerifications.userId, appUsers.id))
+    }).from(loomBusinessVerifications).innerJoin(loomPublicAuthors, eq(loomBusinessVerifications.userId, loomPublicAuthors.id))
       .where(eq(loomBusinessVerifications.status, "pending"))
       .orderBy(asc(loomBusinessVerifications.submittedAt)).limit(100);
     return NextResponse.json({ requests }, { headers: { "Cache-Control": "no-store" } });
