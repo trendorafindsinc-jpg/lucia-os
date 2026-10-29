@@ -84,3 +84,62 @@
   color: var(--lucia-accent, #8b7cff);
   background: linear-gradient(145deg, rgba(139, 124, 255, 0.22), rgba(77, 209, 191, 0.14));
 }
+
+/* Phase 3: approved Blue Glass launcher composition, scoped to the signed-in page. */
+.workspace:global(.lucia-workspace-theme) {
+  --ws-ink: var(--lucia-ink);
+  --ws-muted: #4b5f79;
+  --ws-line: #cddcf0;
+  background: radial-gradient(ellipse at 30% 5%,rgba(31,107,255,.24),transparent 34rem),var(--lucia-mist);
+}
+.workspace:global(.lucia-workspace-theme) .header {
+  background: var(--lucia-navy);
+  border-color: rgba(128,184,255,.2);
+  color: #fff;
+}
+.workspace:global(.lucia-workspace-theme) .brand { color: #fff; }
+.workspace:global(.lucia-workspace-theme) .brandMuted,
+.workspace:global(.lucia-workspace-theme) .headerContext { color: #bcd5ff; }
+.workspace:global(.lucia-workspace-theme) .brandMark {
+  background: linear-gradient(145deg,var(--lucia-blue-light),var(--lucia-blue));
+  box-shadow: 0 6px 22px rgba(31,107,255,.3);
+}
+.workspace:global(.lucia-workspace-theme) .brandMark span { border-color: #fff; }
+.workspace:global(.lucia-workspace-theme) .brandMark span::after { background: #fff; }
+.workspace:global(.lucia-workspace-theme) .avatar {
+  background: #d9e7ff;
+  color: #103f9c;
+  border-color: #aac9ff;
+}
+.workspace:global(.lucia-workspace-theme) .eyebrow { color: #104bbd; }
+.workspace:global(.lucia-workspace-theme) .appTile,
+.workspace:global(.lucia-workspace-theme) .toolLink {
+  background: var(--lucia-glass-surface);
+  border-color: rgba(255,255,255,.65);
+  box-shadow: var(--lucia-glass-shadow);
+}
+.workspace:global(.lucia-workspace-theme) .appTile[href]:hover {
+  border-color: var(--lucia-blue-light);
+  box-shadow: 0 20px 44px rgba(31,107,255,.16);
+}
+.workspace:global(.lucia-workspace-theme) .appTileUnavailable {
+  background: rgba(235,241,250,.88);
+  box-shadow: none;
+}
+.workspace:global(.lucia-workspace-theme) .iconSurface {
+  background: linear-gradient(145deg,#cfe4ff,#eaf3ff);
+  color: #104bbd;
+}
+.workspace:global(.lucia-workspace-theme) .sectionCount {
+  background: #e4efff;
+  color: #103f9c;
+}
+.workspace:global(.lucia-workspace-theme) .appTile:focus-visible,
+.workspace:global(.lucia-workspace-theme) .toolLink:focus-visible {
+  outline: 3px solid #1659dc;
+  outline-offset: 3px;
+}
+@media (prefers-reduced-transparency: reduce) {
+  .workspace:global(.lucia-workspace-theme) .appTile,
+  .workspace:global(.lucia-workspace-theme) .toolLink { background: #fff; }
+}
