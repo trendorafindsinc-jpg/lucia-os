@@ -272,3 +272,6 @@
 @media (max-width:680px) and (prefers-reduced-transparency:reduce) {
   .mobileDock,.workspace:global(.lucia-workspace-theme) .appTile { backdrop-filter:none; background:#f2f7ff; }
 }
+
+/* Mobile refinements: user-selected wallpaper and a dedicated App Library overlay. */
+@media(max-width:680px){.workspace:global(.lucia-workspace-theme){background:var(--lucia-mobile-wallpaper,linear-gradient(165deg,#061427,#345c90,#b6cce1))!important;background-attachment:fixed!important}}
