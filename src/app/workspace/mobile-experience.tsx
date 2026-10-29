@@ -15,12 +15,15 @@ export default function MobileExperience({userId}:{userId:string}) {
   const [wallpaper,setWallpaper] = useState("aurora");
   const [custom,setCustom] = useState("");
   const [notice,setNotice] = useState("");
+  const [orbOpen,setOrbOpen] = useState(false);
   const key = "lucia-os:appearance:"+userId;
   useEffect(()=>{try{const raw=localStorage.getItem(key);if(raw){const saved=JSON.parse(raw) as {wallpaper?:string;custom?:string};if(saved.wallpaper && (backgrounds[saved.wallpaper]||saved.wallpaper==="custom"))setWallpaper(saved.wallpaper);if(saved.custom?.startsWith("data:image/"))setCustom(saved.custom)}}catch{}},[key]);
   useEffect(()=>{
+    const previous=document.body.style.overflow;
+    if(view!=="home" || orbOpen)document.body.style.overflow="hidden";
     document.documentElement.dataset.luciaMobileView=view;
-    return ()=>{delete document.documentElement.dataset.luciaMobileView};
-  },[view]);
+    return ()=>{delete document.documentElement.dataset.luciaMobileView;document.body.style.overflow=previous};
+  },[view,orbOpen]);
   useEffect(()=>{
     const bg=wallpaper==="custom"&&custom?`linear-gradient(rgba(3,12,30,.3),rgba(3,12,30,.3)),url("${custom}") center / cover fixed`:backgrounds[wallpaper]||backgrounds.aurora;
     document.documentElement.style.setProperty("--lucia-mobile-wallpaper",bg);
@@ -31,15 +34,16 @@ export default function MobileExperience({userId}:{userId:string}) {
   return <div className={styles.mobileExperience}>
     {view!=="home"&&<section className={styles.screen} aria-label={view==="apps"?"App Library":view==="appearance"?"Wallpaper settings":view}>
       <div className={styles.screenHeader}><button onClick={()=>setView(view==="appearance"?"more":"home")} aria-label="Back">‹</button><h1>{view==="apps"?"Your Apps":view==="activity"?"Activity":view==="appearance"?"Wallpaper":"More"}</h1></div>
-      {view==="apps"&&<div className={styles.library}>{WORKSPACE_APPS.map(app=><div key={app.key} className={styles.app}>{app.status==="available"&&app.href?<Link href={app.href} className={styles.appIcon} aria-label={app.label}><span aria-hidden="true">{app.icon==="loomify-ai"?"✦":app.icon==="website"?"▣":app.icon==="layouts"?"▤":app.icon==="overview"?"▦":"◎"}</span></Link>:<span className={styles.disabledIcon} aria-label={app.reason||"Unavailable"} title={app.reason}>◌</span>}<span>{app.label}</span></div>)}</div>}
+      {view==="apps"&&<div className={styles.library}><div className={styles.app}><button className={styles.appIcon} aria-label="Settings" onClick={()=>setView("appearance")}><span aria-hidden="true">⚙</span></button><span>Settings</span></div>{WORKSPACE_APPS.map(app=><div key={app.key} className={styles.app}>{app.status==="available"&&app.href?<Link href={app.href} className={styles.appIcon} aria-label={app.label}><span aria-hidden="true">{app.icon==="loomify-ai"?"✦":app.icon==="website"?"▣":app.icon==="layouts"?"▤":app.icon==="overview"?"▦":"◎"}</span></Link>:<span className={styles.disabledIcon} aria-label={app.reason||"Unavailable"} title={app.reason}>◌</span>}<span>{app.label}</span></div>)}</div>}
       {view==="activity"&&<p className={styles.note}>Your activity feed is not available yet. No activity is being displayed.</p>}
       {view==="more"&&<div className={styles.more}><button onClick={()=>setView("appearance")}>Appearance & Wallpaper <span>›</span></button><Link href="/workspace/domains">Domains <span>›</span></Link><Link href="/workspace/team">Team & access <span>›</span></Link><Link href="/support">Help & support <span>›</span></Link></div>}
       {view==="appearance"&&<><p className={styles.note}>Choose your workspace background. Preferences are saved on this device for your account.</p><div className={styles.gallery}>{Object.entries(backgrounds).map(([name,bg])=><button key={name} onClick={()=>choose(name)} aria-pressed={wallpaper===name}><span style={{background:bg}}/><strong>{name[0].toUpperCase()+name.slice(1)}</strong>{wallpaper===name?" ✓":""}</button>)}</div><label className={styles.upload}>Upload your wallpaper<input type="file" accept="image/png,image/jpeg,image/webp" onChange={e=>void upload(e.target.files?.[0])}/></label><button className={styles.reset} onClick={()=>choose("aurora","")}>Restore default</button>{notice&&<p role="status" className={styles.note}>{notice}</p>}</>}
     </section>}
+    {orbOpen&&<section className={styles.orbPanel} role="dialog" aria-modal="true" aria-label="LUCIA Orb"><div className={styles.orbHeading}><strong>LUCIA Orb · loomifyAI</strong><button onClick={()=>setOrbOpen(false)} aria-label="Close Orb">×</button></div><p>Open loomifyAI to create AI design proposals and send them to Layout Studio. Orb is the unified entry point; voice and autonomous actions are not yet available.</p><Link href="/loomify-ai" onClick={()=>setOrbOpen(false)}>Open loomifyAI →</Link></section>}
     <nav className={`${styles.dock} lucia-mobile-workspace-dock`} aria-label="Mobile workspace navigation">
-      <button aria-current={view==="home"?"page":undefined} onClick={()=>setView("home")}><span>⌂</span><small>Home</small></button>
-      <button aria-current={view==="apps"?"page":undefined} onClick={()=>setView("apps")}><span>▦</span><small>Apps</small></button>
-      <span className={styles.orbSlot} aria-hidden="true"><span>✦</span><small>Orb</small></span>
+      <button aria-current={view==="home"?"page":undefined} onClick={()=>{setOrbOpen(false);setView("home")}}><span>⌂</span><small>Home</small></button>
+      <button aria-current={view==="apps"?"page":undefined} onClick={()=>{setOrbOpen(false);setView("apps")}}><span>▦</span><small>Apps</small></button>
+      <button className={styles.orbSlot} aria-label="Open LUCIA Orb and loomifyAI" aria-expanded={orbOpen} onClick={()=>setOrbOpen(value=>!value)}><span>✦</span><small>Orb</small></button>
       <button aria-current={view==="activity"?"page":undefined} onClick={()=>setView("activity")}><span>◷</span><small>Activity</small></button>
       <button aria-current={view==="more"||view==="appearance"?"page":undefined} onClick={()=>setView("more")}><span>☷</span><small>More</small></button>
     </nav>
