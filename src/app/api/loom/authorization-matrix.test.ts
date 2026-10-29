@@ -67,8 +67,8 @@ describe("Loom route-level authorization matrix", () => {
 
   it("denies anonymous group creation and membership changes", async () => {
     expect((await createGroup(request("/api/loom/groups", "POST", { name: "Test group", slug: "test-group" }))).status).toBe(401);
-    expect((await joinGroup(request("/api/loom/groups/" + groupId + "/membership", "POST"), groupContext)).status).toBe(401);
-    expect((await leaveGroup(request("/api/loom/groups/" + groupId + "/membership", "DELETE"), groupContext)).status).toBe(401);
+    expect((await joinGroup(request("/api/loom/groups/" + groupId + "/membership", "POST"), groupContext))?.status).toBe(401);
+    expect((await leaveGroup(request("/api/loom/groups/" + groupId + "/membership", "DELETE"), groupContext))?.status).toBe(401);
     expect(mocks.getDb).not.toHaveBeenCalled();
   });
 
@@ -107,7 +107,7 @@ describe("Loom route-level authorization matrix", () => {
       updateNotifications(request("/api/loom/notifications", "PATCH", { markAllRead: true }, attacker)),
       reviewVerification(request("/api/loom/staff/verification", "PATCH", { verificationId: postId, decision: "verified" }, attacker)),
     ]);
-    expect(results.map(response => response.status)).toEqual(Array(11).fill(403));
+    expect(results.map(response => response?.status)).toEqual(Array(11).fill(403));
     expect(mocks.currentUser).not.toHaveBeenCalled();
     expect(mocks.getDb).not.toHaveBeenCalled();
   });
