@@ -37,9 +37,9 @@ export const appUsers = pgTable(
 
 /** Narrow read-only projection for Loom community reads; never expose Core subject IDs. */
 export const loomPublicAuthors = pgView("loom_public_authors", {
-  id: uuid("id"),
+  id: uuid("id").notNull(),
   displayName: text("display_name"),
-  active: boolean("active"),
+  active: boolean("active").notNull(),
 }).existing();
 
 export const organizations = pgTable(
