@@ -91,6 +91,8 @@ describe("workspace launcher acceptance", () => {
     expect(css).toContain(".mobileStats { display:grid");
     expect(css).toContain(".mobileDock {");
     expect(css).toContain("grid-template-columns:repeat(5,minmax(0,1fr))");
+    const sharedCss = readFileSync(new URL("../../styles/phase-3-blue-glass.css", import.meta.url), "utf8");
+    expect(sharedCss).toContain("body:has(.lucia-mobile-workspace-dock) .lucia-mobile-switcher { display:none; }");
   });
 
   it("activates the scoped Blue Glass workspace theme", () => {
