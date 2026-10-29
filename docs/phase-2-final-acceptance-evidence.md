@@ -135,3 +135,39 @@ Next acceptance work is limited to Phase 2: run the new route and launcher tests
 - GitHub Actions Quality run **656** passed on head `1149ba4ef5a6ed6e977372d93da1cf5cc3162820`: lint, TypeScript, Drizzle consistency, **47 test files / 320 tests**, production build.
 - **Still open:** signed-in end-to-end browser sessions for unverified, verified and staff identities; two-user private-message/notification isolation through HTTP; and actual mutation/transaction behavior for those roles against disposable data. These are not proven by anonymous smoke tests or mocked route tests. No production schema migration or production data writes were performed.
 - **Disposition:** the database connection, anonymous HTTP gate, browser structural gate and source-level authorization matrix are now evidenced. Phase 2 remains **OPEN** until the authenticated multi-user privacy/role matrix is exercised end-to-end. Phase 3 remains blocked.
+
+
+## 2026-10-29 follow-up — authenticated HTTP and browser matrix passed on disposable preview
+
+### Fixes made from real runtime findings
+
+- Added migration `0024_loom_public_authors.sql` and Drizzle declaration for a narrow view exposing only `id`, `display_name`, and `active`. Loom read routes that need another member's display label now join this view instead of querying `app_users` directly, whose RLS policy intentionally limits direct row reads to the current session. This restores public feed/profile and other-member labels without exposing Core subject IDs or contact fields.
+- Fixed rate-limit SQL timestamp parameters by passing ISO strings into raw SQL fragments; Drizzle's raw SQL interpolation had been binding `Date` objects in a way postgres-js could not handle. The post-write endpoint now correctly returns the intended authorization response for unverified users and permits verified users to publish. Temporary preview-only diagnostic logging was removed after the fix.
+- Applied migration 0024 only to disposable Neon branch `br-winter-dust-ba24kliv`; no production schema or data was changed.
+
+### Real HTTP requests through the Vercel Preview app, using disposable Neon
+
+- Target deployment: `https://lucia-doputzqv0-trendoraplc-5738.vercel.app`, built from code head `5062325b9f52cd56d8df013c560f93687e93cfda` (the subsequent commit only removes temporary preview logging).
+- **18/18 authenticated HTTP acceptance checks passed** against the branch-scoped Preview-only `DATABASE_URL_RUNTIME` using `lucia_os_runtime`:
+  - Public `GET /api/loom/posts` returned 200 and included the fixture posts plus their display names; `GET /api/loom/groups` returned 200.
+  - Anonymous private messages returned 401.
+  - User A could read only the A–B conversation; the B–C fixture message did not leak, and A could not open a conversation with unconnected C (403).
+  - User A saw only A's notification; user B saw only B's notification.
+  - Verified A returned verified status; unverified C returned pending status.
+  - Verified public member profile and connection list resolved names through the safe view.
+  - Unverified C's profile edit and post publish were denied with 403; verified A's post publish returned 201.
+  - Non-staff A could not read the staff verification queue (403); cross-origin report submission was rejected (403).
+- Database assertions after the HTTP run confirmed: one verified-user test post was created; no unverified-user post was created; marking A's notifications read changed A's fixture only and left B's notification unread. These fixture rows and mutations exist only on the disposable branch.
+
+### Signed-in browser acceptance
+
+- A second real Playwright/Chromium run on the same Preview passed **7/7 signed-in UI checks**: verified A sees the public feed fixture and author name; desktop and mobile feed have no horizontal overflow; B sees B's notification and not A's; unverified C's profile page renders; and ordinary member A sees no private fixture data on the staff route. The first attempt used too-short waits and failed two content assertions; rerunning with hydration waits made all seven pass. No production environment or data was touched.
+- The earlier 29/29 structural/navigation/anonymous checks remain valid for the same Loom UI shell. The current signed-in run is the stronger follow-up for identity-specific rendering.
+
+### Current disposition
+
+- Source-level route authorization matrix: CI passed on code head `5062325b9f52cd56d8df013c560f93687e93cfda`, **47 test files / 320 tests**, including lint, TypeScript, Drizzle consistency and production build. A final logging-only cleanup commit is pending its own deployment/checks.
+- Disposable DB migration/rollback/recovery: passed.
+- Real HTTP against disposable DB: passed for the tested anonymous, verified, unverified and non-staff cases above.
+- Signed-in browser acceptance: passed for the seven journeys above.
+- Still required before Phase 2 closure: wait for the logging-only cleanup commit's CI and Preview deployment; then repeat a brief post-cleanup API smoke. Full staff-positive/authorized-moderation mutation coverage and the complete route-by-route mutation matrix still need explicit proof. Keep PR draft and Phase 3 blocked until those last checks are complete.
