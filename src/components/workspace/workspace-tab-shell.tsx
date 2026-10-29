@@ -152,7 +152,7 @@ function WorkspaceTabShellInner({ children }: { children: ReactNode }) {
   return (
     <WorkspaceContext.Provider value={value}>
       {hydrated && route && (
-        <nav className="workspace-tabbar" aria-label="Open app workspaces">
+        <nav className="workspace-tabbar lucia-blue-glass-nav" aria-label="Open app workspaces">
           <Link className="workspace-tab-home" href="/workspace" aria-label="Return to workspace launcher" title="Workspace launcher">⌂</Link>
           <div className="workspace-tablist" role="tablist" aria-label="Workspace tabs">
             {tabs.map((tab) => (
@@ -167,7 +167,7 @@ function WorkspaceTabShellInner({ children }: { children: ReactNode }) {
         </nav>
       )}
       {hydrated && route && showWorkspaceQuickNavigation && (
-        <nav className="workspace-route-navigation" aria-label="Workspace navigation">
+        <nav className="workspace-route-navigation lucia-blue-glass-nav" aria-label="Workspace navigation">
           <Link href="/workspace" aria-label="Workspace overview">Overview</Link>
           <Link href="/workspace/websites" aria-current={pathname === "/workspace/websites" ? "page" : undefined}>Websites</Link>
           <Link href="/create" aria-current={pathname === "/create" ? "page" : undefined}>Create website</Link>
