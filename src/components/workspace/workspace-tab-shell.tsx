@@ -12,6 +12,7 @@ import {
   type ReactNode,
 } from "react";
 import Link from "next/link";
+import { AssistiveOrb } from "./assistive-orb";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { canCloseWorkspaceTab, describeWorkspaceRoute, getWorkspaceTabId, isSafeWorkspaceTabHref } from "@/lib/workspace/tabs";
 
@@ -185,6 +186,7 @@ function WorkspaceTabShellInner({ children }: { children: ReactNode }) {
         </nav>
       )}
       {children}
+      {hydrated && route && <AssistiveOrb />}
     </WorkspaceContext.Provider>
   );
 }

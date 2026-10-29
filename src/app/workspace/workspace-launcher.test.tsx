@@ -50,11 +50,13 @@ describe("workspace launcher acceptance", () => {
     expect(markup).toContain('href="/workspace/team"');
     expect(markup).toContain('href="/support"');
   });
-  it("renders the Assistive Orb as an honest, collapsed presentation control", () => {
+  it("renders one collapsed Orb with the shared loomifyAI destination", () => {
     expect(markup).toContain('aria-label="LUCIA assistive controls"');
     expect(markup).toContain('aria-label="Expand LUCIA Assistive Orb"');
     expect(markup).toContain('aria-expanded="false"');
-    expect(markup).toContain("voice listening and automated actions are not connected here yet.");
+    expect(markup).toContain("Voice and automated actions are not available yet.");
+    expect(markup).toContain("Open loomifyAI");
+    expect(markup.match(/aria-label="LUCIA assistive controls"/g)).toHaveLength(1);
   });
 
   it("keeps mobile launcher controls touch-friendly and clears the floating Orb", () => {
@@ -86,7 +88,8 @@ describe("workspace launcher acceptance", () => {
     expect(markup).toContain('aria-label="Mobile workspace navigation"');
     expect(markup).toContain("lucia-mobile-workspace-dock");
     expect(markup).toContain('href="/workspace/domains"');
-    expect(markup).toContain('href="#apps-title"');
+    expect(markup).not.toContain('href="#apps-title"');
+    expect(markup).toContain('aria-label="Open App Library"');
     const css = readFileSync(new URL("./workspace-launcher.module.css", import.meta.url), "utf8");
     expect(css).toContain(".mobileStats { display:grid");
     expect(css).toContain(".mobileDock {");

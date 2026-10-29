@@ -275,3 +275,8 @@
 
 /* Mobile refinements: user-selected wallpaper and a dedicated App Library overlay. */
 @media(max-width:680px){.workspace:global(.lucia-workspace-theme){background:var(--lucia-mobile-wallpaper,linear-gradient(165deg,#061427,#345c90,#b6cce1))!important;background-attachment:fixed!important}}
+
+/* New apps live in the App Library by default on phones; desktop retains launcher. */
+@media(max-width:680px){.appSection{display:none}}
+
+@media(max-width:680px){:global(html[data-lucia-home-apps="true"]) .appSection{display:block}.mobileStat{font:inherit;cursor:pointer}}
