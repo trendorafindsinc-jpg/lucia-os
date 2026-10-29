@@ -38,5 +38,6 @@
   }
 }
 
-/* The mobile dock owns the Orb; retain the floating control on desktop only. */
-@media(max-width:680px){body:has(.lucia-mobile-workspace-dock) .root{display:none}}
+
+.action { display: inline-block; margin-top: 16px; padding: 12px 16px; border-radius: 12px; background: #2765d9; color: white; text-decoration: none; }
+.action:focus-visible { outline: 3px solid #80b8ff; outline-offset: 4px; }
