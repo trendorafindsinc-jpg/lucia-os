@@ -29,6 +29,7 @@ export default async function OrganizationWorkspacePage() {
   ));
 
   return <WorkspaceLauncher
+    userId={user.id}
     displayName={user.displayName || "LUCIA user"}
     organizationCount={organizations.length}
     websiteCount={websiteCounts.reduce((total, value) => total + value, 0)}
