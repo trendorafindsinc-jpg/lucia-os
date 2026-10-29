@@ -56,6 +56,20 @@ describe("workspace launcher acceptance", () => {
     expect(markup).not.toContain("voice listening");
   });
 
+  it("keeps mobile launcher controls touch-friendly and clears the floating Orb", () => {
+    const css = readFileSync(new URL("./workspace-launcher.module.css", import.meta.url), "utf8");
+    expect(css).toContain("min-height: 100dvh");
+    expect(css).toContain("padding-bottom: calc(112px + env(safe-area-inset-bottom))");
+    expect(css).toContain(".appTile[href] { touch-action: manipulation; }");
+    expect(css).toContain(".toolLink { min-height: 52px;");
+  });
+
+  it("provides a stable accessible Orb panel target even while collapsed", () => {
+    expect(markup).toContain('id="lucia-assistive-panel"');
+    expect(markup).toContain('aria-controls="lucia-assistive-panel"');
+    expect(markup).toContain('hidden=""');
+  });
+
   it("activates the scoped Blue Glass workspace theme", () => {
     expect(markup).toContain("lucia-workspace-theme");
     const css = readFileSync(new URL("./workspace-launcher.module.css", import.meta.url), "utf8");
