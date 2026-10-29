@@ -5,7 +5,7 @@
   "description": "LUCIA OS universal multi-tenant website platform",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && node scripts/check-routing-build.mjs",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
@@ -13,7 +13,8 @@
     "test:watch": "vitest",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:check": "drizzle-kit check"
+    "db:check": "drizzle-kit check",
+    "test:routing:http": "node scripts/check-routing-http.mjs"
   },
   "dependencies": {
     "next": "^15.5.6",
