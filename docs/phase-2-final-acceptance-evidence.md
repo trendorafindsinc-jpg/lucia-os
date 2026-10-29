@@ -88,7 +88,7 @@ Next acceptance work is limited to Phase 2: run the new route and launcher tests
 - Target deployment: `https://lucia-b6eo0d9y9-trendoraplc-5738.vercel.app` (preview only; not production).
 - Browser: Playwright + Chromium headless, real network requests, reduced-motion preference enabled.
 - Result: **29/29 checks passed**.
-- Evidence: `docs/evidence/loom-desktop.png`, `docs/evidence/loom-tablet.png`, `docs/evidence/loom-mobile.png`, and `docs/evidence/loom-browser-report.json` (if present in this commit).
+- Evidence: desktop/tablet/mobile screenshots and the machine-readable Playwright report were captured in the temporary browser sandbox. The binary screenshots were not committed to the repository; the 29-check summary and results below are the retained evidence.
 - Covered: `/loom` page and its feed/navigation landmarks; `/loom/discover`, `/loom/discussions`, `/loom/groups`, `/loom/connections`, `/loom/messages`, `/loom/notifications`, `/loom/saved`, `/loom/blocks`, `/loom/profile`, and `/loom/staff` all returned HTTP 200; tablet (768px) and mobile (390px) had no horizontal overflow; keyboard focus and reduced-motion preference were observed; anonymous private reads and write actions were denied with 401/403. No failing browser checks were recorded.
 - Scope limit: this is genuine browser/device-emulation evidence for the **signed-out** path. It is not a signed-in session test and does not prove private-data isolation across two authenticated users.
 
