@@ -37,3 +37,6 @@
     width:min(340px,calc(100vw - 24px));
   }
 }
+
+/* The mobile dock owns the Orb; retain the floating control on desktop only. */
+@media(max-width:680px){body:has(.lucia-mobile-workspace-dock) .root{display:none}}
