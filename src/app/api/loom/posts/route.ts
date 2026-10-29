@@ -61,7 +61,6 @@ export async function POST(request: Request) {
     });
     return NextResponse.json({ post: { ...post, authorName: user.displayName } }, { status: 201, headers: { "Cache-Control": "no-store" } });
   } catch (error) {
-    if (process.env.VERCEL_ENV === "preview") console.error("[loom] post persistence failed", error instanceof Error ? { name: error.name, message: error.message } : { name: "UnknownError" });
     return NextResponse.json({ error: "Your post could not be saved. Your text is still available in the composer; please try again." }, { status: 503 });
   }
 }
