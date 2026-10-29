@@ -6,7 +6,7 @@ import WorkspaceLauncher from "./workspace-launcher";
 
 describe("workspace launcher acceptance", () => {
   const markup = renderToStaticMarkup(
-    <WorkspaceLauncher displayName="Afolabi Oluwaseyi" organizationCount={2} websiteCount={3} />,
+    <WorkspaceLauncher userId="test-user" displayName="Afolabi Oluwaseyi" organizationCount={2} websiteCount={3} />,
   );
 
   it("renders the signed-in workspace summary and app sections accessibly", () => {
