@@ -70,6 +70,16 @@ describe("workspace launcher acceptance", () => {
     expect(markup).toContain('hidden=""');
   });
 
+  it("gives each available app a distinct vector identity within Blue Glass", () => {
+    const css = readFileSync(new URL("./workspace-launcher.module.css", import.meta.url), "utf8");
+    for (const icon of ["overview", "website", "layouts", "loomify-ai", "loom", "store"]) {
+      expect(css).toContain(`.icon_${icon} { --app-glow:`);
+    }
+    expect(css).toContain(".iconSurface::before");
+    expect(markup).toContain('aria-label="Layout Studio"');
+    expect(markup).toContain('aria-label="loomifyAI"');
+  });
+
   it("activates the scoped Blue Glass workspace theme", () => {
     expect(markup).toContain("lucia-workspace-theme");
     const css = readFileSync(new URL("./workspace-launcher.module.css", import.meta.url), "utf8");
