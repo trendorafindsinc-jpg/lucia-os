@@ -2,8 +2,10 @@ import { sql } from "drizzle-orm";
 import {
   bigint,
   boolean,
+  check,
   foreignKey,
   index,
+  integer,
   pgTable,
   text,
   timestamp,
@@ -415,3 +417,205 @@ export const websiteSeoSettings = pgTable("website_seo_settings", {
   uniqueIndex("website_seo_settings_org_website_uq").on(table.organizationId, table.websiteId),
   uniqueIndex("website_seo_settings_org_id_id_uq").on(table.organizationId, table.id),
 ]);
+
+export const loomPosts = pgTable(
+  "loom_posts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    authorUserId: uuid("author_user_id").notNull().references(() => appUsers.id, { onDelete: "cascade" }),
+    groupId: uuid("group_id").references(() => loomGroups.id, { onDelete: "cascade" }),
+    body: text("body").notNull(),
+    moderationStatus: text("moderation_status").notNull().default("visible"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [index("loom_posts_created_idx").on(table.createdAt), index("loom_posts_author_idx").on(table.authorUserId), index("loom_posts_group_created_idx").on(table.groupId, table.createdAt)],
+);
+
+export const loomReplies = pgTable(
+  "loom_replies",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    postId: uuid("post_id").notNull().references(() => loomPosts.id, { onDelete: "cascade" }),
+    authorUserId: uuid("author_user_id").notNull().references(() => appUsers.id, { onDelete: "cascade" }),
+    body: text("body").notNull(),
+    moderationStatus: text("moderation_status").notNull().default("visible"),
+    createdAt: createdAt(),
+  },
+  (table) => [index("loom_replies_post_created_idx").on(table.postId, table.createdAt), index("loom_replies_author_idx").on(table.authorUserId)],
+);
+
+
+/** Loom business identity verification; only authorised staff may change status to verified. */
+export const loomBusinessVerifications = pgTable(
+  "loom_business_verifications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull().references(() => appUsers.id, { onDelete: "cascade" }),
+    evidenceType: text("evidence_type").notNull(),
+    evidenceReference: text("evidence_reference").notNull(),
+    status: text("status").notNull().default("pending"),
+    reviewNote: text("review_note"),
+    reviewedByUserId: uuid("reviewed_by_user_id").references(() => appUsers.id, { onDelete: "set null" }),
+    submittedAt: timestamp("submitted_at", { withTimezone: true }).notNull().defaultNow(),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    uniqueIndex("loom_business_verifications_user_uq").on(table.userId),
+    index("loom_business_verifications_status_submitted_idx").on(table.status, table.submittedAt),
+  ],
+);
+
+
+/** Public-facing Loom profile data is kept separate from the authentication identity record. */
+export const loomProfiles = pgTable("loom_profiles", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => appUsers.id, { onDelete: "cascade" }),
+  businessName: text("business_name"),
+  bio: text("bio").notNull().default(""),
+  website: text("website"),
+  avatarUrl: text("avatar_url"),
+  moderationStatus: text("moderation_status").notNull().default("visible"),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+}, (table) => [uniqueIndex("loom_profiles_user_uq").on(table.userId)]);
+
+/** Public community spaces owned by a Loom member. */
+export const loomGroups = pgTable("loom_groups", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  createdByUserId: uuid("created_by_user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
+  name: text("name").notNull(),
+  slug: text("slug").notNull(),
+  description: text("description").notNull().default(""),
+  visibility: text("visibility").notNull().default("public"),
+  status: text("status").notNull().default("active"),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+}, (table) => [
+  uniqueIndex("loom_groups_slug_uq").on(table.slug),
+  index("loom_groups_status_created_idx").on(table.status, table.createdAt),
+]);
+
+export const loomGroupMemberships = pgTable("loom_group_memberships", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  groupId: uuid("group_id").notNull().references(() => loomGroups.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").notNull().references(() => appUsers.id, { onDelete: "cascade" }),
+  role: text("role").notNull().default("member"),
+  status: text("status").notNull().default("active"),
+  createdAt: createdAt(),
+}, (table) => [
+  uniqueIndex("loom_group_memberships_group_user_uq").on(table.groupId, table.userId),
+  index("loom_group_memberships_user_status_idx").on(table.userId, table.status),
+]);
+
+export const loomConnections = pgTable("loom_connections", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  requesterUserId: uuid("requester_user_id").notNull().references(() => appUsers.id, { onDelete: "cascade" }),
+  recipientUserId: uuid("recipient_user_id").notNull().references(() => appUsers.id, { onDelete: "cascade" }),
+  status: text("status").notNull().default("pending"),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+}, (table) => [
+  uniqueIndex("loom_connections_request_recipient_uq").on(table.requesterUserId, table.recipientUserId),
+  index("loom_connections_recipient_status_idx").on(table.recipientUserId, table.status),
+]);
+
+export const loomReactions = pgTable("loom_reactions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  postId: uuid("post_id").notNull().references(() => loomPosts.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").notNull().references(() => appUsers.id, { onDelete: "cascade" }),
+  reaction: text("reaction").notNull().default("like"),
+  createdAt: createdAt(),
+}, (table) => [
+  uniqueIndex("loom_reactions_post_user_uq").on(table.postId, table.userId),
+  index("loom_reactions_post_created_idx").on(table.postId, table.createdAt),
+]);
+
+export const loomSavedPosts = pgTable("loom_saved_posts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  postId: uuid("post_id").notNull().references(() => loomPosts.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").notNull().references(() => appUsers.id, { onDelete: "cascade" }),
+  createdAt: createdAt(),
+}, (table) => [
+  uniqueIndex("loom_saved_posts_user_post_uq").on(table.userId, table.postId),
+  index("loom_saved_posts_user_created_idx").on(table.userId, table.createdAt),
+]);
+
+export const loomReports = pgTable("loom_reports", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  reporterUserId: uuid("reporter_user_id").notNull().references(() => appUsers.id, { onDelete: "cascade" }),
+  targetType: text("target_type").notNull(),
+  targetId: text("target_id").notNull(),
+  reason: text("reason").notNull(),
+  details: text("details").notNull().default(""),
+  status: text("status").notNull().default("open"),
+  reviewedByUserId: uuid("reviewed_by_user_id").references(() => appUsers.id, { onDelete: "set null" }),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+  createdAt: createdAt(),
+}, (table) => [
+  index("loom_reports_status_created_idx").on(table.status, table.createdAt),
+  index("loom_reports_reporter_created_idx").on(table.reporterUserId, table.createdAt),
+]);
+
+export const loomMessages = pgTable("loom_messages", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  senderUserId: uuid("sender_user_id").notNull().references(() => appUsers.id, { onDelete: "cascade" }),
+  recipientUserId: uuid("recipient_user_id").notNull().references(() => appUsers.id, { onDelete: "cascade" }),
+  body: text("body").notNull(),
+  readAt: timestamp("read_at", { withTimezone: true }),
+  createdAt: createdAt(),
+}, (table) => [
+  index("loom_messages_inbox_idx").on(table.recipientUserId, table.readAt, table.createdAt),
+  index("loom_messages_conversation_idx").on(table.senderUserId, table.recipientUserId, table.createdAt),
+]);
+
+export const loomNotifications = pgTable("loom_notifications", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => appUsers.id, { onDelete: "cascade" }),
+  actorUserId: uuid("actor_user_id").references(() => appUsers.id, { onDelete: "set null" }),
+  kind: text("kind").notNull(),
+  targetId: text("target_id"),
+  body: text("body").notNull(),
+  readAt: timestamp("read_at", { withTimezone: true }),
+  createdAt: createdAt(),
+}, (table) => [
+  index("loom_notifications_user_read_created_idx").on(table.userId, table.readAt, table.createdAt),
+]);
+
+/** Loom-specific restrictions are separate from LUCIA ID and the wider OS account status. */
+export const loomMemberRestrictions = pgTable("loom_member_restrictions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => appUsers.id, { onDelete: "cascade" }),
+  status: text("status").notNull().default("restricted"),
+  reason: text("reason").notNull(),
+  createdByStaffUserId: uuid("created_by_staff_user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  liftedAt: timestamp("lifted_at", { withTimezone: true }),
+  liftedByStaffUserId: uuid("lifted_by_staff_user_id").references(() => appUsers.id, { onDelete: "set null" }),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+}, (table) => [
+  uniqueIndex("loom_member_restrictions_user_uq").on(table.userId),
+  index("loom_member_restrictions_status_expires_idx").on(table.status, table.expiresAt),
+]);
+
+/** Member-to-member blocks prevent unwanted Loom interactions without changing the LUCIA ID account. */
+export const loomBlocks = pgTable("loom_blocks", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  blockerUserId: uuid("blocker_user_id").notNull().references(() => appUsers.id, { onDelete: "cascade" }),
+  blockedUserId: uuid("blocked_user_id").notNull().references(() => appUsers.id, { onDelete: "cascade" }),
+  createdAt: createdAt(),
+}, (table) => [
+  uniqueIndex("loom_blocks_pair_uq").on(table.blockerUserId, table.blockedUserId),
+  index("loom_blocks_blocked_created_idx").on(table.blockedUserId, table.createdAt),
+  check("loom_blocks_no_self", sql`${table.blockerUserId} <> ${table.blockedUserId}`),
+]);
+
+/** Atomic Postgres-backed throttling for high-abuse Loom write actions. */
+export const loomActionLimits = pgTable("loom_action_limits", {
+  limitKey: text("limit_key").primaryKey(),
+  windowStartedAt: timestamp("window_started_at", { withTimezone: true }).notNull().defaultNow(),
+  requestCount: integer("request_count").notNull().default(0),
+  updatedAt: updatedAt(),
+}, (table) => [index("loom_action_limits_window_idx").on(table.windowStartedAt)]);

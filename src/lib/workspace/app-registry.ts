@@ -4,7 +4,7 @@ export type WorkspaceApp = {
   key: string;
   label: string;
   description: string;
-  href?: "/workspace" | "/workspace/websites" | "/templates" | "/loomify-ai";
+  href?: "/workspace" | "/workspace/websites" | "/templates" | "/loomify-ai" | "/loom";
   status: WorkspaceAppStatus;
   icon: "overview" | "website" | "layouts" | "loomify-ai" | "loom" | "store";
   reason?: string;
@@ -47,9 +47,9 @@ export const WORKSPACE_APPS = [
     key: "loom",
     label: "Loom",
     description: "A professional network for people and businesses",
-    status: "unavailable",
+    href: "/loom",
+    status: "available",
     icon: "loom",
-    reason: "Loom is not available in this release.",
   },
   {
     key: "store",

@@ -23,14 +23,13 @@ describe("workspace launcher acceptance", () => {
     expect(markup).toContain('aria-label="Layout Studio" href="/workspace/websites"');
     expect(markup).toContain('aria-label="Layouts" href="/templates"');
     expect(markup).toContain('aria-label="loomifyAI" href="/loomify-ai"');
+    expect(markup).toContain('aria-label="Loom" href="/loom"');
   });
 
   it("does not render unavailable apps as clickable links", () => {
-    expect(markup).toContain("Loom is not available in this release.");
     expect(markup).toContain("The Store is not available in this release.");
     expect(markup).toContain('aria-disabled="true"');
     expect(markup).toContain("Unavailable");
-    expect(markup).not.toContain('href="/loom"');
     expect(markup).not.toContain('href="/store"');
   });
 

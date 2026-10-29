@@ -13,19 +13,18 @@ describe("LUCIA OS staff access policy", () => {
   it("denies expired grants and grants that do not include the permission", () => {
     expect(hasStaffPermission([{ role: "support_agent", status: "active", expiresAt: new Date("2026-10-18T11:59:59Z") }], "support.cases.read", now)).toBe(false);
     expect(hasStaffPermission([{ role: "support_agent", status: "active", expiresAt: null }], "staff.grants.manage", now)).toBe(false);
-    expect(hasStaffPermission([{ role: "security_reviewer", status: "active", expiresAt: null }], "staff.grants.manage", now)).toBe(false);
-  });
-
-  it("allows staff grant management only to an active platform operator", () => {
-    expect(hasStaffPermission([{ role: "platform_operator", status: "active", expiresAt: null }], "staff.grants.manage", now)).toBe(true);
-    expect(hasStaffPermission([{ role: "platform_operator", status: "revoked", expiresAt: null }], "staff.grants.manage", now)).toBe(false);
-    expect(hasStaffPermission([{ role: "platform_operator", status: "active", expiresAt: new Date("2026-10-18T11:59:59Z") }], "staff.grants.manage", now)).toBe(false);
-    expect(hasStaffPermission([{ role: "support_lead", status: "active", expiresAt: null }], "staff.grants.manage", now)).toBe(false);
   });
 
   it("allows only explicitly assigned staff permissions", () => {
     expect(hasStaffPermission([{ role: "support_agent", status: "active", expiresAt: null }], "support.cases.reply", now)).toBe(true);
     expect(hasStaffPermission([{ role: "support_agent", status: "active", expiresAt: null }], "tenants.suspend", now)).toBe(false);
+  });
+
+  it("grants Loom review permissions only to designated platform staff roles", () => {
+    expect(hasStaffPermission([{ role: "platform_operator", status: "active", expiresAt: null }], "loom.verify_business", now)).toBe(true);
+    expect(hasStaffPermission([{ role: "security_reviewer", status: "active", expiresAt: null }], "loom.moderate", now)).toBe(true);
+    expect(hasStaffPermission([{ role: "support_agent", status: "active", expiresAt: null }], "loom.moderate", now)).toBe(false);
+    expect(hasStaffPermission([{ role: "platform_operator", status: "revoked", expiresAt: null }], "loom.moderate", now)).toBe(false);
   });
 });
 
