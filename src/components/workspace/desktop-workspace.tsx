@@ -11,6 +11,7 @@ import { WorkspaceIcon } from "./workspace-icon";
 import { applyDesktopRequest, createDesktopState, DESKTOP_SNAPSHOT_KEY, DESKTOP_TAB_ID, describeDesktopApp, restoreDesktopState, sameDesktopContext, type DesktopState, type PaneId } from "@/lib/workspace/desktop";
 import { getWorkspaceTabId, isSafeWorkspaceTabHref } from "@/lib/workspace/tabs";
 import styles from "./desktop-workspace.module.css";
+import { canUseLatticeSplit } from "@/lib/workspace/tablet";
 
 /** Late completions from a closed/replaced app cannot mutate the next app in that slot. */
 function PaneSessionProvider({ adapter, tabId, children }: { adapter: Omit<WorkspaceContextValue, "activeTabId">; tabId: string; children: React.ReactNode }) {
@@ -55,7 +56,7 @@ export function DesktopWorkspace({ userId, initialHref }: { userId: string; init
   useEffect(() => {
     // Split is governed by usable CSS space, never the user agent or pointer type.
     // Both native adapters need a minimum 440px content column.
-    const sync = () => setCanSplit(window.innerWidth >= 1100);
+    const sync = () => setCanSplit(canUseLatticeSplit(window.innerWidth, 2));
     sync();
     window.addEventListener("resize", sync, { passive: true });
     return () => window.removeEventListener("resize", sync);
