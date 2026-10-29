@@ -11,6 +11,7 @@ import { WorkspaceIcon } from "./workspace-icon";
 import { applyDesktopRequest, createDesktopState, DESKTOP_SNAPSHOT_KEY, DESKTOP_TAB_ID, describeDesktopApp, restoreDesktopState, sameDesktopContext, type DesktopState, type PaneId } from "@/lib/workspace/desktop";
 import { getWorkspaceTabId, isSafeWorkspaceTabHref } from "@/lib/workspace/tabs";
 import styles from "./desktop-workspace.module.css";
+import { canUseLatticeSplit } from "@/lib/workspace/tablet";
 
 /** Late completions from a closed/replaced app cannot mutate the next app in that slot. */
 function PaneSessionProvider({ adapter, tabId, children }: { adapter: Omit<WorkspaceContextValue, "activeTabId">; tabId: string; children: React.ReactNode }) {
@@ -53,10 +54,12 @@ export function DesktopWorkspace({ userId, initialHref }: { userId: string; init
     setRestored(true);
   }, [restored, parentTabId, getParentSnapshot, userId, initialHref, update]);
   useEffect(() => {
-    const media = window.matchMedia("(min-width:1280px) and (hover:hover) and (pointer:fine)");
-    const sync = () => setCanSplit(media.matches);
-    sync();media.addEventListener("change", sync);
-    return () => media.removeEventListener("change", sync);
+    // Split is governed by usable CSS space, never the user agent or pointer type.
+    // Both native adapters need a minimum 440px content column.
+    const sync = () => setCanSplit(canUseLatticeSplit(window.innerWidth, 2));
+    sync();
+    window.addEventListener("resize", sync, { passive: true });
+    return () => window.removeEventListener("resize", sync);
   }, []);
   const dirty = state.panes.some(pane => pane.open && pane.dirty);
   useEffect(() => {
@@ -155,12 +158,12 @@ export function DesktopWorkspace({ userId, initialHref }: { userId: string; init
       </div>
       <div className={styles.viewActions}>
         <button type="button" aria-pressed={state.mode === "single"} onClick={() => update(current => ({ ...current, mode: "single" }))}>Single app</button>
-        <button type="button" disabled={!canSplit || state.panes.some(pane => !pane.open)} title={canSplit ? "Show both apps" : "Split view needs a desktop pointer and at least 1280 pixels of width"} aria-pressed={split} onClick={() => update(current => ({ ...current, mode: "split" }))}>Split view</button>
+        <button type="button" disabled={!canSplit || state.panes.some(pane => !pane.open)} title={canSplit ? "Show both apps" : "Split view needs at least 1100 pixels of available viewport width"} aria-pressed={split} onClick={() => update(current => ({ ...current, mode: "split" }))}>Split view</button>
         <button type="button" disabled={!split} onClick={() => update(current => ({ ...current, order: [...current.order].reverse() }))}>Swap sides</button>
       </div>
     </div>
-    {!canSplit && <p className={styles.helper}>One app at a time at this size. Both app states stay open; use the app buttons to switch.</p>}
-    {split && <label className={styles.resize}>Pane balance <input aria-label="Left pane width" type="range" min="40" max="60" value={state.ratio} onChange={event => update(current => ({ ...current, ratio: Number(event.target.value) }))} />{state.ratio}%</label>}
+    {!canSplit && <p className={styles.helper}>Focus mode is active at this width. Both app states remain open; switch using the app buttons. Rotate or widen the window to make Split available.</p>}
+    {split && <label className={styles.resize}>Pane balance <input aria-label="Left pane width" aria-valuetext={`${state.ratio} percent left, ${100 - state.ratio} percent right`} type="range" min="45" max="55" step="5" value={state.ratio} onChange={event => update(current => ({ ...current, ratio: Number(event.target.value) }))} />{state.ratio}%</label>}
     <p className={styles.helper}>Alt + Shift + ← / → focuses an app. Draft recovery is kept in this browser session; save your website to keep it permanently. Other apps open full screen.</p>
     {notice && <p role="status" className={styles.notice}>{notice}</p>}
     {!restored ? <p role="status" className={styles.notice}>Opening Lattice…</p> : <div className={styles.panes} data-split={split} style={{ "--left-pane": `${state.ratio}%` } as CSSProperties}>

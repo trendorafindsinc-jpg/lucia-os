@@ -34,3 +34,28 @@
 
 /* Quiet visual confirmation of the keyboard target in split mode. */
 .panes[data-split=true] .pane[data-active=true]{border-color:#80b8ff;box-shadow:0 0 0 2px #80b8ff44,0 16px 48px #030d1f33}
+
+/* Phase 6: touch-first tablet composition without changing the verified scrollport. */
+@media (min-width:681px) and (max-width:1279px) {
+  .desktop{padding:clamp(14px,2.2vw,28px);padding-bottom:calc(24px + env(safe-area-inset-bottom));}
+  .header{margin-bottom:14px;gap:12px}
+  .toolbar{gap:10px;padding:10px;border-radius:20px}
+  .toolbar button{min-height:44px;padding:10px 13px;font-size:13px;touch-action:manipulation}
+  .appTabs,.viewActions{flex:1 1 260px}
+  .pane{height:clamp(360px,calc(100dvh - 300px),1100px)}
+  .paneBody{min-height:0;max-height:none;overflow-y:auto;touch-action:pan-y}
+  .panes{gap:12px}
+  .paneHeader{gap:8px;padding:9px 12px}
+  .paneHeader button{min-height:44px;min-width:44px}
+  .helper{font-size:12px}
+  .resize{max-width:none;padding:3px 8px}
+  .resize input{min-height:44px;touch-action:pan-x}
+}
+@media (min-width:681px) and (max-width:1099px){
+  .panes[data-split=true]{grid-template-columns:minmax(0,1fr)}
+}
+@media (min-width:1100px) and (max-width:1279px) {
+  .paneBody :global(.editor-page),.paneBody :global(.template-page){width:calc(100% - 20px)}
+  .paneBody :global(.editor-heading h1),.paneBody :global(.template-intro h1){font-size:26px}
+}
+@media (prefers-reduced-motion:reduce){.paneBody{scroll-behavior:auto}}
