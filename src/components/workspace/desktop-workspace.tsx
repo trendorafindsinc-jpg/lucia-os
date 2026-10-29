@@ -35,6 +35,7 @@ export function DesktopWorkspace({ userId, initialHref }: { userId: string; init
   const [canSplit, setCanSplit] = useState(false);
   const [notice, setNotice] = useState("");
   const paneRefs = useRef<Partial<Record<PaneId, HTMLElement | null>>>({});
+  const scrollRefs = useRef<Partial<Record<PaneId, HTMLDivElement | null>>>({});
   const update = useCallback((transform: (current: DesktopState) => DesktopState) => {
     const next = transform(stateRef.current);
     stateRef.current = next;
@@ -79,7 +80,7 @@ export function DesktopWorkspace({ userId, initialHref }: { userId: string; init
 
   function activate(id: PaneId) {
     update(current => ({ ...current, active: id }));
-    requestAnimationFrame(() => paneRefs.current[id]?.focus());
+    requestAnimationFrame(() => scrollRefs.current[id]?.focus({ preventScroll: true }));
   }
   function navigate(id: PaneId, href: string) {
     const current = stateRef.current;
@@ -118,6 +119,19 @@ export function DesktopWorkspace({ userId, initialHref }: { userId: string; init
   const split = canSplit && state.mode === "split" && state.panes.every(pane => pane.open);
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target;
+      if (target instanceof HTMLElement && target.closest("input,textarea,select,[contenteditable],button,a,[role=slider],[role=combobox]")) return;
+      if (!event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey && ["ArrowUp","ArrowDown","PageUp","PageDown","Home","End"," "].includes(event.key)) {
+        const id = stateRef.current.active;
+        const body = scrollRefs.current[id];
+        if (!body || !document.activeElement || !(body.contains(document.activeElement) || paneRefs.current[id]?.contains(document.activeElement))) return;
+        const amount = event.key === "ArrowDown" ? 56 : event.key === "ArrowUp" ? -56 : event.key === "PageDown" || event.key === " " ? body.clientHeight * 0.85 : event.key === "PageUp" ? -body.clientHeight * 0.85 : null;
+        if (body.scrollHeight <= body.clientHeight) return;
+        event.preventDefault();
+        if (amount === null) body.scrollTo({ top: event.key === "Home" ? 0 : body.scrollHeight, behavior: "smooth" });
+        else body.scrollBy({ top: amount, behavior: "smooth" });
+        return;
+      }
       if (!event.altKey || !event.shiftKey || !["ArrowLeft", "ArrowRight"].includes(event.key) || event.target instanceof HTMLElement && event.target.closest("input,textarea,select,[contenteditable=true]")) return;
       const id = stateRef.current.order[event.key === "ArrowLeft" ? 0 : 1];
       if (!stateRef.current.panes.find(pane => pane.id === id)?.open) return;
@@ -155,7 +169,7 @@ export function DesktopWorkspace({ userId, initialHref }: { userId: string; init
         const app = describeDesktopApp(pane.href)!;
         return pane.open && <section key={id} id={`desktop-pane-${id}`} tabIndex={-1} ref={element => {paneRefs.current[id]=element;}} className={styles.pane} hidden={!split && activeId !== id} aria-label={`${app.appKey === "layouts" ? "Layouts" : "Layout Studio"} app pane`}>
           <header className={styles.paneHeader}><strong>{app.label}</strong><span>{pane.dirty ? "Unsaved changes" : app.context.startsWith("website:") ? "Website draft" : "App workspace"}</span><button type="button" onClick={() => { activate(id);update(current => ({ ...current, mode: "single" })); }}>Focus</button><button type="button" aria-label={`Close ${app.appKey === "layouts" ? "Layouts" : "Layout Studio"} pane`} onClick={() => closePane(id)}>×</button></header>
-          <div className={styles.paneBody}>
+          <div className={styles.paneBody} ref={element => { scrollRefs.current[id] = element; }} tabIndex={0} role="region" aria-label={`${app.label} scrollable content`} onPointerDown={() => { if (stateRef.current.active !== id) update(current => ({...current, active:id})); }}>
             <PaneSessionProvider key={pane.href} adapter={adapters[id]} tabId={getWorkspaceTabId(app)}><AppNavigationProvider value={{ href: pane.href, navigate: href => navigate(id, href) }}>
               {app.appKey === "layouts" ? <TemplateGallery embedded /> : <VisualSiteEditor embedded />}
             </AppNavigationProvider></PaneSessionProvider>
