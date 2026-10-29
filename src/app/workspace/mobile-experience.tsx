@@ -36,7 +36,7 @@ export default function MobileExperience({userId}:{userId:string}) {
       {view==="more"&&<div className={styles.more}><button onClick={()=>setView("appearance")}>Appearance & Wallpaper <span>›</span></button><Link href="/workspace/domains">Domains <span>›</span></Link><Link href="/workspace/team">Team & access <span>›</span></Link><Link href="/support">Help & support <span>›</span></Link></div>}
       {view==="appearance"&&<><p className={styles.note}>Choose your workspace background. Preferences are saved on this device for your account.</p><div className={styles.gallery}>{Object.entries(backgrounds).map(([name,bg])=><button key={name} onClick={()=>choose(name)} aria-pressed={wallpaper===name}><span style={{background:bg}}/><strong>{name[0].toUpperCase()+name.slice(1)}</strong>{wallpaper===name?" ✓":""}</button>)}</div><label className={styles.upload}>Upload your wallpaper<input type="file" accept="image/png,image/jpeg,image/webp" onChange={e=>void upload(e.target.files?.[0])}/></label><button className={styles.reset} onClick={()=>choose("aurora","")}>Restore default</button>{notice&&<p role="status" className={styles.note}>{notice}</p>}</>}
     </section>}
-    <nav className={styles.dock} aria-label="Mobile workspace navigation">
+    <nav className={`${styles.dock} lucia-mobile-workspace-dock`} aria-label="Mobile workspace navigation">
       <button aria-current={view==="home"?"page":undefined} onClick={()=>setView("home")}><span>⌂</span><small>Home</small></button>
       <button aria-current={view==="apps"?"page":undefined} onClick={()=>setView("apps")}><span>▦</span><small>Apps</small></button>
       <span className={styles.orbSlot} aria-hidden="true"><span>✦</span><small>Orb</small></span>
