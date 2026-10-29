@@ -55,7 +55,7 @@ export function DesktopWorkspace({ userId, initialHref }: { userId: string; init
   useEffect(() => {
     // Split is governed by usable CSS space, never the user agent or pointer type.
     // Both native adapters need a minimum 440px content column.
-    const sync = () => setCanSplit(window.innerWidth >= 960);
+    const sync = () => setCanSplit(window.innerWidth >= 1100);
     sync();
     window.addEventListener("resize", sync, { passive: true });
     return () => window.removeEventListener("resize", sync);
@@ -157,7 +157,7 @@ export function DesktopWorkspace({ userId, initialHref }: { userId: string; init
       </div>
       <div className={styles.viewActions}>
         <button type="button" aria-pressed={state.mode === "single"} onClick={() => update(current => ({ ...current, mode: "single" }))}>Single app</button>
-        <button type="button" disabled={!canSplit || state.panes.some(pane => !pane.open)} title={canSplit ? "Show both apps" : "Split view needs at least 960 pixels of available viewport width"} aria-pressed={split} onClick={() => update(current => ({ ...current, mode: "split" }))}>Split view</button>
+        <button type="button" disabled={!canSplit || state.panes.some(pane => !pane.open)} title={canSplit ? "Show both apps" : "Split view needs at least 1100 pixels of available viewport width"} aria-pressed={split} onClick={() => update(current => ({ ...current, mode: "split" }))}>Split view</button>
         <button type="button" disabled={!split} onClick={() => update(current => ({ ...current, order: [...current.order].reverse() }))}>Swap sides</button>
       </div>
     </div>
