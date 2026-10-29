@@ -104,3 +104,8 @@ Next acceptance work is limited to Phase 2: run the new route and launcher tests
 - Required remaining evidence: real HTTP process against the disposable branch using the non-bypass runtime role, plus authenticated two-user private-message/notification isolation and verified/unverified/staff negative cases. Do not mark Phase 2 complete until these are tested.
 
 **Disposition remains Phase 2 OPEN; Phase 3 BLOCKED.**
+
+### Isolated preview wiring (after the API smoke)
+
+- Added a Vercel **Preview-only, branch-scoped** `DATABASE_URL_RUNTIME` environment variable for `phase-2-loom-route-and-runtime-acceptance`, pointing to disposable Neon branch `br-winter-dust-ba24kliv` using the non-bypass `lucia_os_runtime` role. Production and Development targets were not changed.
+- This environment change does not alter an already-running deployment. A fresh branch deployment is required before repeating the live API smoke. The next acceptance step is to verify the new deployment reports healthy `/api/loom/posts` and `/api/loom/groups` reads, then run signed-in fixture isolation checks only on this disposable branch.
