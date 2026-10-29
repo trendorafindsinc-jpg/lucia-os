@@ -278,3 +278,5 @@
 
 /* New apps live in the App Library by default on phones; desktop retains launcher. */
 @media(max-width:680px){.appSection{display:none}}
+
+@media(max-width:680px){:global(html[data-lucia-home-apps="true"]) .appSection{display:block}.mobileStat{font:inherit;cursor:pointer}}
