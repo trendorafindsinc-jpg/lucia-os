@@ -19,3 +19,7 @@ LUCIA OS owns its plans, trials, subscription state, invoices, discounts, and en
 ## Technical baseline
 
 Next.js App Router and TypeScript; PostgreSQL on Neon with Drizzle migrations; provider-neutral object storage; separate preview and production configuration; secrets never committed to source control. Use versioned migrations, maintain rollback plans, and verify authentication contracts against the live Core API before claiming end-to-end integration.
+
+## Host routing build invariant
+
+This repository uses `src/app`, so its sole Next.js 15 middleware entrypoint is `src/middleware.ts`. A repository-root middleware file is not discovered in this layout. The build must include the routing middleware in `.next/server/middleware-manifest.json`, and CI exercises compiled-server Host routing. Use the original HTTP Host for site selection, never a client-selected forwarded-host value. A selected hostname only locates a site; published/active checks and server authorization still control what is served.
