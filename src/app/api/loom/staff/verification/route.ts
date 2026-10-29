@@ -1,4 +1,4 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getDb } from "@/lib/db/client";
@@ -51,6 +51,8 @@ export async function PATCH(request: Request) {
     const db = getDb();
     const now = new Date();
     const result = await db.transaction(async tx => {
+      await tx.execute(sql`select set_config('app.current_user_id', ${access.user!.id}, true)`);
+      await tx.execute(sql`select set_config('app.is_platform_staff', 'true', true)`);
       const [existing] = await tx.select({
         id: loomBusinessVerifications.id,
         userId: loomBusinessVerifications.userId,
