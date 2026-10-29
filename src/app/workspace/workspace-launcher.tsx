@@ -72,6 +72,11 @@ export default function WorkspaceLauncher({ userId, displayName, organizationCou
           </div>
         </section>
 
+        <section className={styles.desktopEntry} aria-label="Desktop workspace">
+          <div><span className={styles.desktopKicker}>YOUR DESKTOP</span><h2>A little more room to create.</h2><p>Open Layout Studio and Layouts side by side. Keep each app’s work in its own space.</p></div>
+          <Link href={{ pathname: "/workspace/desktop" }} className={styles.desktopOpen}><WorkspaceIcon icon="overview" />Open desktop workspace <span aria-hidden="true">→</span></Link>
+        </section>
+
         <section className={styles.appSection} aria-labelledby="apps-title">
           <div className={styles.sectionHeading}>
             <div><h2 id="apps-title">Your apps</h2><p>Choose where you want to work.</p></div>

@@ -13,6 +13,9 @@ export function describeWorkspaceRoute(pathname: string, search: string): Worksp
   const templateId = params.get("template");
   const websiteContext = websiteId ? `website:${websiteId}` : "library";
 
+  if (pathname === "/workspace/desktop") {
+    return { appKey: "desktop", label: "Desktop", href: pathname + search, context: "home" };
+  }
   if (pathname === "/templates" || pathname === "/layouts") {
     return { appKey: "layouts", label: "Layouts", href: pathname + search, context: "catalogue" };
   }
@@ -84,4 +87,13 @@ export function isSafeWorkspaceTabHref(href: string): boolean {
   } catch {
     return false;
   }
+}
+
+export type WorkspaceTabState = WorkspaceRoute & { id: string; dirty: boolean };
+/** Evict only a clean tab; unsaved work must never disappear to enforce a visual limit. */
+export function openWorkspaceTab<T extends {id:string;dirty:boolean}>(current: T[], next: T, preferredLimit = 12): T[] {
+  if (current.some(tab => tab.id === next.id)) return current.map(tab => tab.id === next.id ? next : tab);
+  if (current.length < preferredLimit) return [...current, next];
+  const clean = current.findIndex(tab => !tab.dirty);
+  return [...current.filter((_, index) => index !== clean), next];
 }

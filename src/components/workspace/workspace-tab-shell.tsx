@@ -12,9 +12,10 @@ import {
   type ReactNode,
 } from "react";
 import Link from "next/link";
+import { describeDesktopApp } from "@/lib/workspace/desktop";
 import { AssistiveOrb } from "./assistive-orb";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { canCloseWorkspaceTab, describeWorkspaceRoute, getWorkspaceTabId, isSafeWorkspaceTabHref } from "@/lib/workspace/tabs";
+import { canCloseWorkspaceTab, describeWorkspaceRoute, getWorkspaceTabId, isSafeWorkspaceTabHref, openWorkspaceTab } from "@/lib/workspace/tabs";
 
 type WorkspaceTab = {
   id: string;
@@ -24,7 +25,7 @@ type WorkspaceTab = {
   dirty: boolean;
 };
 
-type WorkspaceContextValue = {
+export type WorkspaceContextValue = {
   activeTabId: string | null;
   setActiveTabDirty: (dirty: boolean) => void;
   getSnapshot: <T,>(key: string) => T | undefined;
@@ -32,7 +33,7 @@ type WorkspaceContextValue = {
   clearSnapshot: (key: string) => void;
 };
 
-const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
+export const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
 const TAB_STORAGE_KEY = "lucia.workspace.tabs.v1";
 const SNAPSHOT_STORAGE_KEY = "lucia.workspace.snapshots.v1";
 
@@ -57,7 +58,7 @@ function WorkspaceTabShellInner({ children }: { children: ReactNode }) {
       const savedTabs = JSON.parse(sessionStorage.getItem(TAB_STORAGE_KEY) || "[]") as WorkspaceTab[];
       const savedSnapshots = JSON.parse(sessionStorage.getItem(SNAPSHOT_STORAGE_KEY) || "{}") as Record<string, unknown>;
       if (Array.isArray(savedTabs)) setTabs(savedTabs.filter((tab) => tab && typeof tab.id === "string" && typeof tab.appKey === "string" && typeof tab.label === "string" && typeof tab.href === "string" && isSafeWorkspaceTabHref(tab.href) && typeof tab.dirty === "boolean"));
-      if (savedSnapshots && typeof savedSnapshots === "object" && !Array.isArray(savedSnapshots)) setSnapshots(savedSnapshots);
+      if (savedSnapshots && typeof savedSnapshots === "object" && !Array.isArray(savedSnapshots)) { snapshotsRef.current=savedSnapshots;setSnapshots(savedSnapshots); }
     } catch {
       try {
         sessionStorage.removeItem(TAB_STORAGE_KEY);
@@ -75,9 +76,7 @@ function WorkspaceTabShellInner({ children }: { children: ReactNode }) {
     setTabs((current) => {
       const existing = current.find((tab) => tab.id === id);
       const nextTab = { id, appKey: route.appKey, label: route.label, href: route.href, dirty: existing?.dirty ?? false };
-      return existing
-        ? current.map((tab) => tab.id === id ? nextTab : tab)
-        : [...current, nextTab].slice(-12);
+      return openWorkspaceTab(current, nextTab);
     });
     setActiveTabId(id);
     setMobileSwitcherOpen(false);
@@ -141,6 +140,7 @@ function WorkspaceTabShellInner({ children }: { children: ReactNode }) {
     const confirmed = !tab.dirty || window.confirm(`“${tab.label}” has unsaved changes. Close this workspace tab and discard those changes?`);
     if (!canCloseWorkspaceTab(tab.dirty, confirmed)) return;
     if (tab.dirty) clearSnapshot(`editor-draft:${tab.id}`);
+    if (tab.appKey === "desktop") clearSnapshot(`desktop-state:${tab.id}`);
     const remaining = tabs.filter((item) => item.id !== tab.id);
     setTabs(remaining);
     if (activeTabId === tab.id) {
@@ -161,16 +161,26 @@ function WorkspaceTabShellInner({ children }: { children: ReactNode }) {
       {hydrated && route && (
         <nav className="workspace-tabbar lucia-blue-glass-nav" aria-label="Open app workspaces">
           <Link className="workspace-tab-home" href="/workspace" aria-label="Return to workspace launcher" title="Workspace launcher">⌂</Link>
-          <div className="workspace-tablist" role="tablist" aria-label="Workspace tabs">
+          <div className="workspace-tablist" role="tablist" aria-label="Workspace tabs" onKeyDown={event => {
+            if (!(event.target instanceof HTMLElement) || event.target.getAttribute("role") !== "tab") return;
+            if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+            event.preventDefault();
+            const current=tabs.findIndex(tab=>tab.id===activeTabId);
+            const index=event.key==="Home"?0:event.key==="End"?tabs.length-1:(current+(event.key==="ArrowRight"?1:-1)+tabs.length)%tabs.length;
+            if(!tabs[index])return;
+            activateTab(tabs[index]);
+            const buttons=event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]');buttons[index]?.focus();
+          }}>
             {tabs.map((tab) => (
               <div className={`workspace-tab ${tab.id === activeTabId ? "is-active" : ""}`} key={tab.id}>
-                <button type="button" role="tab" aria-selected={tab.id === activeTabId} onClick={() => activateTab(tab)} title={tab.dirty ? `${tab.label} — unsaved changes` : tab.label}>
+                <button type="button" role="tab" aria-controls="lucia-active-workspace" tabIndex={tab.id === activeTabId ? 0 : -1} aria-selected={tab.id === activeTabId} onClick={() => activateTab(tab)} title={tab.dirty ? `${tab.label} — unsaved changes` : tab.label}>
                   <span>{tab.label}</span>{tab.dirty && <span className="workspace-tab-dirty" aria-label="Unsaved changes">•</span>}
                 </button>
                 <button type="button" className="workspace-tab-close" aria-label={`Close ${tab.label} tab`} onClick={() => closeTab(tab)}>×</button>
               </div>
             ))}
           </div>
+          <div className="desktop-workspace-launch">{tabs.find(tab=>tab.id===activeTabId)?.dirty ? <button type="button" disabled title="Save this draft before opening it in Desktop">Desktop · save draft first</button> : <Link href={{pathname:"/workspace/desktop",query:route && describeDesktopApp(route.href)?{app:route.href}:{}}}>Open desktop</Link>}</div>
         </nav>
       )}
       {hydrated && route && showWorkspaceQuickNavigation && (
@@ -185,7 +195,7 @@ function WorkspaceTabShellInner({ children }: { children: ReactNode }) {
           <Link href={contextualHref("/publish") as Parameters<typeof router.push>[0]} aria-current={pathname === "/publish" ? "page" : undefined}>Publishing</Link>
         </nav>
       )}
-      {children}
+      {route ? <div id="lucia-active-workspace" role="tabpanel" aria-label={route.label}>{children}</div> : children}
       {hydrated && route && <AssistiveOrb />}
     </WorkspaceContext.Provider>
   );

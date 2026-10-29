@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import React, { useEffect, useId, useMemo, useState } from "react";
+import { WorkspaceAppLink as Link, useAppSearch } from "@/components/workspace/app-navigation";
 import { useRouter } from "next/navigation";
 import { getTemplateById, websiteTemplates } from "@/lib/templates/catalogue";
 import { editorPalettes, makeInitialDraft, moveSection, siteDraftSchema, type EditorPaletteId, type SiteDraft } from "@/lib/editor/site-draft";
@@ -12,8 +12,11 @@ import { useWorkspaceTab } from "@/components/workspace/workspace-tab-shell";
 
 type SavedWebsiteVersion = { id: string; label: string; notes: string; createdAt: string; snapshot: WebsiteSnapshot };
 
-export function VisualSiteEditor() {
+export function VisualSiteEditor({ embedded = false }: { embedded?: boolean } = {}) {
+  const Root = embedded ? "div" : "main";
+  const versionHeadingId = useId();
   const router = useRouter();
+  const appSearch = useAppSearch();
   const [draft, setDraft] = useState<SiteDraft>(() => makeInitialDraft("northstar-consulting"));
   const { activeTabId, setActiveTabDirty, getSnapshot, setSnapshot, clearSnapshot } = useWorkspaceTab();
   const snapshotKey = activeTabId ? `editor-draft:${activeTabId}` : "";
@@ -41,9 +44,16 @@ export function VisualSiteEditor() {
     const cachedCheck = siteDraftSchema.safeParse(cachedCandidate);
     const cachedDraft = cachedCheck.success ? cachedCheck.data : undefined;
     if (cachedCandidate !== undefined && !cachedCheck.success) clearSnapshot(`editor-draft:${activeTabId}`);
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(appSearch);
     const requested = params.get("template");
     const savedWebsiteId = params.get("websiteId");
+    setWebsiteId(savedWebsiteId || "");
+    setSavedDraftUnavailable(false);
+    setIsLoadingSaved(false);
+    setIsLoadingVersions(false);
+    setVersions([]);
+    setVersionError("");
+    if (!cachedDraft && !requested) setDraft(makeInitialDraft("northstar-consulting"));
     if (cachedDraft) {
       setDraft(cachedDraft);
       setSaveLabel("Unsaved changes");
@@ -97,10 +107,10 @@ export function VisualSiteEditor() {
       })
       .finally(() => { if (!cancelled) setIsLoadingSaved(false); });
     return () => { cancelled = true; };
-  }, [activeTabId, getSnapshot, clearSnapshot, setActiveTabDirty]);
+  }, [activeTabId, appSearch, getSnapshot, clearSnapshot, setActiveTabDirty]);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(appSearch);
     if (params.get("loomifyProposal") !== "1") return;
     try {
       const raw = sessionStorage.getItem("lucia.loomify.pending-proposal.v1");
@@ -120,7 +130,7 @@ export function VisualSiteEditor() {
     } catch {
       setAiError("The incoming loomifyAI proposal could not be read. Your draft is unchanged.");
     }
-  }, []);
+  }, [appSearch]);
 
   function update<K extends keyof SiteDraft>(key: K, value: SiteDraft[K]) {
     const next = { ...draft, [key]: value };
@@ -277,7 +287,7 @@ export function VisualSiteEditor() {
   }
 
   return (
-    <main className="editor-page">
+    <Root className="editor-page">
       <header className="editor-topbar">
         <Link className="wordmark" href="/" aria-label="LUCIA OS home"><span className="brand-mark" aria-hidden="true">L</span><span>LUCIA <span className="muted-word">OS</span></span></Link>
         <div className="editor-topbar-actions"><span className="editor-unsaved">{isLoadingSaved ? "Opening saved draft…" : isSaving ? "Saving…" : websiteId ? saveLabel : "Preview only · Not saved"}</span><Link className="editor-back-link" href={websiteId ? `/pages?websiteId=${encodeURIComponent(websiteId)}` : "/pages"}>Pages & navigation ↗</Link>{websiteId ? <><Link className="editor-back-link" href={`/content?websiteId=${encodeURIComponent(websiteId)}`}>Blog & media ↗</Link><Link className="editor-back-link" href={`/seo?websiteId=${encodeURIComponent(websiteId)}`}>SEO & social ↗</Link><Link className="editor-back-link" href={`/publish?websiteId=${encodeURIComponent(websiteId)}`}>Publish website ↗</Link></> : null}<Link className="editor-back-link" href={(websiteId ? `/loomify-ai?websiteId=${encodeURIComponent(websiteId)}` : "/loomify-ai") as Parameters<typeof router.push>[0]}>loomifyAI ↗</Link><Link className="editor-back-link" href="/workspace/websites">Back to Websites</Link></div>
@@ -290,8 +300,8 @@ export function VisualSiteEditor() {
       <div className="editor-workspace">
         <aside className="editor-panel" aria-label="Website editing controls">
           <div className="editor-panel-heading"><div><span className="editor-kicker">YOUR WEBSITE</span><h2>Content & style</h2></div><span className="editor-live-dot">Live preview</span></div>
-          <section className="loomify-card" aria-labelledby="version-history-title">
-            <div className="loomify-card-top"><span className="editor-kicker">VERSION HISTORY</span><h3 id="version-history-title">Saved checkpoints</h3></div>
+          <section className="loomify-card" aria-labelledby={versionHeadingId}>
+            <div className="loomify-card-top"><span className="editor-kicker">VERSION HISTORY</span><h3 id={versionHeadingId}>Saved checkpoints</h3></div>
             <p>Save a named checkpoint of the visual draft and related website metadata. Restore currently brings back visual editor fields only; pages, SEO settings and blog/media content are not restored. It never publishes.</p>
             <label className="editor-field">Checkpoint name<input value={versionLabel} maxLength={80} onChange={(event) => setVersionLabel(event.target.value)} /></label>
             <button type="button" className="loomify-generate" onClick={saveVersionCheckpoint} disabled={!websiteId || isLoadingSaved || isLoadingVersions || savedDraftUnavailable || isSaving || versionBusy || !validation.success}>{versionBusy ? "Saving checkpoint…" : "Save checkpoint"}</button>
@@ -322,6 +332,6 @@ export function VisualSiteEditor() {
         </section>
       </div>
       <footer className="editor-page-footer"><span>{draft.visibleSections.length} visible sections</span><span>{websiteId ? "Draft saving is connected · Publishing remains separate" : "Preview only · Open a saved website to save changes"}</span><span>{validation.success ? "Draft fields valid" : "Check draft fields"}</span></footer>
-    </main>
+    </Root>
   );
 }

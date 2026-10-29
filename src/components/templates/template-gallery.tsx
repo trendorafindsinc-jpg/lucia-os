@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import Link from "next/link";
+import React, { useEffect, useMemo, useState } from "react";
+import { WorkspaceAppLink as Link } from "@/components/workspace/app-navigation";
+import { useWorkspaceTab } from "@/components/workspace/workspace-tab-shell";
 import { templateCategories, websiteTemplates, type TemplateCategory, type WebsiteTemplate } from "@/lib/templates/catalogue";
 import { getTemplateSetupHref } from "@/lib/templates/navigation";
 
@@ -37,9 +38,22 @@ function PreviewComposition({ template, variant }: { template: WebsiteTemplate; 
   );
 }
 
-export function TemplateGallery() {
+export function TemplateGallery({ embedded = false }: { embedded?: boolean } = {}) {
+  const Root = embedded ? "div" : "main";
+  const { activeTabId, getSnapshot, setSnapshot } = useWorkspaceTab();
+  const [restored, setRestored] = useState(false);
   const [category, setCategory] = useState<"All" | TemplateCategory>("All");
   const [search, setSearch] = useState("");
+  useEffect(() => {
+    if (!activeTabId) return;
+    const saved = getSnapshot<{ category?: string; search?: string }>(`layouts-filter:${activeTabId}`);
+    if (saved && templateCategories.some(item => item === saved.category)) setCategory(saved.category as "All" | TemplateCategory);
+    if (typeof saved?.search === "string") setSearch(saved.search.slice(0, 160));
+    setRestored(true);
+  }, [activeTabId, getSnapshot]);
+  useEffect(() => {
+    if (restored && activeTabId) setSnapshot(`layouts-filter:${activeTabId}`, { category, search });
+  }, [restored, activeTabId, category, search, setSnapshot]);
   const visibleTemplates = useMemo(() => {
     const term = search.trim().toLowerCase();
     return websiteTemplates.filter((template) => {
@@ -50,7 +64,7 @@ export function TemplateGallery() {
   }, [category, search]);
 
   return (
-    <main className="template-page">
+    <Root className="template-page">
       <header className="template-topbar">
         <Link className="wordmark" href="/workspace" aria-label="Return to LUCIA OS workspace"><span className="brand-mark" aria-hidden="true">L</span><span>LUCIA <span className="muted-word">OS</span></span></Link>
         <Link className="template-back" href="/workspace">Back to workspace <span aria-hidden="true">←</span></Link>
@@ -64,7 +78,7 @@ export function TemplateGallery() {
       </section>
       <section className="template-controls" aria-label="Find a website layout">
         <label className="template-search-label" htmlFor="template-search">Search layouts</label>
-        <input id="template-search" className="template-search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Try “school”, “portfolio”, or “shop”" />
+        <input id="template-search" maxLength={160} className="template-search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Try “school”, “portfolio”, or “shop”" />
         <div className="template-filters" aria-label="Filter layouts by category">
           {templateCategories.map((item) => <button key={item} type="button" className={category === item ? "template-filter is-active" : "template-filter"} onClick={() => setCategory(item)} aria-pressed={category === item}>{item}</button>)}
         </div>
@@ -90,6 +104,6 @@ export function TemplateGallery() {
         })}</div> : <div className="template-empty"><h3>No matching layouts</h3><p>Try another search or choose a different category.</p><button type="button" onClick={() => { setCategory("All"); setSearch(""); }}>Clear filters</button></div>}
       </section>
       <footer className="template-footer"><span>Layouts are starting points, not locked-in designs.</span><span>Edits and publishing remain subject to the Studio’s save and publish safeguards.</span></footer>
-    </main>
+    </Root>
   );
 }

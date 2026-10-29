@@ -280,3 +280,11 @@
 @media(max-width:680px){.appSection{display:none}}
 
 @media(max-width:680px){:global(html[data-lucia-home-apps="true"]) .appSection{display:block}.mobileStat{font:inherit;cursor:pointer}}
+
+/* Phase 5: desktop-only entry, without changing phone composition. */
+.desktopEntry{display:none}
+@media(min-width:1024px){
+.workspace:global(.lucia-workspace-theme){background:radial-gradient(ellipse at 85% 6%,#4584d240,transparent 50%),linear-gradient(150deg,#dceaff,#edf3fc 65%,#e3ecfc)}
+.desktopEntry{display:flex;align-items:center;justify-content:space-between;gap:28px;margin:0 0 34px;padding:30px;border:1px solid #ffffffd9;border-radius:26px;background:linear-gradient(120deg,#0b1729,#163e6a);box-shadow:0 18px 48px #142c4a1f;color:#f2f7ff}
+.desktopKicker{font-size:10px;letter-spacing:.16em;font-weight:750;color:#a8ceff}.desktopEntry h2{margin:9px 0;font-size:25px;letter-spacing:-.035em}.desktopEntry p{max-width:480px;margin:0;color:#c6dbf2;font-size:13px;line-height:1.7}.desktopOpen{display:flex;align-items:center;justify-content:center;gap:11px;flex-shrink:0;min-height:48px;padding:12px 18px;border:1px solid #d8eaff;border-radius:16px;background:#dcecff;color:#123b72;text-decoration:none;font-size:12px;font-weight:750}.desktopOpen svg{width:22px;height:22px}.desktopOpen:focus-visible{outline:3px solid #80b8ff;outline-offset:4px}
+}
