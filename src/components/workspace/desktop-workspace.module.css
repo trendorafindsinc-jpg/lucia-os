@@ -23,3 +23,11 @@
   .pane{height:clamp(360px,calc(100dvh - 160px),900px)}
   .paneBody{height:auto;min-height:0;max-height:none;overflow-y:auto}
 }
+
+/* Desktop: bound each flex pane to a viewport scrollport. Without a definite
+   pane height, the flex child grows with its content and the wheel never
+   scrolls the selected app independently (in either Focus or Split). */
+@media(min-width:681px){
+  .pane{height:clamp(420px,calc(100dvh - 320px),1200px)}
+  .paneBody{height:auto;min-height:0;max-height:none;flex:1 1 0%;overflow-y:auto}
+}
