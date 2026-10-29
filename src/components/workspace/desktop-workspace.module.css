@@ -31,3 +31,6 @@
   .pane{height:clamp(420px,calc(100dvh - 320px),1200px)}
   .paneBody{height:auto;min-height:0;max-height:none;flex:1 1 0%;overflow-y:auto}
 }
+
+/* Quiet visual confirmation of the keyboard target in split mode. */
+.panes[data-split=true] .pane[data-active=true]{border-color:#80b8ff;box-shadow:0 0 0 2px #80b8ff44,0 16px 48px #030d1f33}
