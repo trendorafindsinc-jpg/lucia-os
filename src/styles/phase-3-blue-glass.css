@@ -77,3 +77,53 @@
 @media (prefers-reduced-motion: reduce) {
   .lucia-workspace-theme .lucia-primary-action { transition: none; }
 }
+
+
+/* Shared authenticated workspace navigation: existing tab actions remain unchanged. */
+.workspace-tabbar.lucia-blue-glass-nav,
+.workspace-route-navigation.lucia-blue-glass-nav {
+  border-bottom: 1px solid rgba(128,184,255,.28);
+  background: #0b1729;
+  color: #f4f8ff;
+}
+.lucia-blue-glass-nav .workspace-tab-home {
+  min-width: 44px;
+  min-height: 44px;
+  border-color: rgba(128,184,255,.32);
+  background: rgba(128,184,255,.14);
+  color: #f4f8ff;
+}
+.lucia-blue-glass-nav .workspace-tab.is-active {
+  background: rgba(128,184,255,.19);
+  border-color: rgba(128,184,255,.45);
+  box-shadow: none;
+}
+.lucia-blue-glass-nav .workspace-tab > button,
+.lucia-blue-glass-nav .workspace-tab.is-active > button[role="tab"] {
+  min-height: 44px;
+  color: #f4f8ff;
+}
+.lucia-blue-glass-nav .workspace-tab-close { color: #c9dcfa !important; }
+.lucia-blue-glass-nav .workspace-tab-close:hover { color: #fff !important; background: rgba(128,184,255,.24); }
+.lucia-blue-glass-nav.workspace-route-navigation a {
+  min-height: 44px;
+  color: #d9e8ff;
+}
+.lucia-blue-glass-nav.workspace-route-navigation a:hover,
+.lucia-blue-glass-nav.workspace-route-navigation a[aria-current="page"] {
+  background: rgba(128,184,255,.18);
+  color: #fff;
+  border-color: rgba(128,184,255,.32);
+}
+.lucia-blue-glass-nav :where(a,button):focus-visible {
+  outline: 3px solid #80b8ff;
+  outline-offset: 2px;
+}
+@media (prefers-reduced-transparency: reduce) {
+  .workspace-tabbar.lucia-blue-glass-nav,
+  .workspace-route-navigation.lucia-blue-glass-nav { backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+@media (max-width: 680px) {
+  .lucia-blue-glass-nav .workspace-tab-home { min-width: 44px; min-height: 44px; }
+  .lucia-blue-glass-nav .workspace-tab { max-width: 170px; }
+}
