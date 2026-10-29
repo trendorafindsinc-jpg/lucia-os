@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import React, { type CSSProperties } from "react";
 import type { LayoutBlueprint, LayoutSection } from "@/lib/layout-blueprint/blueprint";
 
 const layoutClass: Record<LayoutBlueprint["theme"]["layout"], string> = {
@@ -10,7 +10,10 @@ const layoutClass: Record<LayoutBlueprint["theme"]["layout"], string> = {
   classic: "layout-classic",
 };
 
-export function LayoutRenderer({ blueprint, preview = false }: { blueprint: LayoutBlueprint; preview?: boolean }) {
+export function LayoutRenderer({ blueprint, preview = false, idPrefix = "" }: { blueprint: LayoutBlueprint; preview?: boolean; idPrefix?: string }) {
+  const prefix = preview ? idPrefix : "";
+  const anchor = (href: string) => href.startsWith("#") ? `#${prefix}${href.slice(1)}` : href;
+  const Root = preview ? "div" : "main";
   const [ink, accent, paper] = blueprint.theme.colors;
   const style = {
     "--layout-ink": ink,
@@ -22,37 +25,37 @@ export function LayoutRenderer({ blueprint, preview = false }: { blueprint: Layo
   if (!page) return null;
 
   return (
-    <main className={`layout-site ${layoutClass[blueprint.theme.layout]}`} style={style}>
+    <Root className={`layout-site ${layoutClass[blueprint.theme.layout]}`} style={style}>
       <header className="layout-site-header">
-        <a className="layout-brand" href="#top">{blueprint.site.name}</a>
+        <a className="layout-brand" href={anchor("#top")}>{blueprint.site.name}</a>
         <nav aria-label="Main navigation">
-          {blueprint.navigation.map((item) => <a key={item.href + item.label} href={item.href}>{item.label}</a>)}
+          {blueprint.navigation.map((item) => <a key={item.href + item.label} href={anchor(item.href)}>{item.label}</a>)}
         </nav>
-        <a className="layout-header-action" href="#contact">{page.sections.find((item): item is Extract<LayoutSection, { type: "hero" }> => item.type === "hero")?.actionLabel ?? "Get in touch"}</a>
+        <a className="layout-header-action" href={anchor("#contact")}>{page.sections.find((item): item is Extract<LayoutSection, { type: "hero" }> => item.type === "hero")?.actionLabel ?? "Get in touch"}</a>
       </header>
-      <div id="top" className="layout-page-content">
-        {page.sections.map((section) => <LayoutSectionView key={section.id} section={section} />)}
+      <div id={`${prefix}top`} className="layout-page-content">
+        {page.sections.map((section) => <LayoutSectionView key={section.id} section={section} prefix={prefix} anchor={anchor} />)}
       </div>
       <footer className="layout-site-footer">
         <span>{blueprint.site.name}</span>
         <span>{preview ? "Private preview · LUCIA OS" : "Made with LUCIA OS"}</span>
       </footer>
-    </main>
+    </Root>
   );
 }
 
-function LayoutSectionView({ section }: { section: LayoutSection }) {
+function LayoutSectionView({ section, prefix, anchor }: { section: LayoutSection; prefix: string; anchor: (href: string) => string }) {
   if (section.type === "hero") {
-    return <section id="hero" className="layout-hero">
+    return <section id={`${prefix}hero`} className="layout-hero">
       <p className="layout-eyebrow">{section.eyebrow}</p>
       <h1>{section.heading}</h1>
       <p className="layout-lede">{section.body}</p>
-      <a className="layout-primary-action" href={section.actionHref}>{section.actionLabel}<span aria-hidden="true">↗</span></a>
+      <a className="layout-primary-action" href={anchor(section.actionHref)}>{section.actionLabel}<span aria-hidden="true">↗</span></a>
       <div className="layout-hero-art" aria-hidden="true"><span /><span /><span /></div>
     </section>;
   }
   if (section.type === "content-grid") {
-    return <section id={section.id} className="layout-content-section">
+    return <section id={`${prefix}${section.id}`} className="layout-content-section">
       <header><p className="layout-eyebrow">DISCOVER</p><h2>{section.heading}</h2></header>
       <div className="layout-content-grid">{section.items.map((item, index) => <article key={item.title + index}>
         <span className="layout-item-index">{String(index + 1).padStart(2, "0")}</span>
@@ -61,9 +64,9 @@ function LayoutSectionView({ section }: { section: LayoutSection }) {
     </section>;
   }
   if (section.type === "call-to-action") {
-    return <section id={section.id} className="layout-cta"><h2>{section.heading}</h2><p>{section.body}</p><a href={section.actionHref}>{section.actionLabel} ↗</a></section>;
+    return <section id={`${prefix}${section.id}`} className="layout-cta"><h2>{section.heading}</h2><p>{section.body}</p><a href={anchor(section.actionHref)}>{section.actionLabel} ↗</a></section>;
   }
-  return <section id="contact" className="layout-contact"><p className="layout-eyebrow">NEXT STEP</p><h2>{section.heading}</h2><p>{section.body}</p></section>;
+  return <section id={`${prefix}contact`} className="layout-contact"><p className="layout-eyebrow">NEXT STEP</p><h2>{section.heading}</h2><p>{section.body}</p></section>;
 }
 
 // Compatibility export for older internal imports.

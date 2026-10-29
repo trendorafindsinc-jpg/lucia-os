@@ -326,10 +326,10 @@ export function VisualSiteEditor({ embedded = false }: { embedded?: boolean } = 
           {aiError && !aiProposal && <p className="editor-notice" role="alert">{aiError}</p>}
           {aiProposal && <section className="loomify-proposal-review" aria-label="loomifyAI proposal review">
             <div className="loomify-review-heading"><div><span className="editor-kicker">YOUR PROPOSAL</span><h2>{aiProposal.site.name}</h2><p>AI-generated concept · Review before applying</p></div><button type="button" className="loomify-dismiss" onClick={() => setAiProposal(null)} aria-label="Dismiss proposal">×</button></div>
-            <div className="loomify-proposal-canvas"><LayoutRenderer blueprint={aiProposal} preview /></div>{aiError && <p className="editor-notice" role="alert">{aiError}</p>}
+            <div className="loomify-proposal-canvas"><LayoutRenderer blueprint={aiProposal} preview idPrefix={`${versionHeadingId}-proposal-`} /></div>{aiError && <p className="editor-notice" role="alert">{aiError}</p>}
             <div className="loomify-review-actions"><span>Private preview only. Your live website is unchanged.</span><button type="button" className="editor-done" onClick={applyAIProposalToEditor} disabled={isLoadingSaved || savedDraftUnavailable}>{isLoadingSaved ? "Loading saved draft…" : savedDraftUnavailable ? "Draft unavailable" : "Apply proposal to draft"}</button></div>
           </section>}
-          <div className="editor-layout-preview"><LayoutRenderer blueprint={previewBlueprint} preview /></div>
+          <div className="editor-layout-preview"><LayoutRenderer blueprint={previewBlueprint} preview idPrefix={`${versionHeadingId}-draft-`} /></div>
           <p className="editor-preview-caption">{websiteId ? "Changes can be saved to your organisation’s website draft. This preview is private; it is not a public website." : "Illustrative preview. Open a saved website from your Websites library to enable persistent saving."}</p>
         </section>
       </div>

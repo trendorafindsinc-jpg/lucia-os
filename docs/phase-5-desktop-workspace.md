@@ -14,6 +14,7 @@ Main baseline: 390d886 (customer-host routing fix #116). Existing shell had navi
 - Focus/single-app mode, split mode, swap sides, keyboard focus (Alt+Shift+Left/Right), accessible balance slider, close/reopen actions and unsaved-change confirmation. Duplicate contexts cannot be opened concurrently across panes. Explicit app launches take priority over clean cached panes without replacing unsaved work.
 - Existing desktop tab strip gains arrow/Home/End navigation, selected-tab focus handling and a linked app panel. The preferred tab limit evicts clean tabs only, retaining all unsaved tabs. Closing the Desktop tab discards its recovery snapshot only after the existing dirty-tab confirmation.
 - Fix editor context reset: a new preview cannot retain the previous saved website ID/loading flags. Per-context pending requests keep their existing cancellation checks.
+- Private preview section IDs and anchor links are namespaced per editor/proposal, preventing cross-pane anchor collisions; published renderer defaults stay unchanged. Preview roots avoid additional main landmarks.
 - Standalone editor receives a Suspense boundary for search-based navigation. Native embedded app roots avoid nested main landmarks and editor heading IDs are unique.
 
 ## Changed areas
@@ -21,7 +22,7 @@ Main baseline: 390d886 (customer-host routing fix #116). Existing shell had navi
 
 ## Local verification
 - TypeScript passed.
-- Unit suite: 45 files / 319 tests passed (including unsafe destinations, duplicate contexts, account/version recovery, dirty-tab retention, launch priority, and signed-out server-entry denial).
+- Unit suite: 46 files / 321 tests passed (including unsafe destinations, duplicate contexts, account/version recovery, dirty-tab retention, launch priority, and signed-out server-entry denial).
 - Lint passed with pre-existing warnings; no new hook warnings remain.
 - Production build passed; existing customer-host middleware manifest guard passed.
 - Compiled production-server HTTP matrix passed, including signed-out desktop denial and tenant-host desktop isolation.
@@ -36,4 +37,4 @@ Main baseline: 390d886 (customer-host routing fix #116). Existing shell had navi
 - No complete Phase 5 acceptance, production rollout or Phase 6 start is claimed.
 
 ## Safety / incident #112
-The customer-domain incident was fixed on baseline #116 and closed after live verification. Its middleware/build guard and HTTP matrix remain intact. This phase changes no DNS, secret, Core authentication, production data, database policy or public website renderer. Draft PR only; no main merge or production promotion in this implementation step.
+The customer-domain incident was fixed on baseline #116 and closed after live verification. Its middleware/build guard and HTTP matrix remain intact. This phase changes no DNS, secret, Core authentication, production data, database policy or published website rendering behavior. Draft PR only; no main merge or production promotion in this implementation step.
