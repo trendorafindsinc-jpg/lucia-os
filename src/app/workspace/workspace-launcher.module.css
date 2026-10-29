@@ -269,6 +269,6 @@
   .workspace:global(.lucia-workspace-theme) .appTile { grid-template-columns:42px minmax(0,1fr) 12px; min-height:65px; }
   .workspace:global(.lucia-workspace-theme) .iconSurface { width:42px;height:42px; }
 }
-@media (prefers-reduced-transparency:reduce) {
-  @media (max-width:680px) { .mobileDock,.workspace:global(.lucia-workspace-theme) .appTile { backdrop-filter:none; background:#f2f7ff; } }
+@media (max-width:680px) and (prefers-reduced-transparency:reduce) {
+  .mobileDock,.workspace:global(.lucia-workspace-theme) .appTile { backdrop-filter:none; background:#f2f7ff; }
 }
