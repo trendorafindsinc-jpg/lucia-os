@@ -10,7 +10,8 @@ describe("workspace launcher acceptance", () => {
   );
 
   it("renders the signed-in workspace summary and app sections accessibly", () => {
-    expect(markup).toContain("Welcome back, Afolabi.");
+    expect(markup).toContain("Welcome back, ");
+    expect(markup).toContain("Afolabi.");
     expect(markup).toContain('aria-label="Workspace summary"');
     expect(markup).toContain("2</strong> organisations");
     expect(markup).toContain("3</strong> websites");
@@ -78,6 +79,18 @@ describe("workspace launcher acceptance", () => {
     expect(css).toContain(".iconSurface::before");
     expect(markup).toContain('aria-label="Layout Studio"');
     expect(markup).toContain('aria-label="loomifyAI"');
+  });
+
+  it("renders the approved mobile workspace with real navigation and Orb docking", () => {
+    expect(markup).toContain('aria-label="Workspace at a glance"');
+    expect(markup).toContain('aria-label="Mobile workspace navigation"');
+    expect(markup).toContain("lucia-mobile-workspace-dock");
+    expect(markup).toContain('href="/workspace/domains"');
+    expect(markup).toContain('href="#apps-title"');
+    const css = readFileSync(new URL("./workspace-launcher.module.css", import.meta.url), "utf8");
+    expect(css).toContain(".mobileStats { display:grid");
+    expect(css).toContain(".mobileDock {");
+    expect(css).toContain("grid-template-columns:repeat(5,minmax(0,1fr))");
   });
 
   it("activates the scoped Blue Glass workspace theme", () => {
