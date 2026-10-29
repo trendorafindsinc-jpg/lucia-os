@@ -143,3 +143,28 @@
   .workspace:global(.lucia-workspace-theme) .appTile,
   .workspace:global(.lucia-workspace-theme) .toolLink { background: #fff; }
 }
+
+
+/* Phase 4: phone-first launcher density and readable touch-first hierarchy. */
+@media (max-width: 680px) {
+  .workspace:global(.lucia-workspace-theme) { min-height: 100dvh; }
+  .header { padding-top: max(12px,env(safe-area-inset-top)); gap: 8px; }
+  .content { padding-top: 28px; padding-bottom: calc(112px + env(safe-area-inset-bottom)); }
+  .welcome { padding-bottom: 25px; }
+  .welcome h1 { font-size: clamp(1.85rem,8vw,2.6rem); line-height: 1.12; letter-spacing: -.045em; }
+  .lead { font-size: 14px; line-height: 1.55; }
+  .summary { gap: 9px; margin-top: 16px; }
+  .appGrid { gap: 12px; }
+  .appTile { min-height: 174px; padding: 16px; border-radius: 22px; }
+  .appTile[href] { touch-action: manipulation; }
+  .iconSurface { width: 48px; height: 48px; }
+  .appLabel { font-size: 13px; }
+  .appDescription { font-size: 11px; }
+  .toolsSection { margin-top: 30px; }
+  .toolLink { min-height: 52px; font-size: 12px; }
+}
+@media (max-width: 350px) {
+  .appGrid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+  .appTile { min-height: 160px; padding: 11px; border-radius: 16px; }
+  .appDescription { font-size: 10px; }
+}
