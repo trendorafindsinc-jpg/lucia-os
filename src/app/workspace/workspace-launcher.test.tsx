@@ -53,7 +53,7 @@ describe("workspace launcher acceptance", () => {
     expect(markup).toContain('aria-label="LUCIA assistive controls"');
     expect(markup).toContain('aria-label="Expand LUCIA Assistive Orb"');
     expect(markup).toContain('aria-expanded="false"');
-    expect(markup).not.toContain("voice listening");
+    expect(markup).toContain("voice listening and automated actions are not connected here yet.");
   });
 
   it("keeps mobile launcher controls touch-friendly and clears the floating Orb", () => {
