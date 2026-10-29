@@ -60,7 +60,7 @@ export default function WorkspaceLauncher({ displayName, organizationCount, webs
   const firstName = displayName.trim().split(/\s+/)[0] || "there";
 
   return (
-    <main className={styles.workspace}>
+    <main className={`${styles.workspace} lucia-workspace-theme`}>
       <header className={styles.header}>
         <Link className={styles.brand} href="/workspace" aria-label="LUCIA OS workspace home">
           <span className={styles.brandMark} aria-hidden="true"><span /></span>
