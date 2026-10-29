@@ -43,7 +43,7 @@ function AppTile({ app }: { app: WorkspaceApp }) {
       <Link className={styles.appTile} href={app.href} aria-label={app.label}>
         {icon}
         <span className={styles.appLabel}>{app.label}</span>
-        <span className={styles.appDescription}>{app.description}</span>
+        <span className={styles.appDescription}>{app.description}</span><span className={styles.appChevron} aria-hidden="true">›</span>
       </Link>
     );
   }
@@ -75,13 +75,19 @@ export default function WorkspaceLauncher({ displayName, organizationCount, webs
 
       <div className={styles.content}>
         <section className={styles.welcome} aria-labelledby="workspace-title">
-          <p className={styles.eyebrow}>YOUR DIGITAL WORKSPACE</p>
-          <h1 id="workspace-title">Welcome back, {firstName}.</h1>
-          <p className={styles.lead}>Everything you use in LUCIA, together in one place.</p>
+          <p className={styles.eyebrow}>YOUR DIGITAL WORKSPACE</p><p className={styles.mobileGreeting}>Good to see you,</p>
+          <h1 id="workspace-title"><span className={styles.desktopGreeting}>Welcome back, </span>{firstName}.</h1>
+          <p className={styles.lead}>Build, create and manage your digital space with LUCIA OS.</p><div className={styles.mobileSearch}><span aria-hidden="true">⌕</span><span>Explore your apps below</span></div>
           <div className={styles.summary} aria-label="Workspace summary">
             <span><strong>{organizationCount}</strong> {organizationCount === 1 ? "organisation" : "organisations"}</span>
             <span className={styles.summaryDivider} aria-hidden="true" />
             <span><strong>{websiteCount}</strong> {websiteCount === 1 ? "website" : "websites"}</span>
+          </div>
+          <div className={styles.mobileStats} aria-label="Workspace at a glance">
+            <Link href="/workspace/team" className={styles.mobileStat}><span aria-hidden="true">♧</span><strong>{organizationCount}</strong><small>Orgs</small></Link>
+            <Link href="/workspace/websites" className={styles.mobileStat}><span aria-hidden="true">◎</span><strong>{websiteCount}</strong><small>Websites</small></Link>
+            <a href="#apps-title" className={styles.mobileStat}><span aria-hidden="true">▦</span><strong>{WORKSPACE_APPS.filter((app) => app.status === "available").length}</strong><small>Apps</small></a>
+            <Link href="/workspace/domains" className={styles.mobileStat}><span aria-hidden="true">↗</span><strong>↗</strong><small>Domains</small></Link>
           </div>
         </section>
 
@@ -101,6 +107,13 @@ export default function WorkspaceLauncher({ displayName, organizationCount, webs
         </section>
         <p className={styles.footerNote}>Your access is checked by LUCIA OS. Unavailable apps are shown for clarity and cannot be launched.</p>
       </div>
+      <nav className={styles.mobileDock} aria-label="Mobile workspace navigation">
+        <Link href="/workspace" aria-current="page"><span aria-hidden="true">⌂</span><small>Home</small></Link>
+        <a href="#apps-title"><span aria-hidden="true">▦</span><small>Apps</small></a>
+        <span className={styles.orbDockSpace} aria-hidden="true" />
+        <Link href="/support"><span aria-hidden="true">♧</span><small>Help</small></Link>
+        <Link href="/workspace/domains"><span aria-hidden="true">☷</span><small>More</small></Link>
+      </nav>
       <AssistiveOrb />
     </main>
   );
