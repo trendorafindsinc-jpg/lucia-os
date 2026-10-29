@@ -1,0 +1,16 @@
+.root { position: fixed; right: max(20px, env(safe-area-inset-right)); bottom: max(20px, env(safe-area-inset-bottom)); z-index: 90; display: flex; flex-direction: column; align-items: flex-end; gap: 12px; pointer-events: none; }
+.root > * { pointer-events: auto; }
+.orb { display: grid; place-items: center; width: 60px; height: 60px; border: 1px solid rgba(255,255,255,.65); border-radius: 50%; background: radial-gradient(circle at 30% 25%,#a6d9ff,#1f6bff 52%,#0b307f); box-shadow: 0 12px 32px rgba(31,107,255,.3), inset 0 2px 4px rgba(255,255,255,.6); cursor: pointer; transition: transform 160ms ease, box-shadow 160ms ease; }
+.orb:hover { transform: translateY(-2px); box-shadow: 0 16px 36px rgba(31,107,255,.4); }
+.orb:focus-visible, .close:focus-visible { outline: 3px solid #80b8ff; outline-offset: 4px; }
+.core { width: 24px; height: 24px; border: 2px solid rgba(255,255,255,.9); border-radius: 50%; box-shadow: 0 0 12px rgba(255,255,255,.7); }
+.panel { width: min(340px,calc(100vw - 32px)); padding: 20px; border: 1px solid rgba(128,184,255,.35); border-radius: 22px; background: #0b1729; color: #f4f8ff; box-shadow: 0 20px 60px rgba(11,23,41,.28); }
+.heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.heading strong { display: block; font-size: 15px; }
+.status { display: block; margin-top: 6px; color: #bcd5ff; font-size: 12px; }
+.panel p { margin: 16px 0 0; color: #dceaff; font-size: 13px; line-height: 1.65; }
+.panel .note { color: #a9c7f2; }
+.close { display: grid; place-items: center; min-width: 44px; min-height: 44px; border: 1px solid rgba(128,184,255,.4); border-radius: 12px; background: rgba(128,184,255,.14); color: #fff; font: inherit; font-size: 24px; cursor: pointer; }
+@media (max-width: 680px) { .root { right: max(12px,env(safe-area-inset-right)); bottom: max(12px,env(safe-area-inset-bottom)); } .orb { width: 54px; height: 54px; } }
+@media (prefers-reduced-motion: reduce) { .orb { transition: none; } .orb:hover { transform: none; } }
+@media (forced-colors: active) { .orb,.panel,.close { border: 2px solid ButtonText; } }

@@ -49,4 +49,17 @@ describe("workspace launcher acceptance", () => {
     expect(markup).toContain('href="/workspace/team"');
     expect(markup).toContain('href="/support"');
   });
+  it("renders the Assistive Orb as an honest, collapsed presentation control", () => {
+    expect(markup).toContain('aria-label="LUCIA assistive controls"');
+    expect(markup).toContain('aria-label="Expand LUCIA Assistive Orb"');
+    expect(markup).toContain('aria-expanded="false"');
+    expect(markup).not.toContain("voice listening");
+  });
+
+  it("activates the scoped Blue Glass workspace theme", () => {
+    expect(markup).toContain("lucia-workspace-theme");
+    const css = readFileSync(new URL("./workspace-launcher.module.css", import.meta.url), "utf8");
+    expect(css).toContain(".workspace:global(.lucia-workspace-theme)");
+  });
+
 });

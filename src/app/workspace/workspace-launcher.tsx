@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { WorkspaceApp } from "@/lib/workspace/app-registry";
 import { WORKSPACE_APPS, WORKSPACE_TOOLS } from "@/lib/workspace/app-registry";
 import styles from "./workspace-launcher.module.css";
+import { AssistiveOrb } from "@/components/workspace/assistive-orb";
 
 type WorkspaceLauncherProps = {
   displayName: string;
@@ -60,7 +61,7 @@ export default function WorkspaceLauncher({ displayName, organizationCount, webs
   const firstName = displayName.trim().split(/\s+/)[0] || "there";
 
   return (
-    <main className={styles.workspace}>
+    <main className={`${styles.workspace} lucia-workspace-theme`}>
       <header className={styles.header}>
         <Link className={styles.brand} href="/workspace" aria-label="LUCIA OS workspace home">
           <span className={styles.brandMark} aria-hidden="true"><span /></span>
@@ -100,6 +101,7 @@ export default function WorkspaceLauncher({ displayName, organizationCount, webs
         </section>
         <p className={styles.footerNote}>Your access is checked by LUCIA OS. Unavailable apps are shown for clarity and cannot be launched.</p>
       </div>
+      <AssistiveOrb />
     </main>
   );
 }
