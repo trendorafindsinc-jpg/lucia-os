@@ -57,3 +57,25 @@ Branch ID: `br-jolly-paper-ba034v2i`; database: `lucia_os`. Checks were read-onl
 **Phase 2 is not declared complete by this evidence record.** The cross-tenant read and INSERT-denial results are useful security evidence, but organization/owner rollback, full protected-route checks, migration recovery, and workspace browser/device acceptance still lack reproducible evidence. Marking the phase complete now would overstate what was tested.
 
 Next acceptance work is limited to Phase 2: run the new route and launcher tests in fresh CI; add any needed fixes; finish the protected-route matrix and real-browser/device checks; verify onboarding retry/idempotency against a real disposable PostgreSQL transaction; then update this matrix with actual outputs. Phase 3 remains blocked until those gates are passed and recorded.
+
+
+## 2026-10-29 follow-up — Loom route and runtime migration evidence
+
+**Candidate:** [PR #107](https://github.com/trendorafindsinc-jpg/lucia-os/pull/107), head `8929a1ec94a327ce11ad1dd82c1a5082010095a5`. This candidate selectively ports the existing Loom community implementation; it does not merge the old combined workspace redesign. The PR remains a draft and has not been merged or promoted to production.
+
+### Verified on this candidate
+
+- GitHub Actions Quality run **646** passed on the exact head: lint, TypeScript, Drizzle migration consistency, **46 test files / 312 tests**, and production build.
+- Vercel preview for the exact head reached **READY**: [preview deployment](https://vercel.com/trendoraplc-5738/lucia-os/H5gp7WVCroXCCrny3atrrGBvsNbR). The deployment has not been promoted to production.
+- The Loom entry now has a real `/loom` destination and the route/component/API files are included in the candidate. This fixes the source-level route/registry mismatch; a live browser session against the preview has not yet been independently captured.
+- The nine Loom migration SQL files were applied in sequence to disposable Neon branch `loom-phase2-migration-acceptance` (`br-winter-dust-ba24kliv`). The database exposed all **15 Loom base tables**. Under `lucia_os_runtime`, the role has SELECT and INSERT privileges on all 15 tables, with `rolbypassrls=false` and `rolsuper=false`.
+- Rollback/recovery was exercised on disposable branch `phase-2-preflight-failure-test` (`br-delicate-lab-bap4r47w`): all 50 migration statements were attempted in one transaction followed by a deliberate missing-relation failure; the transaction failed and a follow-up query found **zero Loom tables**, proving the DDL rolled back. The nine migrations were then applied successfully in sequence and the branch exposed all **15 Loom base tables**. No production data or production schema was changed.
+
+### Still open — do not declare Phase 2 complete
+
+- **Live route/browser acceptance:** the preview deployment is READY, but this environment could not fetch the Vercel preview through its browser-fetch path, and no signed-in browser/device session was captured. Desktop/tablet/mobile viewport, keyboard/touch, reduced-motion, feed loading/error, and authenticated user journeys therefore remain unverified in a real browser.
+- **Full runtime authorization matrix:** current-head unit tests pass, including the existing post, connection, block, private-message, and staff-report tests, but there is not yet an end-to-end HTTP test against the actual application process and disposable Neon branch. Add/finish negative-case coverage for the remaining profile, verification, reports, saved-content, notifications, groups, replies, and staff-verification routes.
+- **Private-data boundary:** Loom community tables intentionally currently rely on server-side route predicates for private messages, notifications, saved content, blocks, and staff-only data; the migration/runtime-role probe confirms table grants and that the runtime role is not superuser/BYPASSRLS, but it does not itself prove these application predicates against a live HTTP request. Treat this as a route-level acceptance gate, not as a passed database RLS gate.
+- **Production schema rollout:** no production migration has been run. The code is not ready for promotion until the product owner approves a production migration window and the candidate's live acceptance gates pass.
+
+**Disposition:** Loom's missing route is repaired in the PR candidate and migration rollback/recovery evidence is now available on disposable branches. Phase 2 remains **OPEN** because live browser acceptance and the complete runtime authorization matrix are not yet proven. Phase 3 remains blocked.
