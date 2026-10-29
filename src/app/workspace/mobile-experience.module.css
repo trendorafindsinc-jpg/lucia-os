@@ -11,6 +11,13 @@
 :global(html[data-lucia-mobile-view="apps"]) .mobileExperience,:global(html[data-lucia-mobile-view="more"]) .mobileExperience{display:block}
 }
 
-@media(max-width:680px){.orbPanel{position:fixed;z-index:90;left:16px;right:16px;bottom:calc(88px + env(safe-area-inset-bottom));padding:20px;border:1px solid #ffffffaa;border-radius:24px;background:#f2f7ff;color:#17365c;box-shadow:0 20px 65px #06182b88}.orbHeading{display:flex;justify-content:space-between;align-items:center;gap:10px}.orbHeading button{border:0;background:transparent;font-size:26px;color:inherit}.orbPanel p{font-size:13px;line-height:1.6}.orbPanel a{display:inline-block;padding:12px 15px;border-radius:12px;background:#215ac4;color:white;text-decoration:none}.appIcon{cursor:pointer;font:inherit}.screen{overscroll-behavior:contain;touch-action:pan-y}.dock{isolation:isolate}}
+
 
 @media(max-width:680px){.preference{display:flex;align-items:center;gap:12px;min-height:56px;padding:12px 16px;border:1px solid #ffffff66;border-radius:14px;background:#ffffffd9;color:#193b68}.preference input{width:22px;height:22px}.screen button:focus-visible,.screen a:focus-visible,.dock button:focus-visible{outline:3px solid #80b8ff;outline-offset:3px}}
+
+@media(max-width:680px){
+.appIcon svg,.disabledIcon svg{display:block;width:30px;height:30px;flex-shrink:0;stroke:currentColor;fill:none;}
+.dock button>svg{display:block;width:24px;height:24px;flex-shrink:0;}
+.appIcon{font-size:inherit;padding:0;cursor:pointer}.screen{overscroll-behavior:contain;touch-action:pan-y}.dock{isolation:isolate}
+.appIcon:focus-visible{outline:3px solid #80b8ff;outline-offset:4px}
+}

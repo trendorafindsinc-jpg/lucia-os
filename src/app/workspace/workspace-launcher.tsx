@@ -5,7 +5,7 @@ import { WORKSPACE_APPS, WORKSPACE_TOOLS } from "@/lib/workspace/app-registry";
 import styles from "./workspace-launcher.module.css";
 import { OpenAppLibraryButton } from "./open-app-library-button";
 import MobileExperience from "./mobile-experience";
-import { AssistiveOrb } from "@/components/workspace/assistive-orb";
+import { WorkspaceIcon } from "@/components/workspace/workspace-icon";
 
 type WorkspaceLauncherProps = {
   userId: string;
@@ -14,32 +14,9 @@ type WorkspaceLauncherProps = {
   websiteCount: number;
 };
 
-function AppGlyph({ icon }: { icon: WorkspaceApp["icon"] }) {
-  const common = {
-    "aria-hidden": true as const,
-    viewBox: "0 0 32 32",
-    fill: "none",
-    className: styles.glyph,
-  };
-
-  switch (icon) {
-    case "overview":
-      return <svg {...common}><rect x="5" y="5" width="9" height="9" rx="3" /><rect x="18" y="5" width="9" height="9" rx="3" /><rect x="5" y="18" width="9" height="9" rx="3" /><path d="M22.5 18v9M18 22.5h9" strokeLinecap="round" /></svg>;
-    case "website":
-      return <svg {...common}><rect x="4" y="6" width="24" height="20" rx="5" /><path d="M4 12h24M9 9h.01M12 9h.01M10 18l4-4 4 4-4 4-4-4Z" strokeLinecap="round" strokeLinejoin="round" /><path d="M21 16h3M21 20h3" strokeLinecap="round" /></svg>;
-    case "layouts":
-      return <svg {...common}><rect x="5" y="7" width="17" height="17" rx="3" /><path d="M10 12h7M10 16h7M10 20h4M24 11h3v14a3 3 0 0 1-3 3H12v-2" strokeLinecap="round" /></svg>;
-    case "loomify-ai":
-      return <svg {...common}><path d="M16 4 19.3 12.7 28 16l-8.7 3.3L16 28l-3.3-8.7L4 16l8.7-3.3L16 4Z" strokeLinejoin="round" /><circle cx="16" cy="16" r="3.1" /><path d="M24 4v5M21.5 6.5h5" strokeLinecap="round" /></svg>;
-    case "loom":
-      return <svg {...common}><circle cx="9" cy="11" r="3.5" /><circle cx="23" cy="11" r="3.5" /><circle cx="16" cy="23" r="3.5" /><path d="m12 13 3 6m5-6-3 6M12.5 11h7" strokeLinecap="round" /></svg>;
-    case "store":
-      return <svg {...common}><path d="M6 12h20l-2 15H8L6 12Z" strokeLinejoin="round" /><path d="M11 12V9a5 5 0 0 1 10 0v3" strokeLinecap="round" /><path d="m12 19 3 3 6-6" strokeLinecap="round" strokeLinejoin="round" /></svg>;
-  }
-}
 
 function AppTile({ app }: { app: WorkspaceApp }) {
-  const icon = <span className={`${styles.iconSurface} ${styles[`icon_${app.icon}`]}`}><AppGlyph icon={app.icon} /></span>;
+  const icon = <span className={`${styles.iconSurface} ${styles[`icon_${app.icon}`]}`}><WorkspaceIcon icon={app.icon} /></span>;
 
   if (app.status === "available" && app.href) {
     return (
@@ -88,10 +65,10 @@ export default function WorkspaceLauncher({ userId, displayName, organizationCou
             <span><strong>{websiteCount}</strong> {websiteCount === 1 ? "website" : "websites"}</span>
           </div>
           <div className={styles.mobileStats} aria-label="Workspace at a glance">
-            <Link href="/workspace" className={styles.mobileStat}><span aria-hidden="true">♧</span><strong>{organizationCount}</strong><small>Orgs</small></Link>
-            <Link href="/workspace/websites" className={styles.mobileStat}><span aria-hidden="true">◎</span><strong>{websiteCount}</strong><small>Websites</small></Link>
-            <OpenAppLibraryButton className={styles.mobileStat}><span aria-hidden="true">▦</span><strong>{WORKSPACE_APPS.filter((app) => app.status === "available").length}</strong><small>Apps</small></OpenAppLibraryButton>
-            <Link href="/workspace/domains" className={styles.mobileStat}><span aria-hidden="true">↗</span><strong>↗</strong><small>Domains</small></Link>
+            <Link href="/workspace" className={styles.mobileStat}><span aria-hidden="true"><WorkspaceIcon icon="organizations" /></span><strong>{organizationCount}</strong><small>Orgs</small></Link>
+            <Link href="/workspace/websites" className={styles.mobileStat}><span aria-hidden="true"><WorkspaceIcon icon="domains" /></span><strong>{websiteCount}</strong><small>Websites</small></Link>
+            <OpenAppLibraryButton className={styles.mobileStat}><span aria-hidden="true"><WorkspaceIcon icon="overview" /></span><strong>{WORKSPACE_APPS.filter((app) => app.status === "available").length}</strong><small>Apps</small></OpenAppLibraryButton>
+            <Link href="/workspace/domains" className={styles.mobileStat}><span aria-hidden="true"><WorkspaceIcon icon="domains" /></span><strong>↗</strong><small>Domains</small></Link>
           </div>
         </section>
 
@@ -113,7 +90,6 @@ export default function WorkspaceLauncher({ userId, displayName, organizationCou
       </div>
       </div>
       <MobileExperience key={userId} userId={userId} />
-      <AssistiveOrb />
     </main>
   );
 }

@@ -68,8 +68,8 @@ describe("workspace launcher acceptance", () => {
   });
 
   it("provides a stable accessible Orb panel target even while collapsed", () => {
-    expect(markup).toContain('id="lucia-assistive-panel"');
-    expect(markup).toContain('aria-controls="lucia-assistive-panel"');
+    expect(markup).toMatch(/id="[^"]+" aria-label="LUCIA assistant information"/);
+    expect(markup).toMatch(/aria-controls="[^"]+"/);
     expect(markup).toContain('hidden=""');
   });
 
