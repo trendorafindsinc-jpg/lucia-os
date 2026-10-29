@@ -1,3 +1,4 @@
+import React, { Suspense } from "react";
 import type { Metadata } from "next";
 import { VisualSiteEditor } from "@/components/editor/visual-site-editor";
 import "./editor.css";
@@ -8,5 +9,5 @@ export const metadata: Metadata = {
 };
 
 export default function VisualEditorPage() {
-  return <VisualSiteEditor />;
+  return <Suspense fallback={<p role="status">Opening Layout Studio…</p>}><VisualSiteEditor /></Suspense>;
 }

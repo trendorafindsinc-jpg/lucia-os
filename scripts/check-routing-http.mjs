@@ -34,6 +34,10 @@ try {
   assert(platform,"Production server did not start");
   assert.equal(platform.status,200);
   assert.match(platform.body,/Your vision deserves/);
+  const desktop=await request("os.lucia.name.ng","/workspace/desktop");
+  assert.equal(desktop.status,200);
+  assert.match(desktop.body,/Sign in to open your desktop/);
+  assert.doesNotMatch(desktop.body,/Website name/);
   for(const [host,path] of [
     ["ores-agric.lucia.name.ng","/"],
     ["northstar.lucia.name.ng","/about"],
@@ -45,6 +49,7 @@ try {
     ["northstar.lucia.name.ng","/site/other"],
     ["northstar.lucia.name.ng","/tenant-site-internal"],
     ["northstar.lucia.name.ng","/staff"],
+    ["northstar.lucia.name.ng","/workspace/desktop"],
   ]) {
     const response=await request(host,path);
     assert.equal(response.status,404,`${host}${path} must fail closed without a published site`);

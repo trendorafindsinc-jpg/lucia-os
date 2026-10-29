@@ -149,3 +149,6 @@
 @media (max-width:680px) {
   body:has(.lucia-mobile-workspace-dock) .lucia-mobile-switcher { display:none; }
 }
+
+.desktop-workspace-launch{display:none}
+@media(min-width:1024px){.desktop-workspace-launch{display:flex;align-items:center;padding:0 12px}.desktop-workspace-launch a,.desktop-workspace-launch button{display:inline-flex;align-items:center;min-height:38px;padding:8px 14px;border:1px solid #80b8ff66;border-radius:12px;background:#cce2ff1f;color:#e4f0ff;text-decoration:none;font:inherit;font-size:12px;white-space:nowrap}.desktop-workspace-launch button:disabled{opacity:.55;cursor:not-allowed}}
