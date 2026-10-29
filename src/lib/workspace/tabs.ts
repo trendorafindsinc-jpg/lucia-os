@@ -14,7 +14,7 @@ export function describeWorkspaceRoute(pathname: string, search: string): Worksp
   const websiteContext = websiteId ? `website:${websiteId}` : "library";
 
   if (pathname === "/workspace/desktop") {
-    return { appKey: "desktop", label: "Desktop", href: pathname + search, context: "home" };
+    return { appKey: "desktop", label: "Lattice", href: pathname + search, context: "home" };
   }
   if (pathname === "/templates" || pathname === "/layouts") {
     return { appKey: "layouts", label: "Layouts", href: pathname + search, context: "catalogue" };

@@ -47,7 +47,7 @@ export function DesktopWorkspace({ userId, initialHref }: { userId: string; init
     if (saved) {
       const next=applyDesktopRequest(saved,initialHref);
       update(() => next);
-      if(initialHref && !next.panes.some(pane=>pane.open && sameDesktopContext(pane.href,initialHref)))setNotice("Your previous desktop has unsaved changes in both panes. Save or close a pane before opening the requested app.");
+      if(initialHref && !next.panes.some(pane=>pane.open && sameDesktopContext(pane.href,initialHref)))setNotice("Your previous Lattice workspace has unsaved changes in both panes. Save or close a pane before opening the requested app.");
     }
     setRestored(true);
   }, [restored, parentTabId, getParentSnapshot, userId, initialHref, update]);
@@ -104,7 +104,7 @@ export function DesktopWorkspace({ userId, initialHref }: { userId: string; init
     const pane = current.panes.find(item => item.id === id)!;
     if (pane.dirty && !window.confirm("Close this app pane and discard its unsaved changes?")) return;
     const remaining = current.panes.find(item => item.id !== id && item.open);
-    if (!remaining) { setNotice("Keep one app open, or return to Home. Use the Desktop tab’s close button to close the whole workspace.");return; }
+    if (!remaining) { setNotice("Keep one app open, or return to Home. Use the Lattice tab’s close button to close the whole workspace.");return; }
     update(value => ({ ...value, active: remaining.id, panes: value.panes.map(item => item.id === id ? { ...item, open: false, dirty: false, snapshots: {} } : item) }));
     activate(remaining.id);
   }
@@ -128,13 +128,13 @@ export function DesktopWorkspace({ userId, initialHref }: { userId: string; init
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [update]);
 
-  return <main className={styles.desktop} aria-label="Desktop workspace">
+  return <main className={styles.desktop} aria-label="Lattice workspace">
     <header className={styles.header}>
-      <div><p className={styles.eyebrow}>LUCIA OS · DESKTOP</p><h1>Room for your next idea.</h1><p>Layout Studio and Layouts, connected in one workspace.</p></div>
+      <div><p className={styles.eyebrow}>LUCIA OS · LATTICE</p><h1>Lattice</h1><p>Two apps. One workspace.</p></div>
       <Link className={styles.home} href="/workspace"><WorkspaceIcon icon="home" />Home</Link>
     </header>
-    <div className={styles.toolbar} aria-label="Desktop view controls">
-      <div className={styles.appTabs} aria-label="Open desktop apps">
+    <div className={styles.toolbar} aria-label="Lattice view controls">
+      <div className={styles.appTabs} aria-label="Open Lattice apps">
         {state.order.map(id => { const pane = state.panes.find(item => item.id === id)!;const app = describeDesktopApp(pane.href)!;
           return pane.open ? <button type="button" key={id} aria-pressed={activeId === id} aria-controls={`desktop-pane-${id}`} onClick={() => activate(id)}><WorkspaceIcon icon={app.appKey === "layouts" ? "layouts" : "website"} />{app.appKey === "layouts" ? "Layouts" : "Layout Studio"}{pane.dirty && <span aria-label="Unsaved changes">•</span>}</button> : <button type="button" key={id} onClick={() => reopen(id)}>Reopen {app.appKey === "layouts" ? "Layouts" : "Layout Studio"}</button>;
         })}
@@ -149,7 +149,7 @@ export function DesktopWorkspace({ userId, initialHref }: { userId: string; init
     {split && <label className={styles.resize}>Pane balance <input aria-label="Left pane width" type="range" min="40" max="60" value={state.ratio} onChange={event => update(current => ({ ...current, ratio: Number(event.target.value) }))} />{state.ratio}%</label>}
     <p className={styles.helper}>Alt + Shift + ← / → focuses an app. Draft recovery is kept in this browser session; save your website to keep it permanently. Other apps open full screen.</p>
     {notice && <p role="status" className={styles.notice}>{notice}</p>}
-    {!restored ? <p role="status" className={styles.notice}>Opening your desktop…</p> : <div className={styles.panes} data-split={split} style={{ "--left-pane": `${state.ratio}%` } as CSSProperties}>
+    {!restored ? <p role="status" className={styles.notice}>Opening Lattice…</p> : <div className={styles.panes} data-split={split} style={{ "--left-pane": `${state.ratio}%` } as CSSProperties}>
       {state.order.map(id => {
         const pane = state.panes.find(item => item.id === id)!;
         const app = describeDesktopApp(pane.href)!;

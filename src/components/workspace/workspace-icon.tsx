@@ -1,7 +1,7 @@
 import React from "react";
 import type { WorkspaceApp } from "@/lib/workspace/app-registry";
 
-export function WorkspaceIcon({ icon }: { icon: WorkspaceApp["icon"] | "settings" | "home" | "activity" | "more" | "domains" | "organizations" }) {
+export function WorkspaceIcon({ icon }: { icon: WorkspaceApp["icon"] | "settings" | "home" | "activity" | "more" | "domains" | "organizations" | "lattice" }) {
   const common = {
     "aria-hidden": true as const,
     viewBox: "0 0 32 32",
@@ -13,6 +13,8 @@ export function WorkspaceIcon({ icon }: { icon: WorkspaceApp["icon"] | "settings
   };
 
   switch (icon) {
+    case "lattice":
+      return <svg {...common}><rect x="4" y="5" width="24" height="22" rx="5"/><path d="M16 5v22M4 12h24M9 9h.01M12 9h.01" strokeLinecap="round"/><path d="m11 17-3 3 3 3m10-6 3 3-3 3" strokeLinecap="round" strokeLinejoin="round"/></svg>;
     case "settings":
       return <svg {...common}><path d="m13 4-1 4-4 2-4-1-2 5 3 3v4l-2 3 4 4 4-2 4 1 2 3 5-2v-4l3-3 4-1-1-5-4-1-2-3V6l-5-2-2 3h-4Z" transform="translate(2 0) scale(.9)" strokeLinejoin="round"/><circle cx="16" cy="16" r="5"/></svg>;
     case "home":

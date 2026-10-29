@@ -4,6 +4,7 @@ import type { WorkspaceApp } from "@/lib/workspace/app-registry";
 import { WORKSPACE_APPS, WORKSPACE_TOOLS } from "@/lib/workspace/app-registry";
 import styles from "./workspace-launcher.module.css";
 import { OpenAppLibraryButton } from "./open-app-library-button";
+import { LatticeLauncher } from "@/components/workspace/lattice-launcher";
 import MobileExperience from "./mobile-experience";
 import { WorkspaceIcon } from "@/components/workspace/workspace-icon";
 
@@ -72,10 +73,7 @@ export default function WorkspaceLauncher({ userId, displayName, organizationCou
           </div>
         </section>
 
-        <section className={styles.desktopEntry} aria-label="Desktop workspace">
-          <div><span className={styles.desktopKicker}>YOUR DESKTOP</span><h2>A little more room to create.</h2><p>Open Layout Studio and Layouts side by side. Keep each app’s work in its own space.</p></div>
-          <Link href={{ pathname: "/workspace/desktop" }} className={styles.desktopOpen}><WorkspaceIcon icon="overview" />Open desktop workspace <span aria-hidden="true">→</span></Link>
-        </section>
+        <section className={styles.desktopEntry} aria-label="Lattice workspace"><LatticeLauncher /></section>
 
         <section className={styles.appSection} aria-labelledby="apps-title">
           <div className={styles.sectionHeading}>
