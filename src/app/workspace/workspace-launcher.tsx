@@ -21,17 +21,17 @@ function AppGlyph({ icon }: { icon: WorkspaceApp["icon"] }) {
 
   switch (icon) {
     case "overview":
-      return <svg {...common}><rect x="5" y="5" width="9" height="9" rx="2" /><rect x="18" y="5" width="9" height="9" rx="2" /><rect x="5" y="18" width="9" height="9" rx="2" /><rect x="18" y="18" width="9" height="9" rx="2" /></svg>;
+      return <svg {...common}><rect x="5" y="5" width="9" height="9" rx="3" /><rect x="18" y="5" width="9" height="9" rx="3" /><rect x="5" y="18" width="9" height="9" rx="3" /><path d="M22.5 18v9M18 22.5h9" strokeLinecap="round" /></svg>;
     case "website":
-      return <svg {...common}><rect x="4.5" y="5.5" width="23" height="21" rx="4" /><path d="M5 11h22M10 8.5h.01M13.5 8.5h.01M10 16h12M10 20h8" strokeLinecap="round" /></svg>;
+      return <svg {...common}><rect x="4" y="6" width="24" height="20" rx="5" /><path d="M4 12h24M9 9h.01M12 9h.01M10 18l4-4 4 4-4 4-4-4Z" strokeLinecap="round" strokeLinejoin="round" /><path d="M21 16h3M21 20h3" strokeLinecap="round" /></svg>;
     case "layouts":
-      return <svg {...common}><rect x="5" y="5" width="22" height="22" rx="4" /><path d="M5 13h22M13 13v14M9 9h.01M12 9h.01M17 18h6M17 22h6" strokeLinecap="round" /></svg>;
+      return <svg {...common}><rect x="5" y="7" width="17" height="17" rx="3" /><path d="M10 12h7M10 16h7M10 20h4M24 11h3v14a3 3 0 0 1-3 3H12v-2" strokeLinecap="round" /></svg>;
     case "loomify-ai":
-      return <svg {...common}><path d="M16 4.5 18.8 12l7.7 4-7.7 3.2L16 27.5l-2.8-8.3L5.5 16l7.7-4L16 4.5Z" strokeLinejoin="round" /><path d="m23.5 4 .9 2.5 2.6 1-2.6 1-.9 2.5-.9-2.5-2.6-1 2.6-1 .9-2.5Z" strokeLinejoin="round" /></svg>;
+      return <svg {...common}><path d="M16 4 19.3 12.7 28 16l-8.7 3.3L16 28l-3.3-8.7L4 16l8.7-3.3L16 4Z" strokeLinejoin="round" /><circle cx="16" cy="16" r="3.1" /><path d="M24 4v5M21.5 6.5h5" strokeLinecap="round" /></svg>;
     case "loom":
-      return <svg {...common}><circle cx="16" cy="16" r="11" /><path d="M11 20V12l5 5 5-5v8M9 8l2 2M23 8l-2 2" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+      return <svg {...common}><circle cx="9" cy="11" r="3.5" /><circle cx="23" cy="11" r="3.5" /><circle cx="16" cy="23" r="3.5" /><path d="m12 13 3 6m5-6-3 6M12.5 11h7" strokeLinecap="round" /></svg>;
     case "store":
-      return <svg {...common}><path d="M6 13h20l-1.5 13h-17L6 13Z" strokeLinejoin="round" /><path d="M11 13V9a5 5 0 0 1 10 0v4M12 18h8" strokeLinecap="round" /></svg>;
+      return <svg {...common}><path d="M6 12h20l-2 15H8L6 12Z" strokeLinejoin="round" /><path d="M11 12V9a5 5 0 0 1 10 0v3" strokeLinecap="round" /><path d="m12 19 3 3 6-6" strokeLinecap="round" strokeLinejoin="round" /></svg>;
   }
 }
 

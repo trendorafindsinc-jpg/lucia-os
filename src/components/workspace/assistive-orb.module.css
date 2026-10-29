@@ -14,3 +14,13 @@
 @media (max-width: 680px) { .root { right: max(12px,env(safe-area-inset-right)); bottom: max(12px,env(safe-area-inset-bottom)); } .orb { width: 54px; height: 54px; } }
 @media (prefers-reduced-motion: reduce) { .orb { transition: none; } .orb:hover { transform: none; } }
 @media (forced-colors: active) { .orb,.panel,.close { border: 2px solid ButtonText; } }
+
+
+/* Phone: keep the control above the home indicator and panel inside the visible viewport. */
+.panel[hidden] { display: none; }
+@media (max-width: 680px) {
+  .root { right: max(12px,env(safe-area-inset-right)); bottom: max(16px,env(safe-area-inset-bottom)); }
+  .panel { width: min(360px,calc(100vw - 24px)); max-height: min(65dvh,520px); overflow-y: auto; padding: 18px; border-radius: 20px; }
+  .orb { width: 56px; height: 56px; touch-action: manipulation; }
+}
+@media (max-width: 350px) { .panel { padding: 14px; } }

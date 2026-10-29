@@ -127,3 +127,20 @@
   .lucia-blue-glass-nav .workspace-tab-home { min-width: 44px; min-height: 44px; }
   .lucia-blue-glass-nav .workspace-tab { max-width: 170px; }
 }
+
+
+/* Phase 4: phone-first app switcher; desktop and tablet retain the full tab strip. */
+.lucia-mobile-switcher { display: none; }
+@media (max-width: 680px) {
+  .workspace-tabbar { display: none !important; }
+  .lucia-mobile-switcher { position: relative; z-index: 70; display: flex; align-items: center; gap: 12px; min-height: 62px; padding: 8px max(16px, env(safe-area-inset-right)) 8px max(16px, env(safe-area-inset-left)); background: #0b1729; color: #f2f7ff; border-bottom: 1px solid rgba(128,184,255,.25); }
+  .lucia-mobile-switcher-trigger { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border: 1px solid rgba(128,184,255,.45); border-radius: 14px; background: rgba(128,184,255,.15); color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+  .lucia-mobile-current-app { min-width: 0; flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 13px; font-weight: 650; }
+  .lucia-mobile-switcher > a { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px; color: #fff; background: rgba(128,184,255,.12); text-decoration: none; font-size: 23px; }
+  .lucia-mobile-app-list { position: absolute; top: calc(100% + 6px); left: max(12px,env(safe-area-inset-left)); right: max(12px,env(safe-area-inset-right)); max-height: min(60vh,480px); overflow-y: auto; padding: 8px; border: 1px solid rgba(128,184,255,.35); border-radius: 18px; background: #0b1729; box-shadow: 0 18px 50px rgba(11,23,41,.3); }
+  .lucia-mobile-app-list[hidden] { display: none; }
+  .lucia-mobile-app-list button { display: block; width: 100%; min-height: 48px; padding: 12px; border: 0; border-radius: 11px; background: transparent; color: #f2f7ff; font: inherit; text-align: left; cursor: pointer; }
+  .lucia-mobile-app-list button[aria-current="page"] { background: rgba(31,107,255,.35); }
+  .lucia-mobile-switcher :is(button,a):focus-visible { outline: 3px solid #80b8ff; outline-offset: 2px; }
+  .workspace-route-navigation { overflow-x: auto; max-width: 100%; overscroll-behavior-x: contain; }
+}

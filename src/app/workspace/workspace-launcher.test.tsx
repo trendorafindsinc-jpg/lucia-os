@@ -53,7 +53,31 @@ describe("workspace launcher acceptance", () => {
     expect(markup).toContain('aria-label="LUCIA assistive controls"');
     expect(markup).toContain('aria-label="Expand LUCIA Assistive Orb"');
     expect(markup).toContain('aria-expanded="false"');
-    expect(markup).not.toContain("voice listening");
+    expect(markup).toContain("voice listening and automated actions are not connected here yet.");
+  });
+
+  it("keeps mobile launcher controls touch-friendly and clears the floating Orb", () => {
+    const css = readFileSync(new URL("./workspace-launcher.module.css", import.meta.url), "utf8");
+    expect(css).toContain("min-height: 100dvh");
+    expect(css).toContain("padding-bottom: calc(112px + env(safe-area-inset-bottom))");
+    expect(css).toContain(".appTile[href] { touch-action: manipulation; }");
+    expect(css).toContain(".toolLink { min-height: 52px;");
+  });
+
+  it("provides a stable accessible Orb panel target even while collapsed", () => {
+    expect(markup).toContain('id="lucia-assistive-panel"');
+    expect(markup).toContain('aria-controls="lucia-assistive-panel"');
+    expect(markup).toContain('hidden=""');
+  });
+
+  it("gives each available app a distinct vector identity within Blue Glass", () => {
+    const css = readFileSync(new URL("./workspace-launcher.module.css", import.meta.url), "utf8");
+    for (const icon of ["overview", "website", "layouts", "loomify-ai", "loom", "store"]) {
+      expect(css).toContain(`.icon_${icon} { --app-glow:`);
+    }
+    expect(css).toContain(".iconSurface::before");
+    expect(markup).toContain('aria-label="Layout Studio"');
+    expect(markup).toContain('aria-label="loomifyAI"');
   });
 
   it("activates the scoped Blue Glass workspace theme", () => {

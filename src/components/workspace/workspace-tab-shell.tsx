@@ -49,6 +49,7 @@ function WorkspaceTabShellInner({ children }: { children: ReactNode }) {
   const [snapshots, setSnapshots] = useState<Record<string, unknown>>({});
   const snapshotsRef = useRef(snapshots);
   const [hydrated, setHydrated] = useState(false);
+  const [mobileSwitcherOpen, setMobileSwitcherOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -78,6 +79,7 @@ function WorkspaceTabShellInner({ children }: { children: ReactNode }) {
         : [...current, nextTab].slice(-12);
     });
     setActiveTabId(id);
+    setMobileSwitcherOpen(false);
   }, [hydrated, route]);
 
   useEffect(() => {
@@ -130,6 +132,7 @@ function WorkspaceTabShellInner({ children }: { children: ReactNode }) {
   function activateTab(tab: WorkspaceTab) {
     if (!isSafeWorkspaceTabHref(tab.href)) return;
     setActiveTabId(tab.id);
+    setMobileSwitcherOpen(false);
     router.push(tab.href as Parameters<typeof router.push>[0]);
   }
 
@@ -151,6 +154,9 @@ function WorkspaceTabShellInner({ children }: { children: ReactNode }) {
 
   return (
     <WorkspaceContext.Provider value={value}>
+      {hydrated && route && (
+        <div className="lucia-mobile-switcher"><button type="button" className="lucia-mobile-switcher-trigger" aria-expanded={mobileSwitcherOpen} aria-controls="lucia-mobile-app-list" onClick={() => setMobileSwitcherOpen((open) => !open)}>Apps <span aria-hidden="true">⌄</span></button><span className="lucia-mobile-current-app">{route.label}</span><Link href="/workspace" aria-label="Open workspace launcher">⌂</Link><div id="lucia-mobile-app-list" className="lucia-mobile-app-list" hidden={!mobileSwitcherOpen} aria-label="Open application workspaces">{tabs.map((tab) => <button type="button" key={tab.id} aria-current={tab.id === activeTabId ? "page" : undefined} onClick={() => activateTab(tab)}>{tab.label}{tab.dirty ? " •" : ""}</button>)}</div></div>
+      )}
       {hydrated && route && (
         <nav className="workspace-tabbar lucia-blue-glass-nav" aria-label="Open app workspaces">
           <Link className="workspace-tab-home" href="/workspace" aria-label="Return to workspace launcher" title="Workspace launcher">⌂</Link>
