@@ -180,7 +180,7 @@ function WorkspaceTabShellInner({ children }: { children: ReactNode }) {
               </div>
             ))}
           </div>
-          <div className="desktop-workspace-launch">{tabs.find(tab=>tab.id===activeTabId)?.dirty ? <button type="button" disabled title="Save this draft before opening it in Desktop">Desktop · save draft first</button> : <Link href={{pathname:"/workspace/desktop",query:route && describeDesktopApp(route.href)?{app:route.href}:{}}}>Open desktop</Link>}</div>
+          <div className="desktop-workspace-launch">{tabs.find(tab=>tab.id===activeTabId)?.dirty ? <button type="button" disabled title="Save this draft before opening it in Lattice">Lattice · save draft first</button> : <Link href={{pathname:"/workspace/desktop",query:route && describeDesktopApp(route.href)?{app:route.href}:{}}}>Lattice</Link>}</div>
         </nav>
       )}
       {hydrated && route && showWorkspaceQuickNavigation && (

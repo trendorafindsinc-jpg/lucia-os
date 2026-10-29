@@ -36,7 +36,7 @@ try {
   assert.match(platform.body,/Your vision deserves/);
   const desktop=await request("os.lucia.name.ng","/workspace/desktop");
   assert.equal(desktop.status,200);
-  assert.match(desktop.body,/Sign in to open your desktop/);
+  assert.match(desktop.body,/Sign in to open Lattice/);
   assert.doesNotMatch(desktop.body,/Website name/);
   for(const [host,path] of [
     ["ores-agric.lucia.name.ng","/"],

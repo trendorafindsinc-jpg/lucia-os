@@ -51,3 +51,9 @@ export function applyDesktopRequest(state: DesktopState, href?: string): Desktop
   if(!target)return state;
   return {...state,active:target.id,panes:state.panes.map(pane=>pane.id===target.id?{...pane,href,open:true,snapshots:{},dirty:false}:pane)};
 }
+
+/** Visible Lattice choices come only from implemented native pane adapters. */
+export const LATTICE_APPS = [
+  { key: "website-engine", label: "Layout Studio", href: "/editor", icon: "website" },
+  { key: "layouts", label: "Layouts", href: "/templates", icon: "layouts" },
+] as const;

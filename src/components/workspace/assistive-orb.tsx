@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState, type CSSProperties, type PointerEvent } from "react";
 import Link from "next/link";
 import { DEFAULT_ORB_POSITION, parseOrbPosition, snapOrb, type OrbPosition } from "@/lib/workspace/orb-position";
+import { LatticeLauncher } from "./lattice-launcher";
 import styles from "./assistive-orb.module.css";
 
 /** Shared assistant entry on the launcher and every recognized app workspace. */
@@ -71,6 +72,7 @@ export function AssistiveOrb({ homeDock = false }: { homeDock?: boolean }) {
           </div>
           <p>Create AI design proposals with loomifyAI, then review them in Layout Studio.</p>
           <Link className={styles.action} href="/loomify-ai" onClick={() => setExpanded(false)}>Open loomifyAI →</Link>
+          <LatticeLauncher compact onLaunch={() => setExpanded(false)} />
           <p className={styles.note}>Voice and automated actions are not available yet.</p>
       </section>
       <button

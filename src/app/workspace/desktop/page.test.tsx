@@ -11,7 +11,7 @@ describe("desktop workspace server entry",()=>{
     mocks.user.mockResolvedValue(null);
     const output=await DesktopWorkspacePage({searchParams:Promise.resolve({app:"/editor?websiteId=private"})});
     const html=renderToStaticMarkup(output);
-    expect(html).toContain("Sign in to open your desktop");
+    expect(html).toContain("Sign in to open Lattice");
     expect(html).not.toContain("private");
     expect(html).not.toContain("Website name");
   });
