@@ -3,9 +3,11 @@ import Link from "next/link";
 import type { WorkspaceApp } from "@/lib/workspace/app-registry";
 import { WORKSPACE_APPS, WORKSPACE_TOOLS } from "@/lib/workspace/app-registry";
 import styles from "./workspace-launcher.module.css";
+import MobileExperience from "./mobile-experience";
 import { AssistiveOrb } from "@/components/workspace/assistive-orb";
 
 type WorkspaceLauncherProps = {
+  userId: string;
   displayName: string;
   organizationCount: number;
   websiteCount: number;
@@ -57,7 +59,7 @@ function AppTile({ app }: { app: WorkspaceApp }) {
   );
 }
 
-export default function WorkspaceLauncher({ displayName, organizationCount, websiteCount }: WorkspaceLauncherProps) {
+export default function WorkspaceLauncher({ userId, displayName, organizationCount, websiteCount }: WorkspaceLauncherProps) {
   const firstName = displayName.trim().split(/\s+/)[0] || "there";
 
   return (
@@ -107,13 +109,7 @@ export default function WorkspaceLauncher({ displayName, organizationCount, webs
         </section>
         <p className={styles.footerNote}>Your access is checked by LUCIA OS. Unavailable apps are shown for clarity and cannot be launched.</p>
       </div>
-      <nav className={`${styles.mobileDock} lucia-mobile-workspace-dock`} aria-label="Mobile workspace navigation">
-        <Link href="/workspace" aria-current="page"><span aria-hidden="true">⌂</span><small>Home</small></Link>
-        <a href="#apps-title"><span aria-hidden="true">▦</span><small>Apps</small></a>
-        <span className={styles.orbDockSpace} aria-hidden="true" />
-        <Link href="/support"><span aria-hidden="true">♧</span><small>Help</small></Link>
-        <Link href="/workspace/domains"><span aria-hidden="true">☷</span><small>More</small></Link>
-      </nav>
+      <MobileExperience userId={userId} />
       <AssistiveOrb />
     </main>
   );
