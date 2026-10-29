@@ -79,3 +79,28 @@ Next acceptance work is limited to Phase 2: run the new route and launcher tests
 - **Production schema rollout:** no production migration has been run. The code is not ready for promotion until the product owner approves a production migration window and the candidate's live acceptance gates pass.
 
 **Disposition:** Loom's missing route is repaired in the PR candidate and migration rollback/recovery evidence is now available on disposable branches. Phase 2 remains **OPEN** because live browser acceptance and the complete runtime authorization matrix are not yet proven. Phase 3 remains blocked.
+
+
+## 2026-10-29 — browser acceptance and expanded route authorization matrix
+
+### Browser run (real Chromium against the Vercel preview)
+
+- Target deployment: `https://lucia-b6eo0d9y9-trendoraplc-5738.vercel.app` (preview only; not production).
+- Browser: Playwright + Chromium headless, real network requests, reduced-motion preference enabled.
+- Result: **29/29 checks passed**.
+- Evidence: `docs/evidence/loom-desktop.png`, `docs/evidence/loom-tablet.png`, `docs/evidence/loom-mobile.png`, and `docs/evidence/loom-browser-report.json` (if present in this commit).
+- Covered: `/loom` page and its feed/navigation landmarks; `/loom/discover`, `/loom/discussions`, `/loom/groups`, `/loom/connections`, `/loom/messages`, `/loom/notifications`, `/loom/saved`, `/loom/blocks`, `/loom/profile`, and `/loom/staff` all returned HTTP 200; tablet (768px) and mobile (390px) had no horizontal overflow; keyboard focus and reduced-motion preference were observed; anonymous private reads and write actions were denied with 401/403. No failing browser checks were recorded.
+- Scope limit: this is genuine browser/device-emulation evidence for the **signed-out** path. It is not a signed-in session test and does not prove private-data isolation across two authenticated users.
+
+### Route-level authorization matrix
+
+- Added/expanded `src/app/api/loom/authorization-matrix.test.ts` to cover anonymous member discovery, private profile/notifications/saved/messages/verification reads, verification submission, profile editing, reports, saved-content mutations, notification updates, group creation/join/leave/posts, connection request/decision, block/unblock, reactions, replies, and staff verification decisions. The matrix asserts denied requests do not reach the database mock. Existing dedicated tests continue to cover post publishing, private-message connection requirements, block validation, staff report moderation, and cross-origin writes.
+- A fresh CI run is required for the expanded matrix before calling the source-level gate passed.
+
+### Disposable database / live-process limitation
+
+- Disposable Neon migration, rollback and least-privilege role evidence remains as recorded above.
+- The local application source was cloned and built successfully in an isolated sandbox. Starting that process with the disposable Neon runtime connection was blocked by the execution environment's secret-handling boundary, so an actual HTTP request through a local Next.js process connected to that disposable database has **not** been proven in this run. I did not route a preview deployment to the production database for testing, alter Vercel environment variables, or attempt any production writes.
+- Required remaining evidence: real HTTP process against the disposable branch using the non-bypass runtime role, plus authenticated two-user private-message/notification isolation and verified/unverified/staff negative cases. Do not mark Phase 2 complete until these are tested.
+
+**Disposition remains Phase 2 OPEN; Phase 3 BLOCKED.**
