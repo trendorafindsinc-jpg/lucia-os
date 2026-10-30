@@ -61,9 +61,12 @@ Device-adaptive interaction:
 
 ### Section 2 — Layouts (website design library)
 
+**Canonical design specification:** `docs/layouts-48-premium-catalogue.md`. **Storage and payment contract:** `docs/layouts-s3-storage-contract.md`. Phase 11 owns existing website platform readiness and free offer; Phase 12 owns catalogue design and quality criteria; Phase 13 owns the shared validated composition engine. The catalogue specification does not imply completed production designs.
+
+
 Use **Layouts**, never customer-facing “templates,” for the curated website design catalogue. Layouts are accessed through their own workspace icon or an equally clear first-class entry.
 
-The catalogue must offer genuinely different designs, not one structure with changed titles, colours, or demo copy. If there are 36 layouts, there should be 36 intentionally distinct design compositions. Design quality takes priority over rushing a catalogue count.
+The catalogue must offer genuinely different designs, not one structure with changed titles, colours, or demo copy. The approved target is **48 Layouts in 8 categories of 6**. All 48 must be intentionally distinct design compositions. Design quality takes priority over rushing a catalogue count.
 
 Each Layout should be a polished, ready-to-personalise website, with:
 - Distinct page structure, information hierarchy, typography, spacing, colour system, navigation, imagery, component choices, and responsive composition appropriate to its use case.
