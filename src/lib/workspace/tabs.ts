@@ -93,6 +93,12 @@ export function isSafeWorkspaceTabHref(href: string): boolean {
     if ([...params.keys()].some(key =>
       !/^[a-zA-Z][a-zA-Z0-9]{0,35}$/.test(key) ||
       params.getAll(key).length !== 1)) return false;
+    // Lattice's app query is a nested local native-adapter route, never a remote URL.
+    if (url.pathname === "/workspace/desktop" && params.has("app")) {
+      const app = params.get("app") || "";
+      return [...params.keys()].length === 1 &&
+        /^\/(?:editor(?:\?websiteId=[a-zA-Z0-9_-]{1,128})?|templates)$/.test(app);
+    }
     if ([...params.values()].some(value => !/^[a-zA-Z0-9_-]{1,128}$/.test(value))) return false;
     return describeWorkspaceRoute(url.pathname, url.search) !== null;
   } catch { return false; }

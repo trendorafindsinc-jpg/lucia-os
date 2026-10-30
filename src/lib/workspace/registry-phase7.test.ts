@@ -72,6 +72,9 @@ describe("Phase 7 canonical workspace registry", () => {
     expect(describeWorkspaceRoute("/templates","")?.appKey).toBe(getWorkspaceApp("layouts")?.id);
     expect(getWorkspaceTabId(describeWorkspaceRoute("/editor","?websiteId=tenant-a")!)).toBe("website-engine:website:tenant-a");
     expect(isSafeWorkspaceTabHref("/editor?websiteId=abc")).toBe(true);
+    expect(isSafeWorkspaceTabHref("/workspace/desktop?app=%2Feditor")).toBe(true);
+    expect(isSafeWorkspaceTabHref("/workspace/desktop?app=%2Feditor%3FwebsiteId%3Dsite-a")).toBe(true);
+    expect(isSafeWorkspaceTabHref("/workspace/desktop?app=https%3A%2F%2Fevil.test")).toBe(false);
     for(const value of ["https://evil.test", "//evil.test","/staff", "/editor#frag", "/editor?websiteId=a&websiteId=b", "/editor?websiteId=../../staff"]) expect(isSafeWorkspaceTabHref(value)).toBe(false);
     const state=createDesktopState("user-a","/editor?websiteId=site-a");
     state.panes[0].dirty=true;
