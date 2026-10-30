@@ -98,6 +98,7 @@ try {
   });
   const context = await browser.newContext({
     viewport: { width: 1440, height: 900 },
+    reducedMotion: "reduce",
   });
   await context.addCookies([
     { name: "lucia_os_session", value: fixtures.tokens.a, url: base },
@@ -369,6 +370,19 @@ try {
     });
     await region.focus();
     await region.press("End");
+    await region.evaluate(async (e) => {
+      if (e.scrollHeight > e.clientHeight)
+        await new Promise((resolve, reject) => {
+          const start = performance.now();
+          const tick = () =>
+            e.scrollTop > 0
+              ? resolve()
+              : performance.now() - start > 3000
+                ? reject(new Error("Pane did not scroll"))
+                : requestAnimationFrame(tick);
+          tick();
+        });
+    });
     assert(
       await region.evaluate(
         (e) => e.scrollHeight <= e.clientHeight || e.scrollTop > 0,
@@ -398,6 +412,9 @@ try {
   await page
     .getByRole("heading", { name: "Control Center", exact: true })
     .waitFor();
+  await page.waitForFunction(() =>
+    document.querySelector("input[name=theme]")?.matches(":enabled"),
+  );
   assert(
     await page.getByRole("radio", { name: theme, exact: true }).isChecked(),
   );
@@ -410,7 +427,7 @@ try {
     .click();
   await page
     .getByRole("region", { name: "LUCIA assistant information" })
-    .getByRole("link", { name: "Layouts ↗", exact: true })
+    .getByRole("link", { name: "Layouts", exact: true })
     .click();
   await page.getByLabel("Search layouts", { exact: true }).waitFor();
   assert.equal(

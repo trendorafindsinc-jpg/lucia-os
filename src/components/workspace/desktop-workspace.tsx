@@ -467,12 +467,17 @@ export function DesktopWorkspace({
                   : null;
         if (body.scrollHeight <= body.clientHeight) return;
         event.preventDefault();
+        const behavior: ScrollBehavior = window.matchMedia(
+          "(prefers-reduced-motion: reduce)",
+        ).matches
+          ? "auto"
+          : "smooth";
         if (amount === null)
           body.scrollTo({
             top: event.key === "Home" ? 0 : body.scrollHeight,
-            behavior: "smooth",
+            behavior,
           });
-        else body.scrollBy({ top: amount, behavior: "smooth" });
+        else body.scrollBy({ top: amount, behavior });
         return;
       }
       if (

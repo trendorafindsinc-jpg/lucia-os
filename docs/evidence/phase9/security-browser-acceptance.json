@@ -1,0 +1,15 @@
+{
+  "date": "2026-10-30",
+  "environment": "Real compiled local application connected to isolated Neon database with synthetic users and NOBYPASSRLS runtime",
+  "checks": [
+    "Delayed successful save preserves and marks newer local edits unsaved",
+    "Organization preference switch preserves unsaved website identity and tenant ownership",
+    "Revoked preferred organization is removed by the server-authorized membership list",
+    "Deleted resource deep link fails safely without a save action",
+    "Corrupt recovery stays untouched while the application remains usable",
+    "Disabled storage keeps an honest memory-only draft across mobile app switches",
+    "No unhandled browser application errors"
+  ],
+  "physicalTablet": "deferred",
+  "previewRuntime": "not claimed"
+}

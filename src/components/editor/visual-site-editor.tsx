@@ -627,6 +627,7 @@ export function VisualSiteEditor({
           <fieldset
             className="editor-recovery-controls"
             disabled={
+              recoveryReady === false ||
               isLoadingSaved ||
               savedDraftUnavailable ||
               Boolean(
