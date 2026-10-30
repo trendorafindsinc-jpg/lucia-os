@@ -51,10 +51,14 @@ describe("Phase 13 premium layout contract", () => {
     script.pages[0].sections[0].onClick = "alert(1)";
     expect(() => parsePremiumLayout(script)).toThrow();
     const external = structuredClone(haven);
-    external.pages[0].sections[0].image = { src: "https://evil.test/track", alt: "test" };
+    const externalHero = external.pages[0].sections[0];
+    if (externalHero.type !== "premium-hero") throw new Error("Expected premium hero fixture");
+    externalHero.image = { src: "https://evil.test/track", alt: "test" };
     expect(() => parsePremiumLayout(external)).toThrow();
     const variant = structuredClone(canvas);
-    variant.pages[0].sections[0].variant = "javascript";
+    const gallerySection = variant.pages[0].sections[0];
+    if (gallerySection.type !== "project-gallery") throw new Error("Expected gallery fixture");
+    gallerySection.variant = "javascript";
     expect(() => parsePremiumLayout(variant)).toThrow();
   });
   it("rejects malformed tokens and duplicate section instance IDs", () => {
@@ -67,7 +71,9 @@ describe("Phase 13 premium layout contract", () => {
   });
   it("permits bounded content edits but prevents design-lock variant changes", () => {
     const parsed = parsePremiumLayout(meridian);
-    const replacement = { ...parsed.pages[0].sections[0], heading: "Updated headline" };
+    const originalHero = parsed.pages[0].sections[0];
+    if (originalHero.type !== "premium-hero") throw new Error("Expected premium hero fixture");
+    const replacement = { ...originalHero, heading: "Updated headline" };
     const changed = applyPremiumEdit(parsed, "guided", { kind: "replace-section", pageId: "home", section: replacement });
     expect(changed.pages[0].sections[0]).toMatchObject({ heading: "Updated headline" });
     expect(parsed.pages[0].sections[0]).toMatchObject({ heading: "An original experience" });
