@@ -11,7 +11,7 @@ export type AppCategory = "workspace" | "creation" | "design" | "intelligence" |
 export type AppClass = "system" | "first-party" | "commercial";
 export type AppRecovery = "none" | "session-snapshot" | "server-draft";
 export type NativePaneAdapterId = "layout-studio" | "layouts";
-export type CanonicalAppHref = "/workspace" | "/workspace/websites" | "/templates" | "/loomify-ai";
+export type CanonicalAppHref = "/workspace" | "/workspace/websites" | "/templates" | "/loomify-ai" | "/workspace/settings";
 export type AppLaunch = { kind: "route"; href: CanonicalAppHref } | { kind: "local"; action: "open-settings" } | { kind: "none" };
 export type WorkspaceAppStatus = "available" | "unavailable";
 
@@ -46,7 +46,7 @@ export type WorkspaceApp = {
 };
 
 const ICONS: ReadonlySet<string> = new Set(["overview","website","layouts","loomify-ai","loom","store","settings"]);
-const ROUTES: ReadonlySet<string> = new Set(["/workspace","/workspace/websites","/templates","/loomify-ai"]);
+const ROUTES: ReadonlySet<string> = new Set(["/workspace","/workspace/websites","/templates","/loomify-ai","/workspace/settings"]);
 /** Do not allow external, encoded, query-bearing or arbitrary destinations in static metadata. */
 export function isCanonicalAppDestination(href: unknown): href is CanonicalAppHref {
   return typeof href === "string" && ROUTES.has(href) &&
@@ -120,10 +120,10 @@ export const WORKSPACE_APPS: readonly WorkspaceApp[] = createAppRegistry([
     requiredPermissions:noPermissions,entitlement:B,lifecycle:{onClose:"immediate",restore:"none"}
   },
   {
-    id:"settings",key:"settings",label:"Settings",description:"Wallpaper and local display preferences",
+    id:"settings",key:"settings",label:"Settings",description:"Your LUCIA Control Center",
     category:"preferences",classification:"system",icon:"settings",iconAsset:{kind:"lucia-svg",name:"settings"},
-    launch:{kind:"local",action:"open-settings"},status:"available",availability:available,
-    context:"none",capabilities:{modes:["mobile"],split:false,recovery:"none"},
+    launch:{kind:"route",href:"/workspace/settings"},href:"/workspace/settings",status:"available",availability:available,
+    context:"none",capabilities:{modes:ALL_MODES,split:false,recovery:"none"},
     requiredPermissions:noPermissions,entitlement:B,lifecycle:{onClose:"immediate",restore:"none"}
   },
 ]);

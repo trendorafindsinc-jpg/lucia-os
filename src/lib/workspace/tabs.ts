@@ -15,6 +15,8 @@ export function describeWorkspaceRoute(pathname: string, search: string): Worksp
   const templateId = params.get("template");
   const websiteContext = websiteId ? `website:${websiteId}` : "library";
 
+  if (pathname === "/workspace/apps") return { appKey:"workspace-tools",label:"App Library",href:pathname+search,context:"apps" };
+  if (pathname === "/workspace/settings") return { appKey:"settings",label:"Settings",href:pathname+search,context:"account" };
   if (pathname === "/workspace/desktop") {
     return { appKey: "desktop", label: "Lattice", href: pathname + search, context: "home" };
   }

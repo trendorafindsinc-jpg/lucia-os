@@ -29,6 +29,7 @@ export default async function OrganizationWorkspacePage() {
   ));
 
   return <WorkspaceLauncher
+    organizations={organizations.map(o=>({id:o.id,name:o.name}))}
     userId={user.id}
     displayName={user.displayName || "LUCIA user"}
     organizationCount={organizations.length}

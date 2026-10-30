@@ -277,9 +277,9 @@
 @media(max-width:680px){.workspace:global(.lucia-workspace-theme){background:var(--lucia-mobile-wallpaper,linear-gradient(165deg,#061427,#345c90,#b6cce1))!important;background-attachment:fixed!important}}
 
 /* New apps live in the App Library by default on phones; desktop retains launcher. */
-@media(max-width:680px){.appSection{display:none}}
 
-@media(max-width:680px){:global(html[data-lucia-home-apps="true"]) .appSection{display:block}.mobileStat{font:inherit;cursor:pointer}}
+
+@media(max-width:680px){.mobileStat{font:inherit;cursor:pointer}}
 
 /* Phase 5: desktop-only entry, without changing phone composition. */
 .desktopEntry{display:none}
@@ -309,3 +309,9 @@
   .appSection{margin-top:14px}
 }
 @media (min-width:960px) and (max-width:1279px){.appGrid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+.workspace:global(.lucia-workspace-theme){background:var(--lucia-workspace-wallpaper)!important;background-size:cover!important;background-position:center!important}
+.workspace:global(.lucia-workspace-theme) :is(.welcome,.sectionHeading,.footerNote){color:#fff;text-shadow:0 1px 6px #041a32}
+.workspace:global(.lucia-workspace-theme) :is(.lead,.eyebrow,.mobileGreeting){color:#eef5ff}
+.workspace:global(.lucia-workspace-theme) .appTile,.workspace:global(.lucia-workspace-theme) .toolLink{background:var(--wp-panel);color:var(--wp-text)}
+.workspace:global(.lucia-workspace-theme) .appDescription{color:var(--wp-muted)}

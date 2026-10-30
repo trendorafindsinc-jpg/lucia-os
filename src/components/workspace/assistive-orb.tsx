@@ -74,6 +74,7 @@ export function AssistiveOrb({ homeDock = false }: { homeDock?: boolean }) {
           </div>
           <p>Create AI design proposals with loomifyAI, then review them in Layout Studio.</p>
           {assistantApp?.status === "available" && assistantApp.href && <Link className={styles.action} href={assistantApp.href} onClick={() => setExpanded(false)}>Open {assistantApp.label} →</Link>}
+          <Link className={styles.action} href="/workspace/settings" onClick={() => setExpanded(false)}>Settings →</Link>
           <LatticeLauncher compact onLaunch={() => setExpanded(false)} />
           <p className={styles.note}>Voice and automated actions are not available yet.</p>
       </section>

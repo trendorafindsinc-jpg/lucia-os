@@ -34,6 +34,11 @@ try {
   assert(platform,"Production server did not start");
   assert.equal(platform.status,200);
   assert.match(platform.body,/Your vision deserves/);
+  const settings=await request("os.lucia.name.ng","/workspace/settings");
+  assert.equal(settings.status,200);
+  assert.match(settings.body,/Sign in to open Settings/);
+  const preferences=await request("os.lucia.name.ng","/api/workspace/preferences");
+  assert.equal(preferences.status,401);
   const desktop=await request("os.lucia.name.ng","/workspace/desktop");
   assert.equal(desktop.status,200);
   assert.match(desktop.body,/Sign in to open Lattice/);
@@ -50,6 +55,9 @@ try {
     ["northstar.lucia.name.ng","/tenant-site-internal"],
     ["northstar.lucia.name.ng","/staff"],
     ["northstar.lucia.name.ng","/workspace/desktop"],
+    ["northstar.lucia.name.ng","/workspace/settings"],
+    ["customer-example.com","/workspace/settings"],
+    ["customer-example.com","/api/workspace/preferences"],
   ]) {
     const response=await request(host,path);
     assert.equal(response.status,404,`${host}${path} must fail closed without a published site`);
