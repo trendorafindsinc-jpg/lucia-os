@@ -66,7 +66,7 @@ export function AssistiveOrb({ homeDock = false }: { homeDock?: boolean }) {
   }, [expanded]);
 
   return (
-    <aside className={`${styles.root} ${homeDock ? styles.homeDock : ""} ${dragPoint ? styles.dragging : ""}`} style={placement} data-side={position.side} aria-label="LUCIA assistive controls">
+    <aside data-lucia-orb className={`${styles.root} ${homeDock ? styles.homeDock : ""} ${dragPoint ? styles.dragging : ""}`} style={placement} data-side={position.side} aria-label="LUCIA assistive controls">
       <section className={styles.panel} id={panelId} aria-label="LUCIA assistant information" hidden={!expanded}>
           <div className={styles.heading}>
             <div><strong>LUCIA Orb · loomifyAI</strong><span className={styles.status}>Your workspace assistant</span></div>
@@ -74,6 +74,7 @@ export function AssistiveOrb({ homeDock = false }: { homeDock?: boolean }) {
           </div>
           <p>Create AI design proposals with loomifyAI, then review them in Layout Studio.</p>
           {assistantApp?.status === "available" && assistantApp.href && <Link className={styles.action} href={assistantApp.href} onClick={() => setExpanded(false)}>Open {assistantApp.label} →</Link>}
+          <Link className={styles.action} href="/workspace/settings" onClick={() => setExpanded(false)}>Settings →</Link>
           <LatticeLauncher compact onLaunch={() => setExpanded(false)} />
           <p className={styles.note}>Voice and automated actions are not available yet.</p>
       </section>

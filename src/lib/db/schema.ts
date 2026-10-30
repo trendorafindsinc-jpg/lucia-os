@@ -1,6 +1,8 @@
 import { sql } from "drizzle-orm";
 import {
   bigint,
+  integer,
+  jsonb,
   boolean,
   foreignKey,
   index,
@@ -415,3 +417,11 @@ export const websiteSeoSettings = pgTable("website_seo_settings", {
   uniqueIndex("website_seo_settings_org_website_uq").on(table.organizationId, table.websiteId),
   uniqueIndex("website_seo_settings_org_id_id_uq").on(table.organizationId, table.id),
 ]);
+
+/** Account-owned presentation preferences, never authentication or permissions. */
+export const workspacePreferences = pgTable("workspace_preferences", {
+ userId: uuid("user_id").primaryKey().references(()=>appUsers.id,{onDelete:"cascade"}),
+ preferences: jsonb("preferences").$type<import("@/lib/workspace/preferences").WorkspacePreferences>().notNull(),
+ revision: integer("revision").notNull().default(1),
+ updatedAt: updatedAt(),
+});

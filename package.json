@@ -14,7 +14,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:check": "drizzle-kit check",
-    "test:routing:http": "node scripts/check-routing-http.mjs"
+    "test:routing:http": "node scripts/check-routing-http.mjs",
+    "test:settings:http": "node scripts/check-settings-http.mjs"
   },
   "dependencies": {
     "next": "^15.5.6",

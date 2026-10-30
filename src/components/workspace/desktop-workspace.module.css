@@ -59,3 +59,21 @@
   .paneBody :global(.editor-heading h1),.paneBody :global(.template-intro h1){font-size:26px}
 }
 @media (prefers-reduced-motion:reduce){.paneBody{scroll-behavior:auto}}
+
+/* Account wallpaper decorates only the shell, never the embedded website preview. */
+.desktop {
+  background: var(
+    --lucia-workspace-wallpaper,
+    linear-gradient(160deg, #0b1729, #122d50)
+  );
+  background-size: cover;
+  background-position: center;
+}
+:global([data-workspace-preferences][data-appearance="light"]) .toolbar {
+  background: #eff6fff2;
+  color: #132238;
+}
+:global([data-workspace-preferences][data-appearance="light"]) .toolbar button {
+  color: #132238;
+  background: #e0edff;
+}
