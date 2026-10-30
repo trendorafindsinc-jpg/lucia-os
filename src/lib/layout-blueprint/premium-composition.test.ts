@@ -10,7 +10,7 @@ const gallery = { id: "gallery", type: "project-gallery", variant: "masonry", he
 const journey = { id: "journey", type: "service-journey", variant: "chapters", heading: "Services", items: [{ title: "Strategy", body: "Clarify direction" }] };
 const experience = { id: "experience", type: "experience", variant: "immersive", heading: "Stay here", body: "A welcoming retreat", image: { src: "builtin:hospitality/stay", alt: "A room" } };
 
-function fixture(name: string, sections: unknown[], interior: unknown[]) {
+function fixture(name: string, sections: Record<string, unknown>[], interior: Record<string, unknown>[]) {
   return { schema: "lucia.layout-composition", version: 2, layoutId: "lucia.layout." + name, layoutVersion: 1,
     category: "Demonstration", identity: { name, description: "Composition fixture only, not a commissioned Layout" },
     tokens, navigation: [{ label: "Home", href: "/" }, { label: "About", href: "/about" }],
@@ -45,7 +45,7 @@ describe("Phase 13 premium layout contract", () => {
     script.pages[0].sections[0].onClick = "alert(1)";
     expect(() => parsePremiumLayout(script)).toThrow();
     const external = structuredClone(haven);
-    external.pages[0].sections[0].image.src = "https://evil.test/track";
+    external.pages[0].sections[0].image = { src: "https://evil.test/track", alt: "test" };
     expect(() => parsePremiumLayout(external)).toThrow();
     const variant = structuredClone(canvas);
     variant.pages[0].sections[0].variant = "javascript";
