@@ -68,6 +68,8 @@ Verify real click/touch/keyboard flows at phone, tablet portrait/landscape, lapt
 ### Phase 11 — Layout Studio baseline and free-offer audit
 Audit create/edit/preview/publish, domains, layouts, data persistence, entitlement checks, and current pricing gates. Remove any unsupported assumption that standard website creation/publishing requires a subscription, paid Layout, or AI purchase.
 
+**Approved Phase 11 commercial boundary:** Standard website creation/editing/preview/publishing and built-in Layouts are free. The only paid access capability scoped to the Phase 11 website workflow is optional custom-domain access, sold through **LUCIA Store at ₦5,000 one-time**, with **Paystack** as the approved provider. Domain registration/registrar renewal are separate. No recurring LUCIA website subscription is required. Audit legacy pricing and entitlement gates without deleting history. Prepare the entitlement/verification contract; do not fake or prematurely deploy checkout, and never activate domain access from an unverified redirect. See `docs/lucia-os-product-vision.md` and `docs/layouts-s3-storage-contract.md`.
+
 ### Phase 12 — Layout catalogue design rubric and inventory
 Inventory current catalogue entries, routes, screenshots, and rendered structures. Define per-layout purpose, design identity, sections, responsive composition, imagery, navigation, and content-replacement criteria. Identify near-duplicates.
 
