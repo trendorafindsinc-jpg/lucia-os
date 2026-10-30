@@ -23,6 +23,12 @@ const canvas = fixture("canvas", [gallery, story, contact], [story, gallery, con
 const haven = fixture("haven", [{ ...hero, variant: "full-bleed", image: { src: "builtin:hospitality/hero", alt: "Hotel exterior" } }, experience, contact], [experience, story, contact]);
 
 describe("Phase 13 premium layout contract", () => {
+  it("accepts literal dotted layout IDs and rejects malformed separators", () => {
+    expect(parsePremiumLayout(meridian).layoutId).toBe("lucia.layout.meridian");
+    const malformed = structuredClone(meridian);
+    malformed.layoutId = "luciaXlayoutXmeridian";
+    expect(() => parsePremiumLayout(malformed)).toThrow();
+  });
   it("registers only fixed section types", () => {
     expect(Object.keys(premiumSectionRegistry)).toHaveLength(7);
     expect(() => parsePremiumLayout(fixture("unsafe", [{ id: "evil", type: "javascript", code: "alert(1)" }], [contact]))).toThrow();
