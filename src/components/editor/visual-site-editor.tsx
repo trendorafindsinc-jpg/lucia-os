@@ -65,6 +65,11 @@ export function VisualSiteEditor({
   const [websiteId, setWebsiteId] = useState("");
   const [isLoadingSaved, setIsLoadingSaved] = useState(false);
   const [savedDraftUnavailable, setSavedDraftUnavailable] = useState(false);
+  const [draftRevision, setDraftRevision] = useState<string | null>(null);
+  const [saveConflict, setSaveConflict] = useState<{
+    revision: string;
+    draft: SiteDraft | null;
+  } | null>(null);
   const [readyContext, setReadyContext] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveLabel, setSaveLabel] = useState("Preview only");
@@ -101,6 +106,8 @@ export function VisualSiteEditor({
     const requested = params.get("template");
     const savedWebsiteId = params.get("websiteId");
     setIsSaving(false);
+    setDraftRevision(null);
+    setSaveConflict(null);
     setWebsiteId(savedWebsiteId || "");
     setSavedDraftUnavailable(false);
     setIsLoadingSaved(false);
@@ -169,6 +176,11 @@ export function VisualSiteEditor({
               data.draft?.siteName || data.website?.name || base.siteName,
           },
         );
+        const baseRevision = getSnapshot<string>(`editor-base:${activeTabId}`);
+        setDraftRevision(cachedDraft ? (baseRevision ?? null) : data.revision);
+        if (cachedDraft && baseRevision !== data.revision) {
+          setSaveConflict({ revision: data.revision, draft: data.draft });
+        }
         if (cachedDraft) {
           setSavedDraftUnavailable(false);
           setSaveLabel("Unsaved changes");
@@ -262,10 +274,16 @@ export function VisualSiteEditor({
     }
   }, [appSearch, accountId]);
 
+  function checkpointDraft(value: SiteDraft) {
+    if (!snapshotKey) return;
+    if (draftRevision) setSnapshot(`editor-base:${activeTabId}`, draftRevision);
+    setSnapshot(snapshotKey, value);
+  }
+
   function update<K extends keyof SiteDraft>(key: K, value: SiteDraft[K]) {
     const next = { ...draft, [key]: value };
     setDraft(next);
-    if (snapshotKey) setSnapshot(snapshotKey, next);
+    checkpointDraft(next);
     setSaveLabel("Unsaved changes");
     setActiveTabDirty(true);
     setNotice("");
@@ -279,7 +297,12 @@ export function VisualSiteEditor({
       setNotice("Open a saved website from Websites before saving changes.");
       return false;
     }
-    if (isLoadingSaved || savedDraftUnavailable) {
+    if (
+      isLoadingSaved ||
+      savedDraftUnavailable ||
+      !draftRevision ||
+      saveConflict
+    ) {
       setNotice(
         "The saved draft could not be safely loaded. Reload this website before trying to save.",
       );
@@ -299,16 +322,30 @@ export function VisualSiteEditor({
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
+            "If-Match": draftRevision,
             ...(accountId ? { "X-LUCIA-Workspace-Account": accountId } : {}),
           },
           body: JSON.stringify(checked.data),
         },
       );
       const data = await response.json();
-      if (!response.ok)
+      if (!response.ok) {
+        if (response.status === 409 && data.conflict) {
+          const latestResponse = await fetch(
+            `/api/websites/${encodeURIComponent(websiteId)}/draft`,
+            { cache: "no-store" },
+          );
+          const latest = await latestResponse.json();
+          if (contextEpoch.current.matches(epoch) && latestResponse.ok)
+            setSaveConflict({ revision: latest.revision, draft: latest.draft });
+        }
         throw new Error(data.error || "Couldn't save your changes.");
+      }
       if (!contextEpoch.current.matches(epoch)) return false;
+      setDraftRevision(data.revision);
       if (JSON.stringify(draftRef.current) !== submitted) {
+        if (activeTabId)
+          setSnapshot(`editor-base:${activeTabId}`, data.revision);
         setNotice(
           "The submitted draft was saved. Your newer edits remain unsaved.",
         );
@@ -316,6 +353,7 @@ export function VisualSiteEditor({
       }
       setSaveLabel("Saved just now");
       if (snapshotKey) clearSnapshot(snapshotKey);
+      if (activeTabId) clearSnapshot(`editor-base:${activeTabId}`);
       setActiveTabDirty(false);
       setNotice(
         "Your website draft is saved to your LUCIA OS workspace. It is not published.",
@@ -339,6 +377,8 @@ export function VisualSiteEditor({
       websiteId &&
       !isLoadingSaved &&
       !savedDraftUnavailable &&
+      Boolean(draftRevision) &&
+      !saveConflict &&
       !isSaving &&
       validation.success
         ? saveDraft
@@ -460,7 +500,7 @@ export function VisualSiteEditor({
       return;
     }
     setDraft(checked.data);
-    if (snapshotKey) setSnapshot(snapshotKey, checked.data);
+    checkpointDraft(checked.data);
     setSaveLabel("Unsaved changes");
     setActiveTabDirty(true);
     setNotice(
@@ -522,7 +562,7 @@ export function VisualSiteEditor({
       return;
     }
     setDraft(checked.data);
-    if (snapshotKey) setSnapshot(snapshotKey, checked.data);
+    checkpointDraft(checked.data);
     setSaveLabel("Unsaved changes");
     setActiveTabDirty(true);
     setNotice(
@@ -622,6 +662,68 @@ export function VisualSiteEditor({
           Saving stores a draft; publishing is a separate step.
         </p>
       </section>
+      {saveConflict && (
+        <section
+          className="workspace-card"
+          role="alert"
+          aria-label="Saved draft conflict"
+        >
+          <h2>A newer saved draft needs review</h2>
+          <p>
+            Your local edits are still here. They have not overwritten the saved
+            website.
+          </p>
+          <details>
+            <summary>Review the latest saved content</summary>
+            <pre style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+              {JSON.stringify(saveConflict.draft, null, 2)}
+            </pre>
+          </details>
+          <button
+            type="button"
+            disabled={!saveConflict.draft}
+            onClick={() => {
+              if (
+                !saveConflict.draft ||
+                !window.confirm("Replace local edits with the saved draft?")
+              )
+                return;
+              setDraft(saveConflict.draft);
+              setDraftRevision(saveConflict.revision);
+              if (snapshotKey) clearSnapshot(snapshotKey);
+              if (activeTabId) clearSnapshot(`editor-base:${activeTabId}`);
+              setSaveConflict(null);
+              setActiveTabDirty(false);
+              setSaveLabel("Saved draft loaded");
+            }}
+          >
+            Load saved draft
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (
+                !window.confirm(
+                  "Keep your local edits after reviewing the saved version? Saving will explicitly replace that version.",
+                )
+              )
+                return;
+              setDraftRevision(saveConflict.revision);
+              if (activeTabId)
+                setSnapshot(
+                  `editor-base:${activeTabId}`,
+                  saveConflict.revision,
+                );
+              setSaveConflict(null);
+              setNotice(
+                "Local edits retained. Save explicitly to replace the reviewed version.",
+              );
+            }}
+          >
+            Keep my edits after review
+          </button>
+        </section>
+      )}
       <div className="editor-workspace">
         <aside className="editor-panel" aria-label="Website editing controls">
           <fieldset
@@ -676,6 +778,8 @@ export function VisualSiteEditor({
                   isLoadingSaved ||
                   isLoadingVersions ||
                   savedDraftUnavailable ||
+                  !draftRevision ||
+                  Boolean(saveConflict) ||
                   isSaving ||
                   versionBusy ||
                   !validation.success
@@ -703,7 +807,13 @@ export function VisualSiteEditor({
                       <button
                         type="button"
                         onClick={() => restoreVisualDraft(version)}
-                        disabled={isLoadingSaved || isSaving || versionBusy}
+                        disabled={
+                          isLoadingSaved ||
+                          isSaving ||
+                          versionBusy ||
+                          !draftRevision ||
+                          Boolean(saveConflict)
+                        }
                       >
                         Restore visual draft
                       </button>
@@ -725,7 +835,7 @@ export function VisualSiteEditor({
                 onChange={(event) => {
                   const next = makeInitialDraft(event.target.value);
                   setDraft(next);
-                  if (snapshotKey) setSnapshot(snapshotKey, next);
+                  checkpointDraft(next);
                   setSaveLabel("Unsaved changes");
                   setActiveTabDirty(true);
                   setNotice("");
@@ -879,7 +989,7 @@ export function VisualSiteEditor({
                 onClick={() => {
                   const next = makeInitialDraft(draft.templateId);
                   setDraft(next);
-                  if (snapshotKey) setSnapshot(snapshotKey, next);
+                  checkpointDraft(next);
                   setSaveLabel("Unsaved changes");
                   setActiveTabDirty(true);
                   setNotice(
@@ -897,6 +1007,8 @@ export function VisualSiteEditor({
                   !websiteId ||
                   isLoadingSaved ||
                   savedDraftUnavailable ||
+                  !draftRevision ||
+                  Boolean(saveConflict) ||
                   isSaving ||
                   !validation.success
                 }

@@ -86,3 +86,6 @@
 @media(max-width:700px) { .loomify-card { margin:16px 10px 4px; padding:14px; } .loomify-proposal-review { margin:8px; } .loomify-review-actions { align-items:stretch; flex-direction:column; } .loomify-review-actions .editor-done { min-height:42px; } .loomify-proposal-canvas { padding:5px; } }
 
 .editor-recovery-controls{border:0;margin:0;padding:0;min-width:0;width:100%}
+
+/* Keep editor actions usable at narrow widths instead of overflowing the page. */
+@media(max-width:700px){.editor-topbar{flex-wrap:wrap;padding-block:12px}.editor-topbar-actions{min-width:0;flex-wrap:wrap;justify-content:flex-end}.editor-topbar-actions>*{max-width:100%;overflow-wrap:anywhere}}

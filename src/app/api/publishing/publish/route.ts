@@ -4,79 +4,249 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getOrganizationMembershipsForUser } from "@/lib/access/guards";
 import { hasOrganizationPermission } from "@/lib/access/policy";
 import { getDb } from "@/lib/db/client";
-import { websiteDomains, websitePages, websites } from "@/lib/db/schema";
-import { makeInitialDraft, siteDraftSchema } from "@/lib/editor/site-draft";
-import { publishActionSchema, publishSettingsSchema } from "@/lib/publishing/publishing";
+import {
+  memberships,
+  organizations,
+  websiteDomains,
+  websitePages,
+  websites,
+} from "@/lib/db/schema";
+import { siteDraftSchema } from "@/lib/editor/site-draft";
+import {
+  publishActionSchema,
+  publishRequestSchema,
+} from "@/lib/publishing/publishing";
+
+import {
+  draftRevision,
+  isDraftRevision,
+  websiteMutationAllowed,
+  isUniqueWebsiteWrite,
+} from "@/lib/websites/draft-revision";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 function jsonError(message: string, status: number) {
-  return NextResponse.json({ error: message }, { status, headers: { "Cache-Control": "no-store" } });
+  return NextResponse.json(
+    { error: message },
+    { status, headers: { "Cache-Control": "no-store" } },
+  );
 }
 export async function POST(request: Request) {
-  const origin = request.headers.get("origin");
-  if (origin && origin !== new URL(request.url).origin) return jsonError("This publishing request did not come from LUCIA OS.", 403);
+  if (!websiteMutationAllowed(request))
+    return jsonError(
+      "This publishing request did not come from LUCIA OS.",
+      403,
+    );
   const user = await getCurrentUser().catch(() => null);
-  if (!user) return jsonError("Sign in with LUCIA ID before saving or publishing your website.", 401);
+  if (!user)
+    return jsonError(
+      "Sign in with LUCIA ID before saving or publishing your website.",
+      401,
+    );
+  const expectedAccount = request.headers.get("x-lucia-workspace-account");
+  if (expectedAccount && expectedAccount !== user.id)
+    return jsonError(
+      "Account changed. Reload publishing before continuing.",
+      409,
+    );
   let body: unknown;
-  try { body = await request.json(); } catch { return jsonError("Submit valid website details.", 400); }
-  if (!body || typeof body !== "object" || Array.isArray(body)) return jsonError("Submit valid website details.", 400);
-  const actionResult = publishActionSchema.safeParse((body as Record<string, unknown>).action);
-  if (!actionResult.success) return jsonError("Choose an explicit save or publish action.", 400);
+  try {
+    body = await request.json();
+  } catch {
+    return jsonError("Submit valid website details.", 400);
+  }
+  if (!body || typeof body !== "object" || Array.isArray(body))
+    return jsonError("Submit valid website details.", 400);
+  const actionResult = publishActionSchema.safeParse(
+    (body as Record<string, unknown>).action,
+  );
+  if (!actionResult.success)
+    return jsonError("Choose an explicit save or publish action.", 400);
   const action = actionResult.data;
-  const parsed = publishSettingsSchema.safeParse(body);
+  const parsed = publishRequestSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Review your website details before saving.", issues: parsed.error.flatten() }, { status: 422, headers: { "Cache-Control": "no-store" } });
+    return NextResponse.json(
+      {
+        error: "Review your website details before saving.",
+        issues: parsed.error.flatten(),
+      },
+      { status: 422, headers: { "Cache-Control": "no-store" } },
+    );
   }
   const settings = parsed.data;
+  const expectedRevision = request.headers.get("if-match");
+  if (!isDraftRevision(expectedRevision))
+    return jsonError(
+      "Reload the saved website before saving or publishing.",
+      428,
+    );
   let db: ReturnType<typeof getDb>;
-  try { db = getDb(); } catch { return jsonError("Website storage is not configured. Your changes have not been published.", 503); }
+  try {
+    db = getDb();
+  } catch {
+    return jsonError(
+      "Website storage is not configured. Your changes have not been published.",
+      503,
+    );
+  }
 
   let orgRows: Array<{ id: string; role: string; membershipStatus: string }>;
   try {
     orgRows = await getOrganizationMembershipsForUser(user.id);
-  } catch { return jsonError("We couldn't verify your organisation access. Please try again.", 503); }
+  } catch {
+    return jsonError(
+      "We couldn't verify your organisation access. Please try again.",
+      503,
+    );
+  }
 
-  const requiredPermission = action === "save" ? "website.edit" : "website.publish";
-  const permitted = orgRows.filter((org) => hasOrganizationPermission({ role: org.role, status: org.membershipStatus }, requiredPermission));
-  if (permitted.length === 0) return jsonError("You need an active organisation membership with website publishing permission.", 403);
+  const requiredPermission =
+    action === "save" ? "website.edit" : "website.publish";
+  const permitted = orgRows.filter((org) =>
+    hasOrganizationPermission(
+      { role: org.role, status: org.membershipStatus },
+      requiredPermission,
+    ),
+  );
+  if (permitted.length === 0)
+    return jsonError(
+      "You need an active organisation membership with website publishing permission.",
+      403,
+    );
 
   for (const org of permitted) {
     try {
       const result = await db.transaction(async (tx) => {
-        await tx.execute(sql`select set_config('app.current_organization_id', ${org.id}, true)`);
-        const [website] = await tx.select({
-          id: websites.id, organizationId: websites.organizationId, slug: websites.slug, status: websites.status,
-        }).from(websites).where(and(eq(websites.organizationId, org.id), eq(websites.slug, settings.siteSlug))).limit(1);
+        await tx.execute(
+          sql`select set_config('app.current_user_id', ${user.id}, true)`,
+        );
+        const [membership] = await tx
+          .select({ role: memberships.role, status: memberships.status })
+          .from(memberships)
+          .where(
+            and(
+              eq(memberships.organizationId, org.id),
+              eq(memberships.userId, user.id),
+              eq(memberships.status, "active"),
+            ),
+          )
+          .limit(1);
+        if (
+          !membership ||
+          !hasOrganizationPermission(membership, requiredPermission)
+        )
+          return null;
+        await tx.execute(
+          sql`select set_config('app.current_organization_id', ${org.id}, true)`,
+        );
+        const [organization] = await tx
+          .select({ status: organizations.status })
+          .from(organizations)
+          .where(eq(organizations.id, org.id))
+          .limit(1);
+        if (!organization || organization.status !== "active") return null;
+        const [website] = await tx
+          .select({
+            id: websites.id,
+            organizationId: websites.organizationId,
+            slug: websites.slug,
+            status: websites.status,
+          })
+          .from(websites)
+          .where(
+            and(
+              eq(websites.organizationId, org.id),
+              eq(websites.id, settings.websiteId),
+            ),
+          )
+          .limit(1);
         if (!website) return null;
-        const pages = await tx.select({
-          id: websitePages.id, title: websitePages.title, path: websitePages.path, content: websitePages.content,
-        }).from(websitePages).where(and(eq(websitePages.organizationId, org.id), eq(websitePages.websiteId, website.id)));
-        const home = pages.find((page) => page.path === "/") ?? pages[0];
-        let currentDraft: unknown = makeInitialDraft("northstar-consulting");
-        if (home?.content) {
-          try {
-            const valid = siteDraftSchema.safeParse(JSON.parse(home.content) as unknown);
-            if (valid.success) currentDraft = valid.data;
-          } catch { /* Legacy plain text is not trusted as a structured draft. */ }
+        if (website.slug !== settings.siteSlug)
+          throw new Error("WEBSITE_ADDRESS_MISMATCH");
+        const pages = await tx
+          .select({
+            id: websitePages.id,
+            title: websitePages.title,
+            path: websitePages.path,
+            content: websitePages.content,
+          })
+          .from(websitePages)
+          .where(
+            and(
+              eq(websitePages.organizationId, org.id),
+              eq(websitePages.websiteId, website.id),
+            ),
+          )
+          .orderBy(websitePages.id)
+          .for("update");
+        const home = pages.find((page) => page.path === "/");
+        if (draftRevision(website.id, home?.content) !== expectedRevision)
+          throw new Error("DRAFT_CONFLICT");
+        let currentDraft: unknown;
+        try {
+          currentDraft = JSON.parse(home?.content ?? "");
+        } catch {
+          throw new Error("INVALID_SAVED_DRAFT");
         }
+        const current = siteDraftSchema.safeParse(currentDraft);
+        if (!current.success) throw new Error("INVALID_SAVED_DRAFT");
         const draftResult = siteDraftSchema.safeParse({
-          ...(currentDraft as Record<string, unknown>),
-          siteName: settings.siteName, headline: settings.headline, description: settings.description,
+          ...current.data,
+          siteName: settings.siteName,
+          headline: settings.headline,
+          description: settings.description,
         });
-        if (!draftResult.success) throw new Error("The saved website draft is incomplete. Open the visual editor and save a valid draft first.");
+        if (!draftResult.success)
+          throw new Error(
+            "The saved website draft is incomplete. Open the visual editor and save a valid draft first.",
+          );
         const snapshot = JSON.stringify(draftResult.data);
         const now = new Date();
 
         if (action === "save") {
           if (home) {
-            await tx.update(websitePages).set({ title: "Home", content: snapshot, updatedAt: now })
-              .where(and(eq(websitePages.id, home.id), eq(websitePages.organizationId, org.id), eq(websitePages.websiteId, website.id)));
+            await tx
+              .update(websitePages)
+              .set({ title: "Home", content: snapshot, updatedAt: now })
+              .where(
+                and(
+                  eq(websitePages.id, home.id),
+                  eq(websitePages.organizationId, org.id),
+                  eq(websitePages.websiteId, website.id),
+                ),
+              );
           } else {
-            await tx.insert(websitePages).values({ organizationId: org.id, websiteId: website.id, title: "Home", path: "/", status: "draft", content: snapshot, updatedAt: now });
+            await tx
+              .insert(websitePages)
+              .values({
+                organizationId: org.id,
+                websiteId: website.id,
+                title: "Home",
+                path: "/",
+                status: "draft",
+                content: snapshot,
+                updatedAt: now,
+              });
           }
-          await tx.update(websites).set({ name: settings.siteName, updatedAt: now }).where(and(eq(websites.id, website.id), eq(websites.organizationId, org.id)));
-          return { action, id: website.id, slug: website.slug, name: settings.siteName, status: website.status, savedAt: now.toISOString() };
+          await tx
+            .update(websites)
+            .set({ name: settings.siteName, updatedAt: now })
+            .where(
+              and(
+                eq(websites.id, website.id),
+                eq(websites.organizationId, org.id),
+              ),
+            );
+          return {
+            action,
+            id: website.id,
+            slug: website.slug,
+            name: settings.siteName,
+            status: website.status,
+            savedAt: now.toISOString(),
+            revision: draftRevision(website.id, snapshot),
+          };
         }
 
         // The public renderer expects a validated site-draft snapshot for every
@@ -84,56 +254,95 @@ export async function POST(request: Request) {
         // About/Services/Contact routes permanently 404 after publishing.
         if (pages.length === 0) {
           await tx.insert(websitePages).values({
-            organizationId: org.id, websiteId: website.id, title: "Home", path: "/", status: "published",
-            content: snapshot, publishedContent: snapshot, updatedAt: now,
+            organizationId: org.id,
+            websiteId: website.id,
+            title: "Home",
+            path: "/",
+            status: "published",
+            content: snapshot,
+            publishedContent: snapshot,
+            updatedAt: now,
           });
         } else {
           for (const page of pages) {
             const isHome = page.path === "/";
-            await tx.update(websitePages).set({
-              ...(isHome ? { title: "Home", content: snapshot } : {}),
-              publishedContent: snapshot,
-              status: "published",
-              updatedAt: now,
-            }).where(and(
-              eq(websitePages.id, page.id),
-              eq(websitePages.organizationId, org.id),
-              eq(websitePages.websiteId, website.id),
-            ));
+            await tx
+              .update(websitePages)
+              .set({
+                ...(isHome ? { title: "Home", content: snapshot } : {}),
+                publishedContent: snapshot,
+                status: "published",
+                updatedAt: now,
+              })
+              .where(
+                and(
+                  eq(websitePages.id, page.id),
+                  eq(websitePages.organizationId, org.id),
+                  eq(websitePages.websiteId, website.id),
+                ),
+              );
           }
         }
-        await tx.update(websites).set({ name: settings.siteName, status: "published", publishedAt: now, updatedAt: now })
-          .where(and(eq(websites.id, website.id), eq(websites.organizationId, org.id)));
+        await tx
+          .update(websites)
+          .set({
+            name: settings.siteName,
+            status: "published",
+            publishedAt: now,
+            updatedAt: now,
+          })
+          .where(
+            and(
+              eq(websites.id, website.id),
+              eq(websites.organizationId, org.id),
+            ),
+          );
 
         // Publishing owns the free LUCIA subdomain lifecycle: activate its exact
         // hostname in the same transaction as the published snapshot. Wildcard
         // DNS is only transport; routing still requires this exact active record.
         const siteDomain = (process.env.LUCIA_SITE_DOMAIN || "lucia.name.ng")
-          .trim().toLowerCase().replace(/^\*\./, "").replace(/^\./, "").replace(/\.$/, "");
+          .trim()
+          .toLowerCase()
+          .replace(/^\*\./, "")
+          .replace(/^\./, "")
+          .replace(/\.$/, "");
         const hostname = website.slug + "." + siteDomain;
-        const [existingDomain] = await tx.select({
-          id: websiteDomains.id,
-          organizationId: websiteDomains.organizationId,
-          websiteId: websiteDomains.websiteId,
-          domainType: websiteDomains.domainType,
-        }).from(websiteDomains).where(eq(websiteDomains.hostname, hostname)).limit(1);
-        if (existingDomain && (
-          existingDomain.organizationId !== org.id ||
-          existingDomain.websiteId !== website.id ||
-          existingDomain.domainType !== "lucia_subdomain"
-        )) {
-          throw new Error("The requested LUCIA hostname is already owned by another website.");
+        const [existingDomain] = await tx
+          .select({
+            id: websiteDomains.id,
+            organizationId: websiteDomains.organizationId,
+            websiteId: websiteDomains.websiteId,
+            domainType: websiteDomains.domainType,
+          })
+          .from(websiteDomains)
+          .where(eq(websiteDomains.hostname, hostname))
+          .limit(1);
+        if (
+          existingDomain &&
+          (existingDomain.organizationId !== org.id ||
+            existingDomain.websiteId !== website.id ||
+            existingDomain.domainType !== "lucia_subdomain")
+        ) {
+          throw new Error(
+            "The requested LUCIA hostname is already owned by another website.",
+          );
         }
         if (existingDomain) {
-          await tx.update(websiteDomains).set({
-            status: "active",
-            verifiedAt: now,
-            updatedAt: now,
-          }).where(and(
-            eq(websiteDomains.id, existingDomain.id),
-            eq(websiteDomains.organizationId, org.id),
-            eq(websiteDomains.websiteId, website.id),
-          ));
+          await tx
+            .update(websiteDomains)
+            .set({
+              status: "active",
+              verifiedAt: now,
+              updatedAt: now,
+            })
+            .where(
+              and(
+                eq(websiteDomains.id, existingDomain.id),
+                eq(websiteDomains.organizationId, org.id),
+                eq(websiteDomains.websiteId, website.id),
+              ),
+            );
         } else {
           await tx.insert(websiteDomains).values({
             organizationId: org.id,
@@ -147,26 +356,76 @@ export async function POST(request: Request) {
           });
         }
         return {
-          action, id: website.id, slug: website.slug, name: settings.siteName, status: "published",
-          publishedAt: now.toISOString(), publishedPageCount: Math.max(pages.length, 1),
+          action,
+          id: website.id,
+          slug: website.slug,
+          name: settings.siteName,
+          status: "published",
+          revision: draftRevision(website.id, snapshot),
+          publishedAt: now.toISOString(),
+          publishedPageCount: Math.max(pages.length, 1),
         };
       });
 
       if (!result) continue;
-      if (action === "save") return NextResponse.json({ saved: true, website: result }, { headers: { "Cache-Control": "no-store" } });
-      const domain = (process.env.LUCIA_SITE_DOMAIN || "lucia.name.ng").trim().replace(/^\*\./, "");
-      return NextResponse.json({
-        published: true, website: result, url: "https://" + result.slug + "." + domain,
-        customDomain: settings.customDomain
-          ? { status: "pending_activation", message: "No custom-domain payment was taken. Its separate one-time activation and DNS/TLS verification are not connected yet." }
-          : { status: "not_requested" },
-      }, { headers: { "Cache-Control": "no-store" } });
+      if (action === "save")
+        return NextResponse.json(
+          { saved: true, website: result },
+          { headers: { "Cache-Control": "no-store" } },
+        );
+      const domain = (process.env.LUCIA_SITE_DOMAIN || "lucia.name.ng")
+        .trim()
+        .replace(/^\*\./, "");
+      return NextResponse.json(
+        {
+          published: true,
+          website: result,
+          url: "https://" + result.slug + "." + domain,
+          customDomain: settings.customDomain
+            ? {
+                status: "pending_activation",
+                message:
+                  "No custom-domain payment was taken. Its separate one-time activation and DNS/TLS verification are not connected yet.",
+              }
+            : { status: "not_requested" },
+        },
+        { headers: { "Cache-Control": "no-store" } },
+      );
     } catch (error) {
       const message = error instanceof Error ? error.message : "";
-      if (/requested LUCIA hostname is already owned|unique constraint|duplicate key|websites_published_slug_uq/i.test(message)) return jsonError("That LUCIA address is already claimed. Choose another address or open the website that owns it.", 409);
-      if (/saved website draft is incomplete/i.test(message)) return jsonError(message, 422);
-      return jsonError("We couldn't save or publish the website right now. Your previous live version has been preserved. Please try again shortly.", 503);
+      if (message === "DRAFT_CONFLICT")
+        return jsonError(
+          "The saved website changed. Reload it and review your edits before publishing.",
+          409,
+        );
+      if (message === "WEBSITE_ADDRESS_MISMATCH")
+        return jsonError(
+          "The address does not match the selected website. Reload the selected project.",
+          409,
+        );
+      if (message === "INVALID_SAVED_DRAFT")
+        return jsonError(
+          "The saved draft is invalid. Publication was not changed. Recover a valid draft in Layout Studio first.",
+          422,
+        );
+      if (
+        isUniqueWebsiteWrite(error) ||
+        /requested LUCIA hostname is already owned/.test(message)
+      )
+        return jsonError(
+          "That LUCIA address is already claimed. Choose another address or open the website that owns it.",
+          409,
+        );
+      if (/saved website draft is incomplete/i.test(message))
+        return jsonError(message, 422);
+      return jsonError(
+        "We couldn't save or publish the website right now. Your previous live version has been preserved. Please try again shortly.",
+        503,
+      );
     }
   }
-  return jsonError("No saved website matches this LUCIA address in an organisation you can publish for. Create the website first, then enter its exact address here.", 404);
+  return jsonError(
+    "No saved website matches this LUCIA address in an organisation you can publish for. Create the website first, then enter its exact address here.",
+    404,
+  );
 }

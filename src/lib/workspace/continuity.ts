@@ -78,6 +78,15 @@ export function validateSnapshot(
 ): unknown | undefined {
   if (!isBoundedRecoveryJson(value)) return undefined;
   const suffix = key.slice(key.indexOf(":") + 1);
+  if (
+    key.startsWith("editor-base:") &&
+    /^website-engine:(website:[a-zA-Z0-9_-]{1,128}|template:[a-zA-Z0-9_-]{1,128})$/.test(
+      suffix,
+    )
+  )
+    return typeof value === "string" && /^"draft-[a-f0-9]{64}"$/.test(value)
+      ? value
+      : undefined;
   if (key.startsWith("editor-draft:")) {
     if (
       !/^website-engine:(website:[a-zA-Z0-9_-]{1,128}|template:[a-zA-Z0-9_-]{1,128})$/.test(

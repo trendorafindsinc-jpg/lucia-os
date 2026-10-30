@@ -32,6 +32,33 @@ const envelope = (ownerId = "user-a") => ({
   snapshots: { "editor-draft:website-engine:website:site-a": draft },
 });
 describe("workspace continuity trust and recovery", () => {
+  it("keeps a draft's base revision through account-scoped recovery and discards both for the exact resource", () => {
+    const key = "editor-base:website-engine:website:site-a";
+    const token = '\"draft-' + "a".repeat(64) + '\"';
+    const data = envelope();
+    const snapshots = {
+      ...data.snapshots,
+      [key]: token,
+      "editor-base:website-engine:website:site-b": token,
+    };
+    const recovered = readRecovery(
+      JSON.stringify({ ...data, snapshots }),
+      "user-a",
+      now,
+    )!;
+    expect(recovered.snapshots[key]).toBe(token);
+    const discarded = discardTabSnapshots(
+      recovered.snapshots,
+      "website-engine:website:site-a",
+    );
+    expect(discarded).not.toHaveProperty(key);
+    expect(discarded).not.toHaveProperty(
+      "editor-draft:website-engine:website:site-a",
+    );
+    expect(validateSnapshot(key, "arbitrary", "user-a")).toBeUndefined();
+    expect(validateSnapshot("editor-base:staff:root", token, "user-a")).toBeUndefined();
+  });
+
   it("reconstructs identity from validated route, ignoring browser labels and permissions", () => {
     const e = envelope();
     Object.assign(e.tabs[0], {
