@@ -29,3 +29,23 @@ The branch contains targeted validation tests. CI results, exact test totals, li
 ## Phase 14 handoff
 
 Keep the eight flagship briefs and approved 48-layout catalogue authoritative. Meridian, Canvas and Haven currently illustrate **data structure** only. Phase 14 visual execution must not be recorded as finished until its real renderer, licensed imagery and multi-page website acceptance pass. S3, Paystack, and the ₦5,000 one-time optional domain model are unchanged.
+
+
+## Engineering recovery increment — 30 October 2026
+
+**Status remains IN PROGRESS.** This section records implemented commits separately from incomplete production integration and acceptance.
+
+- Corrected v2 `layoutId` validation to require literal dots and added a regression test.
+- Repaired premium test TypeScript discriminated-union access using explicit section-type guards.
+- Extended the existing `src/components/layout-studio/layout-renderer.tsx` entry point with a version-aware v2 branch and seven registered, validated section presentations. Legacy v1 branch remains unchanged.
+- Added scoped presentation rules to `src/app/layout-renderer.css` for registered v2 variants, responsive grids, mobile stacking, focus visibility and reduced-motion preferences.
+- Added `src/components/layout-studio/premium-renderer.test.tsx` for renderer-level page separation, unknown page behavior and v1 regression. These are not server/browser publication tests.
+- The renderer currently exposes a visible built-in-asset placeholder pending a licensed asset manifest. It does not claim real images were resolved or uploaded.
+
+### Decisions and limits
+
+Keep one `LayoutRenderer` import/entry point for legacy and premium versioned data; closed schema and React components disallow arbitrary customer code. v2 token values are applied as inline custom properties on the rendered site root and CSS selectors remain beneath `.premium-layout`. This is a presentation-boundary implementation, not proof of tenant publication isolation.
+
+**Not implemented or accepted:** v2 revision-bound draft persistence, authorization-checked v2 mutation, full-page transactional publishing, preview-route/public-route integration, verified image manifest, independent multi-page HTTP/refresh behavior, authenticated browser acceptance, and final-head CI/Vercel verification. Existing publication still replicates the home SiteDraft snapshot to interior pages and MUST be upgraded before v2 release. Do not enable v2 customer publication based on this renderer increment.
+
+The complete existing Phase 11 website read/write transaction and `publishedContent` snapshot boundary must remain authoritative. No migrations, customer data changes, authentication changes, or deployment-to-main actions were performed in this increment. Phase 14 readiness is NOT satisfied.
