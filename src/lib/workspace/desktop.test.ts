@@ -27,8 +27,8 @@ describe("desktop split capability and recovery", () => {
   });
   it("keeps a usable app and clamps pane balance on restore", () => {
     const state=createDesktopState("a");
-    expect(restoreDesktopState({...state,ratio:999},"a")?.ratio).toBe(60);
-    expect(restoreDesktopState({...state,ratio:NaN},"a")?.ratio).toBe(50);
+    expect(restoreDesktopState({...state,ratio:999},"a")?.ratio).toBe(55);
+    expect(restoreDesktopState({...state,ratio:NaN},"a")).toBeNull();
     state.panes.forEach(pane=>pane.open=false);expect(restoreDesktopState(state,"a")).toBeNull();
   });
   it("falls back to supported apps for an invalid initial request", () => {

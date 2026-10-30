@@ -1,4 +1,5 @@
 import { describeWorkspaceRoute, getWorkspaceTabId } from "./tabs";
+import {isBoundedRecoveryJson} from "./recovery-json";
 import { getWorkspaceApp } from "./app-registry";
 
 export const DESKTOP_TAB_ID = "desktop:home";
@@ -34,13 +35,13 @@ export function createDesktopState(userId: string, href = "/editor"): DesktopSta
   ], active: "first", order: ["first", "second"], ratio: 50, mode: "split" };
 }
 export function restoreDesktopState(value: unknown, userId: string): DesktopState | null {
-  if (!value || typeof value !== "object") return null;
+  if (!value || typeof value !== "object" || !isBoundedRecoveryJson(value)) return null;
   const saved = value as Partial<DesktopState>;
   if (saved.version !== 1 || saved.userId !== userId || !Array.isArray(saved.panes) || saved.panes.length !== 2) return null;
   if (saved.panes.some((pane, i) => !pane || pane.id !== (i === 0 ? "first" : "second") || !describeDesktopApp(pane.href) || typeof pane.open !== "boolean" || typeof pane.dirty !== "boolean" || !pane.snapshots || typeof pane.snapshots !== "object" || Array.isArray(pane.snapshots))) return null;
   if (!saved.panes.some(pane => pane.open) || sameDesktopContext(saved.panes[0].href, saved.panes[1].href)) return null;
   const base = createDesktopState(userId);
-  return { ...base, panes: saved.panes, active: saved.active === "second" ? "second" : "first", order: saved.order?.[0] === "second" ? ["second", "first"] : ["first", "second"], ratio: typeof saved.ratio === "number" && Number.isFinite(saved.ratio) ? Math.min(60, Math.max(40, saved.ratio)) : 50, mode: saved.mode === "single" ? "single" : "split" };
+  return { ...base, panes: saved.panes, active: saved.active === "second" ? "second" : "first", order: saved.order?.[0] === "second" ? ["second", "first"] : ["first", "second"], ratio: typeof saved.ratio === "number" && Number.isFinite(saved.ratio) ? Math.min(55, Math.max(45, saved.ratio)) : 50, mode: saved.mode === "single" ? "single" : "split" };
 }
 
 /** Explicit app launches take priority over clean cached panes, never over unsaved work. */

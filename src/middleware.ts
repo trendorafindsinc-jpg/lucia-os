@@ -1,31 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { resolveLuciaSubdomain } from "@/lib/publishing/host";
 
-const PLATFORM_HOSTS = new Set([
-  "lucia.name.ng",
-  "www.lucia.name.ng",
-  "os.lucia.name.ng",
-  "lucia-os.vercel.app",
-  "lucia-os-three.vercel.app",
-  "lucia-os-trendoraplc-5738.vercel.app",
-  "lucia-os-git-main-trendoraplc-5738.vercel.app",
-]);
-
-function isPlatformHost(hostname: string): boolean {
-  if (PLATFORM_HOSTS.has(hostname)) return true;
-  const configured = process.env.APP_BASE_URL;
-  if (configured) {
-    try {
-      if (new URL(configured).hostname.toLowerCase() === hostname) return true;
-    } catch {
-      // Invalid configuration must not disable normal host checks.
-    }
-  }
-  // Vercel's deployment and branch aliases are platform entry points, not tenants.
-  const vercelHosts = [process.env.VERCEL_URL, process.env.VERCEL_BRANCH_URL];
-  if (vercelHosts.some((value) => value?.toLowerCase().replace(/:\d+$/, "") === hostname)) return true;
-  return process.env.NODE_ENV !== "production" && (hostname === "localhost" || hostname === "127.0.0.1");
-}
+import {isPlatformHostname as isPlatformHost} from "@/lib/publishing/platform-hosts";
 
 function normalizeDomain(configuredDomain: string): string {
   return configuredDomain.trim().toLowerCase().replace(/^\*\./, "").replace(/^\./, "").replace(/\.$/, "");

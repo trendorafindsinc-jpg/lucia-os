@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import {useWorkspaceTab} from "@/components/workspace/workspace-tab-shell";
 import { useRouter } from "next/navigation";
 import { layoutBlueprintSchema, type LayoutBlueprint } from "@/lib/layout-blueprint/blueprint";
 import { LayoutRenderer } from "@/components/layout-studio/layout-renderer";
@@ -10,6 +11,7 @@ type WebsiteOption = { id: string; name: string };
 
 export function LoomifyAIWorkspace({ websites, initialWebsiteId = "" }: { websites: WebsiteOption[]; initialWebsiteId?: string }) {
   const router = useRouter();
+  const {accountId}=useWorkspaceTab();
   const [websiteId, setWebsiteId] = useState(initialWebsiteId);
   const [brief, setBrief] = useState("");
   const [busy, setBusy] = useState(false);
@@ -50,7 +52,8 @@ export function LoomifyAIWorkspace({ websites, initialWebsiteId = "" }: { websit
   function sendToLayoutStudio() {
     if (!proposal || !selectedWebsite) return;
     try {
-      sessionStorage.setItem("lucia.loomify.pending-proposal.v1", JSON.stringify({ websiteId, proposal }));
+      if(!accountId){setError("Sign in before transferring a proposal to Layout Studio.");return;}
+      sessionStorage.setItem(`lucia.loomify.pending-proposal.v2:${accountId}`, JSON.stringify({version:2,expiresAt:Date.now()+30*60*1000,websiteId,proposal}));
       router.push((`/editor?websiteId=${encodeURIComponent(websiteId)}&loomifyProposal=1`) as Parameters<typeof router.push>[0]);
     } catch {
       setError("This browser couldn't transfer the proposal safely. Your website draft is unchanged.");

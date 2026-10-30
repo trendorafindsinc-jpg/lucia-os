@@ -3,7 +3,10 @@ import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { usePreferences } from "@/components/workspace/preference-provider";
-import { useWorkspaceTab } from "@/components/workspace/workspace-tab-shell";
+import {
+  useWorkspaceAdapter,
+  useWorkspaceTab,
+} from "@/components/workspace/workspace-tab-shell";
 import { WorkspaceIcon } from "@/components/workspace/workspace-icon";
 import {
   formatWorkspaceDate,
@@ -33,7 +36,19 @@ export default function ControlCenter({
   const context = usePreferences();
   const params = useSearchParams();
   const router = useRouter();
-  const { setActiveTabDirty } = useWorkspaceTab();
+  const {
+    activeTabId,
+    getSnapshot,
+    setSnapshot,
+    clearSnapshot,
+    protect,
+    setActiveTabDirty,
+  } = useWorkspaceTab();
+  const settingsKey = "settings-draft:settings:account";
+  const restoredSettings = useRef(false);
+  const hasConflict = useRef(false);
+  const [conflictRecovery, setConflictRecovery] =
+    useState<WorkspacePreferences | null>(null);
   const category =
     categories.find((c) => c.id === params.get("category")) ?? categories[0];
   const [draft, setDraft] = useState(context.preferences);
@@ -48,16 +63,40 @@ export default function ControlCenter({
   const seenRevision = useRef(-1);
   const dirty = JSON.stringify(draft) !== JSON.stringify(baseline);
   useEffect(() => {
+    if (context.loaded && !restoredSettings.current) {
+      restoredSettings.current = true;
+      const saved = getSnapshot<{
+        draft: WorkspacePreferences;
+        baseline: WorkspacePreferences;
+        revision: number;
+      }>(settingsKey);
+      if (saved && saved.revision === context.revision) {
+        seenRevision.current = context.revision;
+        setDraft(saved.draft);
+        setBaseline(saved.baseline);
+        context.apply(saved.draft);
+        setNotice(
+          "Your unsaved Settings choices were recovered for this browser session.",
+        );
+        return;
+      }
+      if (saved) {
+        hasConflict.current = true;
+        setConflictRecovery(saved.draft);
+        setNotice(
+          "Saved account preferences changed since this draft. The newer saved preferences are displayed; the older recovery copy has not been applied.",
+        );
+      }
+    }
     if (context.loaded && context.revision !== seenRevision.current) {
       seenRevision.current = context.revision;
       setDraft(context.preferences);
       setBaseline(context.preferences);
     }
-  }, [context.preferences, context.revision, context.loaded]); // Saved revisions replace only a clean form.
+  }, [context, getSnapshot]); // Saved revisions replace only a clean form.
   useEffect(() => {
-    setActiveTabDirty(dirty);
-    return () => setActiveTabDirty(false);
-  }, [dirty, setActiveTabDirty]);
+    setActiveTabDirty(dirty || Boolean(conflictRecovery));
+  }, [dirty, conflictRecovery, setActiveTabDirty]);
   useEffect(() => {
     if (!dirty) return;
     const guard = (e: BeforeUnloadEvent) => {
@@ -76,15 +115,51 @@ export default function ControlCenter({
     context.apply(next);
     setNotice("");
   }
-  async function save() {
+  useEffect(() => {
+    if (!context.loaded || !restoredSettings.current || !activeTabId) return;
+    if (dirty)
+      setSnapshot(settingsKey, {
+        draft,
+        baseline,
+        revision: seenRevision.current,
+      });
+    else if (!hasConflict.current && getSnapshot(settingsKey))
+      clearSnapshot(settingsKey);
+  }, [
+    draft,
+    baseline,
+    dirty,
+    activeTabId,
+    context.loaded,
+    conflictRecovery,
+    setSnapshot,
+    getSnapshot,
+    clearSnapshot,
+  ]);
+  useWorkspaceAdapter({
+    save: context.loaded && !busy && dirty ? save : undefined,
+    canSuspend: () => Boolean(getSnapshot(settingsKey)),
+    discard: () => {
+      hasConflict.current = false;
+      setConflictRecovery(null);
+      cancel();
+      clearSnapshot(settingsKey);
+      setActiveTabDirty(false);
+    },
+  });
+  async function save(): Promise<boolean> {
     setBusy(true);
     setNotice("");
-    if (await context.save(draft)) {
+    const success = await context.save(draft);
+    if (success) {
+      clearSnapshot(settingsKey);
+      setActiveTabDirty(false);
       setBaseline(draft);
       setNotice("Account preferences saved.");
       router.refresh();
     }
     setBusy(false);
+    return success;
   }
   function cancel() {
     setDraft(baseline);
@@ -113,18 +188,7 @@ export default function ControlCenter({
           <h1>Control Center</h1>
           <p>Small choices. A workspace that feels like yours.</p>
         </div>
-        <Link
-          href="/workspace"
-          onClick={(e) => {
-            if (
-              dirty &&
-              !confirm("Leave Settings with unsaved account changes?")
-            )
-              e.preventDefault();
-          }}
-        >
-          Back to workspace
-        </Link>
+        <Link href="/workspace">Back to workspace</Link>
       </header>
       <div className={styles.layout}>
         <nav className={styles.sidebar} aria-label="Settings categories">
@@ -146,6 +210,39 @@ export default function ControlCenter({
         <section className={styles.panel} aria-labelledby="category-title">
           <p className={styles.eyebrow}>PERSONAL WORKSPACE</p>
           <h2 id="category-title">{category.name}</h2>
+          {conflictRecovery && (
+            <section aria-label="Older Settings recovery">
+              <p>
+                Newer account preferences are displayed. Your older unsaved
+                choices remain available.
+              </p>
+              <button
+                onClick={() => {
+                  setDraft(conflictRecovery);
+                  context.apply(conflictRecovery);
+                  hasConflict.current = false;
+                  setConflictRecovery(null);
+                  setNotice(
+                    "Recovered choices applied locally. Save explicitly to update your account.",
+                  );
+                }}
+              >
+                Restore recovered choices
+              </button>
+              <button
+                onClick={() => {
+                  hasConflict.current = false;
+                  setConflictRecovery(null);
+                  clearSnapshot(settingsKey);
+                  setNotice(
+                    "Older recovery discarded. Saved account preferences are unchanged.",
+                  );
+                }}
+              >
+                Discard older recovery
+              </button>
+            </section>
+          )}
           {!context.loaded && (
             <div role="status">
               {context.error
@@ -392,6 +489,17 @@ export default function ControlCenter({
                     value={draft.preferredOrganizationId ?? ""}
                     disabled={!context.loaded || busy}
                     onChange={(e) => {
+                      const value = e.target.value;
+                      if (protect) {
+                        void protect({
+                          label: "organization context",
+                          dirty: false,
+                          discard: () => {},
+                          run: () =>
+                            change("preferredOrganizationId", value || null),
+                        });
+                        return;
+                      }
                       if (
                         confirm(
                           "Switch the preferred organization? Save any unsaved work in other apps first. Existing resources will stay with their current organization.",

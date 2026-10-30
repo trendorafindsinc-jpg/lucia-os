@@ -35,6 +35,8 @@ export async function PUT(request: Request) {
       { error: "Sign in to manage settings." },
       { status: 401, headers },
     );
+  const expectedAccount=request.headers.get("x-lucia-workspace-account");
+  if(expectedAccount&&expectedAccount!==user.id)return NextResponse.json({error:"Account changed. Reload before saving preferences."},{status:409,headers});
   // Require same-origin JSON, including when browsers omit Fetch Metadata.
   const origin = request.headers.get("origin");
   const requestUrl = new URL(request.url);

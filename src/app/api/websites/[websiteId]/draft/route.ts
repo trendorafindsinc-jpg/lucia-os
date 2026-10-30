@@ -78,6 +78,8 @@ export async function GET(_request: Request, context: RouteContext) {
 export async function PATCH(request: Request, context: RouteContext) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Sign in with LUCIA ID to save changes." }, { status: 401 });
+  const expectedAccount=request.headers.get("x-lucia-workspace-account");
+  if(expectedAccount&&expectedAccount!==user.id)return NextResponse.json({error:"Account changed. Reload this workspace before saving."},{status:409});
   const { websiteId } = await context.params;
   if (!z.string().uuid().safeParse(websiteId).success) return NextResponse.json({ error: "Invalid website id." }, { status: 400 });
   let raw: unknown;
