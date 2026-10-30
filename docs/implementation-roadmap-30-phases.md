@@ -66,6 +66,8 @@ Verify real click/touch/keyboard flows at phone, tablet portrait/landscape, lapt
 ### Phase 11 — Layout Studio baseline and free-offer audit
 Audit create/edit/preview/publish, domains, layouts, data persistence, entitlement checks, and current pricing gates. Remove any unsupported assumption that standard website creation/publishing requires a subscription, paid Layout, or AI purchase.
 
+Approved Layouts contract: 48 complete free Layouts, hybrid complete-site plus customizable sections, Guided/Advanced Mode and Design Lock. The named catalogue, art direction, anti-duplication rules and acceptance criteria are specified in docs/layouts-48-premium-catalogue.md.
+
 ### Phase 12 — Layout catalogue design rubric and inventory
 Inventory current catalogue entries, routes, screenshots, and rendered structures. Define per-layout purpose, design identity, sections, responsive composition, imagery, navigation, and content-replacement criteria. Identify near-duplicates.
 
@@ -82,7 +84,7 @@ Show meaningful previews before selection, with enough of the actual website to 
 Let customers replace demo text, imagery, contact details, and business information without breaking the design. Verify useful defaults and that customers do not need to rebuild navigation, spacing, or missing sections.
 
 ### Phase 17 — Distinct catalogue expansion
-Expand the catalogue in reviewed batches toward the intended 36-layout target if that remains the approved count. Every entry must be meaningfully different in structure/design—not merely copy, title, or colour. Compare screenshots and DOM/page structure at phone, tablet, and desktop sizes; reject near-duplicates.
+Expand the catalogue in quality-gated batches toward the founder-approved 48 distinct Layouts across 8 categories, with release milestones of 8, 16, 32 and 48. Follow docs/layouts-48-premium-catalogue.md. Every entry must be meaningfully different in structure/design—not merely copy, title, or colour. Compare screenshots and DOM/page structure at phone, tablet, and desktop sizes; reject near-duplicates.
 
 ### Phase 18 — Free creation and publishing contract
 Verify that a customer can create, customise, preview, and publish a standard website for free without AI or a purchase. A supported LUCIA address is available; custom domains remain an optional paid service. Preserve the previous known-good live version on failure.
