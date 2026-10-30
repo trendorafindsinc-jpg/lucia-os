@@ -4,7 +4,7 @@
 **Branch:** `phase-10/rapid-workspace-acceptance` · **Baseline:** `655e9eb5686c3b8e74e12cf69a8560a3bb47f85c` (Phase 9, PR #128).
 
 ## Baseline and verified deployment
-The production alias `os.lucia.name.ng` resolved through Vercel deployment `dpl_A2MQz3mLhjEHDUZfbvuKChphdxjS`, **READY**, with Git metadata pointing to the Phase 9 merge SHA above. GitHub combined commit status returned Vercel **success**. The commit-specific workflow query returned no pull-request-triggered runs; this does **not** establish Phase 10 green CI.
+The production alias `os.lucia.name.ng` resolved through Vercel deployment `dpl_A2MQz3mLhjEHDUZfbvuKChphdxjS`, **READY**, with Git metadata pointing to the Phase 9 merge SHA above. GitHub combined commit status returned Vercel **success**. Fresh Phase 10 GitHub Actions workflow **41069862911** completed successfully on commit `53c331ff00df40483685a445045ca253aab7ed43`. Vercel commit status also returned **success**. This establishes automated CI success, but not the authenticated browser matrix.
 
 Reused the repository's canonical product vision, 30-phase roadmap, workspace architecture contract, Phase 8 Settings documentation and Phase 9 continuity contract/evidence. Phase 9 evidence is historical and does not constitute newly executed Phase 10 tests.
 
@@ -42,7 +42,7 @@ Historical Phase 9 local results (not fresh Phase 10 execution):
 - `npm run build`: PASS.
 - `node scripts/check-settings-http.mjs` and `node scripts/check-routing-http.mjs`: PASS in isolated acceptance environment.
 
-**Phase 10 commands were not executed**: this connector-only review could read repository and deployment metadata but did not provide an executable checkout, authenticated test browser or isolated test DB. Do not label the above historical commands as Phase 10 CI.
+**Fresh Phase 10 CI verified:** GitHub Actions workflow 41069862911 completed successfully on the Phase 10 PR head. Its job confirms passing Lint, Type check, Drizzle migration consistency, Unit tests, Production build, and Compiled host-routing HTTP checks. This is a real workflow execution, not merely historical Phase 9 evidence. The previous 444-test count is historical; a fresh individual test count is not independently extracted from workflow logs. Authenticated browser acceptance and the targeted accessibility matrix were **not** newly executed by this review.
 
 ## Findings, fixes, and safety
 - No newly confirmed P0/P1 defect. **Absence of a confirmed defect is not evidence of absence.**
@@ -53,7 +53,7 @@ Historical Phase 9 local results (not fresh Phase 10 execution):
 - Physical tablet and complete authenticated protected-preview UI matrix remain unverified.
 
 ## Acceptance decision
-**BLOCKED:** Do not claim Phase 10 PASS or authorize Phase 11 release gate until fresh checks establish: (1) TypeScript, lint, tests, migration consistency and build on this head; (2) targeted authenticated browser matrix at the four viewports; (3) focus/dialog/keyboard/reduced-motion accessibility; (4) tenant/staff/hostname and revoked-access assertions; (5) green GitHub CI on the PR head and Vercel preview READY. Fix any P0/P1 defect and rerun its affected gate.
+**BLOCKED — browser acceptance incomplete:** CI and Vercel status are green for the Phase 10 PR head. The remaining exit gates are (1) targeted authenticated browser matrix at the four viewports; (2) focus/dialog/keyboard/reduced-motion accessibility; (3) tenant/staff/hostname and revoked-access assertions in that browser/runtime environment. Fix any P0/P1 defect and rerun the affected gate. Physical tablet testing remains deferred, distinctly recorded from emulation.
 
 ## Phase 11 readiness (planning only)
 Next: Layout Studio foundation, then the approved **48 differentiated premium Layouts** in **8 categories × 6**. Confirm the PR #127 catalogue and reconcile older roadmap mentions of 36 before implementation. Preserve Guided/Advanced Modes, Design Lock, accurate previews, and genuine project creation. Built-in Layouts and standard publishing remain free. Optional custom-domain access is ₦5,000 one-time through LUCIA Store with Paystack. S3-compatible storage is a future integration, **not** a prerequisite. **No Phase 11 code is included here.**
