@@ -1,59 +1,121 @@
-# Phase 10 — Rapid Workspace Acceptance
+# Phase 10 — Final Workspace Acceptance
 
-**Status: BLOCKED (acceptance incomplete)** · **Date:** 2026-10-30  
-**Branch:** `phase-10/rapid-workspace-acceptance` · **Baseline:** `655e9eb5686c3b8e74e12cf69a8560a3bb47f85c` (Phase 9, PR #128).
+**Status: PASS** · **Date:** 2026-10-30 (Africa/Lagos)
+**PR:** [#129](https://github.com/trendorafindsinc-jpg/lucia-os/pull/129) · **Branch:** `phase-10/rapid-workspace-acceptance`
+**Exact browser/build/test commit:** `4ccc9c94123580002cedbac78f3a7bd29f9ad71c`
+**Runtime baseline:** Phase 9 merge `655e9eb5686c3b8e74e12cf69a8560a3bb47f85c`. The acceptance branch differs from that baseline only in this report. Final report-commit CI and Vercel evidence is linked in PR #129; the report-only update does not change the tested runtime.
 
-## Baseline and verified deployment
-The production alias `os.lucia.name.ng` resolved through Vercel deployment `dpl_A2MQz3mLhjEHDUZfbvuKChphdxjS`, **READY**, with Git metadata pointing to the Phase 9 merge SHA above. GitHub combined commit status returned Vercel **success**. Fresh Phase 10 GitHub Actions workflow **41069862911** completed successfully on commit `53c331ff00df40483685a445045ca253aab7ed43`. Vercel commit status also returned **success**. This establishes automated CI success, but not the authenticated browser matrix.
+## Continuation and scope
 
-Reused the repository's canonical product vision, 30-phase roadmap, workspace architecture contract, Phase 8 Settings documentation and Phase 9 continuity contract/evidence. Phase 9 evidence is historical and does not constitute newly executed Phase 10 tests.
+Continued the existing PR and branch, rather than restarting Phase 10. Read the current report, Phase 9 continuity evidence, workspace contract, product/security/engineering guidance and roadmap. Inspected the existing browser scripts and fixture helpers. Historical workflow 41069862911 remains historical evidence for `53c331ff`; it was not reused as proof for the newer head.
 
-## Critical journeys / browser evidence
+No new implementation project, navigation redesign, testing architecture, repository dependency, runtime fix or migration was introduced. Only this existing report is changed. Phase 11 is not implemented here.
 
-| Area | Evidence at baseline | Phase 10 result |
+## Fresh automated verification
+
+Executed against `4ccc9c9` in this acceptance cycle; every command exited 0:
+
+| Command | Result |
+| --- | --- |
+| `npm run lint` | PASS, zero errors; three existing warnings |
+| `npm run typecheck` | PASS |
+| `npm test` | PASS: **444 tests in 58 files** |
+| `npm run db:check` | PASS; no unexpected migration |
+| `npm run build` | PASS; compiled customer-host middleware present |
+| `npm run test:routing:http` | PASS: platform, tenant, custom-domain, private-path, staff/customer gates, spoofing and static assets |
+
+Existing warnings are the unused billing import, SEO `<img>` guidance and unused AI-provider-test import. They are not newly introduced failures.
+
+[GitHub Actions 41075721424](https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41075721424) passed for the exact tested head `4ccc9c9`. Vercel deployment `dpl_HDH1g97Gv1syK3mHpPRhUXDt3At5` was **READY** for that same SHA at [the tested-head preview](https://lucia-6at0vx22v-trendoraplc-5738.vercel.app). The final report-only commit is separately checked before PR readiness; its exact results are attached to the PR and delivery report.
+
+## Fresh authenticated browser acceptance
+
+**PASS: 16 focused assertions across representative journeys**, not a replay of the entire Phase 9 programme. Reused `createContinuityFixtures`/`removeContinuityFixtures` from `scripts/continuity-fixtures.mjs`, the session setup, compiled-server startup, native application selectors and assertions from the existing continuity browser/security runners. A scratch driver selected just the acceptance journeys below; no replacement framework or permanent runner was added.
+
+Environment: real production-compiled Next.js application on loopback, Chromium/Playwright, existing isolated Neon branch `br-twilight-credit-basukg9w`, database `phase8_settings_acceptance`. Verified the runtime role is **non-superuser and NOBYPASSRLS**. The app uses its normal PostgreSQL/Drizzle authorization code through a temporary local TCP-to-encrypted-Neon-WebSocket transport. Admin access only creates/revokes/removes synthetic fixture records in that isolated database. Both synthetic users have real OS session rows and distinct tenant memberships; neither has a staff grant. Fixture cleanup completed successfully.
+
+This verifies authenticated OS sessions and workspace entry, not a new LUCIA ID registration/OAuth round trip. Browser acceptance is local against the exact compiled runtime; it is not represented as production or protected-preview browser execution. Vercel readiness is independently verified.
+
+### Four-viewport matrix
+
+| Viewport | Fresh representative interactions | Result |
 | --- | --- | --- |
-| Authentication, Home, App Library, Orb, Settings | Phase 9 authenticated local acceptance and prior API checks | **Not independently rerun** |
-| Tabs, Lattice panes, deep links, Back/Forward | Phase 9 browser acceptance, 22 checks | **Historical PASS; fresh check pending** |
-| Dirty Save/Discard/Cancel, refresh, failed-save recovery | Phase 9 real compiled app + isolated DB | **Historical PASS; fresh check pending** |
-| Tenant/account isolation, revocation, organization ownership | Phase 9 browser and HTTP security checks | **Historical PASS; fresh check pending** |
-| Staff/customer separation and customer host routing | Phase 9 routing/HTTP verification | **Historical PASS; fresh check pending** |
-| Accessibility (keyboard, focus, dialogs, labels, contrast, reduced motion, touch targets) | Partial Phase 9 keyboard/reduced-motion and Settings evidence | **Focused Phase 10 audit pending** |
+| 390 × 844 phone | Home; Apps overlay; inert background; Settings; Orb; Lattice Focus; independent Layouts filter/editor state; labels, targets, reduced motion, overflow | PASS |
+| 768 × 1024 tablet portrait | Home; App Library; Settings; Orb; independent Lattice destinations; Focus fallback; labels, spacing, reduced motion, overflow | PASS |
+| 1180 × 820 tablet landscape | Same critical destinations; independently editable native panes with Split available; labels, spacing, reduced motion, overflow | PASS |
+| 1440 × 900 desktop | Critical destinations and Split panes; additional real Save/Discard/Cancel, tab close/reopen, refresh and Back/Forward journeys | PASS |
 
-Phase 9's JSON evidence records **22** combined browser checks and **7** separate recovery/security checks. It reports no unhandled browser application errors. The existing local tests used a compiled app, isolated `*_acceptance` Neon DB, synthetic accounts, and non-superuser NOBYPASSRLS runtime connections. This is not proof of protected-preview or production browser acceptance.
+Screenshots were captured and visually reviewed at all four sizes. These are **emulated viewports**; no physical tablet or physical touch test is claimed.
 
-### Responsive matrix
+### Unsaved work and stale writes
 
-| Viewport | Existing Phase 9 emulation | New Phase 10 execution |
-| --- | --- | --- |
-| 390 × 844 mobile | PASS (Lattice continuity/overflow) | Not rerun |
-| 768 × 1024 tablet portrait | PASS | Not rerun |
-| 1180 × 820 tablet landscape | PASS | Not rerun |
-| 1440 × 900 desktop | PASS | Not rerun |
+- Cancel/Escape leaves the original dirty editor open and returns focus to the initiating close control.
+- Discard closes only the intended dirty resource. Reopening fetches its unchanged saved value.
+- Save and Continue invokes the authorized website API. Reopening/reloading retrieves the submitted value from the database, rather than a success simulation or a session snapshot.
+- Refresh restores the supported unsaved editor draft. Browser Back/Forward retains the matching website ID and draft.
+- A preference write using the current revision succeeds; a second write using the stale revision returns **409**. A following GET still returns the newer saved value. This is the tested persistent-concurrency scope.
+- Normal recoverable app switches do not require an unnecessary destructive-work prompt. Closing dirty work does prompt.
 
-All listed browser tests were **emulated**, not physical-device tests. Physical tablet/touch acceptance is deferred.
+### Security
 
-## Automated checks
+- Ordinary customer visiting `/staff` receives **Staff access required** and no customer app-tab navigation is substituted for staff authorization.
+- Foreign-tenant draft GET returns **404**.
+- Requests on the synthetic customer website hostname to `/workspace`, `/staff` and `/api/workspace/preferences` return **404**, with no Control Center content. The independent compiled HTTP runner also passes the broader host-routing matrix.
+- After revoking the synthetic user's membership, refresh cannot display the private recovered draft; saving is disabled.
+- Switching to the second authenticated user cannot restore the first user's private draft or GET its website.
 
-Historical Phase 9 local results (not fresh Phase 10 execution):
-- `npm test`: **444 passed** in 58 files.
-- `npm run typecheck`: PASS.
-- `npm run lint`: zero errors; three pre-existing warnings.
-- `npm run db:check`: PASS; no Phase 9 migration.
-- `npm run build`: PASS.
-- `node scripts/check-settings-http.mjs` and `node scripts/check-routing-http.mjs`: PASS in isolated acceptance environment.
+No production customer records, production environment variables, DNS, credentials, payment infrastructure or LUCIA Core were changed. No schema or migration was added. Production preference-migration history was not re-applied or altered by this exercise.
 
-**Fresh Phase 10 CI verified:** GitHub Actions workflow 41069862911 completed successfully on the Phase 10 PR head. Its job confirms passing Lint, Type check, Drizzle migration consistency, Unit tests, Production build, and Compiled host-routing HTTP checks. This is a real workflow execution, not merely historical Phase 9 evidence. The previous 444-test count is historical; a fresh individual test count is not independently extracted from workflow logs. Authenticated browser acceptance and the targeted accessibility matrix were **not** newly executed by this review.
+### Focused accessibility
 
-## Findings, fixes, and safety
-- No newly confirmed P0/P1 defect. **Absence of a confirmed defect is not evidence of absence.**
-- No implementation changes, new tests, schema migrations, secret changes, production DB modifications or LUCIA Core changes.
-- Fixes applied: none; no freshly reproduced defect justified a code change.
-- Known noncritical limitations: device-killed browser tabs may lose uncheckpointed state; disabled storage cannot guarantee durable recovery; pre-coordinator history relies on browser unload protection; unowned legacy recovery is deliberately excluded.
-- Phase 8 preference migration state in production was not independently established.
-- Physical tablet and complete authenticated protected-preview UI matrix remain unverified.
+Keyboard activation and visible focus passed. The native dirty-work dialog initially focuses a contained control, keeps Tab focus inside it, supports Escape/Cancel and restores focus to the trigger. Essential editor controls and observed visible buttons have appropriate labels. Cancel-button text/background contrast measured **10.23:1** using browser-computed colours. All four viewport journeys request reduced motion; the tablet/desktop run also verifies that the Orb's computed animation is disabled. Mobile Apps and Orb targets are usable, with Orb dimensions at least **44 × 44 CSS px**. No critical horizontal overflow or inaccessible essential action was observed. This is a focused acceptance audit, not full WCAG certification or a screen-reader certification.
 
-## Acceptance decision
-**BLOCKED — browser acceptance incomplete:** CI and Vercel status are green for the Phase 10 PR head. The remaining exit gates are (1) targeted authenticated browser matrix at the four viewports; (2) focus/dialog/keyboard/reduced-motion accessibility; (3) tenant/staff/hostname and revoked-access assertions in that browser/runtime environment. Fix any P0/P1 defect and rerun the affected gate. Physical tablet testing remains deferred, distinctly recorded from emulation.
+**Noncritical P2:** the tablet/desktop header App Library link is **14px high**, below the preferred 44px touch target. Its 24px centred target area does not intersect adjacent interactive targets, so the spacing exception passes. Enlarge it during maintenance; it does not block navigation or this acceptance gate.
 
-## Phase 11 readiness (planning only)
-Next: Layout Studio foundation, then the approved **48 differentiated premium Layouts** in **8 categories × 6**. Confirm the PR #127 catalogue and reconcile older roadmap mentions of 36 before implementation. Preserve Guided/Advanced Modes, Design Lock, accurate previews, and genuine project creation. Built-in Layouts and standard publishing remain free. Optional custom-domain access is ₦5,000 one-time through LUCIA Store with Paystack. S3-compatible storage is a future integration, **not** a prerequisite. **No Phase 11 code is included here.**
+The driver was adjusted to use the phone's actual Apps button instead of the desktop link, wait for authenticated client initialization, account for the small target's spacing exception and select the Orb rather than its nested Lattice button. These were test-driver corrections, not confirmed runtime defects. No P0/P1 defect was reproduced; no product fix was justified.
+
+### Executed browser assertion log
+
+The following combines the six desktop data-protection assertions, one phone journey and nine remaining responsive/security assertions from this focused cycle:
+
+```text
+PASS Desktop Cancel, dialog keyboard containment/return, visible focus and contrast 10.23:1
+PASS Discard removes intended draft without changing saved data
+PASS Save and Continue persists through authorized API and reload
+PASS Refresh recovers supported unsaved draft
+PASS Back and Forward retain resource identity and draft
+PASS Server rejects stale preference overwrite and retains newer saved state
+PASS Authenticated 390x844 Home/Library/Settings/Orb/Lattice independent destinations, targets, labels, motion and overflow
+PASS Authenticated 768x1024 Home/Library/Settings/Orb/Lattice independent destinations, targets, labels, motion and overflow
+PASS Authenticated 1180x820 Home/Library/Settings/Orb/Lattice independent destinations, targets, labels, motion and overflow
+PASS Authenticated 1440x900 Home/Library/Settings/Orb/Lattice independent destinations, targets, labels, motion and overflow
+PASS Ordinary customer denied staff functionality
+PASS Foreign tenant resource denied
+PASS Customer hostname denies workspace, staff and private API paths
+PASS Revoked membership denies cached private draft and save
+PASS Account B cannot restore or access account A resource
+PASS No unhandled browser application errors
+```
+
+Viewport capture SHA-256 values (fresh captures, not reused Phase 9 images):
+
+| Viewport | SHA-256 |
+| --- | --- |
+| 390x844 | `94fc304b91ea6f40ef687d571028be288d79b0a606038de01a18ee828d595d6b` |
+| 768x1024 | `c06d0880ee80ef7e8b914ed6bf1bcb708c0f91c8cdb9461feebb3851535ad4cd` |
+| 1180x820 | `098ab67ed792e87d67404feb07a55712314d4314ceff39b79c854b3e39bca71f` |
+| 1440x900 | `d555075296bab7c4d990e27994deb902f96e5ff2056cff80dba466dd423b21a2` |
+
+## Final acceptance decision and remaining boundaries
+
+**PASS — Phase 10's targeted workspace acceptance is complete.** Fresh automated checks, the four authenticated browser journeys, unsaved-work protection, account/tenant/staff/hostname boundaries and critical accessibility checks pass. No unresolved P0/P1 defect remains. Final report-head CI and Vercel must be green before marking PR #129 ready; those exact-head results are recorded on the PR. **Do not merge without explicit founder approval.**
+
+Deferred/nonblocking: physical tablet/touch acceptance, broader assistive-technology/full WCAG review, comprehensive protected-preview UI matrix and the small header target noted above. Existing session-recovery limitations remain: OS-killed tabs may lose uncheckpointed work; disabled browser storage cannot guarantee durable recovery; pre-coordinator history relies on unload protection; unowned legacy recovery is deliberately excluded. These limitations are not newly concealed acceptance failures.
+
+## Phase 11 — Layout Studio Foundation handoff
+
+Reviewed the approved [48-Layout specification in PR #127](https://github.com/trendorafindsinc-jpg/lucia-os/pull/127), exact specification commit `a72e3a2f2f98ad8d663b071bb1283190f002bf0c`. The approved target is **48 distinctive premium-quality complete website designs, eight categories × six**, with customizable registered sections. The earlier 36-Layout target is obsolete. Current legacy catalogue cards/counts are not proof that the approved 48 designs exist.
+
+Start Phase 11 with the real project/create/edit/save/preview/publish foundation and preserve its tenant checks. Follow Guided and Advanced Modes, Design Lock, shared validated preview/editor/published rendering, accurate previews and durable content. Use the eight category briefs and review originality/composition rather than recolouring a single skeleton. Quality-gated batches are 8, 16, 32 and 48.
+
+Standard creation and publishing remain free. Custom-domain access is optional **₦5,000 one-time**; registrar purchase/renewals are separate. **Paystack** is approved. S3-compatible customer media storage is deferred until necessary and is not a prerequisite for repository-hosted built-in assets. The approved catalogue specification should accompany the Phase 11 baseline through its own reviewed change; this acceptance PR does not merge it or implement Phase 11.
