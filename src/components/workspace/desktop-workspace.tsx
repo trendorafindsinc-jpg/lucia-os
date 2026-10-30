@@ -12,6 +12,7 @@ import { applyDesktopRequest, createDesktopState, DESKTOP_SNAPSHOT_KEY, DESKTOP_
 import { getWorkspaceTabId, isSafeWorkspaceTabHref } from "@/lib/workspace/tabs";
 import styles from "./desktop-workspace.module.css";
 import { canUseLatticeSplit } from "@/lib/workspace/tablet";
+import { getWorkspaceApp } from "@/lib/workspace/app-registry";
 
 /** Late completions from a closed/replaced app cannot mutate the next app in that slot. */
 function PaneSessionProvider({ adapter, tabId, children }: { adapter: Omit<WorkspaceContextValue, "activeTabId">; tabId: string; children: React.ReactNode }) {
@@ -153,7 +154,7 @@ export function DesktopWorkspace({ userId, initialHref }: { userId: string; init
     <div className={styles.toolbar} aria-label="Lattice view controls">
       <div className={styles.appTabs} aria-label="Open Lattice apps">
         {state.order.map(id => { const pane = state.panes.find(item => item.id === id)!;const app = describeDesktopApp(pane.href)!;
-          return pane.open ? <button type="button" key={id} aria-pressed={activeId === id} aria-controls={`desktop-pane-${id}`} onClick={() => activate(id)}><WorkspaceIcon icon={app.appKey === "layouts" ? "layouts" : "website"} />{app.appKey === "layouts" ? "Layouts" : "Layout Studio"}{pane.dirty && <span aria-label="Unsaved changes">•</span>}</button> : <button type="button" key={id} onClick={() => reopen(id)}>Reopen {app.appKey === "layouts" ? "Layouts" : "Layout Studio"}</button>;
+          return pane.open ? <button type="button" key={id} aria-pressed={activeId === id} aria-controls={`desktop-pane-${id}`} onClick={() => activate(id)}><WorkspaceIcon icon={getWorkspaceApp(app.appKey)?.icon || "website"} />{getWorkspaceApp(app.appKey)?.label || app.label}{pane.dirty && <span aria-label="Unsaved changes">•</span>}</button> : <button type="button" key={id} onClick={() => reopen(id)}>Reopen {getWorkspaceApp(app.appKey)?.label || app.label}</button>;
         })}
       </div>
       <div className={styles.viewActions}>
@@ -170,8 +171,8 @@ export function DesktopWorkspace({ userId, initialHref }: { userId: string; init
       {state.order.map(id => {
         const pane = state.panes.find(item => item.id === id)!;
         const app = describeDesktopApp(pane.href)!;
-        return pane.open && <section key={id} id={`desktop-pane-${id}`} tabIndex={-1} ref={element => {paneRefs.current[id]=element;}} className={styles.pane} data-active={activeId === id} hidden={!split && activeId !== id} aria-label={`${app.appKey === "layouts" ? "Layouts" : "Layout Studio"} app pane`}>
-          <header className={styles.paneHeader}><strong>{app.label}</strong><span>{pane.dirty ? "Unsaved changes" : app.context.startsWith("website:") ? "Website draft" : "App workspace"}</span><button type="button" onClick={() => { activate(id);update(current => ({ ...current, mode: "single" })); }}>Focus</button><button type="button" aria-label={`Close ${app.appKey === "layouts" ? "Layouts" : "Layout Studio"} pane`} onClick={() => closePane(id)}>×</button></header>
+        return pane.open && <section key={id} id={`desktop-pane-${id}`} tabIndex={-1} ref={element => {paneRefs.current[id]=element;}} className={styles.pane} data-active={activeId === id} hidden={!split && activeId !== id} aria-label={`${getWorkspaceApp(app.appKey)?.label || app.label} app pane`}>
+          <header className={styles.paneHeader}><strong>{app.label}</strong><span>{pane.dirty ? "Unsaved changes" : app.context.startsWith("website:") ? "Website draft" : "App workspace"}</span><button type="button" onClick={() => { activate(id);update(current => ({ ...current, mode: "single" })); }}>Focus</button><button type="button" aria-label={`Close ${getWorkspaceApp(app.appKey)?.label || app.label} pane`} onClick={() => closePane(id)}>×</button></header>
           <div className={styles.paneBody} ref={element => { scrollRefs.current[id] = element; }} tabIndex={0} role="region" aria-label={`${app.label} scrollable content`} onPointerDown={() => { if (stateRef.current.active !== id) update(current => ({...current, active:id})); }}>
             <PaneSessionProvider key={pane.href} adapter={adapters[id]} tabId={getWorkspaceTabId(app)}><AppNavigationProvider value={{ href: pane.href, navigate: href => navigate(id, href) }}>
               {app.appKey === "layouts" ? <TemplateGallery embedded /> : <VisualSiteEditor embedded />}

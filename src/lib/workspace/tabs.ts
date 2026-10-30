@@ -1,3 +1,5 @@
+import { getWorkspaceApp } from "./app-registry";
+
 export type WorkspaceRoute = {
   appKey: string;
   label: string;
@@ -17,7 +19,7 @@ export function describeWorkspaceRoute(pathname: string, search: string): Worksp
     return { appKey: "desktop", label: "Lattice", href: pathname + search, context: "home" };
   }
   if (pathname === "/templates" || pathname === "/layouts") {
-    return { appKey: "layouts", label: "Layouts", href: pathname + search, context: "catalogue" };
+    return { appKey: "layouts", label: getWorkspaceApp("layouts")!.label, href: pathname + search, context: "catalogue" };
   }
   if (pathname === "/editor") {
     const context = websiteId ? `website:${websiteId}` : `template:${templateId || "new"}`;
@@ -63,10 +65,10 @@ export function describeWorkspaceRoute(pathname: string, search: string): Worksp
     return { appKey: "workspace-tools", label: "Help & support", href: pathname + search, context: pathname === "/support" ? "home" : pathname.slice("/support/".length) };
   }
   if (pathname === "/loomify-ai") {
-    return { appKey: "loomify-ai", label: "loomifyAI", href: pathname + search, context: websiteId ? `website:${websiteId}` : "library" };
+    return { appKey: "loomify-ai", label: getWorkspaceApp("loomify-ai")!.label, href: pathname + search, context: websiteId ? `website:${websiteId}` : "library" };
   }
   if (pathname === "/loom") {
-    return { appKey: "loom", label: "Loom", href: pathname + search, context: "home" };
+    return { appKey: "loom", label: getWorkspaceApp("loom")!.label, href: pathname + search, context: "home" };
   }
   return null;
 }
@@ -80,13 +82,39 @@ export function canCloseWorkspaceTab(isDirty: boolean, userConfirmedDiscard: boo
 }
 
 export function isSafeWorkspaceTabHref(href: string): boolean {
-  if (!href.startsWith("/") || href.startsWith("//")) return false;
+  if (typeof href !== "string" || href.length > 1024 ||
+      !href.startsWith("/") || href.startsWith("//") ||
+      href.includes("\\") || /[\u0000-\u001f]/.test(href)) return false;
   try {
     const url = new URL(href, "https://workspace.invalid");
-    return url.origin === "https://workspace.invalid" && describeWorkspaceRoute(url.pathname, url.search) !== null;
-  } catch {
-    return false;
+    if (url.origin !== "https://workspace.invalid" || url.hash ||
+        url.pathname !== href.split("?")[0]) return false;
+    const params = url.searchParams;
+    if ([...params.keys()].some(key =>
+      !/^[a-zA-Z][a-zA-Z0-9]{0,35}$/.test(key) ||
+      params.getAll(key).length !== 1)) return false;
+    if ([...params.values()].some(value => !/^[a-zA-Z0-9_-]{1,128}$/.test(value))) return false;
+    return describeWorkspaceRoute(url.pathname, url.search) !== null;
+  } catch { return false; }
+}
+
+/** Never trust cached IDs, labels, roles, purchases or entitlement claims. */
+export function recoverWorkspaceTabs(input: unknown): (WorkspaceRoute & { id: string; dirty: boolean })[] {
+  if (!Array.isArray(input)) return [];
+  const seen = new Set<string>();
+  const recovered: (WorkspaceRoute & { id: string; dirty: boolean })[] = [];
+  for (const item of input.slice(0, 100)) {
+    if (!item || typeof item !== "object" || typeof item.href !== "string" ||
+        typeof item.dirty !== "boolean" || !isSafeWorkspaceTabHref(item.href)) continue;
+    const url = new URL(item.href, "https://workspace.invalid");
+    const route = describeWorkspaceRoute(url.pathname, url.search);
+    if (!route || getWorkspaceApp(route.appKey)?.status === "unavailable") continue;
+    const id = getWorkspaceTabId(route);
+    if (seen.has(id)) continue;
+    seen.add(id);
+    recovered.push({ ...route, id, dirty: item.dirty });
   }
+  return recovered;
 }
 
 export type WorkspaceTabState = WorkspaceRoute & { id: string; dirty: boolean };
