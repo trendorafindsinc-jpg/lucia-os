@@ -81,7 +81,7 @@ const page = z.object({
 export const premiumLayoutSchema = z.object({
   schema: z.literal("lucia.layout-composition"),
   version: z.literal(2),
-  layoutId: z.string().regex(/^lucia\\.layout\\.[a-z][a-z0-9-]{1,63}$/),
+  layoutId: z.string().regex(/^lucia\.layout\.[a-z][a-z0-9-]{1,63}$/),
   layoutVersion: z.number().int().positive(),
   category: text(80),
   identity: z.object({ name: text(80), description: text(500) }).strict(),
