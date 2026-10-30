@@ -6,5 +6,5 @@ type PageContext = { params: Promise<{ caseId: string }> };
 
 export default async function SupportCasePage({ params }: PageContext) {
   const { caseId } = await params;
-  return <SupportConversation caseId={caseId} />;
+  return <SupportConversation key={(await params).caseId} caseId={caseId} />;
 }

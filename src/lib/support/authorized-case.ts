@@ -46,7 +46,7 @@ export async function findSupportCaseForStaff(caseId: string, permission: string
   if (!staff) return null;
 
   const [supportCase] = await withPlatformStaffScope(staff.id, (tx) =>
-    tx.select(caseProjection)
+    tx.select({ ...caseProjection, assignedStaffUserId: supportCases.assignedStaffUserId })
       .from(supportCases)
       .where(eq(supportCases.id, caseId))
       .limit(1),

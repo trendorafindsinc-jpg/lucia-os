@@ -760,3 +760,7 @@ h1 span { color: #6979c9; }
 .workspace-team-manager button:disabled{opacity:.55;cursor:not-allowed}
 .workspace-team-manager .workspace-table-sub{display:block;max-width:250px;overflow-wrap:anywhere}
 @media(max-width:760px){.workspace-team-form{grid-template-columns:1fr}.workspace-field-reason{grid-column:auto}.workspace-team-form>.workspace-button{width:100%}}
+
+.lucia-support-form textarea { width:100%; border:1px solid #dce3ee; border-radius:12px; background:#fbfcff; padding:12px; color:#17243b; font:inherit; resize:vertical; }
+.lucia-support-form textarea:focus { outline:3px solid #dce2ff; border-color:#7d8be0; }
+.lucia-support-actions select { min-height:44px; padding:8px; border:1px solid #dce3ee; border-radius:10px; background:#fff; color:#17243b; }

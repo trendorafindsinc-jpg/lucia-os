@@ -1,4 +1,4 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getCurrentOrganizationAccess } from "@/lib/access/guards";
 import { withOrganizationScope } from "@/lib/db/tenant-scope";
@@ -86,6 +86,11 @@ export async function POST(request: Request) {
         status: supportCases.status,
         createdAt: supportCases.createdAt,
       });
+
+    if (parsed.data.body) await tx.insert(supportMessages).values({
+      organizationId: organization.id, caseId: supportCase.id, authorUserId: user.id,
+      authorKind: "tenant", visibility: "customer", body: parsed.data.body,
+    });
 
     await tx.insert(platformAuditEvents).values({
       actorUserId: user.id,

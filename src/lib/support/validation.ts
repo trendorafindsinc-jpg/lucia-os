@@ -3,6 +3,7 @@ import { z } from "zod";
 export const supportCaseInputSchema = z.object({
   organizationId: z.string().uuid(),
   subject: z.string().trim().min(3).max(180),
+  body: z.string().trim().min(1).max(12000).optional(),
   category: z.enum(["general", "account", "website", "publishing", "billing", "security", "abuse", "other"]).default("general"),
   priority: z.enum(["low", "normal", "high", "urgent"]).default("normal"),
 });
