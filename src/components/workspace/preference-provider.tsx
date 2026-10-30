@@ -75,7 +75,7 @@ export function PreferenceProvider({
               setPreferences(next);
               const res = await fetch("/api/workspace/preferences", {
                 method: "PUT",
-                headers: { "Content-Type": "application/json" },
+                headers: { "Content-Type": "application/json", "X-LUCIA-Workspace-Account":userId },
                 body: JSON.stringify({ preferences: next, revision: 0 }),
               });
               if (res.ok) {
@@ -193,7 +193,7 @@ export function PreferenceProvider({
       try {
         const response = await fetch("/api/workspace/preferences", {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", "X-LUCIA-Workspace-Account":userId },
           body: JSON.stringify({
             preferences: p,
             revision: revisionRef.current,
@@ -220,7 +220,7 @@ export function PreferenceProvider({
         saving.current = false;
       }
     },
-    [loaded],
+    [loaded,userId],
   );
   return (
     <PreferencesContext.Provider

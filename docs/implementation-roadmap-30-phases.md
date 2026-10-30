@@ -56,6 +56,8 @@ Implementation: [Phase 8 Control Center evidence](phase-8-settings-workspace-con
 Connect profile/workspace preferences, security entry points, organisation context where applicable, and persisted layout/icon preferences. Do not duplicate LUCIA Core authentication.
 
 ### Phase 9 — Cross-destination transitions and state
+
+Implementation: [Phase 9 continuity architecture and evidence](phase-9-workspace-continuity.md), PR #128. Shared transitions, scoped recovery, real dirty-work protection and native pane continuity are implemented. Physical-device and comprehensive protected-preview UI acceptance remain Phase 10 gates.
 Ensure navigation between workspace destinations preserves context and unsaved work appropriately. Define app-tab open/activate/close, safe close when edits are dirty, tab restoration limits, deep-link behavior, browser back/refresh, and independent pane navigation for split view. Do not claim state is preserved unless the app has a real state persistence/restoration mechanism. Every visible control must trigger a real action with truthful success/failure and permission states.
 
 ### Phase 10 — Workspace acceptance gate

@@ -123,8 +123,8 @@ export const WORKSPACE_APPS: readonly WorkspaceApp[] = createAppRegistry([
     id:"settings",key:"settings",label:"Settings",description:"Your LUCIA Control Center",
     category:"preferences",classification:"system",icon:"settings",iconAsset:{kind:"lucia-svg",name:"settings"},
     launch:{kind:"route",href:"/workspace/settings"},href:"/workspace/settings",status:"available",availability:available,
-    context:"none",capabilities:{modes:ALL_MODES,split:false,recovery:"none"},
-    requiredPermissions:noPermissions,entitlement:B,lifecycle:{onClose:"immediate",restore:"none"}
+    context:"none",capabilities:{modes:ALL_MODES,split:false,recovery:"session-snapshot"},
+    requiredPermissions:noPermissions,entitlement:B,lifecycle:{onClose:"confirm-if-dirty",restore:"session-snapshot"}
   },
 ]);
 

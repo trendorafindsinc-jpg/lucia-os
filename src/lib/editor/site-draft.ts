@@ -43,3 +43,9 @@ export function moveSection(sections: readonly string[], index: number, directio
   [result[index], result[nextIndex]] = [result[nextIndex], result[index]];
   return result;
 }
+
+/** Editing recovery retains temporarily invalid text; API saves still use siteDraftSchema. */
+export const siteDraftRecoverySchema = siteDraftSchema.extend({
+ siteName: z.string().max(80), headline:z.string().max(100),description:z.string().max(220),buttonLabel:z.string().max(32),
+ visibleSections:z.array(z.string().min(1).max(160)).max(12),
+});

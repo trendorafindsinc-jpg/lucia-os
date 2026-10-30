@@ -145,4 +145,17 @@ describe("authenticated settings API", () => {
       413,
     );
   });
+  it("rejects a previous account's live preference save after account switching", async () => {
+    const req = new Request("https://os.example/api/workspace/preferences", {
+      method: "PUT",
+      headers: {
+        origin: "https://os.example",
+        "content-type": "application/json",
+        "x-lucia-workspace-account": "previous-account",
+      },
+      body: JSON.stringify({ preferences: DEFAULT_PREFERENCES, revision: 0 }),
+    });
+    expect((await PUT(req)).status).toBe(409);
+    expect(mocks.save).not.toHaveBeenCalled();
+  });
 });
