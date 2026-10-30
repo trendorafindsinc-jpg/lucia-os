@@ -70,6 +70,8 @@ Audit create/edit/preview/publish, domains, layouts, data persistence, entitleme
 
 **Approved Phase 11 commercial boundary:** Standard website creation/editing/preview/publishing and built-in Layouts are free. The only paid access capability scoped to the Phase 11 website workflow is optional custom-domain access, sold through **LUCIA Store at ₦5,000 one-time**, with **Paystack** as the approved provider. Domain registration/registrar renewal are separate. No recurring LUCIA website subscription is required. Audit legacy pricing and entitlement gates without deleting history. Prepare the entitlement/verification contract; do not fake or prematurely deploy checkout, and never activate domain access from an unverified redirect. See `docs/lucia-os-product-vision.md` and `docs/layouts-s3-storage-contract.md`.
 
+**Approved layout boundary:** Phase 11 audits and stabilizes existing free website create/edit/save/preview/publish, tenancy, domain pricing, and persistence. Phase 12 inventories designs, records distinctive art directions/page structures/responsive briefs and applies the 48-Layout quality rubric; it does not implement a competing editor or 48 production Layouts. Phase 13 builds the shared validated hybrid composition engine. Phases 14–17 produce and expand real premium designs. The canonical design contract is `docs/layouts-48-premium-catalogue.md`.
+
 ### Phase 12 — Layout catalogue design rubric and inventory
 Inventory current catalogue entries, routes, screenshots, and rendered structures. Define per-layout purpose, design identity, sections, responsive composition, imagery, navigation, and content-replacement criteria. Identify near-duplicates.
 
@@ -86,7 +88,7 @@ Show meaningful previews before selection, with enough of the actual website to 
 Let customers replace demo text, imagery, contact details, and business information without breaking the design. Verify useful defaults and that customers do not need to rebuild navigation, spacing, or missing sections.
 
 ### Phase 17 — Distinct catalogue expansion
-Expand the catalogue in reviewed batches toward the intended 36-layout target if that remains the approved count. Every entry must be meaningfully different in structure/design—not merely copy, title, or colour. Compare screenshots and DOM/page structure at phone, tablet, and desktop sizes; reject near-duplicates.
+Expand the catalogue in quality-gated batches toward the founder-approved **48 distinct Layouts across 8 categories (6 per category)**, beginning with 8 flagship designs, then 16, 32, and 48. See `docs/layouts-48-premium-catalogue.md`. Every entry must be meaningfully different in structure/design—not merely copy, title, or colour. Compare screenshots and DOM/page structure at phone, tablet, and desktop sizes; reject near-duplicates.
 
 ### Phase 18 — Free creation and publishing contract
 Verify that a customer can create, customise, preview, and publish a standard website for free without AI or a purchase. A supported LUCIA address is available; custom domains remain an optional paid service. Preserve the previous known-good live version on failure.
