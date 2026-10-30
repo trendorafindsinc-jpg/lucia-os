@@ -25,6 +25,21 @@ LUCIA OS must feel like one premium, integrated product—not a collection of di
 - Disclose genuine third-party costs and any optional paid capabilities clearly. Do not imply that a free website includes a custom domain, paid third-party services, unlimited costly AI, or perpetual managed infrastructure where it does not.
 - The free offer is a product rule, not an excuse to compromise security, reliability, accessibility, performance, or support transparency.
 
+## Approved Paystack payment contract (documentation decision)
+
+**Provider:** Paystack is the approved LUCIA OS payment provider for LUCIA Store purchases; this is a product decision, not a claim that Paystack checkout or credentials are already configured.
+
+- Standard Layouts, website creation, editing, preview and publishing on a supported LUCIA address remain **free**.
+- **Custom Domain Access** is a **₦5,000 one-time Store product**, purchased independently of software. It grants platform access to connect an eligible customer-owned domain; registration and registrar renewal costs are separate. Do not represent the charge as domain ownership, an annual renewal or a subscription.
+- Commercial software is purchased as a **specific version** through a one-time purchase with the disclosed licence and one-year updates/maintenance coverage. A future major version is an optional separate purchase, not an automatic recurring charge.
+- Customer-operated subscriptions to their own software end users are distinct from purchases from LUCIA.
+- The server must establish the trusted order, user, product, amount and currency (**NGN 5,000 = 500,000 kobo**). Never trust client-supplied prices or payment-success flags.
+- Create Paystack payment attempts with unique references. Activate a domain-access entitlement or software licence **only after server-to-server verification** of Paystack transaction status, amount, currency, reference, product and the intended customer. A return URL or screenshot is never proof of payment.
+- Verify webhook authenticity using the provider's documented signing contract, process retries idempotently, and prevent duplicate activation. Reconcile pending/abandoned transactions; account for failed, disputed and refunded payments with auditable transitions.
+- Check tenant ownership and domain verification independently of payment entitlement. A successful charge alone never proves domain ownership or authorizes cross-tenant association.
+- Keep Paystack secret keys server-side in deployment secrets. Do not log secrets, expose them in browser bundles or hardcode endpoints/credentials.
+- Implement checkout, Store entitlements, reconciliation and any required migrations only in their approved functional phases, with separate rollout authorization. Do not add fake checkout buttons or activate custom domains in a documentation-only change.
+
 ## 2. The four connected sections
 
 The four sections are product capabilities within one workspace, not four unrelated products. Each has its own icon and destination, while sharing navigation, visual language, account context, permissions, notifications, and clear status.
