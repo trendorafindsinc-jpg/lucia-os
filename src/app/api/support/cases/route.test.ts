@@ -80,4 +80,19 @@ describe("support cases tenant authorization boundary", () => {
     expect(mocks.organizationAccess).not.toHaveBeenCalled();
     expect(mocks.getDb).not.toHaveBeenCalled();
   });
+  it("persists opening details, case and audit using the same transaction", async () => {
+    mocks.organizationAccess.mockResolvedValue({ membership: { organizationId } });
+    const values = vi.fn().mockReturnValue({ returning: vi.fn().mockResolvedValue([{ id: "new-case" }]) });
+    const tx = {
+      execute: vi.fn(),
+      select: vi.fn().mockReturnValue({ from: vi.fn().mockReturnValue({ where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue([{ id: organizationId }]) }) }) }),
+      insert: vi.fn().mockReturnValue({ values }),
+    };
+    mocks.getDb.mockReturnValue({ transaction: vi.fn(fn => fn(tx)) });
+    const response = await POST(postRequest({ organizationId, subject: "Publishing problem", body: "The button reports an error" }));
+    expect(response.status).toBe(201);
+    expect(values).toHaveBeenCalledWith(expect.objectContaining({ caseId: "new-case", body: "The button reports an error", visibility: "customer", authorKind: "tenant", organizationId }));
+    expect(values).toHaveBeenCalledWith(expect.objectContaining({ action: "support.case.created", targetId: "new-case" }));
+  });
+
 });

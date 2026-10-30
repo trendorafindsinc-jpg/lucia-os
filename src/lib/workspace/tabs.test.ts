@@ -85,3 +85,12 @@ describe("workspace tab routing", () => {
     expect(canCloseWorkspaceTab(true, true)).toBe(true);
   });
 });
+
+describe("staff workspace isolation", () => {
+  it("never registers staff routes as customer app tabs", () => {
+    for (const path of ["/staff", "/staff/support", "/staff/team", "/staff/support/b8e95a60-fbde-4c37-93e6-a2916c7b13d4"]) {
+      expect(describeWorkspaceRoute(path, "")).toBeNull();
+      expect(isSafeWorkspaceTabHref(path)).toBe(false);
+    }
+  });
+});
