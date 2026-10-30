@@ -6,10 +6,10 @@ import { z } from "zod";
  */
 const id = z.string().regex(/^[a-z][a-z0-9-]{0,63}$/);
 const text = (n: number) => z.string().trim().min(1).max(n);
-const path = z.string().max(180).regex(/^\\/$|^\\/[a-z0-9]+(?:-[a-z0-9]+)*(?:\\/[a-z0-9]+(?:-[a-z0-9]+)*)*$/);
+const path = z.string().max(180).regex(/^\/$|^\/[a-z0-9]+(?:-[a-z0-9]+)*(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)*$/);
 const color = z.string().regex(/^#[0-9a-fA-F]{6}$/);
 const asset = z.string().regex(/^builtin:[a-z0-9][a-z0-9/_-]{0,150}$/);
-const href = z.string().max(180).regex(/^(?:\\/|\\/[a-z0-9-]+(?:\\/[a-z0-9-]+)*|#[a-z][a-z0-9-]*)$/);
+const href = z.string().max(180).regex(/^(?:\/|\/[a-z0-9-]+(?:\/[a-z0-9-]+)*|#[a-z][a-z0-9-]*)$/);
 const image = z.object({ src: asset, alt: text(200) }).strict();
 
 const hero = z.object({
