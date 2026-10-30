@@ -15,7 +15,7 @@ import Link from "next/link";
 import { describeDesktopApp } from "@/lib/workspace/desktop";
 import { AssistiveOrb } from "./assistive-orb";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { canCloseWorkspaceTab, describeWorkspaceRoute, getWorkspaceTabId, isSafeWorkspaceTabHref, openWorkspaceTab } from "@/lib/workspace/tabs";
+import { canCloseWorkspaceTab, describeWorkspaceRoute, getWorkspaceTabId, isSafeWorkspaceTabHref, openWorkspaceTab, recoverWorkspaceTabs } from "@/lib/workspace/tabs";
 
 type WorkspaceTab = {
   id: string;
@@ -57,7 +57,7 @@ function WorkspaceTabShellInner({ children }: { children: ReactNode }) {
     try {
       const savedTabs = JSON.parse(sessionStorage.getItem(TAB_STORAGE_KEY) || "[]") as WorkspaceTab[];
       const savedSnapshots = JSON.parse(sessionStorage.getItem(SNAPSHOT_STORAGE_KEY) || "{}") as Record<string, unknown>;
-      if (Array.isArray(savedTabs)) setTabs(savedTabs.filter((tab) => tab && typeof tab.id === "string" && typeof tab.appKey === "string" && typeof tab.label === "string" && typeof tab.href === "string" && isSafeWorkspaceTabHref(tab.href) && typeof tab.dirty === "boolean"));
+      if (Array.isArray(savedTabs)) setTabs(recoverWorkspaceTabs(savedTabs.filter((tab) => tab && typeof tab.href === "string" && isSafeWorkspaceTabHref(tab.href))));
       if (savedSnapshots && typeof savedSnapshots === "object" && !Array.isArray(savedSnapshots)) { snapshotsRef.current=savedSnapshots;setSnapshots(savedSnapshots); }
     } catch {
       try {

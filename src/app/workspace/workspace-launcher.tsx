@@ -2,6 +2,10 @@ import React from "react";
 import Link from "next/link";
 import type { WorkspaceApp } from "@/lib/workspace/app-registry";
 import { WORKSPACE_APPS, WORKSPACE_TOOLS } from "@/lib/workspace/app-registry";
+
+// Local mobile Settings is registered once, but is not a dead desktop tile.
+const HOME_APPS = WORKSPACE_APPS.filter(app => app.launch.kind !== "local");
+const HOME_AVAILABLE = HOME_APPS.filter(app => app.status === "available" && app.href);
 import styles from "./workspace-launcher.module.css";
 import { OpenAppLibraryButton } from "./open-app-library-button";
 import { LatticeLauncher } from "@/components/workspace/lattice-launcher";
@@ -68,7 +72,7 @@ export default function WorkspaceLauncher({ userId, displayName, organizationCou
           <div className={styles.mobileStats} aria-label="Workspace at a glance">
             <Link href="/workspace" className={styles.mobileStat}><span aria-hidden="true"><WorkspaceIcon icon="organizations" /></span><strong>{organizationCount}</strong><small>Orgs</small></Link>
             <Link href="/workspace/websites" className={styles.mobileStat}><span aria-hidden="true"><WorkspaceIcon icon="domains" /></span><strong>{websiteCount}</strong><small>Websites</small></Link>
-            <OpenAppLibraryButton className={styles.mobileStat}><span aria-hidden="true"><WorkspaceIcon icon="overview" /></span><strong>{WORKSPACE_APPS.filter((app) => app.status === "available").length}</strong><small>Apps</small></OpenAppLibraryButton>
+            <OpenAppLibraryButton className={styles.mobileStat}><span aria-hidden="true"><WorkspaceIcon icon="overview" /></span><strong>{HOME_AVAILABLE.length}</strong><small>Apps</small></OpenAppLibraryButton>
             <Link href="/workspace/domains" className={styles.mobileStat}><span aria-hidden="true"><WorkspaceIcon icon="domains" /></span><strong>↗</strong><small>Domains</small></Link>
           </div>
         </section>
@@ -80,7 +84,7 @@ export default function WorkspaceLauncher({ userId, displayName, organizationCou
             <div><h2 id="apps-title">Your apps</h2><p>Choose where you want to work.</p></div>
             <span className={styles.sectionCount}>{WORKSPACE_APPS.filter((app) => app.status === "available").length} available</span>
           </div>
-          <div className={styles.appGrid}>{WORKSPACE_APPS.map((app) => <AppTile app={app} key={app.key} />)}</div>
+          <div className={styles.appGrid}>{HOME_APPS.map((app) => <AppTile app={app} key={app.id} />)}</div>
         </section>
 
         <section className={styles.toolsSection} aria-labelledby="tools-title">

@@ -3,11 +3,13 @@
 import React, { useEffect, useRef, useState, type CSSProperties, type PointerEvent } from "react";
 import Link from "next/link";
 import { DEFAULT_ORB_POSITION, parseOrbPosition, snapOrb, type OrbPosition } from "@/lib/workspace/orb-position";
+import { getWorkspaceApp } from "@/lib/workspace/app-registry";
 import { LatticeLauncher } from "./lattice-launcher";
 import styles from "./assistive-orb.module.css";
 
 /** Shared assistant entry on the launcher and every recognized app workspace. */
 export function AssistiveOrb({ homeDock = false }: { homeDock?: boolean }) {
+  const assistantApp = getWorkspaceApp("loomify-ai");
   const [expanded, setExpanded] = useState(false);
   const [position, setPosition] = useState<OrbPosition>(DEFAULT_ORB_POSITION);
   const [dragPoint, setDragPoint] = useState<{x:number;y:number} | null>(null);
@@ -71,7 +73,7 @@ export function AssistiveOrb({ homeDock = false }: { homeDock?: boolean }) {
             <button type="button" className={styles.close} onClick={() => setExpanded(false)} aria-label="Close assistive panel">×</button>
           </div>
           <p>Create AI design proposals with loomifyAI, then review them in Layout Studio.</p>
-          <Link className={styles.action} href="/loomify-ai" onClick={() => setExpanded(false)}>Open loomifyAI →</Link>
+          {assistantApp?.status === "available" && assistantApp.href && <Link className={styles.action} href={assistantApp.href} onClick={() => setExpanded(false)}>Open {assistantApp.label} →</Link>}
           <LatticeLauncher compact onLaunch={() => setExpanded(false)} />
           <p className={styles.note}>Voice and automated actions are not available yet.</p>
       </section>

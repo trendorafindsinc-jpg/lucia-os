@@ -1,4 +1,5 @@
 import { describeWorkspaceRoute, getWorkspaceTabId } from "./tabs";
+import { getWorkspaceApp } from "./app-registry";
 
 export const DESKTOP_TAB_ID = "desktop:home";
 export const DESKTOP_SNAPSHOT_KEY = `desktop-state:${DESKTOP_TAB_ID}`;
@@ -13,7 +14,7 @@ export function describeDesktopApp(href: unknown) {
   try {
     const url = new URL(href, "https://workspace.invalid");
     if (url.origin !== "https://workspace.invalid" || url.hash) return null;
-    if (!["/editor", "/templates"].includes(url.pathname)) return null;
+    if (!NATIVE_PANE_ADAPTERS.some(adapter => adapter.href === url.pathname && getWorkspaceApp(adapter.appId)?.capabilities.nativePaneAdapter === adapter.adapterId)) return null;
     const keys = [...url.searchParams.keys()];
     if (url.pathname === "/templates" && keys.length) return null;
     if (keys.some(key => !["websiteId", "template"].includes(key) || url.searchParams.getAll(key).length !== 1)) return null;
@@ -52,8 +53,18 @@ export function applyDesktopRequest(state: DesktopState, href?: string): Desktop
   return {...state,active:target.id,panes:state.panes.map(pane=>pane.id===target.id?{...pane,href,open:true,snapshots:{},dirty:false}:pane)};
 }
 
-/** Visible Lattice choices come only from implemented native pane adapters. */
-export const LATTICE_APPS = [
-  { key: "website-engine", label: "Layout Studio", href: "/editor", icon: "website" },
-  { key: "layouts", label: "Layouts", href: "/templates", icon: "layouts" },
+/**
+ * Explicit, tested native adapters. Registry capability flags alone can NEVER
+ * make a new application embeddable in Lattice.
+ */
+export const NATIVE_PANE_ADAPTERS = [
+  { appId: "website-engine", adapterId: "layout-studio", href: "/editor" },
+  { appId: "layouts", adapterId: "layouts", href: "/templates" },
 ] as const;
+export const LATTICE_APPS = NATIVE_PANE_ADAPTERS.flatMap(adapter => {
+  const app = getWorkspaceApp(adapter.appId);
+  return app && app.status === "available" && app.capabilities.split &&
+    app.capabilities.nativePaneAdapter === adapter.adapterId
+      ? [{ key: app.id, label: app.label, href: adapter.href, icon: app.icon }]
+      : [];
+});
