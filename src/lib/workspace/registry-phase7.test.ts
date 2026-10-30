@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   WORKSPACE_APPS, createAppRegistry, getWorkspaceApp, getAppAvailability,
-  getInstalledAppAvailability, isCanonicalAppDestination,
+  getInstalledAppAvailability, isCanonicalAppDestination, type CanonicalAppHref,
 } from "./app-registry";
 import { LATTICE_APPS, NATIVE_PANE_ADAPTERS, describeDesktopApp, applyDesktopRequest, createDesktopState, restoreDesktopState } from "./desktop";
 import { describeWorkspaceRoute, getWorkspaceTabId, recoverWorkspaceTabs, isSafeWorkspaceTabHref } from "./tabs";
@@ -20,7 +20,7 @@ describe("Phase 7 canonical workspace registry", () => {
     const app = getWorkspaceApp("layouts")!;
     for (const href of ["https://evil.test","//evil.test","/staff","/templates?admin=true","/\\evil.test","/"]) {
       expect(isCanonicalAppDestination(href)).toBe(false);
-      expect(() => createAppRegistry([{...app, href, launch:{kind:"route" as const,href}}])).toThrow();
+      expect(() => createAppRegistry([{...app, href:href as CanonicalAppHref, launch:{kind:"route" as const,href:href as CanonicalAppHref}}])).toThrow();
     }
     expect(() => createAppRegistry([{...app,iconAsset:{kind:"lucia-svg",name:"store"}}])).toThrow();
     expect(getWorkspaceApp("nonexistent")).toBeUndefined();

@@ -11,7 +11,8 @@ export type AppCategory = "workspace" | "creation" | "design" | "intelligence" |
 export type AppClass = "system" | "first-party" | "commercial";
 export type AppRecovery = "none" | "session-snapshot" | "server-draft";
 export type NativePaneAdapterId = "layout-studio" | "layouts";
-export type AppLaunch = { kind: "route"; href: string } | { kind: "local"; action: "open-settings" } | { kind: "none" };
+export type CanonicalAppHref = "/workspace" | "/workspace/websites" | "/templates" | "/loomify-ai";
+export type AppLaunch = { kind: "route"; href: CanonicalAppHref } | { kind: "local"; action: "open-settings" } | { kind: "none" };
 export type WorkspaceAppStatus = "available" | "unavailable";
 
 export type WorkspaceApp = {
@@ -27,7 +28,7 @@ export type WorkspaceApp = {
   iconAsset: { kind: "lucia-svg"; name: AppIconId };
   launch: AppLaunch;
   /** Compatibility route: only populated for route launches. */
-  href?: string;
+  href?: CanonicalAppHref;
   status: WorkspaceAppStatus;
   availability: AppAvailability;
   reason?: string;
@@ -47,7 +48,7 @@ export type WorkspaceApp = {
 const ICONS: ReadonlySet<string> = new Set(["overview","website","layouts","loomify-ai","loom","store","settings"]);
 const ROUTES: ReadonlySet<string> = new Set(["/workspace","/workspace/websites","/templates","/loomify-ai"]);
 /** Do not allow external, encoded, query-bearing or arbitrary destinations in static metadata. */
-export function isCanonicalAppDestination(href: unknown): href is string {
+export function isCanonicalAppDestination(href: unknown): href is CanonicalAppHref {
   return typeof href === "string" && ROUTES.has(href) &&
     href.startsWith("/") && !href.startsWith("//") && !href.includes("\\");
 }
