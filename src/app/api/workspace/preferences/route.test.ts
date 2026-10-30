@@ -116,4 +116,33 @@ describe("authenticated settings API", () => {
     expect(res.status).toBe(503);
     expect(await res.json()).not.toHaveProperty("preferences");
   });
+  it("accepts the original platform Host behind Next's internal origin", async () => {
+    const req = new Request("http://localhost/api/workspace/preferences", {
+      method: "PUT",
+      headers: {
+        host: "os.example",
+        origin: "https://os.example",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ preferences: DEFAULT_PREFERENCES, revision: 0 }),
+    });
+    expect((await PUT(req)).status).toBe(200);
+  });
+  it("denies cross-site Fetch Metadata even with a matching Origin", async () => {
+    const req = new Request("https://os.example/api/workspace/preferences", {
+      method: "PUT",
+      headers: {
+        origin: "https://os.example",
+        "sec-fetch-site": "cross-site",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ preferences: DEFAULT_PREFERENCES, revision: 0 }),
+    });
+    expect((await PUT(req)).status).toBe(403);
+  });
+  it("bounds UTF-8 bytes rather than JavaScript character count", async () => {
+    expect((await PUT(request({ ignored: "😀".repeat(2200) }))).status).toBe(
+      413,
+    );
+  });
 });

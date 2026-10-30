@@ -1,6 +1,6 @@
 # Phase 8 — LUCIA Control Center and workspace context
 
-Status: implementation and automated local verification in progress. Not merged. Production migration has **not** been applied.
+Status: implemented; local automated/database/browser verification recorded below. Pull request #125 is under review. Not merged. Production migration has **not** been applied.
 
 ## Initial audit and reused foundations
 
@@ -64,18 +64,36 @@ Neon branch creation hit the existing project branch limit. Testing therefore us
 
 - TypeScript: passed locally.
 - ESLint: passed, only nine pre-existing warnings in unrelated files/shared tab fallback parameters.
-- Vitest: 55 files, 407 tests passed, including new preference validation/migration, API ownership/CSRF/conflict/retry and signed-out Settings route coverage.
+- Vitest: 55 files, 410 tests passed, including new preference validation/migration, API ownership/CSRF/conflict/retry and signed-out Settings route coverage.
 - Drizzle consistency: passed.
 - Production build and middleware-manifest guard: passed.
 - Compiled HTTP host-routing matrix: passed, including new signed-out Settings/API and customer-host Settings isolation checks.
 - All 16 migrations applied transactionally in the isolated acceptance database (175 SQL statements).
 - Real compiled-server requests with a synthetic NOBYPASSRLS role verified anonymous read/write denial, authenticated defaults/save, cross-account/cross-tenant denial, simultaneous update 200/409, invalid app IDs, CSRF denial, membership revocation, database owner isolation, forged-owner RLS denial and additive migration rollback.
 
-Browser/CI/preview evidence will be added for the final commit. Physical tablet verification is deferred. Viewport emulation cannot establish physical touch quality.
+The committed `test:settings:http` runner passed against the isolated database after the final API changes. The browser evidence records 29 checks across its four JSON reports, including actual mobile dock → App Library → Settings navigation with scroll-lock cleanup, tablet Home/category navigation, unsafe upload denial, reduced effects/keyboard operation, Lattice vertical scrolling, staff/customer denial and signed-out access.
+
+Authenticated Chromium evidence uses the compiled application and the isolated Neon database with synthetic accounts. Tests across the recorded runs verified theme save/refresh, wallpaper preset save, Home visibility/order, authorized organization switching, shared App Library/Orb Settings launch, injected network failure plus genuine successful retry, decoded custom wallpaper remaining device-only, default restoration after refresh, zero/one/multiple organizations, one-time legacy migration retaining the original key, corrupt storage recovery, and honest account/sign-out controls. Loaded screenshot/overflow checks cover all seven requested viewports. See `evidence/phase8/*.json` and the lossless screenshots below. Test-runner fixes (waiting for loaded preferences, ignoring unchanged-save no-ops and distinguishing Next's route announcer) did not change successful operation into simulated success.
+
+The first PR commit `6a459dad3e632ea69d146e65c8725415e7ebb1dc` passed GitHub Actions run `41006474805` and Vercel deployment `dpl_2ngaDXHueScrzqMgFa4qtrgkvidK` is READY. Final-head results are recorded in the PR after the evidence commit. Vercel Authentication protects the preview; the connector could read deployment status but its authenticated fetch reported no access. No authenticated preview-runtime acceptance is claimed. Local browser acceptance is a separate verified environment. Physical tablet verification is deferred; emulation cannot establish physical touch behavior.
+
+| Viewport | Loaded Settings screenshot |
+| --- | --- |
+| 390 × 844 | [Phone](evidence/phase8/settings-390x844.webp) |
+| 768 × 1024 | [Tablet](evidence/phase8/settings-768x1024.webp) |
+| 820 × 1180 | [Tablet portrait](evidence/phase8/settings-820x1180.webp) |
+| 1024 × 768 | [Tablet landscape](evidence/phase8/settings-1024x768.webp) |
+| 1180 × 820 | [Large tablet](evidence/phase8/settings-1180x820.webp) |
+| 1280 × 800 | [Desktop](evidence/phase8/settings-1280x800.webp) |
+| 1440 × 900 | [Large desktop](evidence/phase8/settings-1440x900.webp) |
+
+Screenshots use lossless WebP encoding of the actual browser captures; no generated UI imagery is used.
+
+Reproducible integration runner: after building and applying the committed migrations to a disposable database whose name ends in `_acceptance`, supply `SETTINGS_TEST_ADMIN_URL` and `SETTINGS_TEST_RUNTIME_URL` and run `npm run test:settings:http`. Both URLs must target that same acceptance database; the runtime must be NOBYPASSRLS/non-superuser. This runner creates only synthetic test identities/resources and verifies real HTTP/database boundaries. It deliberately does not use ordinary production database variables. Tests leave synthetic fixtures with one-hour session expiry for review. The environment-specific local proxy tunnel and Playwright installation are test infrastructure, not runtime dependencies.
 
 ## Files changed
 
-Settings server page/client/CSS and route tests; shared account preference provider/boundary and workspace layout; full-size App Library; registry Settings launch and route description; launcher/mobile navigation and scoped appearance integration; Orb Settings link; preference contract/store/API/tests; owner table/schema/migration/journal; safe OAuth Settings return destination; compiled HTTP regression checks and this document/evidence. Existing central registry is extended, not replaced.
+Settings server page/client/CSS and route tests; shared account preference provider/boundary and workspace layout; full-size App Library; registry Settings launch and route description; launcher/mobile navigation and scoped appearance integration; Orb Settings link; preference contract/store/API/tests; owner table/schema/migration/journal; safe OAuth Settings return destination; compiled HTTP regression checks and this document/evidence. Existing central registry is extended, not replaced. `scripts/check-settings-http.mjs` and the `test:settings:http` package script provide the dedicated real HTTP/database integration runner.
 
 ## Phase 9 handoff
 

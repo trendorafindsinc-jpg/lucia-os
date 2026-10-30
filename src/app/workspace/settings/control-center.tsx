@@ -41,6 +41,10 @@ export default function ControlCenter({
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [now, setNow] = useState<Date | null>(null);
+  useEffect(() => {
+    setNow(new Date());
+  }, []);
   const seenRevision = useRef(-1);
   const dirty = JSON.stringify(draft) !== JSON.stringify(baseline);
   useEffect(() => {
@@ -91,7 +95,9 @@ export default function ControlCenter({
     organizations,
     baseline.preferredOrganizationId,
   );
-  const preview = formatWorkspaceDate(new Date(), draft);
+  const preview = now
+    ? formatWorkspaceDate(now, draft)
+    : "Loading device date and time…";
   function move(id: string, delta: number) {
     const next = [...draft.homeApps];
     const i = next.indexOf(id);
@@ -382,6 +388,7 @@ export default function ControlCenter({
                 <label className={styles.field}>
                   Preferred organization
                   <select
+                    aria-label="Preferred organization"
                     value={draft.preferredOrganizationId ?? ""}
                     disabled={!context.loaded || busy}
                     onChange={(e) => {
@@ -441,6 +448,7 @@ export default function ControlCenter({
                 <label className={styles.field}>
                   Motion
                   <select
+                    aria-label="Motion"
                     value={draft.motion}
                     onChange={(e) =>
                       change(
@@ -456,6 +464,7 @@ export default function ControlCenter({
                 <label className={styles.field}>
                   Transparency
                   <select
+                    aria-label="Transparency"
                     value={draft.transparency}
                     onChange={(e) =>
                       change(
@@ -471,6 +480,7 @@ export default function ControlCenter({
                 <label className={styles.field}>
                   Readability
                   <select
+                    aria-label="Readability"
                     value={draft.readability}
                     onChange={(e) =>
                       change(
@@ -486,6 +496,7 @@ export default function ControlCenter({
                 <label className={styles.field}>
                   Icon density
                   <select
+                    aria-label="Icon density"
                     value={draft.iconLayout}
                     onChange={(e) =>
                       change(
@@ -504,6 +515,7 @@ export default function ControlCenter({
                 <label className={styles.field}>
                   Date format
                   <select
+                    aria-label="Date format"
                     value={draft.dateFormat}
                     onChange={(e) =>
                       change(
@@ -521,6 +533,7 @@ export default function ControlCenter({
                 <label className={styles.field}>
                   Clock
                   <select
+                    aria-label="Clock"
                     value={draft.timeFormat}
                     onChange={(e) =>
                       change(
@@ -537,6 +550,7 @@ export default function ControlCenter({
                 <label className={styles.field}>
                   Time zone
                   <select
+                    aria-label="Time zone"
                     value={draft.timeZone}
                     onChange={(e) => change("timeZone", e.target.value)}
                   >

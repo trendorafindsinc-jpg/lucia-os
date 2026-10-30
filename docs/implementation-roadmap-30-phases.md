@@ -51,6 +51,8 @@ Implement a deliberate tablet composition using tablet space and touch affordanc
 Define stable app identifiers, labels, original icon assets, launch destinations, availability states, and capability/entitlement metadata. The registry also declares whether an app supports split view, how it saves/restores workspace state, and its contextual requirements. Initial first-class entries include Overview, Layout Studio, Layouts, Loom, Store, installed applications, and Settings. Portals and Business Admin are future Store products, not unavailable launcher apps. No fake installed apps or dead icons.
 
 ### Phase 8 — Settings and workspace context
+
+Implementation: [Phase 8 Control Center evidence](phase-8-settings-workspace-context.md), PR #125. Account preferences, organization context and local acceptance are implemented; production migration and protected-preview runtime acceptance remain separate release gates.
 Connect profile/workspace preferences, security entry points, organisation context where applicable, and persisted layout/icon preferences. Do not duplicate LUCIA Core authentication.
 
 ### Phase 9 — Cross-destination transitions and state
