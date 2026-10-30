@@ -1,5 +1,6 @@
 import React, { type CSSProperties } from "react";
 import type { LayoutBlueprint, LayoutSection } from "@/lib/layout-blueprint/blueprint";
+import { parsePremiumLayout, type PremiumLayout, type PremiumSection } from "@/lib/layout-blueprint/premium-composition";
 
 const layoutClass: Record<LayoutBlueprint["theme"]["layout"], string> = {
   editorial: "layout-editorial",
@@ -10,7 +11,8 @@ const layoutClass: Record<LayoutBlueprint["theme"]["layout"], string> = {
   classic: "layout-classic",
 };
 
-export function LayoutRenderer({ blueprint, preview = false, idPrefix = "" }: { blueprint: LayoutBlueprint; preview?: boolean; idPrefix?: string }) {
+export function LayoutRenderer({ blueprint, preview = false, idPrefix = "", pagePath = "/" }: { blueprint: LayoutBlueprint | PremiumLayout; preview?: boolean; idPrefix?: string; pagePath?: string }) {
+  if (blueprint.version === 2) return <PremiumLayoutPage blueprint={blueprint} preview={preview} idPrefix={idPrefix} pagePath={pagePath} />;
   const prefix = preview ? idPrefix : "";
   const anchor = (href: string) => href.startsWith("#") ? `#${prefix}${href.slice(1)}` : href;
   const Root = preview ? "div" : "main";
@@ -71,3 +73,69 @@ function LayoutSectionView({ section, prefix, anchor }: { section: LayoutSection
 
 // Compatibility export for older internal imports.
 export { LayoutRenderer as LoomRenderer };
+
+/** The registered v2 section family deliberately shares the production LayoutRenderer boundary. */
+function PremiumLayoutPage({ blueprint, preview, idPrefix, pagePath }: {
+  blueprint: PremiumLayout; preview: boolean; idPrefix: string; pagePath: string;
+}) {
+  const definition = parsePremiumLayout(blueprint);
+  const page = definition.pages.find(item => item.path === pagePath);
+  if (!page) return null;
+  const prefix = preview ? idPrefix : "";
+  const t = definition.tokens;
+  const widths = { reading: "760px", standard: "1120px", wide: "1440px" };
+  const fonts = { "system-sans": "system-ui, sans-serif", "editorial-serif": "Georgia, serif", "condensed-sans": "Arial Narrow, system-ui, sans-serif" };
+  const style = {
+    "--layout-ink": t.foreground, "--layout-paper": t.background, "--layout-accent": t.accent,
+    "--layout-content-max-width": widths[t.width], fontFamily: fonts[t.font],
+  } as CSSProperties;
+  const Root = preview ? "div" : "main";
+  return <Root className={`layout-site premium-layout premium-scale-${t.scale} premium-rhythm-${t.rhythm} premium-radius-${t.radius} premium-responsive-${page.responsive}`} style={style} data-layout-version="2" data-layout-id={definition.layoutId} data-page-path={page.path}>
+    <header className="layout-site-header">
+      <a className="layout-brand" href="/">{definition.identity.name}</a>
+      {page.navigation && <nav aria-label="Main navigation">{definition.navigation.map(item => <a key={item.href} href={item.href} aria-current={item.href === page.path ? "page" : undefined}>{item.label}</a>)}</nav>}
+    </header>
+    <div className="layout-page-content">
+      {page.sections.map((section, index) => <PremiumSectionView key={section.id} section={section} prefix={prefix} primaryHeading={index === 0} />)}
+    </div>
+    <footer className="layout-site-footer"><span>{definition.identity.name}</span><span>{preview ? "Private preview · LUCIA OS" : "Made with LUCIA OS"}</span></footer>
+  </Root>;
+}
+function PremiumSectionView({ section, prefix, primaryHeading }: { section: PremiumSection; prefix: string; primaryHeading: boolean }) {
+  const heading = (value: string) => primaryHeading ? <h1>{value}</h1> : <h2>{value}</h2>;
+  const id = `${prefix}${section.id}`;
+  switch (section.type) {
+    case "premium-hero":
+      return <section id={id} data-section-type={section.type} data-variant={section.variant} className={`premium-section premium-hero premium-hero-${section.variant}`}>
+        <div><p className="layout-eyebrow">{section.eyebrow}</p>{heading(section.heading)}<p className="layout-lede">{section.body}</p>{section.action && <a className="layout-primary-action" href={section.action.href}>{section.action.label}</a>}</div>
+        {section.image && <PremiumAsset alt={section.image.alt} reference={section.image.src} />}
+      </section>;
+    case "trust-strip":
+      return <section id={id} data-section-type={section.type} data-variant={section.variant} className={`premium-section premium-trust premium-trust-${section.variant}`} aria-label="Trust indicators"><ul>{section.items.map((item, index) => <li key={index}>{item}</li>)}</ul></section>;
+    case "editorial-story":
+      return <section id={id} data-section-type={section.type} data-variant={section.variant} className={`premium-section premium-story premium-story-${section.variant}`}>
+        <div>{heading(section.heading)}<p>{section.body}</p></div>{section.image && <PremiumAsset alt={section.image.alt} reference={section.image.src} />}
+      </section>;
+    case "project-gallery":
+      return <section id={id} data-section-type={section.type} data-variant={section.variant} className={`premium-section premium-gallery premium-gallery-${section.variant}`}>
+        {heading(section.heading)}<div className="premium-gallery-grid">{section.projects.map((project, index) => <article key={index}><PremiumAsset alt={project.image.alt} reference={project.image.src} /><h3>{project.title}</h3>{project.description && <p>{project.description}</p>}</article>)}</div>
+      </section>;
+    case "service-journey":
+      return <section id={id} data-section-type={section.type} data-variant={section.variant} className={`premium-section premium-services premium-services-${section.variant}`}>
+        {heading(section.heading)}<ol>{section.items.map((item, index) => <li key={index}><h3>{item.title}</h3><p>{item.body}</p></li>)}</ol>
+      </section>;
+    case "experience":
+      return <section id={id} data-section-type={section.type} data-variant={section.variant} className={`premium-section premium-experience premium-experience-${section.variant}`}>
+        <PremiumAsset alt={section.image.alt} reference={section.image.src} /><div>{heading(section.heading)}<p>{section.body}</p></div>
+      </section>;
+    case "contact-panel":
+      return <section id={id} data-section-type={section.type} data-variant={section.variant} className={`premium-section premium-contact premium-contact-${section.variant}`}>
+        {heading(section.heading)}<p>{section.body}</p>{section.email && <a href={`mailto:${section.email}`}>{section.email}</a>}
+      </section>;
+  }
+}
+/* An unresolved built-in asset is visibly unavailable, never a broken network image
+ * or a fabricated successful media upload. A licensed manifest is a release gate. */
+function PremiumAsset({ alt, reference }: { alt: string; reference: string }) {
+  return <div className="premium-asset" role="img" aria-label={alt} data-asset-ref={reference}><span>{alt}</span></div>;
+}
