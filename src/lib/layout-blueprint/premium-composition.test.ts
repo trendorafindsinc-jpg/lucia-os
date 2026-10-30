@@ -15,8 +15,8 @@ function fixture(name: string, sections: Record<string, unknown>[], interior: Re
     category: "Demonstration", identity: { name, description: "Composition fixture only, not a commissioned Layout" },
     tokens, navigation: [{ label: "Home", href: "/" }, { label: "About", href: "/about" }],
     pages: [{ id: "home", path: "/", title: "Home", description: "Home", navigation: true, sections },
-      { id: "about", path: "/about", title: "About", description: "About", navigation: true, sections: interior, responsive: "asymmetric" }],
-    permissions };
+      { id: "about", path: "/about", title: "About", description: "About", navigation: true, sections: interior.map(section => ({ ...section, id: "about-" + section.id })), responsive: "asymmetric" }],
+    permissions: { ...permissions, lockedSections: sections.some(section => section.id === "hero") ? ["hero"] : [] } };
 }
 const meridian = fixture("meridian", [hero, journey, story, contact], [story, journey, contact]);
 const canvas = fixture("canvas", [gallery, story, contact], [story, gallery, contact]);
