@@ -10,11 +10,19 @@ vi.mock("@/lib/db/client", () => ({ getDb: mocks.getDb }));
 vi.mock("drizzle-orm", () => ({
   and: (...values: unknown[]) => values,
   eq: (...values: unknown[]) => values,
-  sql: (strings: TemplateStringsArray, ...values: unknown[]) => ({ strings: [...strings], values }),
+  sql: (strings: TemplateStringsArray, ...values: unknown[]) => ({
+    strings: [...strings],
+    values,
+  }),
 }));
 
 import { POST } from "./route";
-import { memberships, organizations, websitePages, websites } from "@/lib/db/schema";
+import {
+  memberships,
+  organizations,
+  websitePages,
+  websites,
+} from "@/lib/db/schema";
 
 const userId = "b8e95a60-fbde-4c37-93e6-a2916c7b13d4";
 const organizationId = "f1e4dbf7-12b6-4285-8c4c-42cdb0b4e1fa";
@@ -37,30 +45,58 @@ function request(body: unknown = payload) {
   });
 }
 
-function configureTransaction(options: {
-  failMembership?: boolean;
-  failWebsite?: boolean;
-  existingMembership?: boolean;
-  existingWebsite?: boolean;
-} = {}) {
+function configureTransaction(
+  options: {
+    failMembership?: boolean;
+    failWebsite?: boolean;
+    existingMembership?: boolean;
+    existingWebsite?: boolean;
+    role?: string;
+    organizationStatus?: string;
+  } = {},
+) {
   const writes: Array<{ table: unknown; values: unknown }> = [];
   const execute = vi.fn().mockResolvedValue([]);
   const membershipLookup = {
     from: vi.fn().mockReturnThis(),
     innerJoin: vi.fn().mockReturnThis(),
     where: vi.fn().mockReturnThis(),
-    limit: vi.fn().mockResolvedValue(options.existingMembership
-      ? [{ id: organizationId, name: payload.organisationName, slug: "lucia-studio", status: "active" }]
-      : []),
+    limit: vi
+      .fn()
+      .mockResolvedValue(
+        options.existingMembership
+          ? [
+              {
+                id: organizationId,
+                name: payload.organisationName,
+                slug: "lucia-studio",
+                status: options.organizationStatus ?? "active",
+                role: options.role ?? "owner",
+                membershipStatus: "active",
+              },
+            ]
+          : [],
+      ),
   };
   const websiteLookup = {
     from: vi.fn().mockReturnThis(),
     where: vi.fn().mockReturnThis(),
-    limit: vi.fn().mockResolvedValue(options.existingWebsite
-      ? [{ id: websiteId, name: payload.websiteName, slug: payload.siteSlug }]
-      : []),
+    limit: vi
+      .fn()
+      .mockResolvedValue(
+        options.existingWebsite
+          ? [
+              {
+                id: websiteId,
+                name: payload.websiteName,
+                slug: payload.siteSlug,
+              },
+            ]
+          : [],
+      ),
   };
-  const select = vi.fn()
+  const select = vi
+    .fn()
     .mockReturnValueOnce(membershipLookup)
     .mockReturnValue(websiteLookup);
   const insert = vi.fn((table: unknown) => ({
@@ -70,22 +106,43 @@ function configureTransaction(options: {
         return Promise.reject(new Error("injected owner membership failure"));
       }
       if (table === websites && options.failWebsite) {
-        return { returning: vi.fn().mockRejectedValue(new Error("injected website failure")) };
+        return {
+          returning: vi
+            .fn()
+            .mockRejectedValue(new Error("injected website failure")),
+        };
       }
       return {
-        returning: vi.fn(async () => table === organizations
-          ? [{ id: organizationId, name: payload.organisationName, slug: "lucia-studio-abcd1234", status: "active" }]
-          : [{ id: websiteId, name: payload.websiteName, slug: payload.siteSlug }]),
+        returning: vi.fn(async () =>
+          table === organizations
+            ? [
+                {
+                  id: organizationId,
+                  name: payload.organisationName,
+                  slug: "lucia-studio-abcd1234",
+                  status: "active",
+                },
+              ]
+            : [
+                {
+                  id: websiteId,
+                  name: payload.websiteName,
+                  slug: payload.siteSlug,
+                },
+              ],
+        ),
       };
     }),
   }));
   const tx = { execute, select, insert };
   let committed = false;
-  const transaction = vi.fn(async (callback: (transaction: typeof tx) => Promise<unknown>) => {
-    const result = await callback(tx);
-    committed = true;
-    return result;
-  });
+  const transaction = vi.fn(
+    async (callback: (transaction: typeof tx) => Promise<unknown>) => {
+      const result = await callback(tx);
+      committed = true;
+      return result;
+    },
+  );
   mocks.getDb.mockReturnValue({ transaction });
   return { tx, transaction, writes, didCommit: () => committed };
 }
@@ -93,7 +150,10 @@ function configureTransaction(options: {
 describe("POST /api/onboarding/website transaction boundary", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.currentUser.mockResolvedValue({ id: userId, displayName: "Test owner" });
+    mocks.currentUser.mockResolvedValue({
+      id: userId,
+      displayName: "Test owner",
+    });
   });
 
   it("rejects unauthenticated requests before opening the database", async () => {
@@ -103,25 +163,61 @@ describe("POST /api/onboarding/website transaction boundary", () => {
     expect(mocks.getDb).not.toHaveBeenCalled();
   });
 
+  it("rejects cross-site creation and reserved addresses", async () => {
+    const cross = new Request(
+      "https://os.lucia.name.ng/api/onboarding/website",
+      {
+        method: "POST",
+        headers: {
+          origin: "https://evil.test",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      },
+    );
+    expect((await POST(cross)).status).toBe(403);
+    expect(
+      (await POST(request({ ...payload, siteSlug: "staff" }))).status,
+    ).toBe(422);
+    expect(mocks.getDb).not.toHaveBeenCalled();
+  });
+  it.each([{ role: "viewer" }, { organizationStatus: "suspended" }])(
+    "cannot create in an unauthorized existing organization %j",
+    async (options) => {
+      const state = configureTransaction({
+        existingMembership: true,
+        ...options,
+      });
+      expect((await POST(request())).status).toBe(403);
+      expect(state.writes).toHaveLength(0);
+    },
+  );
   it("rejects malformed JSON before opening the database", async () => {
-    const malformed = new Request("https://os.lucia.name.ng/api/onboarding/website", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: "{",
-    });
+    const malformed = new Request(
+      "https://os.lucia.name.ng/api/onboarding/website",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: "{",
+      },
+    );
     const response = await POST(malformed);
     expect(response.status).toBe(400);
     expect(mocks.getDb).not.toHaveBeenCalled();
   });
 
   it("rejects invalid setup input before opening the database", async () => {
-    const response = await POST(request({ ...payload, siteSlug: "../outside" }));
+    const response = await POST(
+      request({ ...payload, siteSlug: "../outside" }),
+    );
     expect(response.status).toBe(422);
     expect(mocks.getDb).not.toHaveBeenCalled();
   });
 
   it("rolls back the transaction when initial owner membership creation fails", async () => {
-    const { transaction, writes, didCommit } = configureTransaction({ failMembership: true });
+    const { transaction, writes, didCommit } = configureTransaction({
+      failMembership: true,
+    });
     const response = await POST(request());
 
     expect(response.status).toBe(500);
@@ -137,7 +233,9 @@ describe("POST /api/onboarding/website transaction boundary", () => {
   });
 
   it("rolls back organization, owner membership and website when website creation fails", async () => {
-    const { transaction, writes, didCommit } = configureTransaction({ failWebsite: true });
+    const { transaction, writes, didCommit } = configureTransaction({
+      failWebsite: true,
+    });
     const response = await POST(request());
 
     expect(response.status).toBe(500);
@@ -200,6 +298,8 @@ describe("POST /api/onboarding/website transaction boundary", () => {
     expect(body).toEqual({
       error: "We couldn't save your website yet. Please try again shortly.",
     });
-    expect(JSON.stringify(body)).not.toContain("private connection string details");
+    expect(JSON.stringify(body)).not.toContain(
+      "private connection string details",
+    );
   });
 });

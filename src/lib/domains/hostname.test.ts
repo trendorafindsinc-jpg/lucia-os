@@ -21,31 +21,79 @@ describe("website hostname policy", () => {
     });
   });
 
-  it.each(["os.lucia.name.ng", "admin.lucia.name.ng", "www.lucia.name.ng", "nested.school.lucia.name.ng"])(
-    "rejects reserved or nested LUCIA hostnames: %s",
-    (hostname) => expect(() => classifyWebsiteHostname(hostname)).toThrow(),
+  it.each([
+    "os.lucia.name.ng",
+    "admin.lucia.name.ng",
+    "www.lucia.name.ng",
+    "nested.school.lucia.name.ng",
+  ])("rejects reserved or nested LUCIA hostnames: %s", (hostname) =>
+    expect(() => classifyWebsiteHostname(hostname)).toThrow(),
   );
 
-  it("requires Premium entitlement for custom domains", () => {
-    expect(() => assertDomainClaimAllowed({ hostname: "myschool.com", premiumEntitled: false })).toThrow(/Premium/);
-    expect(assertDomainClaimAllowed({ hostname: "myschool.com", premiumEntitled: true }).type).toBe("custom");
+  it("requires verified one-time Store access for custom domains", () => {
+    expect(() =>
+      assertDomainClaimAllowed({
+        hostname: "myschool.com",
+        customDomainAccessVerified: false,
+      }),
+    ).toThrow(/one-time/);
+    expect(
+      assertDomainClaimAllowed({
+        hostname: "myschool.com",
+        customDomainAccessVerified: true,
+      }).type,
+    ).toBe("custom");
   });
 
   it("does not activate a domain without all verification gates", () => {
-    const base = { status: "verified" as const, type: "custom" as const, premiumEntitled: true,
-      ownershipVerified: true, pointsToExpectedDeployment: true, httpsReady: true };
+    const base = {
+      status: "verified" as const,
+      type: "custom" as const,
+      customDomainAccessVerified: true,
+      ownershipVerified: true,
+      pointsToExpectedDeployment: true,
+      httpsReady: true,
+    };
     expect(canActivateDomain(base)).toBe(true);
     expect(canActivateDomain({ ...base, httpsReady: false })).toBe(false);
-    expect(canActivateDomain({ ...base, ownershipVerified: false })).toBe(false);
-    expect(canActivateDomain({ ...base, premiumEntitled: false })).toBe(false);
+    expect(canActivateDomain({ ...base, ownershipVerified: false })).toBe(
+      false,
+    );
+    expect(
+      canActivateDomain({ ...base, customDomainAccessVerified: false }),
+    ).toBe(false);
     expect(canActivateDomain({ ...base, status: "suspended" })).toBe(false);
     expect(canActivateDomain({ ...base, status: "pending" })).toBe(false);
   });
 
   it("routes only exact, active domains attached to published sites", () => {
-    expect(isRoutableWebsiteDomain({ hostname: "school.lucia.name.ng", status: "active", websiteStatus: "published" })).toBe(true);
-    expect(isRoutableWebsiteDomain({ hostname: "unknown.lucia.name.ng", status: "pending", websiteStatus: "published" })).toBe(false);
-    expect(isRoutableWebsiteDomain({ hostname: "school.lucia.name.ng", status: "active", websiteStatus: "draft" })).toBe(false);
-    expect(isRoutableWebsiteDomain({ hostname: "https://school.lucia.name.ng/path", status: "active", websiteStatus: "published" })).toBe(false);
+    expect(
+      isRoutableWebsiteDomain({
+        hostname: "school.lucia.name.ng",
+        status: "active",
+        websiteStatus: "published",
+      }),
+    ).toBe(true);
+    expect(
+      isRoutableWebsiteDomain({
+        hostname: "unknown.lucia.name.ng",
+        status: "pending",
+        websiteStatus: "published",
+      }),
+    ).toBe(false);
+    expect(
+      isRoutableWebsiteDomain({
+        hostname: "school.lucia.name.ng",
+        status: "active",
+        websiteStatus: "draft",
+      }),
+    ).toBe(false);
+    expect(
+      isRoutableWebsiteDomain({
+        hostname: "https://school.lucia.name.ng/path",
+        status: "active",
+        websiteStatus: "published",
+      }),
+    ).toBe(false);
   });
 });

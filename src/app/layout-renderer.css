@@ -41,3 +41,7 @@
 .layout-storefront .layout-content-grid article{border-radius:0}
 .layout-classic .layout-hero{border-bottom:3px double color-mix(in srgb,var(--layout-ink) 25%,transparent)}
 @media(max-width:760px){.layout-site-header{align-items:flex-start;flex-wrap:wrap;gap:1rem}.layout-site-header nav{order:3;width:100%;gap:1rem}.layout-header-action{padding:.7rem .9rem;font-size:.85rem}.layout-hero{min-height:510px;padding:4rem 0}.layout-hero h1{font-size:clamp(2.8rem,13vw,5rem)}.layout-hero-art{width:100px;height:100px;right:0;bottom:4%}.layout-split .layout-hero{padding-right:0;min-height:550px}.layout-split .layout-hero-art{width:110px;height:110px;top:auto;bottom:3%}.layout-content-section>header{display:block}.layout-content-grid{grid-template-columns:1fr}.layout-content-grid article{min-height:180px}.layout-site-footer{flex-direction:column}}
+
+/* Customer headings and links must fit their actual preview/public container. */
+.layout-site .layout-hero h1,.layout-hero>.layout-lede,.layout-primary-action{max-width:100%;overflow-wrap:anywhere}
+.layout-brand,.layout-header-action,.layout-site-header nav{min-width:0;overflow-wrap:anywhere}

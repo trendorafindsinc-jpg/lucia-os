@@ -12,7 +12,7 @@ export const editorPalettes: Record<EditorPaletteId, readonly [string, string, s
 };
 
 export const siteDraftSchema = z.object({
-  templateId: z.string().refine((id) => Boolean(getTemplateById(id)), "Choose a catalogue template."),
+  templateId: z.string().refine((id) => Boolean(getTemplateById(id)), "Choose a catalogue Layout."),
   siteName: z.string().trim().min(2).max(80),
   headline: z.string().trim().min(2).max(100),
   description: z.string().trim().min(2).max(220),

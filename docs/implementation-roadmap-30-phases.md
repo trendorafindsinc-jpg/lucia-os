@@ -66,6 +66,8 @@ Verify real click/touch/keyboard flows at phone, tablet portrait/landscape, lapt
 ## Section 2 — Free Layout Studio and Layouts (Phases 11–19)
 
 ### Phase 11 — Layout Studio baseline and free-offer audit
+**Acceptance: PASS.** [Executed foundation and security evidence](phase-11-website-foundation.md); final-head CI and Vercel remain mandatory release gates.
+
 Audit create/edit/preview/publish, domains, layouts, data persistence, entitlement checks, and current pricing gates. Remove any unsupported assumption that standard website creation/publishing requires a subscription, paid Layout, or AI purchase.
 
 **Approved Phase 11 commercial boundary:** Standard website creation/editing/preview/publishing and built-in Layouts are free. The only paid access capability scoped to the Phase 11 website workflow is optional custom-domain access, sold through **LUCIA Store at ₦5,000 one-time**, with **Paystack** as the approved provider. Domain registration/registrar renewal are separate. No recurring LUCIA website subscription is required. Audit legacy pricing and entitlement gates without deleting history. Prepare the entitlement/verification contract; do not fake or prematurely deploy checkout, and never activate domain access from an unverified redirect. See `docs/lucia-os-product-vision.md` and `docs/layouts-s3-storage-contract.md`.
@@ -73,6 +75,8 @@ Audit create/edit/preview/publish, domains, layouts, data persistence, entitleme
 **Approved layout boundary:** Phase 11 audits and stabilizes existing free website create/edit/save/preview/publish, tenancy, domain pricing, and persistence. Phase 12 inventories designs, records distinctive art directions/page structures/responsive briefs and applies the 48-Layout quality rubric; it does not implement a competing editor or 48 production Layouts. Phase 13 builds the shared validated hybrid composition engine. Phases 14–17 produce and expand real premium designs. The canonical design contract is `docs/layouts-48-premium-catalogue.md`.
 
 ### Phase 12 — Layout catalogue design rubric and inventory
+**Acceptance: PASS (architecture).** [37-starter inventory, 48 individual blueprints and eight flagship briefs](phase-12-premium-layout-architecture.md). No new premium Layout implementation is claimed.
+
 Inventory current catalogue entries, routes, screenshots, and rendered structures. Define per-layout purpose, design identity, sections, responsive composition, imagery, navigation, and content-replacement criteria. Identify near-duplicates.
 
 ### Phase 13 — Layout composition system
