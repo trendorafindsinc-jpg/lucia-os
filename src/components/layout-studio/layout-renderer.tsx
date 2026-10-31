@@ -223,7 +223,10 @@ function PremiumLayoutPage({
       data-layout-id={definition.layoutId}
       data-page-path={page.path}
     >
-      <header className="layout-site-header">
+      <a className="premium-skip-link" href={`#${prefix}premium-main-content`}>
+        Skip to content
+      </a>
+      <header className="layout-site-header premium-site-header">
         {/* Public hostname navigation must issue a document request, not enter the OS App Router. */}
         {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
         <a
@@ -234,23 +237,38 @@ function PremiumLayoutPage({
           {definition.identity.name}
         </a>
         {page.navigation && (
-          <nav aria-label="Main navigation">
-            {definition.navigation.map((item) => (
-              <a
-                key={item.href}
-                href={item.href}
-                onClick={
-                  preview ? (event) => navigate(event, item.href) : undefined
-                }
-                aria-current={item.href === page.path ? "page" : undefined}
-              >
-                {item.label}
-              </a>
-            ))}
-          </nav>
+          <>
+            <nav className="premium-desktop-nav" aria-label="Main navigation">
+              {definition.navigation.map((item) => (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  onClick={preview ? (event) => navigate(event, item.href) : undefined}
+                  aria-current={item.href === page.path ? "page" : undefined}
+                >
+                  {item.label}
+                </a>
+              ))}
+            </nav>
+            <details className="premium-mobile-menu">
+              <summary>Menu</summary>
+              <nav aria-label="Mobile navigation">
+                {definition.navigation.map((item) => (
+                  <a
+                    key={item.href}
+                    href={item.href}
+                    onClick={preview ? (event) => navigate(event, item.href) : undefined}
+                    aria-current={item.href === page.path ? "page" : undefined}
+                  >
+                    {item.label}
+                  </a>
+                ))}
+              </nav>
+            </details>
+          </>
         )}
       </header>
-      <div className="layout-page-content">
+      <div id={`${prefix}premium-main-content`} className="layout-page-content" tabIndex={-1}>
         {page.sections.map((section, index) => (
           <PremiumSectionView
             key={section.id}
@@ -324,6 +342,7 @@ function PremiumSectionView({
             <PremiumAsset
               alt={section.image.alt}
               reference={section.image.src}
+              eager={primaryHeading}
             />
           )}
         </section>
@@ -471,7 +490,7 @@ function PremiumSectionView({
 }
 /* An unresolved built-in asset is visibly unavailable, never a broken network image
  * or a fabricated successful media upload. A licensed manifest is a release gate. */
-function PremiumAsset({ alt, reference }: { alt: string; reference: string }) {
+function PremiumAsset({ alt, reference, eager = false }: { alt: string; reference: string; eager?: boolean }) {
   return (
     <Image
       unoptimized
@@ -480,7 +499,9 @@ function PremiumAsset({ alt, reference }: { alt: string; reference: string }) {
       alt={alt}
       width={800}
       height={500}
-      loading="lazy"
+      loading={eager ? "eager" : "lazy"}
+      fetchPriority={eager ? "high" : "auto"}
+      sizes="(max-width: 768px) 100vw, (max-width: 1180px) 50vw, 800px"
       data-asset-ref={reference}
     />
   );
