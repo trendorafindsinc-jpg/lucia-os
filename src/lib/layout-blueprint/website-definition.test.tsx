@@ -10,6 +10,7 @@ import { describe, expect, it } from "vitest";
 import { LayoutRenderer } from "@/components/layout-studio/layout-renderer";
 import { makeInitialDraft } from "@/lib/editor/site-draft";
 import { structuralLayout, structuralLayoutIds } from "./structural-layouts";
+import { premiumFlagshipIds } from "./premium-layouts/catalogue-candidates";
 import {
   websiteDefinitionSchema,
   mutateWebsite,
@@ -303,5 +304,101 @@ describe("versioned production website boundary", () => {
         version: 3,
       }).success,
     ).toBe(false);
+  });
+
+  it.each(premiumFlagshipIds)(
+    "assigns %s through the real revision-protected website mutation contract",
+    (id) => {
+      const initial = makeInitialDraft("northstar-consulting");
+      const canonical = websiteMutationSchema.parse({
+        kind: "assign-layout", layoutId: id,
+      });
+      const created = mutateWebsite(initial, canonical);
+      const validated = premiumLayoutSchema.parse(
+        websiteDefinitionSchema.parse(JSON.parse(JSON.stringify(created))),
+      );
+      expect(validated.layoutId).toBe(id);
+      expect(validated.identity.name).toBe(initial.siteName);
+      expect(validated.pages.length).toBeGreaterThanOrEqual(6);
+      const home = renderToStaticMarkup(
+        <LayoutRenderer blueprint={websiteBlueprint(validated)} />,
+      );
+      expect(home).toContain('data-layout-id="' + id + '"');
+      const firstPage = validated.pages.find((page) => page.path !== "/");
+      if (!firstPage) throw Error("Expected a meaningful interior page");
+      const interior = renderToStaticMarkup(
+        <LayoutRenderer blueprint={websiteBlueprint(validated)} pagePath={firstPage.path} />,
+      );
+      expect(interior).toContain('data-page-path="' + firstPage.path + '"');
+      const hero = validated.pages[0].sections.find((part) => part.type === "premium-hero");
+      if (hero?.type !== "premium-hero") throw Error("Expected content-editable hero");
+      const changed = mutateWebsite(validated, websiteMutationSchema.parse({
+        kind: "composition-edit", mode: "guided",
+        edits: [{
+          kind: "replace-section", pageId: "home",
+          section: { ...hero, heading: "Customer authored landing page" },
+        }],
+      }));
+      const persisted = websiteDefinitionSchema.parse(JSON.parse(JSON.stringify(changed)));
+      expect(premiumLayoutSchema.parse(persisted).pages[0].sections)
+        .toContainEqual(expect.objectContaining({ heading: "Customer authored landing page" }));
+      expect(validated.pages[0].sections.some((section) =>
+        section.type === "premium-hero" && section.heading === "Customer authored landing page"
+      )).toBe(false);
+      expect(() => mutateWebsite(validated, initial)).toThrow();
+      expect(() => mutateWebsite(validated, canonical)).toThrow();
+    },
+  );
+
+  it("allows the registered catalogue IDs and rejects invented or unsafe assignment IDs", () => {
+    for (const registered of ["lucia.layout.keystone", "lucia.layout.greenfield"]) {
+      const value = mutateWebsite(makeInitialDraft("northstar-consulting"), websiteMutationSchema.parse({ kind: "assign-layout", layoutId: registered }));
+      expect(premiumLayoutSchema.parse(value).layoutId).toBe(registered);
+    }
+    for (const denied of [
+      "lucia.layout.fake",
+      "lucia.layout.meridian/../../staff", "prototype:canvas",
+    ]) {
+      expect(websiteMutationSchema.safeParse({
+        kind: "assign-layout", layoutId: denied,
+      }).success).toBe(false);
+    }
+    expect(websiteMutationSchema.safeParse({
+      kind: "assign-layout", layoutId: "lucia.layout.canvas",
+      permissions: { lockedSections: [] },
+    }).success).toBe(false);
+  });
+
+  it("renames a flagship site in Guided Mode without changing its canonical ID or design", () => {
+    const base = premiumLayoutSchema.parse(mutateWebsite(
+      makeInitialDraft("northstar-consulting"),
+      websiteMutationSchema.parse({
+        kind: "assign-layout", layoutId: "lucia.layout.meridian",
+      }),
+    ));
+    const before = base.pages.map((p) => p.sections.map((s) => s.id));
+    const renamed = premiumLayoutSchema.parse(mutateWebsite(base, {
+      kind: "composition-edit", mode: "guided",
+      edits: [{ kind: "brand", name: "Stonebridge Advisory" }],
+    }));
+    expect(renamed.identity.name).toBe("Stonebridge Advisory");
+    expect(renamed.layoutId).toBe(base.layoutId);
+    expect(renamed.pages[0].title).toBe("Stonebridge Advisory");
+    expect(renamed.pages.map((p) => p.sections.map((s) => s.id))).toEqual(before);
+    expect(renamed.pages.find((p) => p.path === "/services")?.title)
+      .toContain("Stonebridge Advisory");
+    expect(base.identity.name).not.toBe("Stonebridge Advisory");
+    const html = renderToStaticMarkup(<LayoutRenderer blueprint={renamed} />);
+    expect(html).toContain("Stonebridge Advisory");
+    expect(() => mutateWebsite(base, {
+      kind: "composition-edit", mode: "guided",
+      edits: [{ kind: "brand", name: "X" }],
+    })).toThrow();
+    const denied = structuredClone(base);
+    denied.permissions.guided = denied.permissions.guided.filter((permission) => permission !== "brand");
+    expect(() => mutateWebsite(denied, {
+      kind: "composition-edit", mode: "guided",
+      edits: [{ kind: "brand", name: "A different owner" }],
+    })).toThrow(/Brand edit denied/);
   });
 });

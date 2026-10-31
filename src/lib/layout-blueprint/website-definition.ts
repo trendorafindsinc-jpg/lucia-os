@@ -7,6 +7,7 @@ import {
   applyPremiumEdit,
 } from "./premium-composition";
 import { structuralLayout, structuralLayoutIds } from "./structural-layouts";
+import { premiumCandidate, premiumCandidateIds } from "./premium-layouts/catalogue-candidates";
 
 const legacyDefinitionSchema = z
   .object({
@@ -55,7 +56,7 @@ export const websiteMutationSchema = z.union([
   z
     .object({
       kind: z.literal("assign-layout"),
-      layoutId: z.enum(structuralLayoutIds),
+      layoutId: z.enum([...structuralLayoutIds, ...premiumCandidateIds]),
     })
     .strict(),
   z
@@ -80,7 +81,12 @@ export function mutateWebsite(
   if (mutation.kind === "assign-layout") {
     if (isPremium(stored))
       throw new Error("Replacing an existing composition is not supported");
-    return structuralLayout(mutation.layoutId, stored.siteName);
+    // A full canonical ID is deliberately distinct from the old structural
+    // demo aliases. Assignment still runs inside existing authenticated,
+    // organization-scoped, revision-checked server draft transactions.
+    if (premiumCandidateIds.some((id) => id === mutation.layoutId))
+      return premiumCandidate(mutation.layoutId, stored.siteName);
+    return structuralLayout(mutation.layoutId as (typeof structuralLayoutIds)[number], stored.siteName);
   }
   if (!isPremium(stored))
     throw new Error("This website does not use composition edits");

@@ -3,6 +3,7 @@ node_modules/
 out/
 build/
 coverage/
+artifacts/
 *.tsbuildinfo
 next-env.d.ts
 .env

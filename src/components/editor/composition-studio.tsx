@@ -22,6 +22,8 @@ import {
   type PremiumLayout,
 } from "@/lib/layout-blueprint/premium-composition";
 import { structuralLayoutIds } from "@/lib/layout-blueprint/structural-layouts";
+import { premiumCandidateIds } from "@/lib/layout-blueprint/premium-layouts/catalogue-candidates";
+import { premiumArtworkChoices } from "@/lib/layout-blueprint/premium-layouts/asset-choices";
 
 type Loaded = { draft: WebsiteDefinition; revision: string; context: string };
 export function CompositionStudio({
@@ -141,20 +143,28 @@ export function CompositionStudio({
     <>
       <section
         className="composition-controls"
-        aria-label="Structural Layout demonstrations"
+        aria-label="Layout starting designs"
       >
         <p>
-          Engine demonstrations · Meridian, Canvas and Haven are structural
-          examples, not finished premium designs.
+          The original engine demonstrations remain available. The 48 registered Phase 14
+          candidates can also be assigned for engineering review; they have
+          not passed premium design or publishing acceptance.
         </p>
         <label>
           Starting composition{" "}
           <select value={assign} onChange={(e) => setAssign(e.target.value)}>
-            {structuralLayoutIds.map((id) => (
-              <option key={id} value={id}>
-                {id}
-              </option>
-            ))}
+            <optgroup label="Phase 13 structural demonstrations">
+              {structuralLayoutIds.map((id) => (
+                <option key={id} value={id}>{id}</option>
+              ))}
+            </optgroup>
+            <optgroup label="Phase 14 candidates — not accepted">
+              {premiumCandidateIds.map((id) => (
+                <option key={id} value={id}>
+                  {id.slice("lucia.layout.".length)}
+                </option>
+              ))}
+            </optgroup>
           </select>
         </label>
         <button disabled={busy} onClick={assignLayout}>
@@ -361,6 +371,26 @@ function CompositionEditor({
         className="composition-controls"
         aria-label="Composition controls"
       >
+        {layout.permissions.guided.includes("brand") && (
+          <label>
+            Website name
+            <input
+              key={"brand:" + layout.identity.name}
+              defaultValue={layout.identity.name}
+              maxLength={80}
+              onBlur={(event) => {
+                const name = event.currentTarget.value.trim();
+                if (name.length >= 2 && name !== layout.identity.name)
+                  edit({ kind: "brand", name });
+              }}
+              aria-describedby="website-name-help"
+            />
+            <small id="website-name-help">
+              Changes the website branding and page titles without replacing
+              your editorial content.
+            </small>
+          </label>
+        )}
         <label>
           Editing mode{" "}
           <select
@@ -432,6 +462,227 @@ function CompositionEditor({
               }
             />
           </label>
+        )}
+        {section.type === "premium-hero" && section.action && (
+          <>
+            <label>
+              Primary action label
+              <input
+                key={page.id + ":" + section.id + ":cta:" + section.action.label}
+                defaultValue={section.action.label}
+                maxLength={60}
+                onBlur={(event) => {
+                  const label = event.currentTarget.value.trim();
+                  if (label && label !== section.action!.label)
+                    edit({
+                      kind: "replace-section",
+                      pageId: page.id,
+                      section: {
+                        ...section,
+                        action: { ...section.action!, label },
+                      },
+                    });
+                }}
+              />
+            </label>
+            <label>
+              Primary action destination
+              <select
+                value={section.action.href}
+                onChange={(event) =>
+                  edit({
+                    kind: "replace-section",
+                    pageId: page.id,
+                    section: {
+                      ...section,
+                      action: { ...section.action!, href: event.target.value },
+                    },
+                  })
+                }
+              >
+                {layout.pages.map((destination) => (
+                  <option key={destination.path} value={destination.path}>
+                    {destination.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </>
+        )}
+        {section.type === "contact-panel" && (
+          <label>
+            Business enquiry email
+            <input
+              key={page.id + ":" + section.id + ":" + (section.email ?? "")}
+              type="email"
+              required
+              autoComplete="email"
+              defaultValue={section.email ?? ""}
+              placeholder="contact@yourbusiness.com"
+              onBlur={(event) => {
+                const newEmail = event.currentTarget.value.trim();
+                if (newEmail !== (section.email ?? "")) {
+                  edit({
+                    kind: "replace-section",
+                    pageId: page.id,
+                    section: {
+                      ...section,
+                      email: newEmail || undefined,
+                    },
+                  });
+                }
+              }}
+            />
+            <small>
+              Changing this shared starter address updates matching
+              contact panels across the website. Save the draft before publishing.
+            </small>
+          </label>
+        )}
+        {(section.type === "premium-hero" ||
+          section.type === "editorial-story" ||
+          section.type === "experience") && section.image && (
+          <>
+            <label>
+              Illustrated artwork
+              <select
+                value={section.image.src}
+                onChange={(event) =>
+                  edit({
+                    kind: "replace-section",
+                    pageId: page.id,
+                    section: {
+                      ...section,
+                      image: { ...section.image!, src: event.target.value },
+                    },
+                  })
+                }
+              >
+                {premiumArtworkChoices.map((asset) => (
+                  <option key={asset.ref} value={asset.ref}>{asset.label}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Image description (alt text)
+              <input
+                key={page.id + ":" + section.id + ":alt:" + section.image.alt}
+                defaultValue={section.image.alt}
+                maxLength={200}
+                onBlur={(event) => {
+                  const alt = event.currentTarget.value.trim();
+                  if (alt && alt !== section.image!.alt)
+                    edit({
+                      kind: "replace-section",
+                      pageId: page.id,
+                      section: { ...section, image: { ...section.image!, alt } },
+                    });
+                }}
+              />
+            </label>
+          </>
+        )}
+        {section.type === "project-gallery" && (
+          <fieldset className="composition-controls" aria-label="Portfolio project cards">
+            <legend>Project cards</legend>
+            {section.projects.map((project, index) => (
+              <div className="composition-controls" key={index}>
+                <label>
+                  Project {index + 1} title
+                  <input
+                    key={page.id + ":" + section.id + ":project:" + index + ":" + project.title}
+                    defaultValue={project.title}
+                    maxLength={120}
+                    onBlur={(event) => {
+                      const title = event.currentTarget.value.trim();
+                      if (title && title !== project.title)
+                        edit({
+                          kind: "replace-section",
+                          pageId: page.id,
+                          section: {
+                            ...section,
+                            projects: section.projects.map((entry, i) =>
+                              i === index ? { ...entry, title } : entry),
+                          },
+                        });
+                    }}
+                  />
+                </label>
+                <label>
+                  Project {index + 1} artwork
+                  <select
+                    value={project.image.src}
+                    onChange={(event) =>
+                      edit({
+                        kind: "replace-section",
+                        pageId: page.id,
+                        section: {
+                          ...section,
+                          projects: section.projects.map((entry, i) =>
+                            i === index
+                              ? { ...entry, image: { ...entry.image, src: event.target.value } }
+                              : entry),
+                        },
+                      })
+                    }
+                  >
+                    {premiumArtworkChoices.map((asset) => (
+                      <option key={asset.ref} value={asset.ref}>{asset.label}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Project {index + 1} image description
+                  <input
+                    key={page.id + ":" + section.id + ":projectalt:" + index + ":" + project.image.alt}
+                    defaultValue={project.image.alt}
+                    maxLength={200}
+                    onBlur={(event) => {
+                      const alt = event.currentTarget.value.trim();
+                      if (alt && alt !== project.image.alt)
+                        edit({
+                          kind: "replace-section",
+                          pageId: page.id,
+                          section: {
+                            ...section,
+                            projects: section.projects.map((entry, i) =>
+                              i === index
+                                ? { ...entry, image: { ...entry.image, alt } }
+                                : entry),
+                          },
+                        });
+                    }}
+                  />
+                </label>
+                <label>
+                  Linked project page
+                  <select
+                    value={project.href ?? ""}
+                    onChange={(event) =>
+                      edit({
+                        kind: "replace-section",
+                        pageId: page.id,
+                        section: {
+                          ...section,
+                          projects: section.projects.map((entry, i) =>
+                            i === index
+                              ? { ...entry, href: event.target.value || undefined }
+                              : entry),
+                        },
+                      })
+                    }
+                  >
+                    <option value="">No link</option>
+                    {layout.pages.map((destination) => (
+                      <option key={destination.path} value={destination.path}>
+                        {destination.title}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            ))}
+          </fieldset>
         )}
         <button
           disabled={

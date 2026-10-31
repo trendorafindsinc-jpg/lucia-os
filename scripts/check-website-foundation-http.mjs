@@ -18,6 +18,7 @@ const sourceFiles = execFileSync(
     "--others",
     "--exclude-standard",
     "src",
+    "public",
     "scripts",
     "package.json",
     "package-lock.json",
@@ -60,6 +61,7 @@ let child,
   logs = "";
 const checks = [],
   browserChecks = [];
+let phase14Publishing = [];
 const pass = (name) => {
   checks.push(name);
   console.log("PASS", name);
@@ -400,10 +402,18 @@ try {
         response.writeHead(400).end();
         return;
       }
+      // This is a test-only local transport. Chromium may send localhost
+      // requests to this proxy despite the bypass list. Permit ONLY the
+      // compiled application on its assigned ephemeral port, plus synthetic
+      // LUCIA subdomains; never proxy arbitrary external URLs.
+      const localApp =
+        target.hostname === "localhost" || target.hostname === "127.0.0.1";
+      const publicTestSite =
+        /^[a-z0-9-]+\.lucia\.name\.ng$/.test(target.hostname);
       if (
         target.protocol !== "http:" ||
         target.port !== String(port) ||
-        !/^[a-z0-9-]+\.lucia\.name\.ng$/.test(target.hostname)
+        (!localApp && !publicTestSite)
       ) {
         response.writeHead(403).end();
         return;
@@ -1008,6 +1018,14 @@ try {
       const {checkPremiumComposition} = await import("./premium-composition-acceptance.mjs");
       await checkPremiumComposition({api,admin,f,base,browserContext,created,bpass,publicSite});
     }
+    if (process.env.WEBSITE_TEST_PHASE14 === "1") {
+      const { checkPhase14FlagshipPublishing } = await import(
+        "./phase14-premium-publishing-acceptance.mjs"
+      );
+      phase14Publishing = await checkPhase14FlagshipPublishing({
+        api, admin, f, base, browserContext, created, bpass, publicSite,
+      });
+    }
     assert.equal(errors.length, 0, errors.join("\n"));
     bpass("No unhandled application errors");
   }
@@ -1043,6 +1061,7 @@ try {
           testedSource,
           checks,
           browserChecks,
+          phase14Publishing,
         },
         null,
         2,

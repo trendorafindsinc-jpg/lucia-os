@@ -1,4 +1,4 @@
-import { resolvePremiumAsset } from "@/lib/layout-blueprint/premium-assets";
+import { resolvePremiumAsset, premiumAssetDimensions } from "@/lib/layout-blueprint/premium-assets";
 import Image from "next/image";
 import React, { type CSSProperties } from "react";
 import type {
@@ -217,13 +217,17 @@ function PremiumLayoutPage({
   const Root = preview ? "div" : "main";
   return (
     <Root
-      className={`layout-site premium-layout premium-scale-${t.scale} premium-rhythm-${t.rhythm} premium-radius-${t.radius} premium-responsive-${page.responsive}`}
+      className={`layout-site premium-layout premium-design-${definition.layoutId.slice("lucia.layout.".length)}-r${definition.layoutVersion} premium-scale-${t.scale} premium-rhythm-${t.rhythm} premium-radius-${t.radius} premium-responsive-${page.responsive}`}
       style={style}
       data-layout-version="2"
+      data-layout-revision={definition.layoutVersion}
       data-layout-id={definition.layoutId}
       data-page-path={page.path}
     >
-      <header className="layout-site-header">
+      <a className="premium-skip-link" href={`#${prefix}premium-main-content`}>
+        Skip to content
+      </a>
+      <header className="layout-site-header premium-site-header">
         {/* Public hostname navigation must issue a document request, not enter the OS App Router. */}
         {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
         <a
@@ -234,23 +238,41 @@ function PremiumLayoutPage({
           {definition.identity.name}
         </a>
         {page.navigation && (
-          <nav aria-label="Main navigation">
-            {definition.navigation.map((item) => (
-              <a
-                key={item.href}
-                href={item.href}
-                onClick={
-                  preview ? (event) => navigate(event, item.href) : undefined
-                }
-                aria-current={item.href === page.path ? "page" : undefined}
-              >
-                {item.label}
-              </a>
-            ))}
-          </nav>
+          <>
+            <nav className="premium-desktop-nav" aria-label="Main navigation">
+              {definition.navigation.map((item) => (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  onClick={preview ? (event) => navigate(event, item.href) : undefined}
+                  aria-current={item.href === page.path ? "page" : undefined}
+                >
+                  {item.label}
+                </a>
+              ))}
+            </nav>
+            <details className="premium-mobile-menu">
+              <summary>Menu</summary>
+              <nav aria-label="Mobile navigation">
+                {definition.navigation.map((item) => (
+                  <a
+                    key={item.href}
+                    href={item.href}
+                    onClick={preview ? (event) => {
+                      navigate(event, item.href);
+                      event.currentTarget.closest("details")?.removeAttribute("open");
+                    } : undefined}
+                    aria-current={item.href === page.path ? "page" : undefined}
+                  >
+                    {item.label}
+                  </a>
+                ))}
+              </nav>
+            </details>
+          </>
         )}
       </header>
-      <div className="layout-page-content">
+      <div id={`${prefix}premium-main-content`} className="layout-page-content" tabIndex={-1}>
         {page.sections.map((section, index) => (
           <PremiumSectionView
             key={section.id}
@@ -263,11 +285,35 @@ function PremiumLayoutPage({
           />
         ))}
       </div>
-      <footer className="layout-site-footer">
-        <span>{definition.identity.name}</span>
-        <span>
-          {preview ? "Private preview · LUCIA OS" : "Made with LUCIA OS"}
-        </span>
+      <footer className="layout-site-footer premium-site-footer">
+        <div className="premium-footer-identity">
+          <p className="premium-footer-brand">{definition.identity.name}</p>
+          <p className="premium-footer-description">{definition.identity.description}</p>
+        </div>
+        <nav aria-label="Footer navigation" className="premium-footer-navigation">
+          {definition.navigation.map((item) => (
+            <a
+              href={item.href}
+              key={item.href}
+              onClick={preview ? (event) => navigate(event, item.href) : undefined}
+              aria-current={item.href === page.path ? "page" : undefined}
+            >
+              {item.label}
+            </a>
+          ))}
+        </nav>
+        <div className="premium-footer-end">
+          <span>{preview ? "Private preview · LUCIA OS" : "Made with LUCIA OS"}</span>
+          {/* Customer hostname navigation must issue a document request. */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+          <a
+            href="/"
+            onClick={preview ? (event) => navigate(event, "/") : undefined}
+            aria-label={`Return to ${definition.identity.name} homepage`}
+          >
+            Back to home
+          </a>
+        </div>
       </footer>
     </Root>
   );
@@ -324,6 +370,7 @@ function PremiumSectionView({
             <PremiumAsset
               alt={section.image.alt}
               reference={section.image.src}
+              eager={primaryHeading}
             />
           )}
         </section>
@@ -373,14 +420,45 @@ function PremiumSectionView({
           className={`premium-section premium-gallery premium-gallery-${section.variant}`}
         >
           {heading(section.heading)}
-          <div className="premium-gallery-grid">
+          <div
+            className="premium-gallery-grid"
+            tabIndex={section.variant === "rail" ? 0 : undefined}
+            role={section.variant === "rail" ? "region" : undefined}
+            aria-label={
+              section.variant === "rail"
+                ? `${section.heading} — scrollable projects`
+                : undefined
+            }
+          >
             {section.projects.map((project, index) => (
               <article key={index}>
                 <PremiumAsset
                   alt={project.image.alt}
                   reference={project.image.src}
                 />
-                <h3>{project.title}</h3>
+                <h3>
+                  {project.href ? (
+                    <a
+                      href={
+                        project.href.startsWith("#")
+                          ? `#${prefix}${project.href.slice(1)}`
+                          : project.href
+                      }
+                      onClick={
+                        onNavigate && project.href.startsWith("/")
+                          ? (event) => {
+                              event.preventDefault();
+                              onNavigate(project.href!);
+                            }
+                          : undefined
+                      }
+                    >
+                      {project.title}
+                    </a>
+                  ) : (
+                    project.title
+                  )}
+                </h3>
                 {project.description && <p>{project.description}</p>}
               </article>
             ))}
@@ -440,16 +518,17 @@ function PremiumSectionView({
 }
 /* An unresolved built-in asset is visibly unavailable, never a broken network image
  * or a fabricated successful media upload. A licensed manifest is a release gate. */
-function PremiumAsset({ alt, reference }: { alt: string; reference: string }) {
+function PremiumAsset({ alt, reference, eager = false }: { alt: string; reference: string; eager?: boolean }) {
   return (
     <Image
       unoptimized
       className="premium-asset"
       src={resolvePremiumAsset(reference)}
       alt={alt}
-      width={800}
-      height={500}
-      loading="lazy"
+      {...premiumAssetDimensions(reference)}
+      loading={eager ? "eager" : "lazy"}
+      fetchPriority={eager ? "high" : "auto"}
+      sizes="(max-width: 768px) 100vw, (max-width: 1180px) 50vw, 800px"
       data-asset-ref={reference}
     />
   );

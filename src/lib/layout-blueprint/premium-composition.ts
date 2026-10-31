@@ -77,6 +77,7 @@ const gallery = z
           .object({
             title: text(120),
             image,
+            href: href.optional(),
             description: text(500).optional(),
           })
           .strict(),
@@ -268,18 +269,28 @@ export const premiumLayoutSchema = z
         });
     for (const [i, p] of definition.pages.entries()) {
       for (const [j, section] of p.sections.entries()) {
-        if (section.type !== "premium-hero" || !section.action) continue;
-        const target = section.action.href;
-        if (
-          !(target.startsWith("#")
-            ? p.sections.some((s) => s.id === target.slice(1))
-            : routes.has(target))
-        )
-          ctx.addIssue({
-            code: "custom",
-            path: ["pages", i, "sections", j, "action"],
-            message: "Action destination not registered",
-          });
+        const targets =
+          section.type === "premium-hero"
+            ? section.action
+              ? [section.action.href]
+              : []
+            : section.type === "project-gallery"
+              ? section.projects.flatMap((project) =>
+                  project.href ? [project.href] : [],
+                )
+              : [];
+        for (const target of targets) {
+          if (
+            !(target.startsWith("#")
+              ? p.sections.some((s) => s.id === target.slice(1))
+              : routes.has(target))
+          )
+            ctx.addIssue({
+              code: "custom",
+              path: ["pages", i, "sections", j],
+              message: "Section destination not registered",
+            });
+        }
       }
     }
     for (const [
@@ -300,6 +311,7 @@ export const parsePremiumLayout = (input: unknown): PremiumLayout =>
 /** Every edit is applied to an independently validated copy. Server callers
  * must still authenticate, authorize tenant ownership and enforce revisions. */
 export type PremiumEdit =
+  | { kind: "brand"; name: string }
   | {
       kind: "insert-section";
       pageId: string;
@@ -326,7 +338,23 @@ export function applyPremiumEdit(
   const original = parsePremiumLayout(layout);
   const next = structuredClone(original);
   const perms = next.permissions;
-  if (edit.kind === "insert-page" || edit.kind === "remove-page") {
+  if (edit.kind === "brand") {
+    if (
+      edit.name.trim() !== edit.name ||
+      edit.name.length < 2 ||
+      edit.name.length > 80
+    ) throw new Error("Invalid website name");
+    if (!perms.guided.includes("brand"))
+      throw new Error("Brand edit denied");
+    const oldName = next.identity.name;
+    next.identity.name = edit.name;
+    // Keep page metadata in step with the public navigation/brand name.
+    // This does not rewrite the customer's editorial sections.
+    for (const page of next.pages) {
+      if (page.title.includes(oldName))
+        page.title = page.title.replaceAll(oldName, edit.name).slice(0, 120);
+    }
+  } else if (edit.kind === "insert-page" || edit.kind === "remove-page") {
     if (mode !== "advanced" || !perms.advanced.includes("pages"))
       throw new Error("Page structure edit denied");
     if (edit.kind === "insert-page") {
@@ -463,12 +491,33 @@ export function applyPremiumEdit(
       };
       check(before, edit.section, "section");
       page.sections[index] = edit.section;
+      // A website's enquiry address is shared content, not a per-page
+      // credential. Keep matching contact panels consistent when a customer
+      // replaces the starter address. Do not overwrite a different address
+      // explicitly customized on another page.
+      if (
+        before.type === "contact-panel" &&
+        edit.section.type === "contact-panel" &&
+        before.email !== edit.section.email
+      ) {
+        for (const otherPage of next.pages) {
+          for (const other of otherPage.sections) {
+            if (other.type === "contact-panel" && other.email === before.email) {
+              other.email = edit.section.email;
+            }
+          }
+        }
+      }
     }
   }
   return parsePremiumLayout(next);
 }
 
 export const premiumEditSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("brand"),
+    name: z.string().trim().min(2).max(80),
+  }).strict(),
   z
     .object({
       kind: z.literal("insert-section"),
