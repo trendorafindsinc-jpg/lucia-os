@@ -50,6 +50,15 @@ const categoryOrder = [
   "estate", "care", "build", "motion", "local", "greenfield",
 ] as const;
 
+/** Only these flagship candidates are currently available for controlled 
+ * layout-assignment integration tests. This list is NOT a release approval. */
+export const premiumFlagshipIds = [
+  "lucia.layout.meridian", "lucia.layout.canvas",
+  "lucia.layout.haven", "lucia.layout.academia",
+  "lucia.layout.maison", "lucia.layout.nexus",
+  "lucia.layout.impact", "lucia.layout.estate",
+] as const;
+
 export const premiumCandidateIds: readonly string[] = categoryOrder.map(
   (id) => "lucia.layout." + id,
 );
