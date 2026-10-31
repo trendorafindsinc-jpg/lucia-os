@@ -22,6 +22,7 @@ import {
   type PremiumLayout,
 } from "@/lib/layout-blueprint/premium-composition";
 import { structuralLayoutIds } from "@/lib/layout-blueprint/structural-layouts";
+import { premiumFlagshipIds } from "@/lib/layout-blueprint/premium-layouts/catalogue-candidates";
 
 type Loaded = { draft: WebsiteDefinition; revision: string; context: string };
 export function CompositionStudio({
@@ -141,20 +142,28 @@ export function CompositionStudio({
     <>
       <section
         className="composition-controls"
-        aria-label="Structural Layout demonstrations"
+        aria-label="Layout starting designs"
       >
         <p>
-          Engine demonstrations · Meridian, Canvas and Haven are structural
-          examples, not finished premium designs.
+          The original engine demonstrations remain available. Eight Phase 14
+          flagship candidates can also be assigned for testing; they have
+          not passed premium design or publishing acceptance.
         </p>
         <label>
           Starting composition{" "}
           <select value={assign} onChange={(e) => setAssign(e.target.value)}>
-            {structuralLayoutIds.map((id) => (
-              <option key={id} value={id}>
-                {id}
-              </option>
-            ))}
+            <optgroup label="Phase 13 structural demonstrations">
+              {structuralLayoutIds.map((id) => (
+                <option key={id} value={id}>{id}</option>
+              ))}
+            </optgroup>
+            <optgroup label="Phase 14 candidates — not accepted">
+              {premiumFlagshipIds.map((id) => (
+                <option key={id} value={id}>
+                  {id.slice("lucia.layout.".length)}
+                </option>
+              ))}
+            </optgroup>
           </select>
         </label>
         <button disabled={busy} onClick={assignLayout}>
