@@ -31,6 +31,8 @@ import {
   useWorkspaceTab,
 } from "@/components/workspace/workspace-tab-shell";
 
+export { CompositionStudio as VisualSiteEditor } from "./composition-studio";
+
 type SavedWebsiteVersion = {
   id: string;
   label: string;
@@ -39,7 +41,7 @@ type SavedWebsiteVersion = {
   snapshot: WebsiteSnapshot;
 };
 
-export function VisualSiteEditor({
+export function LegacyVisualSiteEditor({
   embedded = false,
 }: { embedded?: boolean } = {}) {
   const Root = embedded ? "div" : "main";

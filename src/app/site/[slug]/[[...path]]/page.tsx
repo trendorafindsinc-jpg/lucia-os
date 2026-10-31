@@ -2,8 +2,12 @@ import { and, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { getDb } from "@/lib/db/client";
 import { websitePages, websites } from "@/lib/db/schema";
-import { siteDraftSchema } from "@/lib/editor/site-draft";
-import { siteDraftToLayoutBlueprint, type LayoutBlueprint } from "@/lib/layout-blueprint/blueprint";
+import {
+  websiteDefinitionSchema,
+  isPremium,
+  websiteBlueprint,
+} from "@/lib/layout-blueprint/website-definition";
+
 import { LayoutRenderer } from "@/components/layout-studio/layout-renderer";
 
 export const runtime = "nodejs";
@@ -18,41 +22,54 @@ export default async function PublishedWebsitePage({ params }: PageProps) {
 
   try {
     const db = getDb();
-    const [website] = await db.select({
-      id: websites.id,
-      organizationId: websites.organizationId,
-    }).from(websites).where(and(eq(websites.slug, slug), eq(websites.status, "published"))).limit(1);
+    const [website] = await db
+      .select({
+        id: websites.id,
+        organizationId: websites.organizationId,
+      })
+      .from(websites)
+      .where(and(eq(websites.slug, slug), eq(websites.status, "published")))
+      .limit(1);
 
     if (!website) notFound();
     const pagePath = path.length ? "/" + path.join("/") : "/";
-    const [page] = await db.select({
-      title: websitePages.title,
-      path: websitePages.path,
-      publishedContent: websitePages.publishedContent,
-    }).from(websitePages).where(and(
-      eq(websitePages.websiteId, website.id),
-      eq(websitePages.organizationId, website.organizationId),
-      eq(websitePages.path, pagePath),
-      eq(websitePages.status, "published"),
-    )).limit(1);
+    const [page] = await db
+      .select({
+        title: websitePages.title,
+        path: websitePages.path,
+        publishedContent: websitePages.publishedContent,
+      })
+      .from(websitePages)
+      .where(
+        and(
+          eq(websitePages.websiteId, website.id),
+          eq(websitePages.organizationId, website.organizationId),
+          eq(websitePages.path, pagePath),
+          eq(websitePages.status, "published"),
+        ),
+      )
+      .limit(1);
 
     if (!page?.publishedContent) notFound();
     let raw: unknown;
-    try { raw = JSON.parse(page.publishedContent); } catch { notFound(); }
-    const parsed = siteDraftSchema.safeParse(raw);
-    if (!parsed.success) notFound();
-
-    let blueprint: LayoutBlueprint;
     try {
-      blueprint = siteDraftToLayoutBlueprint({
-        ...parsed.data,
-        ...(page.path !== "/" ? { headline: page.title } : {}),
-      });
+      raw = JSON.parse(page.publishedContent);
     } catch {
       notFound();
     }
-
-    return <LayoutRenderer blueprint={blueprint} />;
+    const parsed = websiteDefinitionSchema.safeParse(raw);
+    if (!parsed.success) notFound();
+    if (
+      isPremium(parsed.data) &&
+      !parsed.data.pages.some((p) => p.path === pagePath)
+    )
+      notFound();
+    return (
+      <LayoutRenderer
+        blueprint={websiteBlueprint(parsed.data, pagePath, page.title)}
+        pagePath={pagePath}
+      />
+    );
   } catch (error) {
     if (error && typeof error === "object" && "digest" in error) throw error;
     notFound();

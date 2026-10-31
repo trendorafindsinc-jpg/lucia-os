@@ -1,0 +1,315 @@
+/** Extends the existing isolated compiled-app/browser acceptance runner. */
+import assert from "node:assert/strict";
+import { randomBytes } from "node:crypto";
+import fs from "node:fs";
+export async function checkPremiumComposition({
+  api,
+  admin,
+  f,
+  base,
+  browserContext,
+  created,
+  bpass,
+  publicSite,
+}) {
+  await browserContext.addCookies([
+    { name: "lucia_os_session", value: f.tokens.a, url: base },
+  ]);
+  const page = await browserContext.newPage();
+  page.setDefaultTimeout(60000);
+  page.on("dialog", (d) => d.accept());
+  const ctx = (id) => `/api/websites/${id}/draft`;
+  const sequences = [];
+  for (const name of ["meridian", "canvas", "haven"]) {
+    const slug = "composition-" + randomBytes(6).toString("hex");
+    const creation = await api("a", "/api/onboarding/website", "POST", {
+      organisationName: "Continuity organization A",
+      websiteName: `${name} acceptance`,
+      organisationType: "Business or service",
+      goal: "Introduce my organisation",
+      templateId: "northstar-consulting",
+      country: "Nigeria",
+      siteSlug: slug,
+    });
+    const result = await creation.json();
+    assert.equal(creation.status, 201, result.error);
+    const id = result.website.id;
+    created.push(id);
+    await page.goto(`${base}/editor?websiteId=${id}`, {
+      waitUntil: "networkidle",
+    });
+    await page.getByLabel("Starting composition").selectOption(name);
+    await page
+      .getByRole("button", { name: "Use this composition", exact: true })
+      .click();
+    await page.getByLabel("Composition controls").waitFor();
+    const saved = await (await api("a", ctx(id))).json();
+    assert.equal(saved.draft.version, 2);
+    assert.equal(saved.draft.layoutId, `lucia.layout.${name}`);
+    assert.equal((await api("b", ctx(id))).status, 404);
+    const badEdit = {
+      kind: "composition-edit",
+      mode: "advanced",
+      edits: [{ kind: "token", key: "font", value: "system-sans" }],
+    };
+    assert.equal(
+      (
+        await api("a", ctx(id), "PATCH", badEdit, {
+          "if-match": saved.revision,
+        })
+      ).status,
+      422,
+    );
+    assert.equal(
+      (
+        await api(
+          "b",
+          ctx(id),
+          "PATCH",
+          {
+            kind: "composition-edit",
+            mode: "advanced",
+            edits: [{ kind: "token", key: "accent", value: "#334455" }],
+          },
+          { "if-match": saved.revision },
+        )
+      ).status,
+      404,
+    );
+    if (name === "canvas")
+      await page.getByLabel("Section", { exact: true }).selectOption("story");
+    await page
+      .getByLabel("Heading", { exact: true })
+      .fill(`${name} persisted browser heading`);
+    await page.getByRole("button", { name: "Save draft", exact: true }).click();
+    await page
+      .getByText("Draft saved to your website", { exact: true })
+      .waitFor();
+    await page.reload({ waitUntil: "networkidle" });
+    if (name === "canvas")
+      await page.getByLabel("Section", { exact: true }).selectOption("story");
+    assert.equal(
+      await page.getByLabel("Heading", { exact: true }).inputValue(),
+      `${name} persisted browser heading`,
+    );
+    // Native refresh exercises the registered Phase 9 composition snapshot adapter.
+    await page
+      .getByLabel("Heading", { exact: true })
+      .fill(`${name} recovered unsaved heading`);
+    await page.reload({ waitUntil: "networkidle" });
+    await page
+      .getByText("Recovered unsaved changes. Save draft to commit them.", {
+        exact: true,
+      })
+      .waitFor();
+    if (name === "canvas")
+      await page.getByLabel("Section", { exact: true }).selectOption("story");
+    assert.equal(
+      await page.getByLabel("Heading", { exact: true }).inputValue(),
+      `${name} recovered unsaved heading`,
+    );
+    await page
+      .getByLabel("Heading", { exact: true })
+      .fill(`${name} persisted browser heading`);
+    if (name === "meridian") {
+      await page.route("**/api/websites/*/draft", (route) =>
+        route.request().method() === "PATCH"
+          ? route.abort("failed")
+          : route.continue(),
+      );
+      await page
+        .getByRole("button", { name: "Save draft", exact: true })
+        .click();
+      await page
+        .getByRole("status")
+        .filter({ hasText: /Failed to fetch|fetch|Save failed/i })
+        .waitFor();
+      assert.equal(
+        await page.getByLabel("Heading", { exact: true }).inputValue(),
+        `${name} persisted browser heading`,
+      );
+      await page.unroute("**/api/websites/*/draft");
+    }
+    await page.getByRole("button", { name: "Save draft", exact: true }).click();
+    await page
+      .getByText("Draft saved to your website", { exact: true })
+      .waitFor();
+    const latest = await (await api("a", ctx(id))).json();
+    assert.equal(
+      (
+        await api(
+          "a",
+          ctx(id),
+          "PATCH",
+          {
+            kind: "composition-edit",
+            mode: "advanced",
+            edits: [{ kind: "token", key: "accent", value: "#334455" }],
+          },
+          { "if-match": saved.revision },
+        )
+      ).status,
+      409,
+    );
+    await page
+      .getByRole("link", { name: "Preview and publish saved draft" })
+      .click();
+    await page
+      .getByRole("button", { name: "Preview website", exact: true })
+      .click();
+    const dialog = page.getByRole("dialog", { name: "Saved website preview" });
+    await dialog.waitFor();
+    await dialog.getByLabel("Preview page").selectOption("/about");
+    assert.equal(await dialog.locator('[data-page-path="/about"]').count(), 1);
+    await page.keyboard.press("Escape");
+    await page
+      .getByRole("button", { name: "Publish website", exact: true })
+      .click();
+    await page
+      .getByRole("link", { name: "Open live website", exact: false })
+      .waitFor();
+    const currentPublic = await publicSite("/", slug + ".lucia.name.ng");
+    assert.equal(currentPublic.status, 200);
+    const before = await currentPublic.text();
+    assert(before.includes(`${name} persisted browser heading`));
+    const publicPage = await browserContext.newPage();
+    for (const [width, height] of [
+      [320, 844],
+      [390, 844],
+      [768, 1024],
+      [1180, 820],
+      [1440, 900],
+    ]) {
+      await publicPage.setViewportSize({ width, height });
+      const response = await publicPage.goto(
+        `http://${slug}.lucia.name.ng:${new URL(base).port}/`,
+        { waitUntil: "networkidle" },
+      );
+      assert.equal(response.status(), 200);
+      assert.equal(
+        await publicPage.locator('[data-layout-version="2"]').count(),
+        1,
+      );
+      const geometry = await publicPage.evaluate(() => ({
+        viewport: innerWidth,
+        document: document.documentElement.scrollWidth,
+        broken: [...document.images].filter(
+          (i) => !i.complete || !i.naturalWidth,
+        ).length,
+      }));
+      assert(
+        geometry.document <= geometry.viewport,
+        `${name} overflow at ${width}: ${geometry.document}`,
+      );
+      assert.equal(geometry.broken, 0);
+      assert.equal(
+        await publicPage.locator(".workspace-tabbar,.assistive-orb").count(),
+        0,
+      );
+      if (width === 390) {
+        fs.mkdirSync("docs/acceptance/phase-13", { recursive: true });
+        await publicPage.screenshot({
+          path: `docs/acceptance/phase-13/${name}-390.png`,
+          fullPage: true,
+        });
+      }
+      await publicPage
+        .getByRole("navigation", { name: "Main navigation" })
+        .getByRole("link")
+        .nth(1)
+        .click();
+      await publicPage.locator('[data-page-path="/about"]').waitFor();
+      await publicPage.reload({ waitUntil: "networkidle" });
+      assert.equal(
+        await publicPage.locator('[data-page-path="/about"]').count(),
+        1,
+      );
+      await publicPage.keyboard.press("Tab");
+      assert(
+        await publicPage.evaluate(
+          () => document.activeElement?.tagName === "A",
+        ),
+      );
+      bpass(
+        `${name}: public home/interior, refresh, assets, keyboard and width ${width}×${height} (emulated)`,
+      );
+    }
+    await publicPage.goto(
+      `http://${slug}.lucia.name.ng:${new URL(base).port}/`,
+    );
+    sequences.push(
+      await publicPage
+        .locator("[data-section-type]")
+        .evaluateAll((nodes) =>
+          nodes.map((n) => n.dataset.sectionType).join(","),
+        ),
+    );
+    assert.equal(
+      (await publicSite("/workspace", slug + ".lucia.name.ng")).status,
+      404,
+    );
+    assert.equal(
+      (await publicSite("/not-registered", slug + ".lucia.name.ng")).status,
+      404,
+    );
+    const settings = {
+      action: "publish",
+      websiteId: id,
+      siteSlug: slug,
+      siteName: latest.draft.identity.name,
+      headline: latest.draft.pages[0].title,
+      description: latest.draft.pages[0].description,
+      customDomain: "",
+    };
+    assert.equal(
+      (
+        await api("a", "/api/publishing/publish", "POST", settings, {
+          "if-match": saved.revision,
+        })
+      ).status,
+      409,
+    );
+    assert.equal(
+      (
+        await api("b", "/api/publishing/publish", "POST", settings, {
+          "if-match": latest.revision,
+        })
+      ).status,
+      404,
+    );
+    await admin`UPDATE website_pages SET content='{"schema":"lucia.layout-composition","version":2}' WHERE website_id=${id} AND path='/'`;
+    const corrupt = await (await api("a", ctx(id))).json();
+    assert.equal(
+      (
+        await api("a", "/api/publishing/publish", "POST", settings, {
+          "if-match": corrupt.revision,
+        })
+      ).status,
+      422,
+    );
+    const preserved = await publicSite("/", slug + ".lucia.name.ng");
+    assert.equal(preserved.status, 200);
+    assert(
+      (await preserved.text()).includes(`${name} persisted browser heading`),
+    );
+    await admin`UPDATE website_pages SET content=${JSON.stringify(latest.draft)} WHERE website_id=${id} AND path='/'`;
+    await admin`UPDATE organization_memberships SET status='revoked' WHERE user_id=${f.a} AND organization_id=${f.orgA}`;
+    assert.equal((await api("a", ctx(id))).status, 404);
+    assert.equal(
+      (
+        await api("a", "/api/publishing/publish", "POST", settings, {
+          "if-match": latest.revision,
+        })
+      ).status,
+      403,
+    );
+    await admin`UPDATE organization_memberships SET status='active' WHERE user_id=${f.a} AND organization_id=${f.orgA}`;
+    await publicPage.close();
+    bpass(
+      `${name}: real create→assign→edit→save→reload→preview→publish; tenant/Lock/revision/corrupt/revocation protection`,
+    );
+  }
+  assert.equal(new Set(sequences).size, 3);
+  await page.close();
+  bpass("Three published DOM section sequences are structurally distinct");
+}

@@ -1,3 +1,4 @@
+import { compositionRecoverySchema } from "@/lib/layout-blueprint/premium-composition";
 import { siteDraftRecoverySchema } from "@/lib/editor/site-draft";
 import { preferencesSchema } from "./preferences";
 import { templateCategories } from "@/lib/templates/catalogue";
@@ -87,6 +88,12 @@ export function validateSnapshot(
     return typeof value === "string" && /^"draft-[a-f0-9]{64}"$/.test(value)
       ? value
       : undefined;
+  if (key.startsWith("composition-draft:")) {
+    if (!/^website-engine:website:[a-zA-Z0-9_-]{1,128}$/.test(suffix))
+      return undefined;
+    const parsed = compositionRecoverySchema.safeParse(value);
+    return parsed.success ? parsed.data : undefined;
+  }
   if (key.startsWith("editor-draft:")) {
     if (
       !/^website-engine:(website:[a-zA-Z0-9_-]{1,128}|template:[a-zA-Z0-9_-]{1,128})$/.test(

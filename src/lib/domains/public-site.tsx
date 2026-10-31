@@ -6,9 +6,13 @@ import { notFound } from "next/navigation";
 import { getDb } from "@/lib/db/client";
 import { websiteDomains, websitePages, websites } from "@/lib/db/schema";
 import { normalizeHostname } from "@/lib/domains/hostname";
-import { siteDraftSchema } from "@/lib/editor/site-draft";
-import { siteDraftToLoomBlueprint, type LoomBlueprint } from "@/lib/loom/blueprint";
-import { LoomRenderer } from "@/components/loom/loom-renderer";
+import {
+  websiteDefinitionSchema,
+  isPremium,
+  websiteBlueprint,
+} from "@/lib/layout-blueprint/website-definition";
+
+import { LayoutRenderer } from "@/components/layout-studio/layout-renderer";
 
 export async function PublicWebsite({ path }: { path: string }) {
   const requestHeaders = await headers();
@@ -22,7 +26,8 @@ export async function PublicWebsite({ path }: { path: string }) {
     notFound();
   }
 
-  const cleanPath = path === "/" ? "/" : `/${path.split("/").filter(Boolean).join("/")}`;
+  const cleanPath =
+    path === "/" ? "/" : `/${path.split("/").filter(Boolean).join("/")}`;
   const db = getDb();
   const [record] = await db
     .select({
@@ -30,28 +35,39 @@ export async function PublicWebsite({ path }: { path: string }) {
       organizationId: websiteDomains.organizationId,
     })
     .from(websiteDomains)
-    .innerJoin(websites, and(
-      eq(websites.id, websiteDomains.websiteId),
-      eq(websites.organizationId, websiteDomains.organizationId),
-    ))
-    .where(and(
-      eq(websiteDomains.hostname, hostname),
-      eq(websiteDomains.status, "active"),
-      eq(websites.status, "published"),
-    ))
+    .innerJoin(
+      websites,
+      and(
+        eq(websites.id, websiteDomains.websiteId),
+        eq(websites.organizationId, websiteDomains.organizationId),
+      ),
+    )
+    .where(
+      and(
+        eq(websiteDomains.hostname, hostname),
+        eq(websiteDomains.status, "active"),
+        eq(websites.status, "published"),
+      ),
+    )
     .limit(1);
 
   if (!record) notFound();
 
   const [page] = await db
-    .select({ title: websitePages.title, path: websitePages.path, publishedContent: websitePages.publishedContent })
+    .select({
+      title: websitePages.title,
+      path: websitePages.path,
+      publishedContent: websitePages.publishedContent,
+    })
     .from(websitePages)
-    .where(and(
-      eq(websitePages.organizationId, record.organizationId),
-      eq(websitePages.websiteId, record.websiteId),
-      eq(websitePages.path, cleanPath),
-      eq(websitePages.status, "published"),
-    ))
+    .where(
+      and(
+        eq(websitePages.organizationId, record.organizationId),
+        eq(websitePages.websiteId, record.websiteId),
+        eq(websitePages.path, cleanPath),
+        eq(websitePages.status, "published"),
+      ),
+    )
     .limit(1);
 
   if (!page?.publishedContent) notFound();
@@ -61,18 +77,17 @@ export async function PublicWebsite({ path }: { path: string }) {
   } catch {
     notFound();
   }
-  const parsed = siteDraftSchema.safeParse(raw);
+  const parsed = websiteDefinitionSchema.safeParse(raw);
   if (!parsed.success) notFound();
-
-  let blueprint: LoomBlueprint;
-  try {
-    blueprint = siteDraftToLoomBlueprint({
-      ...parsed.data,
-      ...(page.path !== "/" ? { headline: page.title } : {}),
-    });
-  } catch {
+  if (
+    isPremium(parsed.data) &&
+    !parsed.data.pages.some((p) => p.path === cleanPath)
+  )
     notFound();
-  }
-
-  return <LoomRenderer blueprint={blueprint} />;
+  return (
+    <LayoutRenderer
+      blueprint={websiteBlueprint(parsed.data, cleanPath, page.title)}
+      pagePath={cleanPath}
+    />
+  );
 }

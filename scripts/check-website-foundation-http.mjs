@@ -454,6 +454,7 @@ try {
       browserChecks.push(name);
       console.log("PASS browser", name);
     };
+    if (process.env.WEBSITE_TEST_PREMIUM_ONLY !== "1") {
     await page.goto(base + "/templates", { waitUntil: "networkidle" });
     await page
       .getByRole("link", { name: /Preview current design/ })
@@ -997,9 +998,12 @@ try {
       .getByRole("link", { name: "Open Layout Studio", exact: true })
       .waitFor();
     await noStorage.close();
-    bpass(
-      "Unavailable browser storage does not crash setup or turn a committed project into failure",
-    );
+    bpass("Unavailable browser storage does not crash setup or turn a committed project into failure");
+    }
+    if (process.env.WEBSITE_TEST_PREMIUM === "1") {
+      const {checkPremiumComposition} = await import("./premium-composition-acceptance.mjs");
+      await checkPremiumComposition({api,admin,f,base,browserContext,created,bpass,publicSite});
+    }
     assert.equal(errors.length, 0, errors.join("\n"));
     bpass("No unhandled application errors");
   }

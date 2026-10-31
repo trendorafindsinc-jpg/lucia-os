@@ -12,6 +12,12 @@ import {
   websites,
 } from "@/lib/db/schema";
 import { siteDraftSchema } from "@/lib/editor/site-draft";
+import { premiumLayoutSchema } from "@/lib/layout-blueprint/premium-composition";
+import {
+  isPremium,
+  websiteDefinitionSchema,
+  websiteSummary,
+} from "@/lib/layout-blueprint/website-definition";
 import {
   publishActionSchema,
   publishRequestSchema,
@@ -189,19 +195,23 @@ export async function POST(request: Request) {
         } catch {
           throw new Error("INVALID_SAVED_DRAFT");
         }
-        const current = siteDraftSchema.safeParse(currentDraft);
+        const current = websiteDefinitionSchema.safeParse(currentDraft);
         if (!current.success) throw new Error("INVALID_SAVED_DRAFT");
-        const draftResult = siteDraftSchema.safeParse({
-          ...current.data,
-          siteName: settings.siteName,
-          headline: settings.headline,
-          description: settings.description,
-        });
+        const draftResult = isPremium(current.data)
+          ? premiumLayoutSchema.safeParse(current.data)
+          : siteDraftSchema.safeParse({
+              ...current.data,
+              siteName: settings.siteName,
+              headline: settings.headline,
+              description: settings.description,
+            });
         if (!draftResult.success)
           throw new Error(
             "The saved website draft is incomplete. Open the visual editor and save a valid draft first.",
           );
-        const snapshot = JSON.stringify(draftResult.data);
+        const definition = draftResult.data;
+        const actualName = websiteSummary(definition).siteName;
+        const snapshot = JSON.stringify(definition);
         const now = new Date();
 
         if (action === "save") {
@@ -217,21 +227,19 @@ export async function POST(request: Request) {
                 ),
               );
           } else {
-            await tx
-              .insert(websitePages)
-              .values({
-                organizationId: org.id,
-                websiteId: website.id,
-                title: "Home",
-                path: "/",
-                status: "draft",
-                content: snapshot,
-                updatedAt: now,
-              });
+            await tx.insert(websitePages).values({
+              organizationId: org.id,
+              websiteId: website.id,
+              title: "Home",
+              path: "/",
+              status: "draft",
+              content: snapshot,
+              updatedAt: now,
+            });
           }
           await tx
             .update(websites)
-            .set({ name: settings.siteName, updatedAt: now })
+            .set({ name: actualName, updatedAt: now })
             .where(
               and(
                 eq(websites.id, website.id),
@@ -242,7 +250,7 @@ export async function POST(request: Request) {
             action,
             id: website.id,
             slug: website.slug,
-            name: settings.siteName,
+            name: actualName,
             status: website.status,
             savedAt: now.toISOString(),
             revision: draftRevision(website.id, snapshot),
@@ -252,7 +260,55 @@ export async function POST(request: Request) {
         // The public renderer expects a validated site-draft snapshot for every
         // published path. Previously only "/" received one, leaving seeded
         // About/Services/Contact routes permanently 404 after publishing.
-        if (pages.length === 0) {
+        if (isPremium(definition)) {
+          // All public page snapshots change atomically with hostname activation.
+          // Retired routes cease to be public only after a successful commit.
+          for (const old of pages) {
+            if (!definition.pages.some((p) => p.path === old.path)) {
+              await tx
+                .update(websitePages)
+                .set({ status: "draft", updatedAt: now })
+                .where(
+                  and(
+                    eq(websitePages.id, old.id),
+                    eq(websitePages.organizationId, org.id),
+                    eq(websitePages.websiteId, website.id),
+                  ),
+                );
+            }
+          }
+          for (const registered of definition.pages) {
+            const existing = pages.find((p) => p.path === registered.path);
+            const values = {
+              title: registered.title,
+              publishedContent: snapshot,
+              status: "published",
+              updatedAt: now,
+              ...(registered.path === "/" ? { content: snapshot } : {}),
+            };
+            if (existing)
+              await tx
+                .update(websitePages)
+                .set(values)
+                .where(
+                  and(
+                    eq(websitePages.id, existing.id),
+                    eq(websitePages.organizationId, org.id),
+                    eq(websitePages.websiteId, website.id),
+                  ),
+                );
+            else
+              await tx
+                .insert(websitePages)
+                .values({
+                  ...values,
+                  content: snapshot,
+                  path: registered.path,
+                  websiteId: website.id,
+                  organizationId: org.id,
+                });
+          }
+        } else if (pages.length === 0) {
           await tx.insert(websitePages).values({
             organizationId: org.id,
             websiteId: website.id,
@@ -286,7 +342,7 @@ export async function POST(request: Request) {
         await tx
           .update(websites)
           .set({
-            name: settings.siteName,
+            name: actualName,
             status: "published",
             publishedAt: now,
             updatedAt: now,
@@ -359,7 +415,7 @@ export async function POST(request: Request) {
           action,
           id: website.id,
           slug: website.slug,
-          name: settings.siteName,
+          name: actualName,
           status: "published",
           revision: draftRevision(website.id, snapshot),
           publishedAt: now.toISOString(),

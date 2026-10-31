@@ -10,8 +10,13 @@ import {
   getPublishReadiness,
   publishSettingsSchema,
 } from "@/lib/publishing/publishing";
-import { siteDraftSchema, type SiteDraft } from "@/lib/editor/site-draft";
-import { siteDraftToLoomBlueprint } from "@/lib/loom/blueprint";
+import {
+  websiteDefinitionSchema,
+  websiteBlueprint,
+  isPremium,
+  type WebsiteDefinition,
+} from "@/lib/layout-blueprint/website-definition";
+
 import { LoomRenderer } from "@/components/loom/loom-renderer";
 
 const initialSettings = {
@@ -31,6 +36,7 @@ type WebsiteChoice = {
   description: string;
   revision: string;
   draftValid: boolean;
+  composition?: boolean;
 };
 
 export function PublishingWorkspace() {
@@ -44,8 +50,11 @@ export function PublishingWorkspace() {
   const [reloadKey, setReloadKey] = useState(0);
   const [settings, setSettings] = useState(initialSettings);
   const [websiteChoices, setWebsiteChoices] = useState<WebsiteChoice[]>([]);
+  const [previewPath, setPreviewPath] = useState("/");
   const [showPreview, setShowPreview] = useState(false);
-  const [previewDraft, setPreviewDraft] = useState<SiteDraft | null>(null);
+  const [previewDraft, setPreviewDraft] = useState<WebsiteDefinition | null>(
+    null,
+  );
   const previewDialog = useRef<HTMLDialogElement>(null);
   const previewTrigger = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -61,7 +70,7 @@ export function PublishingWorkspace() {
 
   const [previewLoading, setPreviewLoading] = useState(false);
   const previewBlueprint = useMemo(
-    () => (previewDraft ? siteDraftToLoomBlueprint(previewDraft) : null),
+    () => (previewDraft ? websiteBlueprint(previewDraft) : null),
     [previewDraft],
   );
   const [message, setMessage] = useState("");
@@ -230,7 +239,7 @@ export function PublishingWorkspace() {
           payload.error || "We couldn't load this website's draft for preview.",
         );
       if (!epoch.matches(token)) return;
-      const parsed = siteDraftSchema.safeParse(payload.draft);
+      const parsed = websiteDefinitionSchema.safeParse(payload.draft);
       if (payload.revision !== selected.revision)
         throw new Error(
           "The saved draft changed. Reload saved details before previewing or publishing.",
@@ -239,6 +248,7 @@ export function PublishingWorkspace() {
         throw new Error(
           "This draft needs to be saved in Studio before it can be previewed.",
         );
+      setPreviewPath("/");
       setPreviewDraft(parsed.data);
       setShowPreview(true);
       setMessage(
@@ -315,6 +325,7 @@ export function PublishingWorkspace() {
             <input
               disabled={isSaving}
               value={settings.siteName}
+              readOnly={selected?.composition}
               maxLength={80}
               onChange={(event) => update("siteName", event.target.value)}
             />
@@ -324,6 +335,7 @@ export function PublishingWorkspace() {
             <input
               disabled={isSaving}
               value={settings.headline}
+              readOnly={selected?.composition}
               maxLength={100}
               onChange={(event) => update("headline", event.target.value)}
             />
@@ -333,12 +345,16 @@ export function PublishingWorkspace() {
             <textarea
               disabled={isSaving}
               value={settings.description}
+              readOnly={selected?.composition}
               maxLength={220}
               rows={3}
               onChange={(event) => update("description", event.target.value)}
             />
           </label>
           <p className="publish-help">
+            {selected?.composition && (
+              <span>Composition content is edited in Layout Studio. </span>
+            )}
             Address preview:{" "}
             <strong>{settings.siteSlug || "your-site"}.lucia.name.ng</strong> ·
             The server checks that the address is yours and available.
@@ -490,7 +506,27 @@ export function PublishingWorkspace() {
               </button>
             </div>
             <div className="publish-preview-renderer" id="preview-title">
-              <LoomRenderer blueprint={previewBlueprint} preview />
+              {isPremium(previewDraft) && (
+                <label>
+                  Preview page{" "}
+                  <select
+                    value={previewPath}
+                    onChange={(e) => setPreviewPath(e.target.value)}
+                  >
+                    {previewDraft.pages.map((p) => (
+                      <option key={p.id} value={p.path}>
+                        {p.title}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              <LoomRenderer
+                blueprint={previewBlueprint}
+                pagePath={previewPath}
+                onNavigate={setPreviewPath}
+                preview
+              />
             </div>
             <p className="publish-preview-note">
               This is the selected saved website rendered by Loom. Preview does

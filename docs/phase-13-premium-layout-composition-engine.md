@@ -1,51 +1,82 @@
-# Phase 13 — Premium hybrid layout composition (implementation record)
+# Phase 13 — Premium Hybrid Layout Composition Engine
 
-**Status: IN PROGRESS — not accepted.** This record reports implemented code and unverified gates separately. The 48 premium catalogue and the Phase 14 decision PR are still distinct from this implementation.
+**Acceptance: IN PROGRESS — final authenticated browser, CI and preview verification pending.**
 
-## Architecture audit and decision
+Continues PR [#133](https://github.com/trendorafindsinc-jpg/lucia-os/pull/133), preserving the schema foundation and renderer increment through `74810a6c2eb9879e0baa3f500d6df1bd6af5236c`. Baseline main is `35ed2d87ac39affcbb62d39cfd75aa6fdca23de6`. This phase does not implement the approved 48 finished websites or change their catalogue.
 
-The existing `src/lib/layout-blueprint/blueprint.ts` defines persisted `lucia.loom-blueprint` v1, a strict four-section union, limited theme values and a `SiteDraft` compatibility adapter. Phase 12's real-renderer inventory found 37 starter records, all ultimately producing the hero/content-grid/contact sequence. The existing layout renderer, draft/publish transaction and website identity boundary remain authoritative. No alternate site engine or database has been created.
+## Audit and implemented integration
 
-## Changes committed in this branch
+The inherited branch defined v2 schemas, edit guards, three test fixtures and seven renderer presentations. Real draft APIs and publication accepted only legacy `SiteDraft`; public rendering parsed only legacy snapshots; images were placeholders. The existing Phase 11 transaction, Phase 9 recovery, website identity, tenant authorization and hostname middleware remain authoritative.
 
-- Additive, strongly typed `lucia.layout-composition` v2 contract and `layoutVersion` with immutable identity. v1 remains byte-compatible and saved sites are **not** auto-upgraded.
-- Closed registry of seven section **schemas**: premium hero, trust strip, editorial story, project gallery, service journey, experience and contact panel. Variant selection and section content are runtime validated. These are contracts, **not yet registered React rendering implementations**.
-- Independently ordered page definitions with valid unique paths, stable page/section IDs, unique section-instance IDs, navigation target validation and optional responsive composition modes.
-- Strict and scoped token **data**: bounded role colours, typography families, scale, width, radius, rhythm, and motion. Tenant-scoped CSS application remains outstanding.
-- Allowlisted local built-in asset references and mandatory image alt text. No arbitrary external URLs, event handlers, executable code, CSS or raw HTML pass the schema. Asset existence/licence verification remains an integration requirement.
-- Guided and Advanced edit decision function, immutable edit copies, section-order validation and Design Lock guards. This is a foundation, not a finished visual editor or authenticated server action.
-- Meridian, Canvas and Haven two-page data fixtures in Vitest to demonstrate distinct recipes. They are not published premium sites or browser-tested examples.
+| Boundary | Implementation |
+| --- | --- |
+| Definition | `website-definition.ts` validates versioned data, selects the existing Blueprint adapter for legacy drafts, and passes v2 compositions unchanged to `LayoutRenderer`. Unsupported version markers cannot fall back to legacy parsing. |
+| Draft | Existing `GET/PATCH /api/websites/:id/draft`, organization-scoped home row, real database persistence and revision ETag. New explicit assignment/edit commands are applied to the freshly locked saved definition. |
+| Preview | Existing Studio and Publishing preview use the same validated renderer. Page selection and internal navigation stay within the private preview. Publishing preview loads the confirmed server draft. |
+| Publication | Existing transaction validates the whole saved definition, compares `If-Match`, synchronizes each registered public page and activates the existing hostname. Obsolete paths become private on successful commit. Exceptions roll back all page/hostname changes. |
+| Public pages | Existing `/site/[slug]/[[...path]]` and custom-domain `PublicWebsite` select the authorized published website/page and render the exact requested page. Unknown paths remain 404. Page title and description are rendered as document metadata. |
+| Legacy | Existing v1 SiteDraft records, layout IDs, ownership, URLs and adapter remain unchanged. No automatic conversion or migration. |
 
-## Compatibility, security and publishing
+## Closed section registry and presentation
 
-No migration or production data change. The persisted v1 adapter and legacy schema remain unchanged and are still the default for existing projects. No v2 draft/publish integration is yet implemented; consequently the project cannot claim v2 publishing parity or successful rollback coverage. An authenticated, tenant-scoped server transaction with revision checking must validate the v2 input before any persisted write or publication. Layout definitions and edit permissions do not confer access rights.
+The seven strict section schemas map to explicit React cases in the existing `LayoutRenderer`: premium hero (offset/full-bleed/typographic), trust strip, editorial story, project gallery, service journey, experience and contact panel. No module name, executable component, raw HTML or arbitrary CSS can be supplied. Unknown or invalid definitions fail validation rather than rendering invented content.
 
-## Tests and known limitations
+Tokens are six-digit role colors and closed typography, scale, width, radius, rhythm and motion choices. Styles and custom properties are scoped under the rendered `.premium-layout` root; section grids use minimum-zero tracks, mobile stacking and wrapping. Gallery rail scrolling is intentional within its section. There is no global horizontal-overflow concealment. Reduced-motion styles disable animation/transition effects; this phase adds no decorative animation library.
 
-The branch contains targeted validation tests. CI results, exact test totals, lint, TypeScript, build, and five-viewport authenticated browser acceptance must be obtained against the final commit; no passing result is asserted in this document.
+All image references resolve through a closed manifest in `premium-assets.ts`. Three original repository-owned geometric SVG illustrations are imported as build assets under `/_next/static/media`, which existing customer-host routing permits. Mandatory alt text, intrinsic dimensions and responsive sizing are applied with Next Image. Unknown built-in references and arbitrary remote/private asset URLs are rejected. These illustrations are structural demo assets, not the licensed photographic art direction required for Phase 14. No S3 configuration or successful-upload claim is introduced.
 
-**Remaining P1 gates:** integrate seven section types into the **existing** LayoutRenderer; resolve per-page public and preview paths through the same composer; apply scoped tokens and responsive layouts; validate built-in asset manifests; add server-boundary persistence/publishing support with the existing revision/tenant mechanisms; test v1 compatibility and v2 transaction safety; complete real browser acceptance at 320, 390×844, 768×1024, 1180×820 and 1440×900. These must be completed before Phase 13 can be declared PASS.
+## Server-enforced customization
 
-## Phase 14 handoff
+Draft mutation commands are strict and bounded (300,000-character request limit; at most 40 validated edits). Assignment accepts only the three server-registered demonstrations and is explicitly confirmed in Studio. It preserves the project name and does not affect the published version. Replacing an existing v2 composition or downgrading it through a legacy draft payload is rejected.
 
-Keep the eight flagship briefs and approved 48-layout catalogue authoritative. Meridian, Canvas and Haven currently illustrate **data structure** only. Phase 14 visual execution must not be recorded as finished until its real renderer, licensed imagery and multi-page website acceptance pass. S3, Paystack, and the ₦5,000 one-time optional domain model are unchanged.
+`composition-edit` takes a mode and edit commands, never client-supplied permissions. Policy is read from the saved definition inside the existing row-lock/revision transaction:
 
+- Guided content edits require the relevant text, image, link or contact capability. Text permission does not confer image/link access. Optional Guided variant capability is explicit and still obeys locks.
+- Advanced variants, tokens, section ordering and page responsiveness require their own capabilities. Registered section insertion/removal and page insertion/removal require `section-structure` or `pages`. New content passes the same schemas and route relationships.
+- Locked sections retain their identity, variant and position; they cannot be removed. A page containing a locked section cannot be removed. Locked token keys cannot be changed. Editable content remains editable under Design Lock.
+- The homepage cannot be removed. New paths must be unique, normalized, nonreserved and registered. Navigation and hero actions must resolve; removing a referenced destination without repairing its relationship fails validation.
 
-## Engineering recovery increment — 30 October 2026
+The existing Studio entry now selects the legacy editor or a bounded composition-controls panel. It supports real content editing, page selection, ordering, Advanced accent/responsive settings, live unsaved preview and real Save draft. It uses the Phase 9 adapter for dirty protection, discard, save-and-continue and account-scoped tab recovery. Failed saves retain edits and permit retry; conflicts require explicit reload. Recovery is session-local and does not claim database persistence or cross-device draft synchronization. A full visual composition editor remains Phase 16 work.
 
-**Status remains IN PROGRESS.** This section records implemented commits separately from incomplete production integration and acceptance.
+## Structural demonstrations
 
-- Corrected v2 `layoutId` validation to require literal dots and added a regression test.
-- Repaired premium test TypeScript discriminated-union access using explicit section-type guards.
-- Extended the existing `src/components/layout-studio/layout-renderer.tsx` entry point with a version-aware v2 branch and seven registered, validated section presentations. Legacy v1 branch remains unchanged.
-- Added scoped presentation rules to `src/app/layout-renderer.css` for registered v2 variants, responsive grids, mobile stacking, focus visibility and reduced-motion preferences.
-- Added `src/components/layout-studio/premium-renderer.test.tsx` for renderer-level page separation, unknown page behavior and v1 regression. These are not server/browser publication tests.
-- The renderer currently exposes a visible built-in-asset placeholder pending a licensed asset manifest. It does not claim real images were resolved or uploaded.
+Runtime demonstrations are registered in `structural-layouts.ts`, not falsely added as finished catalogue acquisitions:
 
-### Decisions and limits
+| Demonstration | Home section sequence | Interior composition |
+| --- | --- | --- |
+| Meridian | Offset hero → trust indicators → chapter service journey → illustrative case story → contact | Story → service journey → contact |
+| Canvas | Masonry project index → editorial notes → contact | Editorial story → project index → contact |
+| Haven | Immersive illustrated hero → experience → place story → contact | Experience → story → contact |
 
-Keep one `LayoutRenderer` import/entry point for legacy and premium versioned data; closed schema and React components disallow arbitrary customer code. v2 token values are applied as inline custom properties on the rendered site root and CSS selectors remain beneath `.premium-layout`. This is a presentation-boundary implementation, not proof of tenant publication isolation.
+Each has independent home/about page definitions, metadata and navigation. Tests compare actual rendered section signatures. These prove structural capability; final commissioned-quality art direction, photography, typography and complete business content belong to Phase 14 and its separate decision record/PR #132.
 
-**Not implemented or accepted:** v2 revision-bound draft persistence, authorization-checked v2 mutation, full-page transactional publishing, preview-route/public-route integration, verified image manifest, independent multi-page HTTP/refresh behavior, authenticated browser acceptance, and final-head CI/Vercel verification. Existing publication still replicates the home SiteDraft snapshot to interior pages and MUST be upgraded before v2 release. Do not enable v2 customer publication based on this renderer increment.
+## Security and compatibility boundaries
 
-The complete existing Phase 11 website read/write transaction and `publishedContent` snapshot boundary must remain authoritative. No migrations, customer data changes, authentication changes, or deployment-to-main actions were performed in this increment. Phase 14 readiness is NOT satisfied.
+LUCIA ID remains the sole identity authority. Existing verified session, active organization/membership, role permissions, RLS context, website/org predicates, account-change header, same-origin protections and `If-Match` checks remain in force. Browser recovery and layout permissions confer no access. Membership is checked again at mutation time. Public rendering reads only published snapshots; corrupt private drafts cannot replace an existing live version.
+
+Strict registered data, bounded strings/arrays, React text escaping and fixed token values prevent executable layout content. Paths reject traversal, encoded separators, duplicate routes and reserved internal areas (`api`, `workspace`, `staff`, `auth`, `site`, `_next`, etc.). Existing host middleware remains unchanged; private endpoints cannot be reached through customer hosts. No Core, payment, entitlement, production configuration or customer data changes are part of this phase.
+
+## Architecture decisions
+
+1. **Registered sections, not arbitrary components.** A closed schema/component mapping makes validation, compatibility and safety review deterministic. New types require code and tests.
+2. **Additive version coexistence.** Legacy drafts keep their exact storage contract; v2 uses an explicit discriminator. Conversion is explicit, authorized and revision-bound, never inferred from a cached route or performed as a destructive migration.
+3. **One preview/public contract.** Studio, Publishing preview, standard hostname and custom hostname reuse `LayoutRenderer` and validated definitions. A preview-only renderer would hide publication incompatibility.
+4. **Root-scoped tokens.** Validated values become custom properties only on the website root, with registered class variants. No user CSS is concatenated into global styles.
+5. **Stored-policy edit commands.** Full untrusted replacement would allow permission escalation and Design Lock removal. Commands apply to locked server state, with compare-and-swap revision protection shared with publishing.
+6. **Existing tenant router.** Pages are data under an existing website, not Next modules. Closed paths and reserved prefixes prevent routing ambiguity; existing hostname resolution remains authoritative.
+7. **Atomic multi-page promotion.** The home row stores the complete private composition; publishing snapshots the same definition across its page records in one transaction. Obsolete public paths are retired only on successful promotion. No new database or temporary draft service is needed.
+8. **Build-owned asset URLs.** Static imports produce immutable asset URLs served through the already-approved static boundary, avoiding customer-path rewrites and external storage dependencies.
+
+## Verification evidence
+
+Current local verification: 530 Vitest tests in 65 files; TypeScript passing; ESLint passing with three pre-existing warnings; Drizzle consistency passing; production build and compiled host-routing HTTP checks passing. Final source/browser and exact-commit CI evidence will be recorded after execution.
+
+The existing `check-website-foundation-http.mjs` runner remains the isolated authenticated acceptance infrastructure. `WEBSITE_TEST_PREMIUM=1` adds `premium-composition-acceptance.mjs`, using genuine project records, session fixtures, NOBYPASSRLS runtime, API calls, Studio/Publishing browser interactions and public-host requests. The restricted loopback proxy preserves customer URL/Host and forwards actual application responses; it does not mock rendering or authorization. Cleanup removes only synthetic test resources. Physical device, live OAuth, production DNS/TLS and production customer publishing are not claimed.
+
+An intermediate acceptance attempt passed legacy create/save/publish and public geometry but timed out on Version History after the build was regenerated while its server was running. It is not accepted as final evidence; a fresh-build run is required. No test assertion was weakened.
+
+## Deployment and Phase 14 handoff
+
+No schema changes or migrations. No production migration was executed. Built-in Layout selection, standard website creation, editing, previews and publication remain free. Optional custom-domain access remains the separate ₦5,000 one-time Store/Paystack boundary; no checkout or entitlement activation was invented. S3-compatible customer media remains deferred.
+
+PR #133 must remain draft until mandatory authenticated browser and exact-head CI/Vercel gates pass, and must remain unmerged pending founder approval. Phase 14 can refine the three structural demonstrations through the same registered engine after acceptance. The canonical 48-Layout specification, eight flagship briefs and 8 → 16 → 32 → 48 review gates remain unchanged.
