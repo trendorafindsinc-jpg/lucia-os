@@ -1,0 +1,62 @@
+name: Phase 14 flagship browser evidence
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/phase14-browser-audit.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phase14-browser-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  flagship-screenshots:
+    name: Eight flagship screenshot evidence (development-only renderer)
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - name: Check out submitted Layout branch
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install verified app dependencies
+        run: npm install --no-audit --no-fund
+      - name: Install ephemeral browser tooling
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Run local Next development server
+        run: |
+          (npm run dev -- --hostname 127.0.0.1 --port 3000 > /tmp/phase14-next.log 2>&1 &)
+          for i in $(seq 1 80); do
+            if curl -fsS http://127.0.0.1:3000/phase14-review/meridian > /dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          tail -100 /tmp/phase14-next.log
+          exit 1
+      - name: Capture eight real flagship designs at five viewports
+        run: |
+          PHASE14_BASE_URL=http://127.0.0.1:3000 node scripts/phase14-visual-audit.mjs --ids=meridian,canvas,haven,academia,maison,nexus,impact,estate
+      - name: Upload screenshots and result manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase14-flagship-browser-evidence
+          path: artifacts/phase14-visual/
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Report failed server startup
+        if: failure()
+        run: tail -80 /tmp/phase14-next.log || true
