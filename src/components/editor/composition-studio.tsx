@@ -1,5 +1,6 @@
 "use client";
 import { mediaIds } from "@/lib/media/references";
+import { VisualExperienceControls } from "./visual-experience-controls";
 import { MediaLibrary } from "./media-library";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -205,7 +206,7 @@ function CompositionEditor({
     [base, setBase] = useState(revision);
   const [pageId, setPageId] = useState(initial.pages[0].id),
     [sectionId, setSectionId] = useState(initial.pages[0].sections[0].id);
-  const [panel, setPanel] = useState<"business" | "content" | "design">("business"),
+  const [panel, setPanel] = useState<"business" | "content" | "design" | "visual">("business"),
     [previewWidth, setPreviewWidth] = useState("100%"),
     [mode, setMode] = useState<"guided" | "advanced">("guided"),
     [notice, setNotice] = useState("Saved draft loaded"),
@@ -389,7 +390,7 @@ function CompositionEditor({
         )}
       </header>
       <nav className="studio-task-nav" aria-label="Personalization tasks">
-        {(["business", "content", "design"] as const).map((tab) => (
+        {(["business", "content", "design", "visual"] as const).map((tab) => (
           <button
             key={tab}
             type="button"
@@ -397,10 +398,11 @@ function CompositionEditor({
             className={panel === tab ? "studio-task-active" : ""}
             onClick={() => setPanel(tab)}
           >
-            {tab === "business" ? "1. Business identity" : tab === "content" ? "2. Page content" : "3. Design"}
+            {tab === "business" ? "1. Business identity" : tab === "content" ? "2. Page content" : tab === "design" ? "3. Design" : "4. Visual Experience"}
           </button>
         ))}
       </nav>
+      {panel === "visual" && <VisualExperienceControls layoutId={layout.layoutId} value={layout.visualExperience} locked={busy || Boolean(layout.permissions.visualExperienceLocked) || !(mode === "guided" ? layout.permissions.guided.includes("brand") : layout.permissions.advanced.includes("tokens"))} onChange={(value) => edit({ kind: "visual-experience", value })} />}
       <fieldset
         disabled={busy}
         hidden={panel !== "business"}

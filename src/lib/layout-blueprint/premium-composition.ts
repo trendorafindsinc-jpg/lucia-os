@@ -1,3 +1,4 @@
+import { visualExperienceSchema, supportedExpressions, type VisualExperience } from "./visual-experience";
 import { z } from "zod";
 import { mediaReferencePattern } from "@/lib/media/references";
 import { premiumAssets } from "./premium-assets";
@@ -201,6 +202,7 @@ export const premiumLayoutSchema = z
       profile: businessProfileSchema.optional(),
     }).strict(),
     tokens: premiumTokensSchema,
+    visualExperience: visualExperienceSchema.optional(),
     navigation: z
       .array(z.object({ label: text(50), href: path }).strict())
       .max(12),
@@ -233,6 +235,7 @@ export const premiumLayoutSchema = z
           )
           .max(6),
         lockedSections: z.array(id).max(100),
+        visualExperienceLocked: z.boolean().optional(),
         lockedTokens: z
           .array(
             z.enum(["font", "scale", "width", "radius", "rhythm", "motion"]),
@@ -243,6 +246,7 @@ export const premiumLayoutSchema = z
   })
   .strict()
   .superRefine((definition, ctx) => {
+    if (definition.visualExperience && !supportedExpressions(definition.layoutId).includes(definition.visualExperience.expression)) ctx.addIssue({ code: "custom", path: ["visualExperience", "expression"], message: "This Layout does not support that expression." });
     const routes = new Set<string>(),
       pageIds = new Set<string>(),
       sectionIds = new Set<string>();
@@ -337,6 +341,7 @@ export const parsePremiumLayout = (input: unknown): PremiumLayout =>
  * must still authenticate, authorize tenant ownership and enforce revisions. */
 export type PremiumEdit =
   | { kind: "brand"; name: string }
+  | { kind: "visual-experience"; value: VisualExperience }
   | { kind: "business-detail"; field: "description" | "tagline" | "contactEmail" | "phone" | "address" | "serviceArea" | "enquiryEmail"; value: string }
   | { kind: "business-social"; network: "instagram" | "facebook" | "linkedin" | "x"; value: string }
   | { kind: "business-logo"; src: string | null; alt: string | null }
@@ -366,6 +371,11 @@ export function applyPremiumEdit(
   const original = parsePremiumLayout(layout);
   const next = structuredClone(original);
   const perms = next.permissions;
+  if (edit.kind === "visual-experience") {
+    if (perms.visualExperienceLocked || !(mode === "guided" ? perms.guided.includes("brand") : perms.advanced.includes("tokens"))) throw Error("Design Lock: visual experience changes denied");
+    next.visualExperience = visualExperienceSchema.parse(edit.value);
+    return parsePremiumLayout(next);
+  }
   if (edit.kind === "brand") {
     if (
       edit.name.trim() !== edit.name ||
@@ -586,6 +596,7 @@ export function applyPremiumEdit(
 }
 
 export const premiumEditSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("visual-experience"), value: visualExperienceSchema }).strict(),
   z.object({
     kind: z.literal("brand"),
     name: z.string().trim().min(2).max(80),

@@ -3,6 +3,7 @@
  * premiumAssets in premium-assets.ts and each update is schema validated.
  */
 export const premiumArtworkChoices = [
+  ...[0, 1, 2].map((index) => ({ ref: "builtin:premium/canvas-art-" + index, label: "Canvas generated sculpture study " + (index + 1) })),
   ...(["haven", "maison", "estate"] as const).map((name) => ({ ref: "builtin:premium/photograph-" + name, label: name[0].toUpperCase() + name.slice(1) + " generated photograph" })),
   ...(["portrait", "service-journey", "direction", "operations"] as const).map((name) => ({ ref: "builtin:meridian/" + name, label: "Meridian generated " + name })),
   { ref: "builtin:portfolio/work-1", label: "Original portfolio study" },

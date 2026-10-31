@@ -200,6 +200,7 @@ function PremiumLayoutPage({
       onNavigate(path);
     }
   };
+  const visual = definition.visualExperience;
   const t = definition.tokens;
   const widths = { reading: "760px", standard: "1120px", wide: "1440px" };
   const fonts = {
@@ -217,12 +218,23 @@ function PremiumLayoutPage({
   const Root = preview ? "div" : "main";
   return (
     <Root
-      className={`layout-site premium-layout premium-design-${definition.layoutId.slice("lucia.layout.".length)}-r${definition.layoutVersion} premium-scale-${t.scale} premium-rhythm-${t.rhythm} premium-radius-${t.radius} premium-responsive-${page.responsive}`}
+      className={`layout-site premium-layout ${visual ? "premium-visual" : ""} premium-design-${definition.layoutId.slice("lucia.layout.".length)}-r${definition.layoutVersion} premium-scale-${t.scale} premium-rhythm-${t.rhythm} premium-radius-${t.radius} premium-responsive-${page.responsive}`}
       style={style}
       data-layout-version="2"
       data-layout-revision={definition.layoutVersion}
       data-layout-id={definition.layoutId}
       data-page-path={page.path}
+      data-expression={visual?.expression}
+      data-visual-motion={visual?.motion}
+      data-visual-reveal={visual?.reveal}
+      data-visual-transition={visual?.transition}
+      data-visual-interaction={visual?.interaction}
+      data-visual-background={visual?.background}
+      data-visual-typography={visual?.typography}
+      data-visual-image={visual?.image}
+      data-visual-depth={visual?.depth}
+      data-visual-lighting={visual?.lighting}
+      data-visual-reduced={visual?.reducedMotion ? "true" : undefined}
     >
       <a className="premium-skip-link" href={`#${prefix}premium-main-content`}>
         Skip to content

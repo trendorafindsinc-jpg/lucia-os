@@ -75,6 +75,15 @@ async function captureTarget(entry) {
         try {
           const response = await page.goto(url, { waitUntil: "networkidle", timeout: 30000 });
           if (response?.status() !== 200) issues.push("HTTP " + (response?.status() ?? "unknown"));
+          // Lazy loading is not a broken asset. Decode all real registered images
+          // before retaining the same completeness/natural-width assertions.
+          await page.evaluate(async () => {
+            const images = [...document.querySelectorAll(".premium-layout img")];
+            await Promise.race([
+              Promise.allSettled(images.map((image) => { image.loading = "eager"; return image.decode(); })),
+              new Promise((_, reject) => setTimeout(() => reject(Error("Image decoding timed out")), 15000)),
+            ]);
+          });
           const check = await page.evaluate(() => ({
             viewport: window.innerWidth,
             bodyWidth: document.documentElement.scrollWidth,

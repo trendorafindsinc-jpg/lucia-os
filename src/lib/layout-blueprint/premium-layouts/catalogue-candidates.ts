@@ -1,3 +1,4 @@
+import { visualPreset } from "../visual-experience";
 import {
   parsePremiumLayout,
   type PremiumLayout,
@@ -64,12 +65,12 @@ export const premiumCandidateIds: readonly string[] = categoryOrder.map(
 );
 
 export function premiumCandidate(id: string, siteName?: string): PremiumLayout {
-  if (id === "lucia.layout.meridian") return meridianCandidate(siteName);
+  if (id === "lucia.layout.meridian") return enrichVisualFlagship(meridianCandidate(siteName));
   const brief = premiumCandidateBriefs.find(
     (item) => "lucia.layout." + item.id === id,
   );
   if (!brief) throw new Error("Unknown premium candidate");
-  return refineFlagship(buildCandidate(brief, siteName ?? brief.name + " · Demo"));
+  return enrichVisualFlagship(refineFlagship(buildCandidate(brief, siteName ?? brief.name + " · Demo")));
 }
 
 function buildCandidate(brief: PremiumCandidateBrief, siteName: string): PremiumLayout {
@@ -242,4 +243,31 @@ function buildCandidate(brief: PremiumCandidateBrief, siteName: string): Premium
       lockedTokens: ["font", "scale", "rhythm"],
     },
   });
+}
+
+/** New starting definitions opt in; stored legacy definitions are never rewritten. */
+function enrichVisualFlagship(input: PremiumLayout): PremiumLayout {
+ const slug = input.layoutId.slice("lucia.layout.".length);
+ if (!["meridian", "canvas", "haven", "academia", "maison", "nexus", "impact", "estate"].includes(slug)) return input;
+ const next = structuredClone(input);
+ next.visualExperience = visualPreset(slug === "canvas" || slug === "nexus" ? "dynamic" : slug === "haven" ? "cinematic" : "elegant");
+ if (slug === "canvas") {
+   next.tokens = { ...next.tokens, font: "system-sans", background: "#F4F1EA", foreground: "#171D2C", accent: "#E46236" };
+   for (const page of next.pages) for (const section of page.sections) {
+     if (section.type === "premium-hero" && page.path === "/") {
+       section.variant = "offset";
+       section.heading = "Ideas that\nmove you.";
+       section.image = { src: "builtin:premium/canvas-art-0", alt: "Generated blue metal arc, coral sphere and yellow panel in an original sculptural study" };
+     }
+     if (section.type === "project-gallery") section.projects.forEach((project,index) => {
+       project.image = { src: "builtin:premium/canvas-art-" + (index % 3), alt: ["Original generated blue metal and coral sculpture", "Original generated folded paper and red wire study", "Original generated amber glass and blue stone composition"][index % 3] };
+     });
+   }
+   next.identity.description = "Fictional creative studio. Original generated demonstration artwork, not completed client commissions.";
+ }
+ if (slug === "haven") {
+   const hero = next.pages.find((page) => page.path === "/")?.sections.find((section) => section.type === "premium-hero");
+   if (hero?.type === "premium-hero") hero.heading = "A different\npace of life.";
+ }
+ return parsePremiumLayout(next);
 }

@@ -1,3 +1,6 @@
+import canvasArt0 from "../../../public/layouts/premium/canvas/study-0-v1.webp";
+import canvasArt1 from "../../../public/layouts/premium/canvas/study-1-v1.webp";
+import canvasArt2 from "../../../public/layouts/premium/canvas/study-2-v1.webp";
 import havenPhotograph from "../../../public/layouts/premium/photography/haven-v1.webp";
 import maisonPhotograph from "../../../public/layouts/premium/photography/maison-v1.webp";
 import estatePhotograph from "../../../public/layouts/premium/photography/estate-v1.webp";
@@ -38,6 +41,9 @@ import room from "../../../public/layouts/structural/room.svg";
 const path = (asset: string | { src: string }) =>
   typeof asset === "string" ? asset : asset.src;
 export const premiumAssets: Readonly<Record<string, string>> = Object.freeze({
+  "builtin:premium/canvas-art-0": path(canvasArt0),
+  "builtin:premium/canvas-art-1": path(canvasArt1),
+  "builtin:premium/canvas-art-2": path(canvasArt2),
   "builtin:premium/photograph-haven": path(havenPhotograph),
   "builtin:premium/photograph-maison": path(maisonPhotograph),
   "builtin:premium/photograph-estate": path(estatePhotograph),
@@ -76,6 +82,9 @@ export const premiumAssets: Readonly<Record<string, string>> = Object.freeze({
   "builtin:premium/project-estate": path(estateProject),
 });
 export const premiumAssetSources = [
+  "public/layouts/premium/canvas/study-0-v1.webp",
+  "public/layouts/premium/canvas/study-1-v1.webp",
+  "public/layouts/premium/canvas/study-2-v1.webp",
   "public/layouts/premium/photography/haven-v1.webp",
   "public/layouts/premium/photography/maison-v1.webp",
   "public/layouts/premium/photography/estate-v1.webp",
@@ -122,6 +131,7 @@ export function resolvePremiumAsset(reference: string): string {
 }
 
 export function premiumAssetDimensions(reference: string): {width: number; height: number} {
+  if (reference.startsWith("builtin:premium/canvas-art-")) return { width: 1500, height: 1000 };
   if (["builtin:premium/photograph-haven", "builtin:premium/photograph-maison", "builtin:premium/photograph-estate"].includes(reference)) return { width: 1500, height: 1000 };
   if (reference === "builtin:meridian/portrait") return { width: 900, height: 1125 };
   if (reference.startsWith("builtin:meridian/")) return { width: 1100, height: 733 };
