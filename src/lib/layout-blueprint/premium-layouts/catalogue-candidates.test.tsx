@@ -137,7 +137,8 @@ describe("Phase 14 canonical premium candidates — not release acceptance", () 
     expect(html).toContain('aria-label="Mobile navigation"');
     expect(html).toContain('aria-current="page"');
     expect(html).toContain('id="premium-main-content"');
-    expect(html).toContain('loading="eager"');
+    const homeHtml = renderToStaticMarkup(<LayoutRenderer blueprint={layout} />);
+    expect(homeHtml).toContain('loading="eager"');
   });
 
   it("does not grant permission to load unregistered Layouts or unsafe paths", () => {
