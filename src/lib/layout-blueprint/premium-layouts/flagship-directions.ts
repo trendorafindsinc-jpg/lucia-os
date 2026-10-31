@@ -118,9 +118,13 @@ export function refineFlagship(base: PremiumLayout): PremiumLayout {
   const image = gallery?.type === "project-gallery" ? gallery.projects[0]?.image : undefined;
   if (!hero || hero.type !== "premium-hero" || !image)
     throw Error("Flagship hero artwork not available");
+  const heroArtwork = {
+    src: "builtin:premium/flagship-" + name,
+    alt: "Original editorial illustration developed for the " + name + " Layout"
+  };
   hero.variant = direction.heroVariant;
   if (hero.variant === "full-bleed" || hero.variant === "offset")
-    hero.image = image;
+    hero.image = heroArtwork;
   else delete hero.image;
   for (const [index, interior] of direction.interiors.entries()) {
     const id = "flagship-" + (index + 1);
