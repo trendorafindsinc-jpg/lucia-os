@@ -28,8 +28,8 @@
         "public/layouts/premium/business.svg"
       ],
       "assetProvenance": "Original repo-authored per-flagship SVG hero and category-level illustration. Artwork belongs to this repository; per-layout galleries and visual quality still need independent review.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
+      "unitTestStatus": "Quality run #? pending after screenshot fixes",
+      "responsiveReview": "Automated check clean, preliminary visual inspection; full independent rubric pending",
       "accessibilityReview": "not run",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
@@ -53,7 +53,28 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "responsiveScreenshots": {
+        "evidenceRun": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41190162848",
+        "artifact": "phase14-flagship-browser-evidence",
+        "capturedAt": "2026-10-31T09:51:01.501Z",
+        "home": [
+          "meridian-home-phone-320.png",
+          "meridian-home-phone-390.png",
+          "meridian-home-tablet.png",
+          "meridian-home-landscape.png",
+          "meridian-home-desktop.png"
+        ],
+        "representativeInterior": [
+          "meridian-services-phone-320.png",
+          "meridian-services-phone-390.png",
+          "meridian-services-tablet.png",
+          "meridian-services-landscape.png",
+          "meridian-services-desktop.png"
+        ],
+        "automatedChecks": "PASS: no horizontal overflow, broken image, empty link, H1 mismatch or mobile menu failure in 10 screenshots",
+        "reviewStatus": "Preliminary screenshot inspection only; no completed design rubric or public publishing acceptance"
+      }
     },
     {
       "id": "lucia.layout.keystone",
@@ -256,8 +277,8 @@
         "public/layouts/premium/creative.svg"
       ],
       "assetProvenance": "Original repo-authored per-flagship SVG hero and category-level illustration. Artwork belongs to this repository; per-layout galleries and visual quality still need independent review.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
+      "unitTestStatus": "Quality run #? pending after screenshot fixes",
+      "responsiveReview": "Automated check clean, preliminary visual inspection; full independent rubric pending",
       "accessibilityReview": "not run",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
@@ -281,7 +302,28 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "responsiveScreenshots": {
+        "evidenceRun": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41190162848",
+        "artifact": "phase14-flagship-browser-evidence",
+        "capturedAt": "2026-10-31T09:51:01.501Z",
+        "home": [
+          "canvas-home-phone-320.png",
+          "canvas-home-phone-390.png",
+          "canvas-home-tablet.png",
+          "canvas-home-landscape.png",
+          "canvas-home-desktop.png"
+        ],
+        "representativeInterior": [
+          "canvas-practice-phone-320.png",
+          "canvas-practice-phone-390.png",
+          "canvas-practice-tablet.png",
+          "canvas-practice-landscape.png",
+          "canvas-practice-desktop.png"
+        ],
+        "automatedChecks": "PASS: no horizontal overflow, broken image, empty link, H1 mismatch or mobile menu failure in 10 screenshots",
+        "reviewStatus": "Preliminary screenshot inspection only; no completed design rubric or public publishing acceptance"
+      }
     },
     {
       "id": "lucia.layout.prism",
@@ -519,8 +561,8 @@
         "public/layouts/premium/hospitality.svg"
       ],
       "assetProvenance": "Original repo-authored per-flagship SVG hero and category-level illustration. Artwork belongs to this repository; per-layout galleries and visual quality still need independent review.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
+      "unitTestStatus": "Quality run #? pending after screenshot fixes",
+      "responsiveReview": "Initial desktop capture revealed reading-width hero; widened and requires new screenshot review",
       "accessibilityReview": "not run",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
@@ -544,7 +586,28 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "responsiveScreenshots": {
+        "evidenceRun": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41190162848",
+        "artifact": "phase14-flagship-browser-evidence",
+        "capturedAt": "2026-10-31T09:51:01.501Z",
+        "home": [
+          "haven-home-phone-320.png",
+          "haven-home-phone-390.png",
+          "haven-home-tablet.png",
+          "haven-home-landscape.png",
+          "haven-home-desktop.png"
+        ],
+        "representativeInterior": [
+          "haven-experiences-phone-320.png",
+          "haven-experiences-phone-390.png",
+          "haven-experiences-tablet.png",
+          "haven-experiences-landscape.png",
+          "haven-experiences-desktop.png"
+        ],
+        "automatedChecks": "PASS: no horizontal overflow, broken image, empty link, H1 mismatch or mobile menu failure in 10 screenshots",
+        "reviewStatus": "Preliminary screenshot inspection only; no completed design rubric or public publishing acceptance"
+      }
     },
     {
       "id": "lucia.layout.bloom",
@@ -712,8 +775,8 @@
         "public/layouts/premium/education.svg"
       ],
       "assetProvenance": "Original repo-authored per-flagship SVG hero and category-level illustration. Artwork belongs to this repository; per-layout galleries and visual quality still need independent review.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
+      "unitTestStatus": "Quality run #? pending after screenshot fixes",
+      "responsiveReview": "Automated check clean, preliminary visual inspection; full independent rubric pending",
       "accessibilityReview": "not run",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
@@ -737,7 +800,28 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "responsiveScreenshots": {
+        "evidenceRun": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41190162848",
+        "artifact": "phase14-flagship-browser-evidence",
+        "capturedAt": "2026-10-31T09:51:01.501Z",
+        "home": [
+          "academia-home-phone-320.png",
+          "academia-home-phone-390.png",
+          "academia-home-tablet.png",
+          "academia-home-landscape.png",
+          "academia-home-desktop.png"
+        ],
+        "representativeInterior": [
+          "academia-programmes-phone-320.png",
+          "academia-programmes-phone-390.png",
+          "academia-programmes-tablet.png",
+          "academia-programmes-landscape.png",
+          "academia-programmes-desktop.png"
+        ],
+        "automatedChecks": "PASS: no horizontal overflow, broken image, empty link, H1 mismatch or mobile menu failure in 10 screenshots",
+        "reviewStatus": "Preliminary screenshot inspection only; no completed design rubric or public publishing acceptance"
+      }
     },
     {
       "id": "lucia.layout.sprout",
@@ -940,8 +1024,8 @@
         "public/layouts/premium/commerce.svg"
       ],
       "assetProvenance": "Original repo-authored per-flagship SVG hero and category-level illustration. Artwork belongs to this repository; per-layout galleries and visual quality still need independent review.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
+      "unitTestStatus": "Quality run #? pending after screenshot fixes",
+      "responsiveReview": "Initial desktop capture revealed gallery heading awkward wrap; CSS corrected and requires new screenshot review",
       "accessibilityReview": "not run",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
@@ -965,7 +1049,28 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "responsiveScreenshots": {
+        "evidenceRun": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41190162848",
+        "artifact": "phase14-flagship-browser-evidence",
+        "capturedAt": "2026-10-31T09:51:01.501Z",
+        "home": [
+          "maison-home-phone-320.png",
+          "maison-home-phone-390.png",
+          "maison-home-tablet.png",
+          "maison-home-landscape.png",
+          "maison-home-desktop.png"
+        ],
+        "representativeInterior": [
+          "maison-collections-phone-320.png",
+          "maison-collections-phone-390.png",
+          "maison-collections-tablet.png",
+          "maison-collections-landscape.png",
+          "maison-collections-desktop.png"
+        ],
+        "automatedChecks": "PASS: no horizontal overflow, broken image, empty link, H1 mismatch or mobile menu failure in 10 screenshots",
+        "reviewStatus": "Preliminary screenshot inspection only; no completed design rubric or public publishing acceptance"
+      }
     },
     {
       "id": "lucia.layout.origin",
@@ -1168,8 +1273,8 @@
         "public/layouts/premium/technology.svg"
       ],
       "assetProvenance": "Original repo-authored per-flagship SVG hero and category-level illustration. Artwork belongs to this repository; per-layout galleries and visual quality still need independent review.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
+      "unitTestStatus": "Quality run #? pending after screenshot fixes",
+      "responsiveReview": "Automated check clean, preliminary visual inspection; full independent rubric pending",
       "accessibilityReview": "not run",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
@@ -1193,7 +1298,28 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "responsiveScreenshots": {
+        "evidenceRun": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41190162848",
+        "artifact": "phase14-flagship-browser-evidence",
+        "capturedAt": "2026-10-31T09:51:01.501Z",
+        "home": [
+          "nexus-home-phone-320.png",
+          "nexus-home-phone-390.png",
+          "nexus-home-tablet.png",
+          "nexus-home-landscape.png",
+          "nexus-home-desktop.png"
+        ],
+        "representativeInterior": [
+          "nexus-capabilities-phone-320.png",
+          "nexus-capabilities-phone-390.png",
+          "nexus-capabilities-tablet.png",
+          "nexus-capabilities-landscape.png",
+          "nexus-capabilities-desktop.png"
+        ],
+        "automatedChecks": "PASS: no horizontal overflow, broken image, empty link, H1 mismatch or mobile menu failure in 10 screenshots",
+        "reviewStatus": "Preliminary screenshot inspection only; no completed design rubric or public publishing acceptance"
+      }
     },
     {
       "id": "lucia.layout.orbit",
@@ -1396,8 +1522,8 @@
         "public/layouts/premium/community.svg"
       ],
       "assetProvenance": "Original repo-authored per-flagship SVG hero and category-level illustration. Artwork belongs to this repository; per-layout galleries and visual quality still need independent review.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
+      "unitTestStatus": "Quality run #? pending after screenshot fixes",
+      "responsiveReview": "Automated check clean, preliminary visual inspection; full independent rubric pending",
       "accessibilityReview": "not run",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
@@ -1421,7 +1547,28 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "responsiveScreenshots": {
+        "evidenceRun": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41190162848",
+        "artifact": "phase14-flagship-browser-evidence",
+        "capturedAt": "2026-10-31T09:51:01.501Z",
+        "home": [
+          "impact-home-phone-320.png",
+          "impact-home-phone-390.png",
+          "impact-home-tablet.png",
+          "impact-home-landscape.png",
+          "impact-home-desktop.png"
+        ],
+        "representativeInterior": [
+          "impact-initiatives-phone-320.png",
+          "impact-initiatives-phone-390.png",
+          "impact-initiatives-tablet.png",
+          "impact-initiatives-landscape.png",
+          "impact-initiatives-desktop.png"
+        ],
+        "automatedChecks": "PASS: no horizontal overflow, broken image, empty link, H1 mismatch or mobile menu failure in 10 screenshots",
+        "reviewStatus": "Preliminary screenshot inspection only; no completed design rubric or public publishing acceptance"
+      }
     },
     {
       "id": "lucia.layout.together",
@@ -1624,8 +1771,8 @@
         "public/layouts/premium/services.svg"
       ],
       "assetProvenance": "Original repo-authored per-flagship SVG hero and category-level illustration. Artwork belongs to this repository; per-layout galleries and visual quality still need independent review.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
+      "unitTestStatus": "Quality run #? pending after screenshot fixes",
+      "responsiveReview": "Automated check clean, preliminary visual inspection; full independent rubric pending",
       "accessibilityReview": "not run",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
@@ -1649,7 +1796,28 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "responsiveScreenshots": {
+        "evidenceRun": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41190162848",
+        "artifact": "phase14-flagship-browser-evidence",
+        "capturedAt": "2026-10-31T09:51:01.501Z",
+        "home": [
+          "estate-home-phone-320.png",
+          "estate-home-phone-390.png",
+          "estate-home-tablet.png",
+          "estate-home-landscape.png",
+          "estate-home-desktop.png"
+        ],
+        "representativeInterior": [
+          "estate-services-phone-320.png",
+          "estate-services-phone-390.png",
+          "estate-services-tablet.png",
+          "estate-services-landscape.png",
+          "estate-services-desktop.png"
+        ],
+        "automatedChecks": "PASS: no horizontal overflow, broken image, empty link, H1 mismatch or mobile menu failure in 10 screenshots",
+        "reviewStatus": "Preliminary screenshot inspection only; no completed design rubric or public publishing acceptance"
+      }
     },
     {
       "id": "lucia.layout.care",
