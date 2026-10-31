@@ -112,12 +112,22 @@ export async function checkPhase14FlagshipPublishing({
         kind: "composition-edit", mode: "guided",
         edits: [{ kind: "brand", name: "Stale request" }],
       }, { "if-match": "W/\"invalid\"" })).status, 428);
-      await view.goto(base + "/editor?websiteId=" + id, { waitUntil: "networkidle" });
-      await view.getByLabel("Composition controls").waitFor();
+      const editorResponse = await view.goto(base + "/editor?websiteId=" + id,
+        { waitUntil: "networkidle" });
+      assert.equal(editorResponse?.status(), 200, name + " editor HTTP");
+      const controls = view.getByLabel("Composition controls");
+      try {
+        await controls.waitFor({ timeout: 12000 });
+      } catch {
+        const body = (await view.locator("body").innerText().catch(() => "")).slice(0, 1300);
+        const browserDraft = await view.request.get(base + "/api/websites/" + id + "/draft");
+        throw Error(name + " saved-editor hydration failure: " +
+          JSON.stringify({ url: view.url(), body, apiStatus: browserDraft.status() }));
+      }
       assert(await view.locator('[data-layout-id="lucia.layout.' + name + '"]').count(),
         name + " editor does not show persisted Layout");
       await view.reload({ waitUntil: "networkidle" });
-      await view.getByLabel("Composition controls").waitFor();
+      await controls.waitFor({ timeout: 12000 });
       const current = await (await api("a", draftRoute(id))).json();
       assert.equal(current.draft.identity.name, renamed);
       const published = await api("a", publishRoute, "POST", publishing(current),
