@@ -324,3 +324,32 @@
   .premium-layout[data-layout-id="lucia.layout.maison"] .premium-hero-full-bleed{min-height:62vh;text-align:left}
   .premium-layout[data-layout-id="lucia.layout.nexus"] .premium-hero-typographic{padding:clamp(1.25rem,5vw,2rem)}
 }
+
+/* Corrections from real 1440px Playwright screenshot review, not heuristics:
+ * Haven's initial reading-width token compressed the cinematic hero.
+ * Maison's gallery heading broke a final letter in a narrow grid track. */
+.premium-layout[data-layout-id="lucia.layout.haven"] .layout-page-content{
+  max-width:var(--layout-content-max-width,1440px);
+}
+.premium-layout[data-layout-id="lucia.layout.haven"] .premium-hero-full-bleed{
+  min-height:min(86vh,820px);
+  width:100%;
+}
+.premium-layout[data-layout-id="lucia.layout.maison"] .premium-gallery{
+  display:block;
+}
+.premium-layout[data-layout-id="lucia.layout.maison"] .premium-gallery h2{
+  max-width:26ch;
+  font-size:clamp(1.85rem,4.2vw,4.4rem);
+  overflow-wrap:normal;
+  word-break:normal;
+}
+.premium-layout[data-layout-id="lucia.layout.maison"] .premium-gallery-grid{
+  width:100%;
+  margin-top:clamp(1.2rem,3vw,3rem);
+}
+@media(max-width:580px){
+  .premium-layout[data-layout-id="lucia.layout.maison"] .premium-gallery h2{
+    font-size:clamp(1.7rem,7vw,2.45rem);
+  }
+}
