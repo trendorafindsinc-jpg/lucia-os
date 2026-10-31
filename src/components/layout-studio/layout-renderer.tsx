@@ -303,6 +303,8 @@ function PremiumLayoutPage({
         </nav>
         <div className="premium-footer-end">
           <span>{preview ? "Private preview · LUCIA OS" : "Made with LUCIA OS"}</span>
+          {/* Customer hostname navigation must issue a document request. */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a
             href="/"
             onClick={preview ? (event) => navigate(event, "/") : undefined}
