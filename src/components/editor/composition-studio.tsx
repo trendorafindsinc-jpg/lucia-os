@@ -463,6 +463,52 @@ function CompositionEditor({
             />
           </label>
         )}
+        {section.type === "premium-hero" && section.action && (
+          <>
+            <label>
+              Primary action label
+              <input
+                key={page.id + ":" + section.id + ":cta:" + section.action.label}
+                defaultValue={section.action.label}
+                maxLength={60}
+                onBlur={(event) => {
+                  const label = event.currentTarget.value.trim();
+                  if (label && label !== section.action!.label)
+                    edit({
+                      kind: "replace-section",
+                      pageId: page.id,
+                      section: {
+                        ...section,
+                        action: { ...section.action!, label },
+                      },
+                    });
+                }}
+              />
+            </label>
+            <label>
+              Primary action destination
+              <select
+                value={section.action.href}
+                onChange={(event) =>
+                  edit({
+                    kind: "replace-section",
+                    pageId: page.id,
+                    section: {
+                      ...section,
+                      action: { ...section.action!, href: event.target.value },
+                    },
+                  })
+                }
+              >
+                {layout.pages.map((destination) => (
+                  <option key={destination.path} value={destination.path}>
+                    {destination.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </>
+        )}
         {section.type === "contact-panel" && (
           <label>
             Business enquiry email
