@@ -101,4 +101,51 @@ describe("Phase 14 canonical premium candidates — not release acceptance", () 
     projects.projects[0].href = "/staff";
     expect(() => parsePremiumLayout(layout)).toThrow();
   });
+
+  it("gives each flagship a relevant, working interior journey rather than repeating About", () => {
+    const required: Record<string, string[]> = {
+      "lucia.layout.meridian": ["/services", "/work/service-journey"],
+      "lucia.layout.canvas": ["/process", "/commissions"],
+      "lucia.layout.haven": ["/rooms", "/booking-enquiry"],
+      "lucia.layout.academia": ["/admissions", "/student-life"],
+      "lucia.layout.maison": ["/lookbook", "/care-guide"],
+      "lucia.layout.nexus": ["/documentation", "/integrations"],
+      "lucia.layout.impact": ["/volunteer", "/accountability"],
+      "lucia.layout.estate": ["/viewings", "/area-guide"],
+    };
+    for (const [id, routes] of Object.entries(required)) {
+      const layout = premiumCandidate(id);
+      for (const route of routes) {
+        const page = layout.pages.find((p) => p.path === route);
+        expect(page, id + " missing " + route).toBeDefined();
+        expect(page?.sections.some((s) => s.type === "editorial-story")).toBe(true);
+        if (!page) throw Error("Missing designed page");
+        const html = renderToStaticMarkup(
+          <LayoutRenderer blueprint={layout} pagePath={route} />,
+        );
+        expect(html).toContain('data-page-path="' + route + '"');
+        expect(html).toContain(page.title);
+      }
+    }
+  });
+
+  it("renders accessible responsive menus, skip links and the page's active destination", () => {
+    const layout = premiumCandidate("lucia.layout.haven");
+    const html = renderToStaticMarkup(<LayoutRenderer blueprint={layout} pagePath="/rooms" />);
+    expect(html).toContain('class="premium-mobile-menu"');
+    expect(html).toContain("Skip to content");
+    expect(html).toContain('aria-label="Mobile navigation"');
+    expect(html).toContain('aria-current="page"');
+    expect(html).toContain('id="premium-main-content"');
+    expect(html).toContain('loading="eager"');
+  });
+
+  it("does not grant permission to load unregistered Layouts or unsafe paths", () => {
+    expect(() => premiumCandidate("lucia.layout.fake")).toThrow(/Unknown/);
+    const layout = premiumCandidate("lucia.layout.estate");
+    expect(() => parsePremiumLayout({
+      ...layout,
+      navigation: [...layout.navigation, { label: "Staff", href: "/staff" }],
+    })).toThrow();
+  });
 });
