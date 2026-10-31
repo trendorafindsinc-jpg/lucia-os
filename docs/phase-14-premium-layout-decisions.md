@@ -1,9 +1,33 @@
 # LUCIA OS — Phase 14 Premium Layout Exemplars: Founder Decision Record and Delivery Contract
 
-**Status:** Approved direction; implementation not yet verified or delivered.
+**Status:** Founder-approved revised scope (48 Layouts in Phase 14); implementation not yet verified or delivered.
+**Superseding decision:** D14-07 below replaces the original three-exemplar completion target and moves catalogue implementation from Phase 17 into Phase 14.
 **Decision date:** 2026-10-30
 **Authority:** Founder-approved 48-Layout catalogue and Phases 11–12 acceptance.
 **Canonical references:** `docs/implementation-roadmap-30-phases.md`, `docs/layouts-48-premium-catalogue.md`, `docs/phase-12-premium-layout-architecture.md`, `docs/lucia-os-product-vision.md`.
+
+## D14-07 — Founder supersession: implement all 48 premium Layouts during Phase 14
+
+**Decision:** Phase 14 owns actual implementation and complete quality-gated acceptance of **all 48 approved premium Layouts** (8 categories × 6), rather than stopping after three exemplars. This supersedes conflicting scope and definition-of-done language in D14-01, D14-02, D14-06 below; those passages remain historical context only. The 48 approved identities, art directions and compositions in `docs/layouts-48-premium-catalogue.md` remain canonical.
+
+**Hard prerequisite:** Phase 13 production-integrated v2 renderer, multi-page save/preview/publication, schema enforcement, tenant authorization and v1 compatibility must be verified and accepted before Phase 14 can depend on them. Never create a parallel renderer to avoid this dependency.
+
+**Four sequential, independently reviewed implementation batches:**
+
+| Batch | Cumulative accepted layouts | Gate |
+| --- | ---: | --- |
+| 1 | 8 — one flagship per category (Meridian, Canvas, Haven, Academia, Maison, Nexus, Impact, Estate) | Distinct architecture, full pages, professional art direction, verified rendering/publishing |
+| 2 | 16 | All 16 individually functional and visually differentiated |
+| 3 | 32 | All 32 pass responsive, accessibility, originality and content-replacement gates |
+| 4 | 48 | Every catalogue identity implemented; full cross-catalogue comparisons and acceptance |
+
+A batch's completion requires evidence per Layout; a passing screenshot, placeholder preview card, schema fixture, or a recolored shared skeleton does not count. Record each Layout ID, its page inventory, real rendered paths, assets and licenses, creation/editability, visual review score, responsive checks, tests and acceptance result. Maintain a machine-readable inventory or verified table to prevent inflated implementation counts. The existing 37 generic starters are not counted as premium deliveries unless individually upgraded and verified against their canonical specifications.
+
+**Phase boundaries updated:** Phase 15 owns accurate live previews, discovery, selection and durable customer project creation for implemented designs; Phase 16 owns comprehensive customer content replacement and customization UX; Phase 17 owns catalogue-wide final quality hardening, optimization, accessibility, originality comparison and rollout readiness **without redefining or claiming the original build of the 48 Layouts**. Phases 15–17 may identify regressions requiring Phase 14 fixes. Do not defer the promised 48 implementation to Phase 17.
+
+**Phase 14 acceptance:** all 48 individually built, functionally working, structurally distinct, complete and responsive on supported viewports; each has navigable meaningful interior pages, demo-content replacement contract, actual renderer/website integration, valid licensed assets, and documented accessibility/security/performance results. Apply the existing 40-point quality rubric (minimum 32/40, no dimension below 3/5) plus hard functional/security gates. Release only accepted batches, protect existing customers, and do not label Phase 14 PASS until all 48 pass. Minimize CI cost with targeted local checks per batch and final required CI on exact PR heads.
+
+**Delivery and merge controls:** implementation may span sequenced reviewable PRs/batches to keep code review feasible, but all belong to Phase 14 and must preserve canonical contracts. Do not merge production implementation without founder approval. Document deviations and do not invent completion or tests.
 
 ## D14-01 — Scope and sequencing
 
