@@ -15,7 +15,9 @@ export async function checkPremiumComposition({
   await browserContext.addCookies([
     { name: "lucia_os_session", value: f.tokens.a, url: base },
   ]);
+  const errors = [];
   const page = await browserContext.newPage();
+  page.on("pageerror", (e) => errors.push(e.message));
   page.setDefaultTimeout(60000);
   page.on("dialog", (d) => d.accept());
   const ctx = (id) => `/api/websites/${id}/draft`;
@@ -168,11 +170,18 @@ export async function checkPremiumComposition({
     await page
       .getByRole("link", { name: "Open live website", exact: false })
       .waitFor();
+    // Another published tenant may have the same slug. Hostname binding wins.
+    if (name === "meridian") {
+      await admin`UPDATE websites SET slug=${slug},status='published' WHERE id=${f.foreign}`;
+      await admin`UPDATE website_pages SET status='published',published_content=${JSON.stringify({ templateId: "northstar-consulting", siteName: "Foreign public website", headline: "Foreign content must stay on its own host", description: "A separate tenant's published website.", buttonLabel: "Contact us", palette: "original", visibleSections: ["Hero", "Contact"] })} WHERE website_id=${f.foreign} AND path='/'`;
+    }
     const currentPublic = await publicSite("/", slug + ".lucia.name.ng");
     assert.equal(currentPublic.status, 200);
     const before = await currentPublic.text();
+    assert(!before.includes("Foreign content must stay on its own host"));
     assert(before.includes(`${name} persisted browser heading`));
     const publicPage = await browserContext.newPage();
+    publicPage.on("pageerror", (e) => errors.push(e.message));
     for (const [width, height] of [
       [320, 844],
       [390, 844],
@@ -304,11 +313,14 @@ export async function checkPremiumComposition({
       403,
     );
     await admin`UPDATE organization_memberships SET status='active' WHERE user_id=${f.a} AND organization_id=${f.orgA}`;
+    if (name === "meridian")
+      await admin`UPDATE websites SET slug=${"phase9-" + f.foreign},status='draft' WHERE id=${f.foreign}`;
     await publicPage.close();
     bpass(
       `${name}: real create→assign→edit→save→reload→preview→publish; tenant/Lock/revision/corrupt/revocation protection`,
     );
   }
+  assert.equal(errors.length, 0, errors.join("\n"));
   assert.equal(new Set(sequences).size, 3);
   await page.close();
   bpass("Three published DOM section sequences are structurally distinct");

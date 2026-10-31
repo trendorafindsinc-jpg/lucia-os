@@ -63,17 +63,19 @@ Strict registered data, bounded strings/arrays, React text escaping and fixed to
 3. **One preview/public contract.** Studio, Publishing preview, standard hostname and custom hostname reuse `LayoutRenderer` and validated definitions. A preview-only renderer would hide publication incompatibility.
 4. **Root-scoped tokens.** Validated values become custom properties only on the website root, with registered class variants. No user CSS is concatenated into global styles.
 5. **Stored-policy edit commands.** Full untrusted replacement would allow permission escalation and Design Lock removal. Commands apply to locked server state, with compare-and-swap revision protection shared with publishing.
-6. **Existing tenant router.** Pages are data under an existing website, not Next modules. Closed paths and reserved prefixes prevent routing ambiguity; existing hostname resolution remains authoritative.
+6. **Existing tenant router.** Pages are data under an existing website, not Next modules. Closed paths and reserved prefixes prevent routing ambiguity. Active hostname bindings resolve through the existing `PublicWebsite` helper and take precedence over nonunique tenant-local slugs. To preserve pre-domain-table v1 URLs without silently migrating customer data, an unbound standard hostname may use a single unambiguous published v1 slug. Ambiguous legacy slugs fail closed; v2 requires an active binding. Custom-domain delivery continues to require its active binding. A future controlled legacy-domain backfill can retire this compatibility fallback.
 7. **Atomic multi-page promotion.** The home row stores the complete private composition; publishing snapshots the same definition across its page records in one transaction. Obsolete public paths are retired only on successful promotion. No new database or temporary draft service is needed.
 8. **Build-owned asset URLs.** Static imports produce immutable asset URLs served through the already-approved static boundary, avoiding customer-path rewrites and external storage dependencies.
 
 ## Verification evidence
 
-Current local verification: 530 Vitest tests in 65 files; TypeScript passing; ESLint passing with three pre-existing warnings; Drizzle consistency passing; production build and compiled host-routing HTTP checks passing. Final source/browser and exact-commit CI evidence will be recorded after execution.
+Current local verification: 531 Vitest tests in 65 files; TypeScript passing; ESLint passing with three pre-existing warnings; Drizzle consistency passing; production build and compiled host-routing HTTP checks passing. Final source/browser and exact-commit CI evidence will be recorded after execution.
 
 The existing `check-website-foundation-http.mjs` runner remains the isolated authenticated acceptance infrastructure. `WEBSITE_TEST_PREMIUM=1` adds `premium-composition-acceptance.mjs`, using genuine project records, session fixtures, NOBYPASSRLS runtime, API calls, Studio/Publishing browser interactions and public-host requests. The restricted loopback proxy preserves customer URL/Host and forwards actual application responses; it does not mock rendering or authorization. Cleanup removes only synthetic test resources. Physical device, live OAuth, production DNS/TLS and production customer publishing are not claimed.
 
-An intermediate acceptance attempt passed legacy create/save/publish and public geometry but timed out on Version History after the build was regenerated while its server was running. It is not accepted as final evidence; a fresh-build run is required. No test assertion was weakened.
+An intermediate acceptance attempt passed legacy create/save/publish and public geometry but timed out on Version History after the build was regenerated while its server was running. It is not accepted as final evidence; a fresh-build run is required. A fresh-build rerun subsequently passed Version History and account-scoped recovery. Its newly added composition-refresh check correctly failed against the build predating the composition recovery registration; that build is also not final evidence. No test assertion was weakened.
+
+The first remote Quality run caught missing SVG ambient types on a fresh checkout (typecheck runs before Next generates `next-env.d.ts`). `src/types/images.d.ts` explicitly references Next's image types; final-head CI must reverify this correction. Vercel reached READY for intermediate commit `fba5182`, which is not a claim about later commits.
 
 ## Deployment and Phase 14 handoff
 

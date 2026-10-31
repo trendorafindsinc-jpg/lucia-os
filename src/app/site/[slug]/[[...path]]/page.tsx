@@ -1,7 +1,10 @@
 import { and, eq } from "drizzle-orm";
+import { headers } from "next/headers";
+import { isPlatformHostname } from "@/lib/publishing/platform-hosts";
+import { PublicWebsite } from "@/lib/domains/public-site";
 import { notFound } from "next/navigation";
 import { getDb } from "@/lib/db/client";
-import { websitePages, websites } from "@/lib/db/schema";
+import { websiteDomains, websitePages, websites } from "@/lib/db/schema";
 import {
   websiteDefinitionSchema,
   isPremium,
@@ -21,16 +24,42 @@ export default async function PublishedWebsitePage({ params }: PageProps) {
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) notFound();
 
   try {
+    const host = (await headers()).get("host");
+    if (!host) notFound();
+    const hostname = new URL(`http://${host}`).hostname
+      .toLowerCase()
+      .replace(/\.$/, "");
     const db = getDb();
-    const [website] = await db
+    const platform = isPlatformHostname(hostname);
+    if (!platform) {
+      const [binding] = await db
+        .select({ id: websiteDomains.id })
+        .from(websiteDomains)
+        .where(
+          and(
+            eq(websiteDomains.hostname, hostname),
+            eq(websiteDomains.status, "active"),
+          ),
+        )
+        .limit(1);
+      // An explicit binding always wins over tenant-local, nonunique slugs.
+      if (binding)
+        return await PublicWebsite({
+          path: path.length ? path.join("/") : "/",
+        });
+    }
+    // Preserve pre-domain-table v1 URLs without inventing a binding or migrating
+    // customer data. Ambiguous legacy slugs fail closed; v2 requires a binding.
+    const candidates = await db
       .select({
         id: websites.id,
         organizationId: websites.organizationId,
       })
       .from(websites)
       .where(and(eq(websites.slug, slug), eq(websites.status, "published")))
-      .limit(1);
+      .limit(2);
 
+    const website = candidates.length === 1 ? candidates[0] : null;
     if (!website) notFound();
     const pagePath = path.length ? "/" + path.join("/") : "/";
     const [page] = await db
@@ -58,7 +87,7 @@ export default async function PublishedWebsitePage({ params }: PageProps) {
       notFound();
     }
     const parsed = websiteDefinitionSchema.safeParse(raw);
-    if (!parsed.success) notFound();
+    if (!parsed.success || (!platform && isPremium(parsed.data))) notFound();
     if (
       isPremium(parsed.data) &&
       !parsed.data.pages.some((p) => p.path === pagePath)
