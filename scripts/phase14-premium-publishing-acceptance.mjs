@@ -4,7 +4,8 @@
  */
 import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
-import { readFile } from "node:fs/promises";
+import { readFile, mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
 
 const flagships = ["meridian", "canvas", "haven", "academia",
   "maison", "nexus", "impact", "estate"];
@@ -207,11 +208,19 @@ export async function checkPhase14FlagshipPublishing({
             const metrics = await liveBrowser.evaluate(() => ({
               viewport: innerWidth, width: document.documentElement.scrollWidth,
               performance: window.__phase14Performance,
+              overflowing: [...document.querySelectorAll("body *")].filter((node) => node.getBoundingClientRect().right > innerWidth + 1).slice(0, 20).map((node) => ({ tag: node.tagName, id: node.id, className: node.className, right: node.getBoundingClientRect().right, width: node.getBoundingClientRect().width, overflowX: getComputedStyle(node).overflowX, display: getComputedStyle(node).display, position: getComputedStyle(node).position })),
+              stylesheets: [...document.styleSheets].map((sheet) => sheet.href),
               resourceTransferBytes: performance.getEntriesByType("resource").reduce((total, entry) => total + entry.transferSize, 0),
               images: [...document.querySelectorAll('.premium-layout img')].map((node) => ({ complete: node.complete, width: node.naturalWidth })),
               navigation: performance.getEntriesByType('navigation').map((entry) => ({ domContentLoadedMs: entry.domContentLoadedEventEnd, transferBytes: entry.transferSize })),
             }));
-            assert(metrics.width <= metrics.viewport + 1, name + " public overflow at " + viewport.width);
+            if (metrics.width > metrics.viewport + 1) {
+              const directory = path.dirname(process.env.WEBSITE_TEST_EVIDENCE_FILE || "artifacts/phase14-auth-publish/results.json");
+              await mkdir(directory, { recursive: true });
+              await writeFile(path.join(directory, name + "-overflow.json"), JSON.stringify({ expectedPath, viewport, metrics }, null, 2));
+              await liveBrowser.screenshot({ path: path.join(directory, name + "-overflow.png"), fullPage: true });
+            }
+            assert(metrics.width <= metrics.viewport + 1, name + " public overflow at " + viewport.width + " " + expectedPath + ": " + JSON.stringify(metrics));
             responsive.push({ viewport, path: expectedPath, throttling: throttled ? "1.6Mbps down / 750Kbps up / 150ms latency / CPU4x / cold cache" : "unthrottled", metrics });
           }
         }
