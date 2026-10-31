@@ -139,6 +139,11 @@ describe("Phase 14 canonical premium candidates — not release acceptance", () 
     expect(html).toContain('class="premium-mobile-menu"');
     expect(html).toContain("Skip to content");
     expect(html).toContain('aria-label="Mobile navigation"');
+    expect(html).toContain('aria-label="Footer navigation"');
+    expect(html).toContain('class="premium-footer-identity"');
+    expect(html).toContain('class="premium-footer-end"');
+    expect(html).toContain('Return to ');
+    expect(html).toContain('href="/contact"');
     expect(html).toContain('aria-current="page"');
     expect(html).toContain('id="premium-main-content"');
     const homeHtml = renderToStaticMarkup(<LayoutRenderer blueprint={layout} />);
