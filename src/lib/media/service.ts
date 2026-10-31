@@ -43,7 +43,10 @@ export async function listMedia(userId: string, websiteId: string) {
   });
 }
 export async function uploadMedia(userId: string, websiteId: string, input: Buffer, mime: string, alt: string) {
-  await withMediaWebsite(userId, websiteId, "website.edit", async () => true);
+  await withMediaWebsite(userId, websiteId, "website.edit", async (tx) => {
+    const [rate] = await tx.execute(sql`select count(*)::int as count from website_media where website_id=${websiteId} and created_at > now() - interval '1 minute'`);
+    if (Number(rate?.count ?? 0) >= 10) throw new MediaError("Wait a minute before uploading more images.", 429);
+  });
   if (!uploadsEnabled()) throw new MediaError("Customer uploads are not enabled yet. Built-in artwork remains available.", 503);
   const optimized = await compressImage(input, mime).catch(() => { throw new MediaError("Choose a decodable JPEG, PNG or WebP up to 4 MB and 24 million pixels."); });
   const id = randomUUID();

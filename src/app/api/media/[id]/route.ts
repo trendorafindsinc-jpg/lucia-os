@@ -9,7 +9,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
   const { id } = await context.params;
   if (!z.uuid().safeParse(id).success) return new Response("Not found", { status: 404 });
   try {
-    const hostname = new URL(request.url).hostname;
+    const hostname = (request.headers.get("host") || new URL(request.url).hostname).trim().toLowerCase().replace(/:\d+$/, "").replace(/\.$/, "");
     const user = isPlatformHostname(hostname) ? await getCurrentUser().catch(() => null) : null;
     const row = await findReadableMedia(id, user?.id ?? null);
     if (!row) return new Response("Not found", { status: 404, headers: { "Cache-Control": "no-store" } });

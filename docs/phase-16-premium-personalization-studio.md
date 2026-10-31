@@ -76,8 +76,12 @@ Configured nonsecret server-side Vercel settings for Production and Preview: `S3
 
 ### Fresh verification and outstanding gates
 
-The local suite passed **831 tests across 74 files**, including actual Sharp compression, format spoofing/corruption/size rejection, server-only request signing, unknown/cross-website references, quota denial, uncertain provider-write reservation retention, deletion reference protection, revoked access and HTTP authentication/account/origin guards. TypeScript, ESLint (three existing warnings), production build, compiled routing and Drizzle consistency were executed; final exact-head CI remains authoritative.
+The local suite passed **834 tests across 75 files**, including actual Sharp compression, format spoofing/corruption/size rejection, server-only request signing, unknown/cross-website references, quota denial, uncertain provider-write reservation retention, deletion reference protection, revoked access and HTTP authentication/account/origin guards. TypeScript, ESLint (three existing warnings), production build, compiled routing and Drizzle consistency were executed; final exact-head CI remains authoritative.
 
 The isolated compiled-application workflow now includes actual PostgreSQL/API media denial cases and the Phase 16 personalization journeys. Synthetic media metadata is used only for **negative authorization tests**, not as evidence of uploaded bytes or a successful storage workflow.
 
 **Not verified:** live IDrive upload → durable reload → preview/publication → rollback; real concurrent quota races; credential restriction against another bucket; actual shared-account storage inventory; customer-image browser acceptance; production migration/deployment. These remain mandatory release gates. No PASS, successful upload, production merge or production migration is claimed from unit tests or historical built-in-image browser results.
+
+### Additional boundary corrections
+
+Private media authorization uses the actual HTTP Host rather than Next.js's internal server URL. Customer-host rewrites cannot use a platform session to obtain private draft images. Two route-level regression cases cover the internal-URL/customer-Host mismatch and legitimate platform-owner checks. Rate-cap checks now precede decoding as well as atomic reservation, preventing repeated expensive compression once the website upload cap is reached. The first CI attempt exposed a local symlink-contaminated generated lockfile; it was removed, restoring the repository's existing lockfile-free install convention. Final-head Quality and deployment checks must be read on PR #138, not inferred from earlier failures or passes.

@@ -15,7 +15,7 @@ beforeEach(() => {
 const member = [{ role: "owner", status: "active" }];
 function uploadReservation(usage: number, quota: number, budgetUpdated = true) {
   // First authorization, then independently revalidated reservation transaction.
-  mocks.execute.mockResolvedValueOnce([]).mockResolvedValueOnce(member)
+  mocks.execute.mockResolvedValueOnce([]).mockResolvedValueOnce(member).mockResolvedValueOnce([{ count: 0 }])
     .mockResolvedValueOnce([]).mockResolvedValueOnce(member).mockResolvedValueOnce([{ reserved_bytes: 0 }])
     .mockResolvedValueOnce([{ count: 0 }]).mockResolvedValueOnce([{ used: usage }]).mockResolvedValueOnce([{ quota_bytes: quota }]);
   if (usage + 200 <= quota) mocks.execute.mockResolvedValueOnce(budgetUpdated ? [{ product: "lucia-os" }] : []).mockResolvedValueOnce([]);
@@ -25,6 +25,12 @@ describe("media authorization and capacity invariants", () => {
     mocks.memberships.mockResolvedValue([]);
     await expect(uploadMedia(user, website, Buffer.from("x"), "image/png", "Alt")).rejects.toMatchObject({ status: 404 });
     expect(mocks.compress).not.toHaveBeenCalled(); expect(mocks.put).not.toHaveBeenCalled();
+  });
+  it("does not decode another image after the upload rate cap", async () => {
+    mocks.execute.mockResolvedValueOnce([]).mockResolvedValueOnce(member).mockResolvedValueOnce([{ count: 10 }]);
+    await expect(uploadMedia(user, website, Buffer.from("x"), "image/png", "Alt")).rejects.toMatchObject({ status: 429 });
+    expect(mocks.compress).not.toHaveBeenCalled();
+    expect(mocks.put).not.toHaveBeenCalled();
   });
   it("rejects an exhausted website quota before any object is written", async () => {
     uploadReservation(900, 1000);
