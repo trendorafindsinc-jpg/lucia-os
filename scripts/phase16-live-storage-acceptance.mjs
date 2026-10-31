@@ -52,14 +52,14 @@ function credentialsAndIsolation() {
   assert.equal(a.pathname, "/lucia_phase16_acceptance");
   result.databaseIsolation = true;
 }
-async function startApp() {
+async function startApp(endpointOverride) {
   const socket = net.createServer();
   await new Promise((resolve) => socket.listen(0, "127.0.0.1", resolve));
   port = socket.address().port;
   await new Promise((resolve) => socket.close(resolve));
   base = "http://localhost:" + port;
   child = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "--hostname", "127.0.0.1", "--port", String(port)], {
-    env: { ...process.env, NODE_ENV: "production", VERCEL_ENV: "preview",
+    env: { ...process.env, NODE_ENV: "production", VERCEL_ENV: "preview", S3_ENDPOINT: endpointOverride || process.env.S3_ENDPOINT,
       DATABASE_URL_RUNTIME: process.env.WEBSITE_TEST_RUNTIME_URL,
       APP_BASE_URL: base, LUCIA_SITE_DOMAIN: "lucia.name.ng" },
     stdio: ["ignore","pipe","pipe"]
@@ -73,6 +73,13 @@ async function startApp() {
     await new Promise((resolve) => setTimeout(resolve, 250));
   }
   throw Error("Compiled application did not start");
+}
+async function stopApp() {
+  if (!child) return;
+  const previous=child; child=null;
+  if (previous.exitCode===null) await new Promise((resolve) => {
+    previous.once("exit", resolve); previous.kill();
+  });
 }
 function api(who, route, method="GET", body, headers={}) {
   const h = { ...(who ? {cookie:"lucia_os_session="+fixture.tokens[who]} : {}),
@@ -405,6 +412,35 @@ try {
       assert.equal(response.status,507);
     } finally {await query("update media_storage_budget set reserved_bytes=$1 where product='lucia-os'",[prior]);}
   });
+  await checkpoint("storage-transport-outage-pending-reservation-and-recovery",async()=>{
+    const before=await only("select reserved_bytes from media_storage_budget where product='lucia-os'");
+    const baseline=await query("select id from website_media where website_id=$1 and status='pending'",[fixture.siteA]);
+    const known=new Set(baseline.map((x)=>x.id));
+    await stopApp();
+    try {
+      // A loopback connection refusal exercises the actual signed S3 adapter's failure
+      // path. This is a simulated transport outage, NOT a live IDrive service incident.
+      await startApp("https://127.0.0.1:9");
+      const failed=await upload("a",fixture.siteA,await imageInput(150,110));
+      assert.equal(failed.status,503,"A failed object write must not return upload success");
+    } finally { await stopApp(); await startApp(); }
+    const pending=await query("select id,bytes,object_key from website_media where website_id=$1 and status='pending'",[fixture.siteA]);
+    const addition=pending.filter((x)=>!known.has(x.id));
+    assert.equal(addition.length,1,"One unresolved write must retain one pending row");
+    const failed=addition[0];
+    assert(failed.object_key.startsWith("os/"+fixture.orgA+"/"+fixture.siteA+"/"));
+    const during=await only("select reserved_bytes from media_storage_budget where product='lucia-os'");
+    assert.equal(Number(during.reserved_bytes),Number(before.reserved_bytes)+Number(failed.bytes));
+    const head=await signHead(failed.object_key);
+    assert.equal(head.status,404,"Unreachable storage request must not have written a real IDrive object");
+    await query("update website_media set created_at=now()-interval '25 hours' where id=$1 and status='pending'",[failed.id]);
+    await expectStatus(api("a","/api/websites/"+fixture.siteA+"/media?id="+failed.id,"DELETE"),200,
+      "Authorized stale pending reservation recovery");
+    const refunded=await only("select reserved_bytes from media_storage_budget where product='lucia-os'");
+    assert.equal(Number(refunded.reserved_bytes),Number(before.reserved_bytes));
+    await query("delete from website_media where id=$1 and status='deleted'",[failed.id]);
+    result.outageRecovery="PASS_SIMULATED_TRANSPORT_FAILURE_NOT_PROVIDER_OUTAGE";
+  });
 } catch (error) {
   result.failure = error instanceof Error ? error.message.slice(0,240) : "Unknown acceptance failure";
   process.exitCode=1;
@@ -418,6 +454,30 @@ try {
   if (child) child.kill();
   if (runtime) await runtime.end().catch(()=>{});
   if (admin) await admin.end().catch(()=>{});
+  const status = (name) => result.tests.find((test) => test.name === name)?.status || "NOT_RUN";
+  result.acceptance = {
+    providerUpload:status("authenticated-real-png-to-idrive-and-metadata"),
+    imageCompression:status("authenticated-real-png-to-idrive-and-metadata"),
+    storedObjectSizeBytes:result.storedObjectBytes ?? null,
+    databaseOwnership:status("authenticated-real-png-to-idrive-and-metadata"),
+    mediaLibrary:status("media-library-visibility-and-byte-accounting"),
+    draftSaveReload:status("tenant-guarded-layout-and-section-save-reload"),
+    privatePreview:status("private-studio-preview-with-real-image"),
+    publicPublication:status("public-publish-and-real-provider-image-delivery"),
+    imageReplacement:status("real-replacement-and-publish-reversion"),
+    priorCompositionRepublish:result.publishingReversion || "NOT_RUN",
+    historicalV2RevisionRollback:result.historicalV2Rollback,
+    crossTenantAndAuth:status("cross-tenant-private-read-delete-and-auth"),
+    invalidImageRejection:status("spoofed-invalid-and-corrupted-image-rejection"),
+    quotaConcurrency:status("atomic-concurrent-site-quota-reservation"),
+    maxRetainedImages:status("200-image-boundary-with-isolated-pending-reservations"),
+    twoGigabyteBudget:status("two-gigabyte-product-budget-guard_without_large_upload"),
+    storageFailureAndRecovery:status("storage-transport-outage-pending-reservation-and-recovery"),
+    deletionSafety:status("reference-aware-published-image-delete-denial"),
+    unreferencedDeletion:status("unreferenced-object-delete-and-accounting"),
+    credentialScope:result.credentialScope,
+    cleanup:result.cleanup
+  };
   result.verified= !process.exitCode && result.testsFailed===0 && result.cleanup==="PASS_APP_DELETION_AND_S3_404"
     && result.historicalV2Rollback!=="NOT_SUPPORTED_BY_CURRENT_VERSION_API"
     && result.credentialScope==="VERIFIED";
