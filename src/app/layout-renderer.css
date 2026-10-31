@@ -402,3 +402,32 @@
 .premium-layout[data-layout-id="lucia.layout.maison"][data-layout-revision="2"] .premium-hero-full-bleed::before,
 .premium-layout[data-layout-id="lucia.layout.estate"][data-layout-revision="2"] .premium-hero-full-bleed::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(0,0,0,.62)}
 .premium-layout[data-layout-revision="2"] .premium-hero-full-bleed .layout-lede{opacity:1}
+
+/* Phase 16 — responsive, task-focused controls on the existing Layout Studio. */
+.studio-task-nav { display:flex; flex-wrap:wrap; gap:.65rem; margin:1rem 0; width:100%; }
+.studio-task-nav button { border:1px solid #aab7c8; border-radius:12px; background:#eef4fb; color:#172b4b; padding:.7rem 1rem; min-height:44px; font:inherit; cursor:pointer; }
+.studio-task-nav .studio-task-active { background:#193e70; color:#fff; border-color:#193e70; }
+.studio-task-nav :focus-visible,.studio-preview-bar :focus-visible { outline:3px solid #2679bf; outline-offset:3px; }
+.composition-controls[hidden] { display:none !important; }
+.composition-controls.studio-panel { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr)); align-items:start; gap:1rem; margin:.8rem 0 1.4rem; padding:1rem; border:1px solid #aebdd0; border-radius:16px; background:rgba(244,248,254,.94); color:#132d4b; width:100%; }
+.studio-panel > legend { padding:0 .65rem; font-weight:700; }
+.studio-panel > p, .studio-panel > legend { grid-column:1/-1; }
+.studio-panel label { display:grid; gap:.45rem; min-width:0; overflow-wrap:anywhere; }
+.studio-panel :is(input,select,textarea) { width:100%; min-width:0; font:inherit; border:1px solid #97aabf; background:#fff; color:#172b4b; border-radius:9px; padding:.7rem; }
+.studio-panel textarea { resize:vertical; min-height:88px; }
+.studio-subfields { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr)); gap:.75rem; min-width:0; border:1px solid #b9c6d4; border-radius:12px; padding:.75rem; }
+.studio-panel .studio-subfields { grid-column:1/-1; }
+.studio-preview-bar { display:flex; flex-wrap:wrap; gap:1rem; align-items:center; justify-content:space-between; margin:.8rem 0; padding:.8rem 1rem; border-radius:12px; background:#1b3f69; color:#fff; }
+.studio-preview-bar label { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; }
+.studio-preview-bar select { font:inherit; min-height:42px; padding:.4rem; max-width:100%; }
+.studio-preview-frame { margin:0 auto; min-width:0; max-width:100%; overflow:hidden; border:1px solid #adc0d2; border-radius:12px; }
+.studio-unsaved { color:#7e3b0b; }
+.premium-social-links { display:flex; flex-wrap:wrap; gap:.65rem; }
+.premium-brand-logo { display:inline-flex; vertical-align:middle; width:48px; height:48px; align-items:center; justify-content:center; overflow:hidden; margin-inline-end:.5rem; }
+.premium-brand-logo img { max-width:100%; max-height:100%; object-fit:contain; }
+@media(max-width:600px) {
+  .studio-task-nav { display:grid; grid-template-columns:1fr; }
+  .composition-controls.studio-panel { grid-template-columns:minmax(0,1fr); padding:.8rem; }
+  .studio-preview-bar { align-items:stretch; }
+}
+@media(prefers-reduced-motion:reduce) { .studio-task-nav button,.studio-preview-frame { transition:none !important; animation:none !important; } }

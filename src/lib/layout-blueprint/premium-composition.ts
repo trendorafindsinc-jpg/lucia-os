@@ -31,6 +31,26 @@ const href = z
   .max(180)
   .regex(/^(?:\/|\/[a-z0-9-]+(?:\/[a-z0-9-]+)*|#[a-z][a-z0-9-]*)$/);
 const image = z.object({ src: asset, alt: text(200) }).strict();
+const publicUrl = z.string().trim().max(350).url().refine((value) => {
+  const url = new URL(value);
+  return url.protocol === "https:" && !url.username && !url.password;
+}, "Use a secure HTTPS address");
+const businessProfileSchema = z.object({
+  tagline: text(160).optional(),
+  contactEmail: z.email().max(254).optional(),
+  phone: z.string().trim().regex(/^\+?[0-9 ()-]{7,24}$/).optional(),
+  address: text(240).optional(),
+  serviceArea: text(160).optional(),
+  enquiryEmail: z.email().max(254).optional(),
+  social: z.object({
+    instagram: publicUrl.optional(),
+    facebook: publicUrl.optional(),
+    linkedin: publicUrl.optional(),
+    x: publicUrl.optional(),
+  }).strict().optional(),
+  logo: image.optional(),
+}).strict();
+
 
 const hero = z
   .object({
@@ -174,7 +194,11 @@ export const premiumLayoutSchema = z
     layoutId: z.string().regex(/^lucia\.layout\.[a-z][a-z0-9-]{1,63}$/),
     layoutVersion: z.number().int().positive(),
     category: text(80),
-    identity: z.object({ name: text(80), description: text(500) }).strict(),
+    identity: z.object({
+      name: text(80),
+      description: text(500),
+      profile: businessProfileSchema.optional(),
+    }).strict(),
     tokens: premiumTokensSchema,
     navigation: z
       .array(z.object({ label: text(50), href: path }).strict())
@@ -312,6 +336,9 @@ export const parsePremiumLayout = (input: unknown): PremiumLayout =>
  * must still authenticate, authorize tenant ownership and enforce revisions. */
 export type PremiumEdit =
   | { kind: "brand"; name: string }
+  | { kind: "business-detail"; field: "description" | "tagline" | "contactEmail" | "phone" | "address" | "serviceArea" | "enquiryEmail"; value: string }
+  | { kind: "business-social"; network: "instagram" | "facebook" | "linkedin" | "x"; value: string }
+  | { kind: "business-logo"; src: string | null; alt: string | null }
   | {
       kind: "insert-section";
       pageId: string;
@@ -351,9 +378,37 @@ export function applyPremiumEdit(
     // Keep page metadata in step with the public navigation/brand name.
     // This does not rewrite the customer's editorial sections.
     for (const page of next.pages) {
-      if (page.title.includes(oldName))
-        page.title = page.title.replaceAll(oldName, edit.name).slice(0, 120);
+      if (page.title === oldName)
+        page.title = edit.name;
     }
+  } else if (edit.kind === "business-detail") {
+    if (!(edit.field === "contactEmail" || edit.field === "phone" || edit.field === "address" ||
+      edit.field === "serviceArea" || edit.field === "enquiryEmail"
+      ? perms.guided.includes("contact") : perms.guided.includes("brand")))
+      throw new Error("Business information edit denied");
+    if (/<\/?[a-z][^>]*>/i.test(edit.value)) throw new Error("HTML markup is not supported");
+    if (edit.field === "description") {
+      next.identity.description = edit.value;
+    } else {
+      const profile = next.identity.profile ?? {};
+      next.identity.profile = { ...profile, [edit.field]: edit.value || undefined };
+      if (edit.field === "enquiryEmail" && edit.value)
+        for (const page of next.pages)
+          for (const section of page.sections)
+            if (section.type === "contact-panel") section.email = edit.value;
+    }
+  } else if (edit.kind === "business-social") {
+    if (!perms.guided.includes("link")) throw new Error("Social link edit denied");
+    const profile = next.identity.profile ?? {};
+    next.identity.profile = {
+      ...profile,
+      social: { ...profile.social, [edit.network]: edit.value || undefined },
+    };
+  } else if (edit.kind === "business-logo") {
+    if (!perms.guided.includes("image")) throw new Error("Logo edit denied");
+    const profile = next.identity.profile ?? {};
+    next.identity.profile = { ...profile,
+      logo: edit.src && edit.alt ? { src: edit.src, alt: edit.alt } : undefined };
   } else if (edit.kind === "insert-page" || edit.kind === "remove-page") {
     if (mode !== "advanced" || !perms.advanced.includes("pages"))
       throw new Error("Page structure edit denied");
@@ -383,6 +438,18 @@ export function applyPremiumEdit(
     )
       throw new Error("Design Lock: token edit denied");
     (next.tokens as Record<string, string>)[edit.key] = edit.value;
+    if (edit.key === "accent") {
+      const luminance = (hex: string) => {
+        const channel = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
+          .map((n) => n <= 0.04045 ? n / 12.92 : ((n + 0.055) / 1.055) ** 2.4);
+        return channel[0] * 0.2126 + channel[1] * 0.7152 + channel[2] * 0.0722;
+      };
+      if (/^#[0-9a-fA-F]{6}$/.test(edit.value)) {
+        const a = luminance(next.tokens.background), b = luminance(edit.value);
+        if ((Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05) < 3)
+          throw new Error("Accent must have at least 3:1 contrast with the background");
+      }
+    }
   } else {
     const page = next.pages.find((p) => p.id === edit.pageId);
     if (!page) throw new Error("Unknown page");
@@ -518,6 +585,21 @@ export const premiumEditSchema = z.discriminatedUnion("kind", [
     kind: z.literal("brand"),
     name: z.string().trim().min(2).max(80),
   }).strict(),
+  z.object({
+    kind: z.literal("business-detail"),
+    field: z.enum(["description", "tagline", "contactEmail", "phone", "address", "serviceArea", "enquiryEmail"]),
+    value: z.string().trim().max(500),
+  }).strict(),
+  z.object({
+    kind: z.literal("business-social"),
+    network: z.enum(["instagram", "facebook", "linkedin", "x"]),
+    value: z.string().trim().max(350),
+  }).strict(),
+  z.object({
+    kind: z.literal("business-logo"),
+    src: asset.nullable(),
+    alt: text(200).nullable(),
+  }).strict().refine((v) => (v.src === null) === (v.alt === null), "Logo and description must be supplied together"),
   z
     .object({
       kind: z.literal("insert-section"),

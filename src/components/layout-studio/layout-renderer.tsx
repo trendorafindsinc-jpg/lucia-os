@@ -235,6 +235,11 @@ function PremiumLayoutPage({
           href="/"
           onClick={preview ? (event) => navigate(event, "/") : undefined}
         >
+          {definition.identity.profile?.logo && (
+            <span className="premium-brand-logo">
+              <PremiumAsset alt={definition.identity.profile.logo.alt} reference={definition.identity.profile.logo.src} />
+            </span>
+          )}
           {definition.identity.name}
         </a>
         {page.navigation && (
@@ -289,6 +294,18 @@ function PremiumLayoutPage({
         <div className="premium-footer-identity">
           <p className="premium-footer-brand">{definition.identity.name}</p>
           <p className="premium-footer-description">{definition.identity.description}</p>
+          {definition.identity.profile?.tagline && <p>{definition.identity.profile.tagline}</p>}
+          {definition.identity.profile?.address && <p>{definition.identity.profile.address}</p>}
+          {definition.identity.profile?.serviceArea && <p>Serving {definition.identity.profile.serviceArea}</p>}
+          {definition.identity.profile?.phone && <a href={`tel:${definition.identity.profile.phone.replace(/[^+0-9]/g, "")}`}>{definition.identity.profile.phone}</a>}
+          {definition.identity.profile?.contactEmail && <a href={`mailto:${definition.identity.profile.contactEmail}`}>{definition.identity.profile.contactEmail}</a>}
+          {definition.identity.profile?.social && (
+            <nav aria-label="Social profiles" className="premium-social-links">
+              {Object.entries(definition.identity.profile.social).map(([network, href]) =>
+                href ? <a key={network} href={href} target="_blank" rel="noopener noreferrer">{network === "x" ? "X" : network[0].toUpperCase() + network.slice(1)}</a> : null
+              )}
+            </nav>
+          )}
         </div>
         <nav aria-label="Footer navigation" className="premium-footer-navigation">
           {definition.navigation.map((item) => (

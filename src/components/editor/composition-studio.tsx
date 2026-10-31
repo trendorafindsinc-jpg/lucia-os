@@ -201,7 +201,9 @@ function CompositionEditor({
     [base, setBase] = useState(revision);
   const [pageId, setPageId] = useState(initial.pages[0].id),
     [sectionId, setSectionId] = useState(initial.pages[0].sections[0].id);
-  const [mode, setMode] = useState<"guided" | "advanced">("guided"),
+  const [panel, setPanel] = useState<"business" | "content" | "design">("business"),
+    [previewWidth, setPreviewWidth] = useState("100%"),
+    [mode, setMode] = useState<"guided" | "advanced">("guided"),
     [notice, setNotice] = useState("Saved draft loaded"),
     [busy, setBusy] = useState(false),
     [conflict, setConflict] = useState(false);
@@ -237,6 +239,15 @@ function CompositionEditor({
         "A recovery copy uses an older revision. It has not overwritten the saved website.",
       );
   }, [initial, revision, getSnapshot, key, setActiveTabDirty]);
+  useEffect(() => {
+    if (!edits.length) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [edits.length]);
   const page = layout.pages.find((p) => p.id === pageId)!;
   const section =
     page.sections.find((s) => s.id === sectionId) ?? page.sections[0];
@@ -258,7 +269,12 @@ function CompositionEditor({
             change.key === previous.key) ||
           (change.kind === "responsive" &&
             previous.kind === "responsive" &&
-            change.pageId === previous.pageId));
+            change.pageId === previous.pageId) ||
+          (change.kind === "business-detail" && previous.kind === "business-detail" &&
+            change.field === previous.field) ||
+          (change.kind === "business-social" && previous.kind === "business-social" &&
+            change.network === previous.network) ||
+          (change.kind === "business-logo" && previous.kind === "business-logo"));
       const queue = coalesce
         ? [...edits.slice(0, -1), change]
         : [...edits, change];
@@ -337,18 +353,19 @@ function CompositionEditor({
       <header className="composition-controls">
         <h1>Layout Studio</h1>
         <p>
-          Structural demonstration · Full visual customization follows in later
-          phases.
+          Personalize your business, pages and design. Only saved drafts can be published.
         </p>
         <p role="status" aria-live="polite">
           {notice}
         </p>
         <button disabled={busy || conflict || !edits.length} onClick={save}>
-          Save draft
+          {busy ? "Saving…" : edits.length ? `Save draft (${edits.length} changes)` : "All changes saved"}
         </button>
-        <WorkspaceAppLink href={`/publish?websiteId=${websiteId}`}>
-          Preview and publish saved draft
-        </WorkspaceAppLink>
+        {edits.length
+          ? <strong className="studio-unsaved">Save your changes before opening publishing.</strong>
+          : <WorkspaceAppLink href={`/publish?websiteId=${websiteId}`}>
+              Preview and publish saved draft
+            </WorkspaceAppLink>}
         {conflict && (
           <button
             onClick={() => {
@@ -366,9 +383,123 @@ function CompositionEditor({
           </button>
         )}
       </header>
+      <nav className="studio-task-nav" aria-label="Personalization tasks">
+        {(["business", "content", "design"] as const).map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            aria-current={panel === tab ? "step" : undefined}
+            className={panel === tab ? "studio-task-active" : ""}
+            onClick={() => setPanel(tab)}
+          >
+            {tab === "business" ? "1. Business identity" : tab === "content" ? "2. Page content" : "3. Design"}
+          </button>
+        ))}
+      </nav>
       <fieldset
         disabled={busy}
-        className="composition-controls"
+        hidden={panel !== "business"}
+        className="composition-controls studio-panel"
+        aria-label="Business identity"
+      >
+        <legend>Business identity</legend>
+        <p>This information belongs to this website alone. Shared contact details appear across its pages.</p>
+        {layout.permissions.guided.includes("brand") && (
+          <>
+            <label>Business name
+              <input key={layout.identity.name} defaultValue={layout.identity.name}
+                maxLength={80} required onBlur={(e) => {
+                  const value = e.currentTarget.value.trim();
+                  if (value !== layout.identity.name) edit({ kind: "brand", name: value });
+                }} />
+            </label>
+            <label>Business description
+              <textarea key={layout.identity.description} defaultValue={layout.identity.description}
+                maxLength={500} required onBlur={(e) => {
+                  const value = e.currentTarget.value.trim();
+                  if (value !== layout.identity.description) edit({ kind: "business-detail", field: "description", value });
+                }} />
+            </label>
+            <label>Tagline
+              <input key={layout.identity.profile?.tagline ?? ""} defaultValue={layout.identity.profile?.tagline ?? ""}
+                maxLength={160} placeholder="What makes your business different?"
+                onBlur={(e) => {
+                  const value = e.currentTarget.value.trim();
+                  if (value !== (layout.identity.profile?.tagline ?? "")) edit({ kind: "business-detail", field: "tagline", value });
+                }} />
+            </label>
+          </>
+        )}
+        {layout.permissions.guided.includes("contact") && (
+          <>
+            {([
+              ["contactEmail", "Public contact email", "email", 254],
+              ["enquiryEmail", "Enquiry destination (shared across contact panels)", "email", 254],
+              ["phone", "Telephone number", "tel", 24],
+              ["address", "Business address", "text", 240],
+              ["serviceArea", "Service area", "text", 160],
+            ] as const).map(([field, label, type, limit]) => (
+              <label key={field}>{label}
+                <input
+                  type={type} maxLength={limit}
+                  key={field + ":" + (layout.identity.profile?.[field] ?? "")}
+                  defaultValue={layout.identity.profile?.[field] ?? ""}
+                  onBlur={(e) => {
+                    const value = e.currentTarget.value.trim();
+                    if (value !== (layout.identity.profile?.[field] ?? ""))
+                      edit({ kind: "business-detail", field, value });
+                  }}
+                />
+              </label>
+            ))}
+          </>
+        )}
+        {layout.permissions.guided.includes("link") && (
+          <fieldset className="studio-subfields"><legend>Social profiles — secure HTTPS links only</legend>
+            {(["instagram", "facebook", "linkedin", "x"] as const).map((network) => (
+              <label key={network}>{network === "x" ? "X" : network[0].toUpperCase() + network.slice(1)}
+                <input type="url" maxLength={350} placeholder="https://"
+                  key={network + ":" + (layout.identity.profile?.social?.[network] ?? "")}
+                  defaultValue={layout.identity.profile?.social?.[network] ?? ""}
+                  onBlur={(e) => {
+                    const value = e.currentTarget.value.trim();
+                    if (value !== (layout.identity.profile?.social?.[network] ?? ""))
+                      edit({ kind: "business-social", network, value });
+                  }}
+                />
+              </label>
+            ))}
+          </fieldset>
+        )}
+        {layout.permissions.guided.includes("image") && (
+          <fieldset className="studio-subfields"><legend>Brand logo artwork</legend>
+            <label>Approved logo or brand image
+              <select value={layout.identity.profile?.logo?.src ?? ""}
+                onChange={(e) => {
+                  const src = e.currentTarget.value;
+                  edit({ kind: "business-logo", src: src || null,
+                    alt: src ? (layout.identity.profile?.logo?.alt ?? layout.identity.name + " brand artwork") : null });
+                }}>
+                <option value="">No logo selected</option>
+                {premiumArtworkChoices.map((choice) => <option key={choice.ref} value={choice.ref}>{choice.label}</option>)}
+              </select>
+            </label>
+            {layout.identity.profile?.logo && <label>Logo description
+              <input key={layout.identity.profile.logo.alt} defaultValue={layout.identity.profile.logo.alt}
+                maxLength={200} onBlur={(e) => {
+                  const alt = e.currentTarget.value.trim();
+                  if (alt !== layout.identity.profile?.logo?.alt)
+                    edit({ kind: "business-logo", src: layout.identity.profile!.logo!.src, alt });
+                }}/>
+            </label>}
+            <small>Choose from approved built-in artwork. Customer-owned file uploads are not available.</small>
+          </fieldset>
+        )}
+      </fieldset>
+      <fieldset
+        disabled={busy}
+        hidden={panel !== "content"}
+        className="composition-controls studio-panel"
         aria-label="Composition controls"
       >
         {layout.permissions.guided.includes("brand") && (
@@ -431,11 +562,44 @@ function CompositionEditor({
             ))}
           </select>
         </label>
+        {section.type === "premium-hero" && (
+          <label>Hero introduction
+            <input maxLength={100} value={section.eyebrow}
+              onChange={(e) => edit({ kind: "replace-section", pageId: page.id,
+                section: { ...section, eyebrow: e.target.value } })}/>
+          </label>
+        )}
+        {section.type === "trust-strip" && section.items.map((value, index) => (
+          <label key={index}>Trust indicator {index + 1}
+            <input maxLength={100} value={value} onChange={(e) => edit({
+              kind: "replace-section", pageId: page.id,
+              section: { ...section, items: section.items.map((item, i) => i === index ? e.target.value : item) },
+            })}/>
+          </label>
+        ))}
+        {section.type === "service-journey" && section.items.map((item, index) => (
+          <div key={index} className="studio-subfields">
+            <label>Service {index + 1} name
+              <input maxLength={120} value={item.title} onChange={(e) => edit({
+                kind: "replace-section", pageId: page.id,
+                section: { ...section, items: section.items.map((entry, i) =>
+                  i === index ? { ...entry, title: e.target.value } : entry) },
+              })}/>
+            </label>
+            <label>Service {index + 1} description
+              <textarea maxLength={500} value={item.body} onChange={(e) => edit({
+                kind: "replace-section", pageId: page.id,
+                section: { ...section, items: section.items.map((entry, i) =>
+                  i === index ? { ...entry, body: e.target.value } : entry) },
+              })}/>
+            </label>
+          </div>
+        ))}
         {"heading" in section && (
           <label>
             Heading{" "}
             <input
-              maxLength={150}
+              maxLength={section.type === "premium-hero" ? 160 : 150}
               value={section.heading}
               onChange={(e) =>
                 edit({
@@ -452,7 +616,7 @@ function CompositionEditor({
             Content{" "}
             <textarea
               value={section.body}
-              maxLength={800}
+              maxLength={section.type === "editorial-story" ? 3000 : section.type === "experience" ? 2000 : 1000}
               onChange={(e) =>
                 edit({
                   kind: "replace-section",
@@ -609,6 +773,21 @@ function CompositionEditor({
                   />
                 </label>
                 <label>
+                  Project {index + 1} description
+                  <textarea maxLength={500}
+                    key={page.id + ":" + section.id + ":projectdescription:" + index + ":" + (project.description ?? "")}
+                    defaultValue={project.description ?? ""}
+                    onBlur={(event) => {
+                      const description = event.currentTarget.value.trim();
+                      if (description !== (project.description ?? "")) edit({
+                        kind: "replace-section", pageId: page.id,
+                        section: { ...section, projects: section.projects.map((entry, i) =>
+                          i === index ? { ...entry, description: description || undefined } : entry) },
+                      });
+                    }}
+                  />
+                </label>
+                <label>
                   Project {index + 1} artwork
                   <select
                     value={project.image.src}
@@ -730,7 +909,57 @@ function CompositionEditor({
           </>
         )}
       </fieldset>
-      <p>Unsaved preview · Publishing uses the confirmed saved draft.</p>
+      <fieldset
+        disabled={busy}
+        hidden={panel !== "design"}
+        className="composition-controls studio-panel"
+        aria-label="Brand appearance"
+      >
+        <legend>Brand appearance</legend>
+        <p>Design-safe appearance controls preserve the original layout and page structure.</p>
+        <label>Editing mode
+          <select disabled={edits.length > 0} value={mode}
+            onChange={(e) => setMode(e.target.value as "guided" | "advanced")}>
+            <option value="guided">Guided</option>
+            <option value="advanced">Advanced</option>
+          </select>
+        </label>
+        {mode === "advanced" && layout.permissions.advanced.includes("tokens") && (
+          <>
+            {(["#243b53", "#22577a", "#3c4c77", "#7c3a49", "#285a46", "#54436b", "#222222"] as const).map((color) => (
+              <button key={color} type="button" aria-label={"Use accent " + color}
+                style={{ backgroundColor: color, color: "#ffffff", minHeight: 44, minWidth: 44 }}
+                onClick={() => edit({ kind: "token", key: "accent", value: color })}>●</button>
+            ))}
+            {(["font", "scale", "radius"] as const).map((token) => (
+              !layout.permissions.lockedTokens.includes(token) && (
+                <label key={token}>{token}
+                  <select value={layout.tokens[token]} onChange={(e) => edit({
+                    kind: "token", key: token, value: e.target.value,
+                  })}>
+                    {(token === "font" ? ["system-sans", "editorial-serif", "condensed-sans"] :
+                      token === "scale" ? ["compact", "balanced", "expressive"] :
+                        ["square", "subtle", "rounded"]).map((choice) =>
+                      <option key={choice} value={choice}>{choice.replaceAll("-", " ")}</option>)}
+                  </select>
+                </label>
+              )
+            ))}
+          </>
+        )}
+      </fieldset>
+      <div className="studio-preview-bar">
+        <span>{edits.length ? "Unsaved local preview — not published" : "Saved draft preview"} · {page.title}</span>
+        <label>Preview width
+          <select value={previewWidth} onChange={(e) => setPreviewWidth(e.target.value)}>
+            <option value="100%">Auto</option>
+            <option value="390px">Phone</option>
+            <option value="768px">Tablet</option>
+            <option value="1180px">Desktop</option>
+          </select>
+        </label>
+      </div>
+      <div className="studio-preview-frame" style={{ width: previewWidth, maxWidth: "100%" }}>
       <LayoutRenderer
         blueprint={layout}
         pagePath={page.path}
@@ -744,6 +973,7 @@ function CompositionEditor({
         preview
         idPrefix="studio-"
       />
+      </div>
     </main>
   );
 }
