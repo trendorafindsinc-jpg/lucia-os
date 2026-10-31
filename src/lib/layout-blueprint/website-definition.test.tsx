@@ -364,4 +364,37 @@ describe("versioned production website boundary", () => {
       permissions: { lockedSections: [] },
     }).success).toBe(false);
   });
+
+  it("renames a flagship site in Guided Mode without changing its canonical ID or design", () => {
+    const base = premiumLayoutSchema.parse(mutateWebsite(
+      makeInitialDraft("northstar-consulting"),
+      websiteMutationSchema.parse({
+        kind: "assign-layout", layoutId: "lucia.layout.meridian",
+      }),
+    ));
+    const before = base.pages.map((p) => p.sections.map((s) => s.id));
+    const renamed = premiumLayoutSchema.parse(mutateWebsite(base, {
+      kind: "composition-edit", mode: "guided",
+      edits: [{ kind: "brand", name: "Stonebridge Advisory" }],
+    }));
+    expect(renamed.identity.name).toBe("Stonebridge Advisory");
+    expect(renamed.layoutId).toBe(base.layoutId);
+    expect(renamed.pages[0].title).toBe("Stonebridge Advisory");
+    expect(renamed.pages.map((p) => p.sections.map((s) => s.id))).toEqual(before);
+    expect(renamed.pages.find((p) => p.path === "/services")?.title)
+      .toContain("Stonebridge Advisory");
+    expect(base.identity.name).not.toBe("Stonebridge Advisory");
+    const html = renderToStaticMarkup(<LayoutRenderer blueprint={renamed} />);
+    expect(html).toContain("Stonebridge Advisory");
+    expect(() => mutateWebsite(base, {
+      kind: "composition-edit", mode: "guided",
+      edits: [{ kind: "brand", name: "X" }],
+    })).toThrow();
+    const denied = structuredClone(base);
+    denied.permissions.guided = denied.permissions.guided.filter((permission) => permission !== "brand");
+    expect(() => mutateWebsite(denied, {
+      kind: "composition-edit", mode: "guided",
+      edits: [{ kind: "brand", name: "A different owner" }],
+    })).toThrow(/Brand edit denied/);
+  });
 });
