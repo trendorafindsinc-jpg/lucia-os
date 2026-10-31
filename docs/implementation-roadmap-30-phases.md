@@ -82,8 +82,8 @@ Inventory current catalogue entries, routes, screenshots, and rendered structure
 ### Phase 13 — Layout composition system
 Build reusable primitives that allow different page structures and visual identities rather than forcing all designs into one skeleton. Preserve supported schema validation and safe rendering; do not execute arbitrary code.
 
-### Phase 14 — First polished Layout exemplars
-Design and finish a small representative set of genuinely different Layouts one by one. Use realistic demo content, complete sections, coherent navigation, and responsive states. Review quality before scaling the catalogue.
+### Phase 14 — Production implementation of all 48 premium Layouts
+Implement and quality-gate all **48 distinct, complete premium Layouts across 8 categories**, in cumulative reviewed batches **8 → 16 → 32 → 48**. Start with one flagship per category; deliver real multi-page designs, working navigation, safe replaceable demo content, responsive compositions, licensed assets, and production-compatible rendering. Do not count the existing 37 shared-skeleton starters as premium until individually upgraded and accepted. Phase 13 must first provide the verified integrated composition and publishing engine. Phase 14 stays incomplete until all 48 pass the per-Layout quality and functional gates. See `docs/phase-14-premium-layout-decisions.md`.
 
 ### Phase 15 — Accurate Layout previews and selection
 Show meaningful previews before selection, with enough of the actual website to judge it. Ensure preview and published rendering use the same validated design definition and asset references. Selection must create a real project, not just change a title.
@@ -91,8 +91,8 @@ Show meaningful previews before selection, with enough of the actual website to 
 ### Phase 16 — Content replacement and customisation
 Let customers replace demo text, imagery, contact details, and business information without breaking the design. Verify useful defaults and that customers do not need to rebuild navigation, spacing, or missing sections.
 
-### Phase 17 — Distinct catalogue expansion
-Expand the catalogue in quality-gated batches toward the founder-approved **48 distinct Layouts across 8 categories (6 per category)**, beginning with 8 flagship designs, then 16, 32, and 48. See `docs/layouts-48-premium-catalogue.md`. Every entry must be meaningfully different in structure/design—not merely copy, title, or colour. Compare screenshots and DOM/page structure at phone, tablet, and desktop sizes; reject near-duplicates.
+### Phase 17 — Catalogue-wide acceptance, optimization and rollout readiness
+Audit, polish and verify the **48 premium Layouts implemented in Phase 14** across real rendering, previews, selection, customization, mobile/tablet/desktop responsiveness, accessibility, performance and originality. Compare screenshots and page/DOM composition; reject near-duplicates and resolve identified defects. Complete rollout/readiness evidence, but do **not** treat Phase 17 as the original implementation phase for the 48 Layouts. See `docs/layouts-48-premium-catalogue.md` and `docs/phase-14-premium-layout-decisions.md`.
 
 ### Phase 18 — Free creation and publishing contract
 Verify that a customer can create, customise, preview, and publish a standard website for free without AI or a purchase. A supported LUCIA address is available; custom domains remain an optional paid service. Preserve the previous known-good live version on failure.
