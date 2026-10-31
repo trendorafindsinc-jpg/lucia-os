@@ -269,6 +269,19 @@ describe("POST /api/onboarding/website transaction boundary", () => {
     expect(response.headers.get("cache-control")).toBe("no-store");
   });
 
+  it("creates the selected registered multi-page Layout directly in the authorized project", async () => {
+    const { writes, didCommit } = configureTransaction({ existingMembership: true });
+    const response = await POST(request({ ...payload, templateId: "lucia.layout.haven" }));
+    expect(response.status).toBe(201);
+    const pages = writes.find((write) => write.table === websitePages)?.values as Array<{ organizationId: string; websiteId: string; path: string; content: string }>;
+    const definition = JSON.parse(pages[0].content);
+    expect(definition).toMatchObject({ version: 2, layoutId: "lucia.layout.haven", identity: { name: payload.websiteName } });
+    expect(pages.map((page) => page.path)).toEqual(definition.pages.map((page: { path: string }) => page.path));
+    expect(pages.every((page) => page.organizationId === organizationId && page.websiteId === websiteId)).toBe(true);
+    expect(pages.slice(1).every((page) => page.content === "")).toBe(true);
+    expect(didCommit()).toBe(true);
+  });
+
   it("reuses an existing owned organization and website on a repeated setup request", async () => {
     const { tx, transaction, writes, didCommit } = configureTransaction({
       existingMembership: true,

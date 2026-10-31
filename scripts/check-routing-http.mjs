@@ -37,6 +37,9 @@ try {
   const settings=await request("os.lucia.name.ng","/workspace/settings");
   assert.equal(settings.status,200);
   assert.match(settings.body,/Sign in to open Settings/);
+  const cataloguePreview=await request("os.lucia.name.ng","/templates/preview/lucia.layout.haven");
+  assert.equal(cataloguePreview.status,307,"Canonical previews require LUCIA ID");
+  assert.match(cataloguePreview.headers.location,/^\/api\/auth\/login\?returnTo=/);
   const preferences=await request("os.lucia.name.ng","/api/workspace/preferences");
   assert.equal(preferences.status,401);
   const desktop=await request("os.lucia.name.ng","/workspace/desktop");
@@ -56,6 +59,7 @@ try {
     ["northstar.lucia.name.ng","/staff"],
     ["northstar.lucia.name.ng","/workspace/desktop"],
     ["northstar.lucia.name.ng","/workspace/settings"],
+    ["northstar.lucia.name.ng","/templates/preview/lucia.layout.haven"],
     ["customer-example.com","/workspace/settings"],
     ["customer-example.com","/api/workspace/preferences"],
   ]) {

@@ -18,8 +18,9 @@ import {
   websiteSetupSchema,
   makeSiteSlug,
 } from "@/lib/onboarding/website-setup";
-import { serializeInitialWebsiteDraft } from "@/lib/onboarding/initial-website-draft";
-import { getTemplateById } from "@/lib/templates/catalogue";
+import { makeStartingWebsiteDefinition } from "@/lib/onboarding/initial-website-draft";
+import { getStartingLayoutById as getTemplateById } from "@/lib/templates/starting-layouts";
+import { isPremium } from "@/lib/layout-blueprint/website-definition";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -208,16 +209,20 @@ export async function POST(request: Request) {
           slug: websites.slug,
         });
 
-      const serializedInitialDraft = serializeInitialWebsiteDraft(
+      const initialDefinition = makeStartingWebsiteDefinition(
         setup.templateId,
         setup.websiteName,
       );
+      const serializedInitialDraft = JSON.stringify(initialDefinition);
+      const pages = isPremium(initialDefinition)
+        ? initialDefinition.pages.map((page) => ({ title: page.title, path: page.path }))
+        : template.sections.map((title, index) => ({ title, path: index === 0 ? "/" : `/${makeSiteSlug(title)}` }));
       await tx.insert(websitePages).values(
-        template.sections.map((section, index) => ({
+        pages.map((page, index) => ({
           organizationId: organization.id,
           websiteId: website.id,
-          title: section,
-          path: index === 0 ? "/" : `/${makeSiteSlug(section)}`,
+          title: page.title,
+          path: page.path,
           status: "draft",
           // Layout Studio loads the structured draft from the home page. Persist it
           // now so the selected template and website name survive the handoff.

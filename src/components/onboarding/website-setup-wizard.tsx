@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { getTemplateById, websiteTemplates } from "@/lib/templates/catalogue";
+import { getStartingLayoutById as getTemplateById, startingWebsiteDesigns as websiteTemplates } from "@/lib/templates/starting-layouts";
 import {
   makeSiteSlug,
   organisationTypes,
@@ -164,6 +164,11 @@ export function WebsiteSetupWizard({ userId }: { userId: string }) {
         /* A local cache failure must not turn a committed project into a failed save. */
       }
       setSubmitted(true);
+      // Open the committed website in the existing editor, never a browser-only mock.
+      // The success screen remains available if a malformed ID is returned.
+      if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(payload.website.id)) {
+        window.location.assign(`/editor?websiteId=${encodeURIComponent(payload.website.id)}`);
+      }
     } catch {
       setSaveError(
         "We couldn’t reach LUCIA OS. Check your connection and try again.",
@@ -199,7 +204,7 @@ export function WebsiteSetupWizard({ userId }: { userId: string }) {
           </span>
         </Link>
         <Link className="setup-back" href="/templates">
-          Back to templates
+          Back to Layouts
         </Link>
       </header>
       <section className="setup-intro">
@@ -263,7 +268,7 @@ export function WebsiteSetupWizard({ userId }: { userId: string }) {
                 </strong>
               </div>
               <div>
-                <span>Template</span>
+                <span>Layout</span>
                 <strong>{template?.name}</strong>
               </div>
               {savedWebsite && (

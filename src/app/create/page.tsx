@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getTemplateById } from "@/lib/templates/catalogue";
+import { getStartingLayoutById as getTemplateById } from "@/lib/templates/starting-layouts";
 import type { Metadata } from "next";
 import { WebsiteSetupWizard } from "@/components/onboarding/website-setup-wizard";
 import "./create.css";
