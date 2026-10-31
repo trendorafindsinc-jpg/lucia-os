@@ -400,10 +400,18 @@ try {
         response.writeHead(400).end();
         return;
       }
+      // This is a test-only local transport. Chromium may send localhost
+      // requests to this proxy despite the bypass list. Permit ONLY the
+      // compiled application on its assigned ephemeral port, plus synthetic
+      // LUCIA subdomains; never proxy arbitrary external URLs.
+      const localApp =
+        target.hostname === "localhost" || target.hostname === "127.0.0.1";
+      const publicTestSite =
+        /^[a-z0-9-]+\.lucia\.name\.ng$/.test(target.hostname);
       if (
         target.protocol !== "http:" ||
         target.port !== String(port) ||
-        !/^[a-z0-9-]+\.lucia\.name\.ng$/.test(target.hostname)
+        (!localApp && !publicTestSite)
       ) {
         response.writeHead(403).end();
         return;
