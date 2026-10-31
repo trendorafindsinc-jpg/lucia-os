@@ -39,3 +39,5 @@ Exercise the authenticated catalogue → interior-page preview → create → St
 - Added all-48 homepage route cases to the existing preview test; these require CI execution and do not establish browser acceptance.
 
 **Remaining gates:** Authenticated end-to-end browser journeys, five responsive viewports, two-account real HTTP tenant isolation, external OAuth (where available), accessibility evidence, final-head CI/Vercel and production smoke tests. No fabricated screenshots, real OAuth claims or customer data writes. Phase 15 remains **INCOMPLETE** pending these checks. Global X-Frame-Options: DENY remains intact; no decorative device emulation has been introduced.
+
+- Updated the pre-existing isolated browser acceptance runner's two creation journeys to assert the new direct editor handoff instead of clicking the former post-save link. This prevents an old test expectation from misreporting the Phase 15 navigation behavior. Execution of those browser cases remains a separate release gate.

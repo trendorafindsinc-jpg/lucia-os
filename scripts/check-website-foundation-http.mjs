@@ -570,12 +570,8 @@ try {
     const ui = await createdResponse.json();
     assert.equal(createdResponse.status(), 201, ui.error);
     created.push(ui.website.id);
-    await page
-      .getByRole("link", {
-        name: /Open.*Studio|Open visual editor|Open Layout Studio/i,
-      })
-      .first()
-      .click();
+    // Phase 15 navigates directly to the persisted editor after creation.
+    await page.waitForURL(new RegExp("/editor\\?websiteId=" + ui.website.id + "$"));
     await page.getByLabel("Website name", { exact: true }).waitFor();
     await page.waitForFunction(() =>
       document.querySelector(".editor-recovery-controls")?.matches(":enabled"),
@@ -1008,9 +1004,9 @@ try {
     const noStoreBody = await noStoreResult.json();
     assert.equal(noStoreResult.status(), 201, noStoreBody.error);
     created.push(noStoreBody.website.id);
-    await noStorePage
-      .getByRole("link", { name: "Open Layout Studio", exact: true })
-      .waitFor();
+    await noStorePage.waitForURL(
+      new RegExp("/editor\\?websiteId=" + noStoreBody.website.id + "$"),
+    );
     await noStorage.close();
     bpass("Unavailable browser storage does not crash setup or turn a committed project into failure");
     }
