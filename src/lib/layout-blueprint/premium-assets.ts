@@ -114,6 +114,8 @@ export const premiumAssetSources = [
   "public/layouts/premium/projects/estate.svg",
 ] as const;
 export function resolvePremiumAsset(reference: string): string {
+  const media = /^media:([0-9a-f-]{36})$/.exec(reference);
+  if (media) return "/_media/" + media[1];
   if (!Object.hasOwn(premiumAssets, reference))
     throw Error("Unknown built-in asset");
   return premiumAssets[reference];

@@ -11,6 +11,10 @@ on:
     paths:
       - 'src/lib/layout-blueprint/**'
       - 'src/components/publishing/**'
+      - 'src/lib/media/**'
+      - 'src/app/api/media/**'
+      - 'src/app/api/websites/**/media/**'
+      - 'scripts/media-security-acceptance.mjs'
       - 'scripts/phase14-premium-publishing-acceptance.mjs'
       - '.github/workflows/phase14-authenticated-publishing.yml'
 
@@ -45,6 +49,9 @@ jobs:
       WEBSITE_TEST_ADMIN_URL: postgres://postgres:ephemeral_acceptance_only@127.0.0.1:5432/lucia_os_acceptance
       WEBSITE_TEST_RUNTIME_URL: postgres://lucia_acceptance_runtime:isolated_runtime_only@127.0.0.1:5432/lucia_os_acceptance
       WEBSITE_TEST_PHASE14: "1"
+      WEBSITE_TEST_PHASE15: "1"
+      WEBSITE_TEST_PHASE16: "1"
+      WEBSITE_TEST_MEDIA: "1"
       WEBSITE_TEST_PHASE14_LAYOUTS: ${{ inputs.layouts || '' }}
       WEBSITE_TEST_PREMIUM_FAST: "1"
       WEBSITE_TEST_PREMIUM_ONLY: "1"

@@ -1,5 +1,7 @@
 # Phase 16 — Premium Website Personalization Studio
 
+**Current release gate:** customer-owned media integration is implemented below but remains BLOCKED on restricted credentials and live-provider acceptance. No merge or production migration is claimed.
+
 **Base:** `main` at `ccf44ba47335c4152fb6e236d188510bb8c93095`. **Branch:** `phase-16-premium-personalization-studio`. **Target:** all 48 original `lucia.layout.*` identities. **Release policy:** founder approval required; do not merge Phase 16 automatically.
 
 ## Baseline and reuse
@@ -43,3 +45,39 @@ No new renderer, content schema family, unrestricted section/page creation, arbi
 2. Clearing the shared enquiry address explicitly clears each registered contact-panel destination, so the existing publishing readiness check fails safely instead of publishing stale contact information.
 3. Changed section text containing HTML markup is rejected server-side while the original React renderer continues to escape ordinary text.
 4. The inherited acceptance harness now uses the Phase 16 business tab as the editor readiness marker, targets the registered page selector reliably and restores the normal viewport after the dedicated mobile screenshot, preventing its state leaking into subsequent flagship tests.
+
+
+## Customer-owned media implementation — 31 October 2026
+
+**Release status: BLOCKED pending restricted credentials and live storage acceptance. No production merge or database migration has been performed.** Earlier built-in-image-only statements describe the previous checkpoint. This additive implementation follows the approved shared storage decision from PR #139.
+
+### Implemented integration
+
+- Existing Studio now has a durable-image library UI: upload, compression, usage/quota information, retry/refresh and protected removal. Ready customer images join the existing logo, hero, editorial and project image selectors. Saving still uses the same Guided/Advanced edit API and renderer.
+- Upload endpoint authenticates the server session, checks account changes and same-origin requests, bounds streamed multipart bytes, resolves active tenant membership and independently checks website-edit permissions. Original filenames/object keys never establish ownership.
+- Sharp performs real image decoding, MIME/format agreement, a 4 MB source limit, a 24-million-pixel ceiling, animation rejection, autorotation, metadata removal, a 1600px dimension cap and WebP transcoding capped at 260 KB. Originals are not retained. Compression targets do not guarantee identical subjective quality for every source.
+- PostgreSQL owns opaque `media:UUID` references, tenant/website ownership, object keys, dimensions, alt text, byte usage and pending/ready/deleting/deleted lifecycle. The private S3 adapter signs requests server-side, uses AES-256 encryption and never returns credentials, provider error bodies or signed URLs.
+- Website reservations and the LUCIA OS product budget are checked atomically under the shared budget-row lock. Default website quota is 5 MB, capped at 200 retained images; platform operators can set individual website quotas through an audited API and `/staff/storage`. Ten successful/reserved uploads per website per minute are bounded; invalid-input abuse throttling and provider-account-wide inventory still need further acceptance/hardening.
+- The initial OS allocation is conservatively 2 GB within the shared 10 GB planning budget. Staff monitoring reports **OS reservation usage**, with an 80% warning. It does not falsely report other-product buckets or monthly bandwidth as measured storage. A shared-account inventory collector remains an outstanding release requirement for broader cross-product use.
+- Save and publication lock/check each referenced image against the exact authorized website. Public `/_media/UUID` delivery uses a narrowly scoped published-reference lookup; private images require active membership. Existing customer-host workspace/API denial remains intact.
+- Removal locks the website home and media row in the same order as save/publication, rejects references from any current draft, publication or retained version, and enforces a 30-day grace period after publication. A possibly completed but unconfirmed upload keeps its quota reservation; pending uploads older than 24 hours can be safely removed through the existing library endpoint. Space is refunded only after confirmed object deletion.
+
+### Verified provider setup and secure credential step
+
+The connected IDrive API confirmed bucket `lucia-os-customer-media-2026`, London-2, reachable, with actual `LocationConstraint=eu-west-3` and endpoint `https://s3.eu-west-3.idrivee2.com`.
+
+Configured nonsecret server-side Vercel settings for Production and Preview: `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `MEDIA_WEBSITE_QUOTA_BYTES=5000000`, `MEDIA_PRODUCT_BUDGET_BYTES=2000000000`, and `MEDIA_UPLOADS_ENABLED=0`. No credential was copied or disclosed.
+
+**Required owner action:** in the IDrive e2 console, Access Key → Create Access Key → London-2 → Read and write; permit object deletion, disable bucket deletion, and select **only** `lucia-os-customer-media-2026` (the provider defaults to all buckets, so deselect that default). Prefer separate Production/Preview keys. Save the generated ID directly into Vercel project `lucia` as `S3_ACCESS_KEY_ID`, and the secret as `S3_SECRET_ACCESS_KEY`, both type Secret/Sensitive in the intended environments. Do not send either value through chat, source control, screenshots or GitHub. The available IDrive connector supports S3 operations but cannot create restricted keys. Keep uploads disabled until the isolated live-provider acceptance passes.
+
+### Migration and recovery
+
+`0016_customer_media.sql` is additive: three tables, constraints/indexes, forced media RLS, a bounded public lookup and runtime grants. Its generated Drizzle snapshot reconciles the existing schema baseline without recreating existing tables. Production migration is **not applied**. Verify function ownership and least-privilege grants in the isolated database before controlled deployment. Recovery is to disable uploads and retain tables/objects/references; never drop media or rewrite existing published snapshots. Existing built-in Layout editing/publication continues without S3 credentials or new media references.
+
+### Fresh verification and outstanding gates
+
+The local suite passed **831 tests across 74 files**, including actual Sharp compression, format spoofing/corruption/size rejection, server-only request signing, unknown/cross-website references, quota denial, uncertain provider-write reservation retention, deletion reference protection, revoked access and HTTP authentication/account/origin guards. TypeScript, ESLint (three existing warnings), production build, compiled routing and Drizzle consistency were executed; final exact-head CI remains authoritative.
+
+The isolated compiled-application workflow now includes actual PostgreSQL/API media denial cases and the Phase 16 personalization journeys. Synthetic media metadata is used only for **negative authorization tests**, not as evidence of uploaded bytes or a successful storage workflow.
+
+**Not verified:** live IDrive upload → durable reload → preview/publication → rollback; real concurrent quota races; credential restriction against another bucket; actual shared-account storage inventory; customer-image browser acceptance; production migration/deployment. These remain mandatory release gates. No PASS, successful upload, production merge or production migration is claimed from unit tests or historical built-in-image browser results.

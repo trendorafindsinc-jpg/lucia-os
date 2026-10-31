@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { mediaReferencePattern } from "@/lib/media/references";
 import { premiumAssets } from "./premium-assets";
 
 /**
@@ -23,7 +24,7 @@ const asset = z
   .string()
   .max(160)
   .refine(
-    (value) => Object.hasOwn(premiumAssets, value),
+    (value) => Object.hasOwn(premiumAssets, value) || mediaReferencePattern.test(value),
     "Unknown built-in asset",
   );
 const href = z

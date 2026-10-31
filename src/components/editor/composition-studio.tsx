@@ -1,4 +1,5 @@
 "use client";
+import { MediaLibrary } from "./media-library";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   WorkspaceAppLink,
@@ -196,6 +197,8 @@ function CompositionEditor({
     clearSnapshot,
   } = useWorkspaceTab();
   const key = `composition-draft:website-engine:website:${websiteId}`;
+  const [ownedArtwork, setOwnedArtwork] = useState<{ ref: string; label: string }[]>([]);
+  const artworkChoices = [...premiumArtworkChoices, ...ownedArtwork];
   const [layout, setLayout] = useState(initial),
     [edits, setEdits] = useState<PremiumEdit[]>([]),
     [base, setBase] = useState(revision);
@@ -350,6 +353,7 @@ function CompositionEditor({
   });
   return (
     <main className="editor-page">
+      {accountId && <MediaLibrary websiteId={websiteId} accountId={accountId} onChange={setOwnedArtwork} />}
       <header className="composition-controls">
         <h1>Layout Studio</h1>
         <p>
@@ -481,7 +485,7 @@ function CompositionEditor({
                     alt: src ? (layout.identity.profile?.logo?.alt ?? layout.identity.name + " brand artwork") : null });
                 }}>
                 <option value="">No logo selected</option>
-                {premiumArtworkChoices.map((choice) => <option key={choice.ref} value={choice.ref}>{choice.label}</option>)}
+                {artworkChoices.map((choice) => <option key={choice.ref} value={choice.ref}>{choice.label}</option>)}
               </select>
             </label>
             {layout.identity.profile?.logo && <label>Logo description
@@ -722,7 +726,7 @@ function CompositionEditor({
                   })
                 }
               >
-                {premiumArtworkChoices.map((asset) => (
+                {artworkChoices.map((asset) => (
                   <option key={asset.ref} value={asset.ref}>{asset.label}</option>
                 ))}
               </select>
@@ -805,7 +809,7 @@ function CompositionEditor({
                       })
                     }
                   >
-                    {premiumArtworkChoices.map((asset) => (
+                    {artworkChoices.map((asset) => (
                       <option key={asset.ref} value={asset.ref}>{asset.label}</option>
                     ))}
                   </select>
