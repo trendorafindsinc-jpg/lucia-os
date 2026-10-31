@@ -26,9 +26,14 @@ const categories = [
 ] as const;
 
 const assets = [
-  "builtin:portfolio/work-1",
-  "builtin:hospitality/hero",
-  "builtin:hospitality/stay",
+  "builtin:premium/business",
+  "builtin:premium/creative",
+  "builtin:premium/hospitality",
+  "builtin:premium/education",
+  "builtin:premium/commerce",
+  "builtin:premium/technology",
+  "builtin:premium/community",
+  "builtin:premium/services",
 ] as const;
 const slug = (value: string) =>
   value.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "")
@@ -67,7 +72,7 @@ function buildCandidate(brief: PremiumCandidateBrief, siteName: string): Premium
   const casePaths = brief.projects.map(
     (name, i) => workPath + "/" + slug(name) + "-" + (i + 1),
   );
-  const art = assets[index % assets.length];
+  const art = assets[brief.category];
   const artAlt = "Original geometric illustration for fictional " + brief.name + " design study";
   const asset = { src: art, alt: artAlt };
   const heroVariants = ["typographic", "offset", "full-bleed"] as const;
