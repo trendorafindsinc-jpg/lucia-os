@@ -393,7 +393,7 @@ export async function checkPhase15AuthenticatedAcceptance({
         await view.getByRole("button", { name: "2. Page content" }).click();
         const editablePage = stored.draft.pages.find(p => p.path === "/contact");
         assert(editablePage);
-        await view.getByLabel("Page", { exact: true }).selectOption(editablePage.id);
+        await view.locator('fieldset[aria-label="Composition controls"] select').nth(1).selectOption(editablePage.id);
         const headingInput = view.getByLabel("Heading", { exact: true });
         await headingInput.waitFor();
         await headingInput.fill("Contact our " + name + " team");
@@ -434,6 +434,8 @@ export async function checkPhase15AuthenticatedAcceptance({
           const dir = "artifacts/phase16-acceptance";
           await mkdir(dir, { recursive: true });
           await view.screenshot({ path: dir + "/studio-business-390.png", fullPage: true });
+          // Restore desktop viewport before reusing this browser page for another flagship.
+          await view.setViewportSize({ width: 1180, height: 820 });
         }
         bpass(name + ": Phase 16 real browser business identity, contact, logo, social, page heading, save/reload, A/B isolation and republish");
       }

@@ -394,10 +394,10 @@ export function applyPremiumEdit(
     } else {
       const profile = next.identity.profile ?? {};
       next.identity.profile = { ...profile, [edit.field]: edit.value || undefined };
-      if (edit.field === "enquiryEmail" && edit.value)
+      if (edit.field === "enquiryEmail")
         for (const page of next.pages)
           for (const section of page.sections)
-            if (section.type === "contact-panel") section.email = edit.value;
+            if (section.type === "contact-panel") section.email = edit.value || undefined;
     }
   } else if (edit.kind === "business-social") {
     if (!perms.guided.includes("link")) throw new Error("Social link edit denied");
@@ -532,6 +532,8 @@ export function applyPremiumEdit(
       // Permissions come from the stored definition, never from the edit request.
       const check = (a: unknown, b: unknown, key: string): void => {
         if (JSON.stringify(a) === JSON.stringify(b)) return;
+        if (typeof b === "string" && /<\/?[a-z][^>]*>/i.test(b))
+          throw new Error("HTML markup is not supported in page content");
         if (Array.isArray(a) && Array.isArray(b)) {
           if (a.length !== b.length)
             throw new Error("Section structure cannot change");

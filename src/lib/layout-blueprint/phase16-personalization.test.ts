@@ -90,6 +90,21 @@ describe("Phase 16 personalization across all 48 original Layout identities", ()
       kind: "business-logo", src: null, alt: null,
     });
     expect(removed.identity.profile?.logo).toBeUndefined();
+    const contactConfigured = applyPremiumEdit(layout, "guided", {
+      kind: "business-detail", field: "enquiryEmail", value: "hello@company.ng",
+    });
+    const cleared = applyPremiumEdit(contactConfigured, "guided", {
+      kind: "business-detail", field: "enquiryEmail", value: "",
+    });
+    expect(cleared.pages.flatMap(p => p.sections).filter(s => s.type === "contact-panel")
+      .every(s => s.type === "contact-panel" && s.email === undefined)).toBe(true);
+    expect(checkPremiumPublishContacts(cleared).ready).toBe(false);
+    const page = layout.pages.find(p => p.sections.some(s => "heading" in s))!;
+    const section = page.sections.find(s => "heading" in s)!;
+    expect(() => applyPremiumEdit(layout, "guided", {
+      kind: "replace-section", pageId: page.id,
+      section: { ...section, heading: "<script>alert(1)</script>" },
+    })).toThrow("HTML markup");
   });
 
   it("keeps deliberately different page titles intact when the brand name changes", () => {
