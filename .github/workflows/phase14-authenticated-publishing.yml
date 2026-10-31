@@ -11,6 +11,10 @@ on:
     paths:
       - 'src/lib/layout-blueprint/**'
       - 'src/components/publishing/**'
+      - 'src/lib/media/**'
+      - 'src/app/api/media/**'
+      - 'src/app/api/websites/**/media/**'
+      - 'scripts/media-security-acceptance.mjs'
       - 'scripts/phase14-premium-publishing-acceptance.mjs'
       - '.github/workflows/phase14-authenticated-publishing.yml'
 
@@ -23,7 +27,7 @@ concurrency:
 
 jobs:
   acceptance:
-    name: 48 canonical Layout real HTTP and browser publishing gates
+    name: Registered Layout HTTP/browser publishing and media authorization
     runs-on: ubuntu-latest
     timeout-minutes: 25
     services:
@@ -45,7 +49,10 @@ jobs:
       WEBSITE_TEST_ADMIN_URL: postgres://postgres:ephemeral_acceptance_only@127.0.0.1:5432/lucia_os_acceptance
       WEBSITE_TEST_RUNTIME_URL: postgres://lucia_acceptance_runtime:isolated_runtime_only@127.0.0.1:5432/lucia_os_acceptance
       WEBSITE_TEST_PHASE14: "1"
-      WEBSITE_TEST_PHASE14_LAYOUTS: ${{ inputs.layouts || '' }}
+      WEBSITE_TEST_PHASE15: "1"
+      WEBSITE_TEST_PHASE16: "1"
+      WEBSITE_TEST_MEDIA: "1"
+      WEBSITE_TEST_PHASE14_LAYOUTS: ${{ inputs.layouts || (github.event.pull_request.number == 138 && 'flagships' || '') }}
       WEBSITE_TEST_PREMIUM_FAST: "1"
       WEBSITE_TEST_PREMIUM_ONLY: "1"
       WEBSITE_TEST_PLAYWRIGHT_MODULE: playwright
@@ -73,6 +80,7 @@ jobs:
           GRANT USAGE ON SCHEMA public TO lucia_acceptance_runtime;
           GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO lucia_acceptance_runtime;
           GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO lucia_acceptance_runtime;
+          GRANT EXECUTE ON FUNCTION public.lucia_public_media(uuid) TO lucia_acceptance_runtime;
           SQL
       - name: Build actual production application
         run: npm run build

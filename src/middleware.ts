@@ -31,6 +31,12 @@ export function middleware(request: NextRequest) {
   // HTTP Host selects the public site; client-supplied forwarded headers do not.
   const hostname = (request.headers.get("host") || request.nextUrl.host)
     .trim().toLowerCase().replace(/:\d+$/, "").replace(/\.$/, "");
+  const media = /^\/_media\/([0-9a-f-]{36})$/.exec(request.nextUrl.pathname);
+  if (media && request.method === "GET") {
+    const destination = request.nextUrl.clone();
+    destination.pathname = "/api/media/" + media[1];
+    return NextResponse.rewrite(destination);
+  }
   if (isPlatformHost(hostname)) return NextResponse.next();
 
   const pathname = request.nextUrl.pathname;

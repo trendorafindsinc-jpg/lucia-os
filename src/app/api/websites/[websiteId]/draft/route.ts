@@ -1,3 +1,4 @@
+import { validateMediaOwnership } from "@/lib/media/service";
 import { and, eq, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -291,6 +292,8 @@ export async function PATCH(request: Request, context: RouteContext) {
     } catch {
       return "invalid-edit" as const;
     }
+    try { await validateMediaOwnership(tx, found.website.organizationId, found.website.id, definition); }
+    catch { return "invalid-edit" as const; }
     persisted = definition;
     await tx
       .update(websites)

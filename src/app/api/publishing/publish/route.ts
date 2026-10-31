@@ -1,3 +1,4 @@
+import { validateMediaOwnership } from "@/lib/media/service";
 import { and, eq, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -212,6 +213,7 @@ export async function POST(request: Request) {
           );
         const definition = draftResult.data;
         const actualName = websiteSummary(definition).siteName;
+        await validateMediaOwnership(tx, org.id, website.id, definition, action === "publish");
         const snapshot = JSON.stringify(definition);
         const now = new Date();
 

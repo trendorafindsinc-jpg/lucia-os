@@ -1027,6 +1027,12 @@ try {
         api, admin, f, base, browserContext, created, bpass, publicSite,
       });
     }
+    if (process.env.WEBSITE_TEST_MEDIA === "1") {
+      const { checkMediaSecurity } = await import("./media-security-acceptance.mjs");
+      await checkMediaSecurity({ admin, api, f });
+      bpass("media authorization and retention trust-boundary denial cases (no live upload claim)");
+    }
+
     assert.equal(errors.length, 0, errors.join("\n"));
     bpass("No unhandled application errors");
   }

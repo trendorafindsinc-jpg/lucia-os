@@ -278,16 +278,22 @@ describe("versioned production website boundary", () => {
       websitePageDetails(makeInitialDraft("northstar-consulting"), "/").title,
     ).toBe("Northstar Consulting");
   });
-  it("escapes customer markup instead of executing a section's text", () => {
+  it("rejects new markup and still escapes historically persisted text in rendering", () => {
     const layout = structuralLayout("meridian", "Demo site"),
       section = layout.pages[0].sections[0];
     if (section.type !== "premium-hero") throw Error("Expected hero");
-    const edited = applyPremiumEdit(layout, "guided", {
+    const oldMarkup = '<script>alert("unsafe")</script>';
+    expect(() => applyPremiumEdit(layout, "guided", {
       kind: "replace-section",
       pageId: "home",
-      section: { ...section, heading: '<script>alert("unsafe")</script>' },
-    });
-    const html = renderToStaticMarkup(<LayoutRenderer blueprint={edited} />);
+      section: { ...section, heading: oldMarkup },
+    })).toThrow("HTML markup");
+    // An older persisted definition may contain text shaped like markup:
+    // rendering must still treat it as text, not executable HTML.
+    const historical = structuredClone(layout);
+    if (historical.pages[0].sections[0].type !== "premium-hero") throw Error("Expected hero");
+    historical.pages[0].sections[0].heading = oldMarkup;
+    const html = renderToStaticMarkup(<LayoutRenderer blueprint={historical} />);
     expect(html).toContain("&lt;script&gt;");
     expect(html).not.toContain("<script>alert");
   });

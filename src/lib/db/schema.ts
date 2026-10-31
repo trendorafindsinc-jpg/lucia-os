@@ -425,3 +425,30 @@ export const workspacePreferences = pgTable("workspace_preferences", {
  revision: integer("revision").notNull().default(1),
  updatedAt: updatedAt(),
 });
+
+/** Private customer media; immutable object identity and tenant/project ownership. */
+export const websiteMedia = pgTable("website_media", {
+  id: uuid("id").primaryKey(),
+  organizationId: uuid("organization_id").notNull(),
+  websiteId: uuid("website_id").notNull(),
+  createdByUserId: uuid("created_by_user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
+  objectKey: text("object_key").notNull(),
+  lastPublishedAt: timestamp("last_published_at", { withTimezone: true }),
+  bytes: integer("bytes").notNull(),
+  width: integer("width").notNull(), height: integer("height").notNull(),
+  alt: text("alt").notNull(),
+  status: text("status").notNull().default("pending"),
+  createdAt: createdAt(), updatedAt: updatedAt(),
+}, (table) => [
+  foreignKey({ name: "website_media_website_org_fk", columns: [table.organizationId, table.websiteId], foreignColumns: [websites.organizationId, websites.id] }).onDelete("restrict"),
+  uniqueIndex("website_media_key_uq").on(table.objectKey),
+  index("website_media_owner_idx").on(table.organizationId, table.websiteId, table.status),
+]);
+export const mediaStorageBudget = pgTable("media_storage_budget", {
+  product: text("product").primaryKey(),
+  reservedBytes: bigint("reserved_bytes", { mode: "number" }).notNull().default(0),
+});
+export const websiteMediaLimits = pgTable("website_media_limits", {
+  websiteId: uuid("website_id").primaryKey().references(() => websites.id, { onDelete: "restrict" }),
+  quotaBytes: integer("quota_bytes").notNull(),
+});

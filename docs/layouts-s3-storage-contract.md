@@ -65,4 +65,4 @@ These keys are **not yet verified or configured**. No credentials are stored in 
 - **Phase 16:** provide meaningful content replacement and customization; only enable persistent uploads where durable storage is proven.
 - **Phases 17–19:** expand the catalogue and validate full website flows without assuming S3 is ready.
 
-**Explicit limitation:** S3 integration, provider selection, bucket configuration and customer-media migration are not implemented by this architectural decision.
+**Updated provisioning note (2026-10-31):** IDrive e2 is the founder-selected initial provider and the private LUCIA OS bucket has been created with AES-256 default encryption. The cross-product storage architecture, Vercel credential placement, 10 GB shared-account budget and mandatory release gates are recorded in [Shared Object Storage Architecture](shared-object-storage-architecture.md). **Application integration, restricted runtime credentials and customer-media migration are not yet implemented or verified.**

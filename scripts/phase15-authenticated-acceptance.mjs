@@ -119,7 +119,7 @@ export async function checkPhase15AuthenticatedAcceptance({
         id = new URL(view.url()).searchParams.get("websiteId");
         assert(id && /^[0-9a-f-]{36}$/i.test(id), "Direct editor handoff must include saved UUID");
         createdBody = { website: { id }, organization: { id: f.orgA } };
-        await view.getByLabel("Composition controls").waitFor();
+        await view.getByRole("button", { name: "1. Business identity" }).waitFor();
         saved = await (await api("a", draftRoute(id))).json();
         initialRevision = saved.revision;
         assert.equal(saved.draft.layoutId, "lucia.layout." + name);
@@ -231,7 +231,7 @@ export async function checkPhase15AuthenticatedAcceptance({
       const editorResponse = await view.goto(base + "/editor?websiteId=" + id,
         { waitUntil: "networkidle" });
       assert.equal(editorResponse?.status(), 200, name + " editor HTTP");
-      const controls = view.getByLabel("Composition controls");
+      const controls = view.getByRole("button", { name: "1. Business identity" });
       try {
         await controls.waitFor({ timeout: 12000 });
       } catch {
@@ -359,6 +359,86 @@ export async function checkPhase15AuthenticatedAcceptance({
           [f.a, f.orgA]);
       }
       bpass(name + ": real synthetic-session create/assign/edit/reload/publish/public routes, tenant denial and rollback");
+      if (process.env.WEBSITE_TEST_PHASE16 === "1") {
+        // Continue on the exact same persisted, already-published test project.
+        // This is a real browser and database test, never a mock editor state.
+        await view.goto(base + "/editor?websiteId=" + id, { waitUntil: "networkidle" });
+        await view.getByRole("button", { name: "1. Business identity" }).waitFor();
+        const identityDescription = "Personalized hospitality and services by " + name;
+        const enquiry = "phase16-" + name + "@testing.example.ng";
+        await view.getByLabel("Business description").fill(identityDescription);
+        await view.getByLabel("Business description").blur();
+        await view.getByLabel("Tagline").fill("Built by a real customer");
+        await view.getByLabel("Tagline").blur();
+        await view.getByLabel("Enquiry destination (shared across contact panels)").fill(enquiry);
+        await view.getByLabel("Enquiry destination (shared across contact panels)").blur();
+        await view.getByLabel("Public contact email").fill("hello@testing.example.ng");
+        await view.getByLabel("Public contact email").blur();
+        await view.getByLabel("Instagram").fill("https://instagram.com/luciaexample");
+        await view.getByLabel("Instagram").blur();
+        await view.getByLabel("Approved logo or brand image").selectOption("builtin:premium/business");
+        const saveButton = view.getByRole("button", { name: /^Save draft \(/ });
+        await saveButton.waitFor();
+        await saveButton.click();
+        await view.getByText("Draft saved to your website").waitFor();
+        await view.reload({ waitUntil: "networkidle" });
+        await view.getByLabel("Business description").waitFor();
+        assert.equal(await view.getByLabel("Business description").inputValue(), identityDescription);
+        const stored = await (await api("a", draftRoute(id))).json();
+        assert.equal(stored.draft.identity.profile.enquiryEmail, enquiry);
+        assert.equal(stored.draft.identity.profile.logo.src, "builtin:premium/business");
+        assert.equal(stored.draft.identity.profile.social.instagram, "https://instagram.com/luciaexample");
+        assert(stored.draft.pages.flatMap(p => p.sections)
+          .filter(s => s.type === "contact-panel").every(s => s.email === enquiry));
+        await view.getByRole("button", { name: "2. Page content" }).click();
+        const editablePage = stored.draft.pages.find(p => p.path === "/contact");
+        assert(editablePage);
+        await view.locator('fieldset[aria-label="Composition controls"] select').nth(1).selectOption(editablePage.id);
+        const headingInput = view.getByLabel("Heading", { exact: true });
+        await headingInput.waitFor();
+        await headingInput.fill("Contact our " + name + " team");
+        await view.getByRole("button", { name: /^Save draft \(/ }).click();
+        await view.getByText("Draft saved to your website").waitFor();
+        const personalized = await (await api("a", draftRoute(id))).json();
+        assert(personalized.draft.pages.find(p => p.path === "/contact")
+          .sections.some(s => "heading" in s && s.heading === "Contact our " + name + " team"));
+        const forbidden = await api("b", draftRoute(id), "PATCH", {
+          kind: "composition-edit", mode: "guided",
+          edits: [{ kind: "business-detail", field: "description", value: "Cross-tenant data" }],
+        }, { "if-match": personalized.revision });
+        assert([403, 404].includes(forbidden.status), name + " foreign identity PATCH accepted");
+        const stale = await api("a", draftRoute(id), "PATCH", {
+          kind: "composition-edit", mode: "guided",
+          edits: [{ kind: "business-detail", field: "description", value: "Stale write" }],
+        }, { "if-match": initialRevision });
+        assert.equal(stale.status, 409, name + " stale business change accepted");
+        const promoted = await api("a", publishRoute, "POST", publishing(personalized),
+          { "if-match": personalized.revision });
+        assert.equal(promoted.status, 200, name + " personalization publication rejected");
+        const publicContact = await (await publicSite("/contact", host)).text();
+        assert(publicContact.includes(enquiry), name + " public contact did not propagate");
+        assert(publicContact.includes("Contact our " + name + " team"), name + " public page edit missing");
+        const publicHome = await (await publicSite("/", host)).text();
+        assert(publicHome.includes(identityDescription), name + " public identity is missing");
+        if (name === "meridian") {
+          for (const width of [320, 390, 768, 1180, 1440]) {
+            await view.setViewportSize({ width, height: width < 500 ? 844 : 900 });
+            const dimensions = await view.evaluate(() => ({
+              viewport: innerWidth, document: document.documentElement.scrollWidth,
+            }));
+            assert(dimensions.document <= dimensions.viewport + 1,
+              "Editor horizontally overflows at " + width);
+          }
+          await view.setViewportSize({ width: 390, height: 844 });
+          await view.getByRole("button", { name: "1. Business identity" }).click();
+          const dir = "artifacts/phase16-acceptance";
+          await mkdir(dir, { recursive: true });
+          await view.screenshot({ path: dir + "/studio-business-390.png", fullPage: true });
+          // Restore desktop viewport before reusing this browser page for another flagship.
+          await view.setViewportSize({ width: 1180, height: 820 });
+        }
+        bpass(name + ": Phase 16 real browser business identity, contact, logo, social, page heading, save/reload, A/B isolation and republish");
+      }
       evidence.push({ layoutId: current.draft.layoutId, pages: current.draft.pages.map((page) => page.path),
         previewPaths: ["/", "/contact"], publicResponsive: responsive,
         tenantDenial: "PASS", staleSave: "PASS", stalePublish: "PASS", corruptPublicationPreservesLive: "PASS", revokedMembership: "PASS",

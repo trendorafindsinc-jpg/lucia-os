@@ -113,6 +113,13 @@
       "when": 1793335714472,
       "tag": "0015_workspace_preferences",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1793463947034,
+      "tag": "0016_customer_media",
+      "breakpoints": true
     }
   ]
 }
