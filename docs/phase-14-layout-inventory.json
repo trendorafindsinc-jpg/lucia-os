@@ -7,336 +7,336 @@
       "id": "lucia.layout.meridian",
       "name": "Meridian",
       "category": "Business & Professional Services",
-      "status": "candidate",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.keystone",
       "name": "Keystone",
       "category": "Business & Professional Services",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.verity",
       "name": "Verity",
       "category": "Business & Professional Services",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.summit",
       "name": "Summit",
       "category": "Business & Professional Services",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.foundry",
       "name": "Foundry",
       "category": "Business & Professional Services",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.civic",
       "name": "Civic",
       "category": "Business & Professional Services",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.canvas",
       "name": "Canvas",
       "category": "Portfolio & Creative",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.prism",
       "name": "Prism",
       "category": "Portfolio & Creative",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.atelier",
       "name": "Atelier",
       "category": "Portfolio & Creative",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.monograph",
       "name": "Monograph",
       "category": "Portfolio & Creative",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.frame",
       "name": "Frame",
       "category": "Portfolio & Creative",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.muse",
       "name": "Muse",
       "category": "Portfolio & Creative",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.savour",
       "name": "Savour",
       "category": "Hospitality & Lifestyle",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.haven",
       "name": "Haven",
       "category": "Hospitality & Lifestyle",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.bloom",
       "name": "Bloom",
       "category": "Hospitality & Lifestyle",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.nomad",
       "name": "Nomad",
       "category": "Hospitality & Lifestyle",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.gather",
       "name": "Gather",
       "category": "Hospitality & Lifestyle",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.bistro",
       "name": "Bistro",
       "category": "Hospitality & Lifestyle",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.academia",
       "name": "Academia",
       "category": "Education & Learning",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.sprout",
       "name": "Sprout",
       "category": "Education & Learning",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.scholar",
       "name": "Scholar",
       "category": "Education & Learning",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.mentor",
       "name": "Mentor",
       "category": "Education & Learning",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.elevate",
       "name": "Elevate",
       "category": "Education & Learning",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.campus",
       "name": "Campus",
       "category": "Education & Learning",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.maison",
       "name": "Maison",
       "category": "Commerce & Product Showcases",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.origin",
       "name": "Origin",
       "category": "Commerce & Product Showcases",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.object",
       "name": "Object",
       "category": "Commerce & Product Showcases",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.harvest",
       "name": "Harvest",
       "category": "Commerce & Product Showcases",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.lustre",
       "name": "Lustre",
       "category": "Commerce & Product Showcases",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.craft",
       "name": "Craft",
       "category": "Commerce & Product Showcases",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.nexus",
       "name": "Nexus",
       "category": "Technology & Digital Products",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.orbit",
       "name": "Orbit",
       "category": "Technology & Digital Products",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.vector",
       "name": "Vector",
       "category": "Technology & Digital Products",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.pulse",
       "name": "Pulse",
       "category": "Technology & Digital Products",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.vault",
       "name": "Vault",
       "category": "Technology & Digital Products",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.signal",
       "name": "Signal",
       "category": "Technology & Digital Products",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.impact",
       "name": "Impact",
       "category": "Community, Nonprofit & Personal",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.together",
       "name": "Together",
       "category": "Community, Nonprofit & Personal",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.journal",
       "name": "Journal",
       "category": "Community, Nonprofit & Personal",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.voice",
       "name": "Voice",
       "category": "Community, Nonprofit & Personal",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.heritage",
       "name": "Heritage",
       "category": "Community, Nonprofit & Personal",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.collective",
       "name": "Collective",
       "category": "Community, Nonprofit & Personal",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.estate",
       "name": "Estate",
       "category": "Property, Health & Local Services",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.care",
       "name": "Care",
       "category": "Property, Health & Local Services",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.build",
       "name": "Build",
       "category": "Property, Health & Local Services",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.motion",
       "name": "Motion",
       "category": "Property, Health & Local Services",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.local",
       "name": "Local",
       "category": "Property, Health & Local Services",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     },
     {
       "id": "lucia.layout.greenfield",
       "name": "Greenfield",
       "category": "Property, Health & Local Services",
-      "status": "not-started",
+      "status": "composition-candidate",
       "accepted": false
     }
   ]
