@@ -130,7 +130,7 @@ export async function checkPhase14FlagshipPublishing({
       const editorResponse = await view.goto(base + "/editor?websiteId=" + id,
         { waitUntil: "networkidle" });
       assert.equal(editorResponse?.status(), 200, name + " editor HTTP");
-      const controls = view.getByLabel("Composition controls");
+      const controls = view.getByRole("button", { name: "1. Business identity" });
       try {
         await controls.waitFor({ timeout: 12000 });
       } catch {
