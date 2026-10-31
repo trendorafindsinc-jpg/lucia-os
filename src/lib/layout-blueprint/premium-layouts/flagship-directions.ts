@@ -90,6 +90,10 @@ export function refineFlagship(base: PremiumLayout): PremiumLayout {
   const direction = directions[name];
   if (!direction) return base;
   const draft = structuredClone(base);
+  // Immersive hospitality, fashion and property compositions require a
+  // deliberate full-width canvas rather than the generic reading measure.
+  if (name === "haven" || name === "maison" || name === "estate")
+    draft.tokens.width = "wide";
   const home = draft.pages.find((page) => page.path === "/");
   const portfolio = draft.pages.find((page) => page.id === "portfolio");
   if (!home || !portfolio) throw Error("Flagship requires homepage and portfolio");
