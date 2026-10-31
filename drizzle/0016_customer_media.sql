@@ -58,9 +58,11 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog,public SET row_s
  JOIN public.organizations o ON o.id=w.organization_id
  WHERE m.id=media_id AND m.status='ready' AND w.status='published' AND o.status='active'
  AND EXISTS(SELECT 1 FROM public.website_pages p WHERE p.website_id=w.id AND p.organization_id=w.organization_id AND p.status='published' AND p.published_content LIKE '%"media:' || m.id::text || '"%') LIMIT 1;
-$$;
+$;
+-- SECURITY DEFINER functions otherwise grant EXECUTE to PUBLIC by default.
+REVOKE ALL ON FUNCTION lucia_public_media(uuid) FROM PUBLIC;
 --> statement-breakpoint
-DO $$ BEGIN
+DO $ BEGIN
  IF EXISTS(SELECT 1 FROM pg_roles WHERE rolname='lucia_os_runtime') THEN
  GRANT SELECT,INSERT,UPDATE ON website_media,media_storage_budget,website_media_limits TO lucia_os_runtime;
  GRANT EXECUTE ON FUNCTION lucia_public_media(uuid) TO lucia_os_runtime;

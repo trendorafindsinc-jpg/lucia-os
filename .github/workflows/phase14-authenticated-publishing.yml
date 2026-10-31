@@ -80,6 +80,7 @@ jobs:
           GRANT USAGE ON SCHEMA public TO lucia_acceptance_runtime;
           GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO lucia_acceptance_runtime;
           GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO lucia_acceptance_runtime;
+          GRANT EXECUTE ON FUNCTION public.lucia_public_media(uuid) TO lucia_acceptance_runtime;
           SQL
       - name: Build actual production application
         run: npm run build

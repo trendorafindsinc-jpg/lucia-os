@@ -89,3 +89,18 @@ Private media authorization uses the actual HTTP Host rather than Next.js's inte
 Upload success additionally requires a confirmed ready-row update after the provider write; a missing update remains an error with its reservation retained. The Studio disables removal of images referenced by its current unsaved composition, in addition to the server's persisted-reference checks. Browser-only recovery remains distinct from a server-retained snapshot. Two additional service cases cover successful finalization and refusal to claim success when readiness is unconfirmed.
 
 For PR #138, the isolated browser workflow defaults to the eight category flagships while the unit/customization contract still covers all 48 IDs. This avoids repeating the historical all-48 publishing programme for every media correction. The original all-48 path remains available through the workflow's `layouts=all` input and remains the default for other PRs. No assertion is disabled; evidence must report its actual target count. Live customer-owned image acceptance is a separate blocked gate, not replaced by this built-in-image suite.
+
+
+## 31 October 2026 — final-head audit continuation
+
+The earlier credential-creation instructions are historical. Vercel now confirms sensitive `S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY` entries for Production and Preview; the actual values and bucket-specific scope have **not** been verified. Generic Production/Preview `MEDIA_UPLOADS_ENABLED=0`; this Phase 16 Preview branch has a specific isolated `1` override. Production uploads remain disabled.
+
+At `bb011f392408a0c95477aef7d6ad44ff92612790`, GitHub Quality `41228662603`, isolated browser/publishing `41228662718`, and flagship capture `41228662632` all passed. Vercel preview deployment `dpl_3mgVPRFzcqfCdPQHJkXXty8QtzJN` was READY for that SHA. These results do **not** prove live IDrive customer upload/publication nor independent visual acceptance of the three expressions.
+
+The IDrive bucket was reachable, listed zero objects, and remained unchanged. The production Neon database did not contain `website_media`, `website_media_limits` or `media_storage_budget`; production migration has not been applied. No production tables, customer websites or media were changed in this audit.
+
+This PR adds an explicit REVOKE of PostgreSQL's default PUBLIC EXECUTE right on the SECURITY DEFINER published-media function, limits access to the runtime role, and adds a disposable-PostgreSQL grant assertion. Final-head CI must verify this new change before release.
+
+See [LUCIA Visual Experience System](lucia-visual-experience-system.md) for the art-direction vocabulary and actual evidence boundaries. Phase 17 retains independent catalogue-wide creative acceptance.
+
+**Do not merge or enable production uploads** before actual IDrive save/reload/private-preview/publication/rollback/deletion, credential restriction, concurrent quota/isolation and three independent visual-expression browser checks pass.

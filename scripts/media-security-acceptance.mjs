@@ -3,6 +3,16 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 export async function checkMediaSecurity({ admin, api, f }) {
+  const [grants] = await admin`
+    select exists (
+      select 1 from pg_proc p,
+      lateral aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) a
+      where p.oid = 'public.lucia_public_media(uuid)'::regprocedure
+      and a.grantee = 0 and a.privilege_type = 'EXECUTE'
+    ) as public_execute,
+    has_function_privilege('lucia_acceptance_runtime', 'public.lucia_public_media(uuid)', 'EXECUTE') as runtime_execute`;
+  assert.equal(grants.public_execute, false, "SECURITY DEFINER media lookup must deny PUBLIC EXECUTE");
+  assert.equal(grants.runtime_execute, true, "The scoped runtime role must retain published-media access");
   const foreign = randomUUID();
   await admin`insert into website_media(id,organization_id,website_id,created_by_user_id,object_key,bytes,width,height,alt,status) values(${foreign},${f.orgB},${f.foreign},${f.b},${'os/'+f.orgB+'/'+f.foreign+'/'+foreign+'.webp'},200,10,10,'Isolated denial fixture','ready')`;
   try {
