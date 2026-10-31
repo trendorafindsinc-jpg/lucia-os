@@ -60,3 +60,16 @@ An earlier Meridian-only revision reported **540 unit tests passing across 66 fi
 **Outstanding acceptance evidence.** No per-layout five-viewport screenshots, verified screen-reader/contrast review, measured performance, named 32/40 design scores, or authenticated isolated-tenant create/edit/save/preview/publish/denial browser runs have been captured. Real customer catalogue launch is not authorized. The other 40 need bespoke design refinement after the first eight are independently accepted.
 
 Strict founder inventory: 48 candidates; 0 fully implemented, 0 verified, 0 accepted. Do not merge or claim PASS.
+
+## Continued visual design and evidence tooling — 31 October 2026
+
+This change refines existing candidates, not the approved catalogue count or its stable identifiers.
+
+- The eight initial flagship designs have received additional per-identity visual refinements on the **existing production LayoutRenderer**: editorial executive Meridian, asymmetrical gallery Canvas, atmospheric Haven, structured Academia, lookbook-led Maison, technical Nexus, story-led Impact and listing-driven Estate.
+- The shared public renderer now includes a real multi-link footer whose links resolve to registered paths, active navigation status, keyboard focus, and a mobile menu that closes after private preview navigation.
+- Layout Studio now supports permission-checked business-name changes (which update page metadata without rewriting editorial content) and edits to hero CTA labels and registered destination links.
+- New regression tests cover capability denial, canonical ID preservation, design lock, interior page routes, and public navigation. Existing draft ownership and publication transaction logic are unchanged.
+- Added a **development-only** `/phase14-review/[id]/[[...path]]` route. It calls the **real** Phase 13 LayoutRenderer on deterministic fictional data and returns 404 when NODE_ENV is not `development`. It accesses no customer websites or production credentials.
+- Added the executable `scripts/phase14-visual-audit.mjs`. With a local Next dev server and Playwright Chromium installed, it captures the home and a representative interior page for each of the **same existing 48** candidates at 320, 390×844, 768×1024, 1180×820 and 1440×900, plus viewport overflow, image, heading, broken-link and mobile-menu checks. Invoke `node scripts/phase14-visual-audit.mjs --ids=meridian,canvas` to limit the audit to selected Layouts; omit `--ids` for the complete catalogue.
+
+**Evidence caveat:** The screenshot runner and live authenticated publication have **not been executed** in the current engineering session. No screenshots or 40-point ratings may be claimed. The 40 nonflagship candidates have not undergone the first-batch independent visual acceptance, so were not promoted or bulk-generated. The founder's sequential 8 → 16 → 32 → 48 gate remains mandatory. Do not merge pending verified screenshot, design, accessibility/performance, and isolated tenant publishing evidence.
