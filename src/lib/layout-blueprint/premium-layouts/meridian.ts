@@ -17,6 +17,10 @@ export function meridianCandidate(siteName = "Meridian Advisory · Demo") {
     eyebrow: "Independent advisory / Demonstration",
     heading,
     body,
+    image: {
+      src: "builtin:premium/business",
+      alt: "Original architectural illustration with arches and geometric forms",
+    },
     action: {
       label:
         href === "/contact"
@@ -75,8 +79,8 @@ export function meridianCandidate(siteName = "Meridian Advisory · Demo") {
         description:
           "A fictional case demonstrating how research becomes an actionable service blueprint.",
         image: {
-          src: "builtin:portfolio/work-1",
-          alt: "Geometric study used as illustrative case artwork",
+          src: "builtin:premium/business",
+          alt: "Original architectural composition representing a fictional service-design case",
         },
         href: "/work/service-journey",
       },
