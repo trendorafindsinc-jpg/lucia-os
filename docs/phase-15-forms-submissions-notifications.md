@@ -1,4 +1,6 @@
-# Phase 15 — Forms, submissions and notifications
+# Historical prototype — Forms, submissions and notifications
+
+This historical document does not define the current Phase 15. The canonical roadmap assigns Phase 15 to accurate Layout previews and selection; see `phase-15-layout-previews-selection.md`. Existing forms functionality is preserved.
 
 ## Included
 - `/forms` workspace with a typed starter contact form and visitor preview.

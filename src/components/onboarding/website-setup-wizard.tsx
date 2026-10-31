@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { getTemplateById, websiteTemplates } from "@/lib/templates/catalogue";
+import { getStartingLayoutById as getTemplateById, startingWebsiteDesigns as websiteTemplates } from "@/lib/templates/starting-layouts";
 import {
   makeSiteSlug,
   organisationTypes,
@@ -199,7 +199,7 @@ export function WebsiteSetupWizard({ userId }: { userId: string }) {
           </span>
         </Link>
         <Link className="setup-back" href="/templates">
-          Back to templates
+          Back to Layouts
         </Link>
       </header>
       <section className="setup-intro">
@@ -263,7 +263,7 @@ export function WebsiteSetupWizard({ userId }: { userId: string }) {
                 </strong>
               </div>
               <div>
-                <span>Template</span>
+                <span>Layout</span>
                 <strong>{template?.name}</strong>
               </div>
               {savedWebsite && (

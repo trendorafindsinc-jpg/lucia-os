@@ -17,6 +17,10 @@ describe("authenticated free website setup entry", () => {
     );
     expect(html).not.toContain('autoComplete="organization"');
   });
+  it("retains a canonical multi-page choice through LUCIA ID sign-in", async () => {
+    const html = renderToStaticMarkup(await CreateWebsitePage({ searchParams: Promise.resolve({ template: "lucia.layout.haven" }) }));
+    expect(html).toContain("returnTo=%2Fcreate%3Ftemplate%3Dlucia.layout.haven");
+  });
   it("does not turn an unknown Layout into an unsafe login return destination", async () => {
     const html = renderToStaticMarkup(
       await CreateWebsitePage({

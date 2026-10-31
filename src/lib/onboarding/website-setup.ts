@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { isReservedSiteSlug } from "@/lib/publishing/host";
-import { websiteTemplates } from "@/lib/templates/catalogue";
+import { getStartingLayoutById } from "@/lib/templates/starting-layouts";
 
 export const websiteGoals = [
   "Introduce my organisation",
@@ -35,9 +35,9 @@ export const websiteSetupSchema = z.object({
   organisationType: z.enum(organisationTypes),
   goal: z.enum(websiteGoals),
   templateId: z
-    .string()
+    .string().max(100)
     .refine(
-      (id) => websiteTemplates.some((template) => template.id === id),
+      (id) => Boolean(getStartingLayoutById(id)),
       "Choose a Layout from the catalogue.",
     ),
   country: z.string().trim().min(2).max(56),

@@ -11,6 +11,8 @@ import {
 } from "@/lib/templates/catalogue";
 import { getTemplateSetupHref } from "@/lib/templates/navigation";
 
+import { premiumStartingLayouts, getLayoutPreviewHref } from "@/lib/templates/starting-layouts";
+
 type PreviewVariant =
   "editorial" | "split" | "gallery" | "storefront" | "service" | "hospitality";
 
@@ -291,10 +293,28 @@ export function TemplateGallery({
           ))}
         </div>
       </section>
+      <section aria-labelledby="complete-layouts-title" className="template-results">
+        <h2 id="complete-layouts-title">Explore complete multi-page previews</h2>
+        <p>Open the actual pages, navigation and artwork before choosing a starting design. Visual review of this collection is ongoing.</p>
+        <div className="template-grid">
+          {premiumStartingLayouts.filter((layout) => (category === "All" || layout.category === category) && (!search.trim() || (layout.name + " " + layout.audience).toLowerCase().includes(search.trim().toLowerCase()))).map((layout) => (
+            <article className="template-card" key={layout.id}>
+              <div className="template-card-body">
+                <p className="template-audience">{layout.audience}</p>
+                <h3>{layout.name}</h3>
+                <p>{layout.description}</p>
+                <p>{layout.sections.length} registered pages · Free standard publishing</p>
+                <Link className="template-action" href={getLayoutPreviewHref(layout.id)}>Preview all pages →</Link>
+                <Link className="template-action" href={getTemplateSetupHref(layout.id)}>Create with {layout.name} →</Link>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
       <section className="template-results" aria-live="polite">
         <div className="template-results-heading">
           <h2>
-            {category === "All" ? "Explore all layouts" : category + " layouts"}
+            {category === "All" ? "Legacy starting designs" : category + " legacy starters"}
           </h2>
           <span>{visibleTemplates.length} shown</span>
         </div>
