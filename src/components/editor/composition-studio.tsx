@@ -442,6 +442,36 @@ function CompositionEditor({
             />
           </label>
         )}
+        {section.type === "contact-panel" && (
+          <label>
+            Business enquiry email
+            <input
+              key={page.id + ":" + section.id + ":" + (section.email ?? "")}
+              type="email"
+              required
+              autoComplete="email"
+              defaultValue={section.email ?? ""}
+              placeholder="contact@yourbusiness.com"
+              onBlur={(event) => {
+                const newEmail = event.currentTarget.value.trim();
+                if (newEmail !== (section.email ?? "")) {
+                  edit({
+                    kind: "replace-section",
+                    pageId: page.id,
+                    section: {
+                      ...section,
+                      email: newEmail || undefined,
+                    },
+                  });
+                }
+              }}
+            />
+            <small>
+              Changing this shared starter address updates matching
+              contact panels across the website. Save the draft before publishing.
+            </small>
+          </label>
+        )}
         <button
           disabled={
             page.sections.indexOf(section) === 0 ||
