@@ -20,4 +20,11 @@ export const premiumArtworkChoices = [
     ref: "builtin:premium/flagship-" + name,
     label: name[0].toUpperCase() + name.slice(1) + " flagship artwork",
   })),
+  ...([
+    "meridian", "canvas", "haven", "academia",
+    "maison", "nexus", "impact", "estate",
+  ] as const).map((name) => ({
+    ref: "builtin:premium/project-" + name,
+    label: name[0].toUpperCase() + name.slice(1) + " illustrated project",
+  })),
 ] as const;

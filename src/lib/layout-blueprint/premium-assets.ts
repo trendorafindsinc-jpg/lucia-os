@@ -1,3 +1,11 @@
+import meridianProject from "../../../public/layouts/premium/projects/meridian.svg";
+import canvasProject from "../../../public/layouts/premium/projects/canvas.svg";
+import havenProject from "../../../public/layouts/premium/projects/haven.svg";
+import academiaProject from "../../../public/layouts/premium/projects/academia.svg";
+import maisonProject from "../../../public/layouts/premium/projects/maison.svg";
+import nexusProject from "../../../public/layouts/premium/projects/nexus.svg";
+import impactProject from "../../../public/layouts/premium/projects/impact.svg";
+import estateProject from "../../../public/layouts/premium/projects/estate.svg";
 import meridianHero from "../../../public/layouts/premium/flagships/meridian.svg";
 import canvasHero from "../../../public/layouts/premium/flagships/canvas.svg";
 import havenHero from "../../../public/layouts/premium/flagships/haven.svg";
@@ -42,6 +50,14 @@ export const premiumAssets: Readonly<Record<string, string>> = Object.freeze({
   "builtin:premium/flagship-nexus": path(nexusHero),
   "builtin:premium/flagship-impact": path(impactHero),
   "builtin:premium/flagship-estate": path(estateHero),
+  "builtin:premium/project-meridian": path(meridianProject),
+  "builtin:premium/project-canvas": path(canvasProject),
+  "builtin:premium/project-haven": path(havenProject),
+  "builtin:premium/project-academia": path(academiaProject),
+  "builtin:premium/project-maison": path(maisonProject),
+  "builtin:premium/project-nexus": path(nexusProject),
+  "builtin:premium/project-impact": path(impactProject),
+  "builtin:premium/project-estate": path(estateProject),
 });
 export const premiumAssetSources = [
   "public/layouts/structural/portfolio.svg",
@@ -63,6 +79,14 @@ export const premiumAssetSources = [
   "public/layouts/premium/flagships/nexus.svg",
   "public/layouts/premium/flagships/impact.svg",
   "public/layouts/premium/flagships/estate.svg",
+  "public/layouts/premium/projects/meridian.svg",
+  "public/layouts/premium/projects/canvas.svg",
+  "public/layouts/premium/projects/haven.svg",
+  "public/layouts/premium/projects/academia.svg",
+  "public/layouts/premium/projects/maison.svg",
+  "public/layouts/premium/projects/nexus.svg",
+  "public/layouts/premium/projects/impact.svg",
+  "public/layouts/premium/projects/estate.svg",
 ] as const;
 export function resolvePremiumAsset(reference: string): string {
   if (!Object.hasOwn(premiumAssets, reference))

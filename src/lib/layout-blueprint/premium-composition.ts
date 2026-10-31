@@ -339,6 +339,11 @@ export function applyPremiumEdit(
   const next = structuredClone(original);
   const perms = next.permissions;
   if (edit.kind === "brand") {
+    if (
+      edit.name.trim() !== edit.name ||
+      edit.name.length < 2 ||
+      edit.name.length > 80
+    ) throw new Error("Invalid website name");
     if (!perms.guided.includes("brand"))
       throw new Error("Brand edit denied");
     const oldName = next.identity.name;

@@ -79,7 +79,7 @@ export function meridianCandidate(siteName = "Meridian Advisory · Demo") {
         description:
           "A fictional case demonstrating how research becomes an actionable service blueprint.",
         image: {
-          src: "builtin:premium/business",
+          src: "builtin:premium/project-meridian",
           alt: "Original architectural composition representing a fictional service-design case",
         },
         href: "/work/service-journey",

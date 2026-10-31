@@ -126,6 +126,21 @@ export function refineFlagship(base: PremiumLayout): PremiumLayout {
     src: "builtin:premium/flagship-" + name,
     alt: "Original editorial illustration developed for the " + name + " Layout"
   };
+  const projectImages = [
+    { src: "builtin:premium/project-" + name,
+      alt: "Original " + name + " editorial project illustration" },
+    { src: "builtin:premium/flagship-" + name,
+      alt: "Original " + name + " brand illustration" },
+    image,
+  ];
+  for (const existingPage of draft.pages) {
+    for (const section of existingPage.sections) {
+      if (section.type !== "project-gallery") continue;
+      section.projects = section.projects.map((project, i) => ({
+        ...project, image: projectImages[i % projectImages.length],
+      }));
+    }
+  }
   hero.variant = direction.heroVariant;
   if (hero.variant === "full-bleed" || hero.variant === "offset")
     hero.image = heroArtwork;
