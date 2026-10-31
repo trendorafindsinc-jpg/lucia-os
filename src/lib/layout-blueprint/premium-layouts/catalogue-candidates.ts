@@ -4,6 +4,7 @@ import {
   type PremiumSection,
 } from "../premium-composition";
 import { meridianCandidate } from "./meridian";
+import { refineFlagship } from "./flagship-directions";
 import {
   premiumCandidateBriefs,
   type PremiumCandidateBrief,
@@ -59,7 +60,7 @@ export function premiumCandidate(id: string, siteName?: string): PremiumLayout {
     (item) => "lucia.layout." + item.id === id,
   );
   if (!brief) throw new Error("Unknown premium candidate");
-  return buildCandidate(brief, siteName ?? brief.name + " · Demo");
+  return refineFlagship(buildCandidate(brief, siteName ?? brief.name + " · Demo"));
 }
 
 function buildCandidate(brief: PremiumCandidateBrief, siteName: string): PremiumLayout {
