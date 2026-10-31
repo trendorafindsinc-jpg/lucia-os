@@ -89,3 +89,19 @@ export function mutateWebsite(
     stored,
   );
 }
+
+export function websitePageDetails(
+  definition: WebsiteDefinition,
+  path: string,
+  title?: string,
+) {
+  if (isPremium(definition)) {
+    const page = definition.pages.find((p) => p.path === path);
+    if (!page) throw Error("Unknown website page");
+    return { title: page.title, description: page.description };
+  }
+  return {
+    title: path === "/" ? definition.siteName : (title ?? definition.headline),
+    description: definition.description,
+  };
+}

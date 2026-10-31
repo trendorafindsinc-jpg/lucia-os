@@ -80,7 +80,7 @@
 .premium-layout img.premium-asset{display:block;width:100%;max-width:100%;height:auto;object-fit:cover;padding:0;border:0}
 .premium-layout .premium-hero-full-bleed{position:relative;isolation:isolate;color:#fff;padding:clamp(2rem,7vw,6rem);background:#26382c}
 .premium-layout .premium-hero-full-bleed>img{position:absolute;inset:0;width:100%;height:100%;z-index:-2;opacity:.25;object-fit:cover}
-.premium-layout .premium-hero-full-bleed .layout-primary-action{background:#fff;color:#26382c}
+.premium-layout .premium-hero-full-bleed .layout-primary-action{background:#fff;color:#26382c!important}
 .premium-layout.premium-scale-expressive .premium-section h1{font-size:clamp(3rem,9vw,8rem)}
 .premium-layout.premium-layout.premium-scale-compact .premium-section h1{font-size:clamp(2rem,6vw,5rem)}
 .premium-layout.premium-rhythm-tight .premium-section{padding-block:2rem}

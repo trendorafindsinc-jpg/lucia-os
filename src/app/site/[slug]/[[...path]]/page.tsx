@@ -1,7 +1,9 @@
 import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { isPlatformHostname } from "@/lib/publishing/platform-hosts";
-import { PublicWebsite } from "@/lib/domains/public-site";
+import { cache } from "react";
+import type { Metadata } from "next";
+import { readPublicWebsitePage } from "@/lib/domains/public-site";
 import { notFound } from "next/navigation";
 import { getDb } from "@/lib/db/client";
 import { websiteDomains, websitePages, websites } from "@/lib/db/schema";
@@ -9,6 +11,7 @@ import {
   websiteDefinitionSchema,
   isPremium,
   websiteBlueprint,
+  websitePageDetails,
 } from "@/lib/layout-blueprint/website-definition";
 
 import { LayoutRenderer } from "@/components/layout-studio/layout-renderer";
@@ -19,8 +22,7 @@ export const revalidate = 0;
 
 type PageProps = { params: Promise<{ slug: string; path?: string[] }> };
 
-export default async function PublishedWebsitePage({ params }: PageProps) {
-  const { slug, path = [] } = await params;
+const readSitePage = cache(async (slug: string, path: string) => {
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) notFound();
 
   try {
@@ -43,10 +45,7 @@ export default async function PublishedWebsitePage({ params }: PageProps) {
         )
         .limit(1);
       // An explicit binding always wins over tenant-local, nonunique slugs.
-      if (binding)
-        return await PublicWebsite({
-          path: path.length ? path.join("/") : "/",
-        });
+      if (binding) return await readPublicWebsitePage(path);
     }
     // Preserve pre-domain-table v1 URLs without inventing a binding or migrating
     // customer data. Ambiguous legacy slugs fail closed; v2 requires a binding.
@@ -61,7 +60,7 @@ export default async function PublishedWebsitePage({ params }: PageProps) {
 
     const website = candidates.length === 1 ? candidates[0] : null;
     if (!website) notFound();
-    const pagePath = path.length ? "/" + path.join("/") : "/";
+    const pagePath = path === "/" ? "/" : "/" + path;
     const [page] = await db
       .select({
         title: websitePages.title,
@@ -93,14 +92,25 @@ export default async function PublishedWebsitePage({ params }: PageProps) {
       !parsed.data.pages.some((p) => p.path === pagePath)
     )
       notFound();
-    return (
-      <LayoutRenderer
-        blueprint={websiteBlueprint(parsed.data, pagePath, page.title)}
-        pagePath={pagePath}
-      />
-    );
+    return {
+      blueprint: websiteBlueprint(parsed.data, pagePath, page.title),
+      pagePath,
+      ...websitePageDetails(parsed.data, pagePath, page.title),
+    };
   } catch (error) {
     if (error && typeof error === "object" && "digest" in error) throw error;
     notFound();
   }
+});
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  const { slug, path = [] } = await params;
+  const page = await readSitePage(slug, path.length ? path.join("/") : "/");
+  return { title: { absolute: page.title }, description: page.description };
+}
+export default async function PublishedWebsitePage({ params }: PageProps) {
+  const { slug, path = [] } = await params;
+  const page = await readSitePage(slug, path.length ? path.join("/") : "/");
+  return <LayoutRenderer blueprint={page.blueprint} pagePath={page.pagePath} />;
 }

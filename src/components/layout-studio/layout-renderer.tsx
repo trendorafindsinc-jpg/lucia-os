@@ -223,12 +223,6 @@ function PremiumLayoutPage({
       data-layout-id={definition.layoutId}
       data-page-path={page.path}
     >
-      {!preview && (
-        <>
-          <title>{page.title}</title>
-          <meta name="description" content={page.description} />
-        </>
-      )}
       <header className="layout-site-header">
         {/* Public hostname navigation must issue a document request, not enter the OS App Router. */}
         {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}

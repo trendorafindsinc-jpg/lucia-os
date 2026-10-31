@@ -15,6 +15,7 @@ import {
   mutateWebsite,
   websiteBlueprint,
   websiteMutationSchema,
+  websitePageDetails,
 } from "./website-definition";
 import { applyPremiumEdit, premiumLayoutSchema } from "./premium-composition";
 import { premiumAssetSources } from "./premium-assets";
@@ -260,6 +261,34 @@ describe("versioned production website boundary", () => {
     expect(
       discardTabSnapshots({ [key]: value }, "website-engine:website:site-a"),
     ).toEqual({});
+  });
+  it("resolves page-specific metadata without inheriting the workspace title", () => {
+    const layout = structuralLayout("haven", "Haven website");
+    expect(websitePageDetails(layout, "/")).toMatchObject({
+      title: "Haven website",
+      description: "A thoughtful introduction.",
+    });
+    expect(websitePageDetails(layout, "/about")).toMatchObject({
+      title: "About Haven website",
+      description: "Our story and approach.",
+    });
+    expect(() => websitePageDetails(layout, "/missing")).toThrow();
+    expect(
+      websitePageDetails(makeInitialDraft("northstar-consulting"), "/").title,
+    ).toBe("Northstar Consulting");
+  });
+  it("escapes customer markup instead of executing a section's text", () => {
+    const layout = structuralLayout("meridian", "Demo site"),
+      section = layout.pages[0].sections[0];
+    if (section.type !== "premium-hero") throw Error("Expected hero");
+    const edited = applyPremiumEdit(layout, "guided", {
+      kind: "replace-section",
+      pageId: "home",
+      section: { ...section, heading: '<script>alert("unsafe")</script>' },
+    });
+    const html = renderToStaticMarkup(<LayoutRenderer blueprint={edited} />);
+    expect(html).toContain("&lt;script&gt;");
+    expect(html).not.toContain("<script>alert");
   });
   it("does not mutate legacy records or reinterpret unsupported compositions", () => {
     const legacy = makeInitialDraft("northstar-consulting"),

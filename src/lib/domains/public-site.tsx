@@ -1,5 +1,6 @@
 import "server-only";
-
+import { cache } from "react";
+import type { Metadata } from "next";
 import { and, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
@@ -10,22 +11,21 @@ import {
   websiteDefinitionSchema,
   isPremium,
   websiteBlueprint,
+  websitePageDetails,
 } from "@/lib/layout-blueprint/website-definition";
-
 import { LayoutRenderer } from "@/components/layout-studio/layout-renderer";
 
-export async function PublicWebsite({ path }: { path: string }) {
-  const requestHeaders = await headers();
-  const rawHost = requestHeaders.get("host");
+// React cache is request-local: metadata and rendering share one resolution;
+// requests for different tenant hosts never share cached authorization/data.
+export const readPublicWebsitePage = cache(async (path: string) => {
+  const rawHost = (await headers()).get("host");
   if (!rawHost) notFound();
-
   let hostname: string;
   try {
     hostname = normalizeHostname(new URL(`http://${rawHost}`).hostname);
   } catch {
     notFound();
   }
-
   const cleanPath =
     path === "/" ? "/" : `/${path.split("/").filter(Boolean).join("/")}`;
   const db = getDb();
@@ -50,13 +50,10 @@ export async function PublicWebsite({ path }: { path: string }) {
       ),
     )
     .limit(1);
-
   if (!record) notFound();
-
   const [page] = await db
     .select({
       title: websitePages.title,
-      path: websitePages.path,
       publishedContent: websitePages.publishedContent,
     })
     .from(websitePages)
@@ -69,7 +66,6 @@ export async function PublicWebsite({ path }: { path: string }) {
       ),
     )
     .limit(1);
-
   if (!page?.publishedContent) notFound();
   let raw: unknown;
   try {
@@ -78,16 +74,23 @@ export async function PublicWebsite({ path }: { path: string }) {
     notFound();
   }
   const parsed = websiteDefinitionSchema.safeParse(raw);
-  if (!parsed.success) notFound();
   if (
-    isPremium(parsed.data) &&
-    !parsed.data.pages.some((p) => p.path === cleanPath)
+    !parsed.success ||
+    (isPremium(parsed.data) &&
+      !parsed.data.pages.some((p) => p.path === cleanPath))
   )
     notFound();
-  return (
-    <LayoutRenderer
-      blueprint={websiteBlueprint(parsed.data, cleanPath, page.title)}
-      pagePath={cleanPath}
-    />
-  );
+  return {
+    blueprint: websiteBlueprint(parsed.data, cleanPath, page.title),
+    pagePath: cleanPath,
+    ...websitePageDetails(parsed.data, cleanPath, page.title),
+  };
+});
+export async function publicWebsiteMetadata(path: string): Promise<Metadata> {
+  const page = await readPublicWebsitePage(path);
+  return { title: { absolute: page.title }, description: page.description };
+}
+export async function PublicWebsite({ path }: { path: string }) {
+  const page = await readPublicWebsitePage(path);
+  return <LayoutRenderer blueprint={page.blueprint} pagePath={page.pagePath} />;
 }

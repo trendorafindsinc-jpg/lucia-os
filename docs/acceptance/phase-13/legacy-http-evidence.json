@@ -1,0 +1,15 @@
+{
+  "environment": "compiled local application; synthetic isolated acceptance database; NOBYPASSRLS runtime",
+  "testedSource": "e52187e920723eb065e2a242727f9134e023b44efb626b4756cda2b68afb8a9b",
+  "checks": [
+    "Creation denies signed-out, invalid/reserved Layout/address, cross-origin and viewer writes",
+    "Create persists real authorized website/home draft, and retry reuses the exact project without payment",
+    "Two concurrent editor saves produce one commit and one 409; invalid and cross-tenant writes cannot change it",
+    "Free publication activates exact hostname and public snapshot for selected ID despite duplicate authorized slugs",
+    "Private saving and stale/late-conflict publishing preserve the previous real public version atomically",
+    "Corrupt saved drafts are rejected without publishing demo defaults or damaging live content",
+    "Revoked tenant membership cannot read or publish",
+    "Ordinary customer session cannot access staff grants"
+  ],
+  "browserChecks": []
+}

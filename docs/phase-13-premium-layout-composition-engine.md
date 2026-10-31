@@ -1,8 +1,8 @@
 # Phase 13 — Premium Hybrid Layout Composition Engine
 
-**Acceptance: IN PROGRESS — final authenticated browser, CI and preview verification pending.**
+**Implementation and local acceptance: PASS. Release requires successful Quality and Vercel checks on the exact final PR head before merge.**
 
-Continues PR [#133](https://github.com/trendorafindsinc-jpg/lucia-os/pull/133), preserving the schema foundation and renderer increment through `74810a6c2eb9879e0baa3f500d6df1bd6af5236c`. Baseline main is `35ed2d87ac39affcbb62d39cfd75aa6fdca23de6`. This phase does not implement the approved 48 finished websites or change their catalogue.
+Continues PR [#133](https://github.com/trendorafindsinc-jpg/lucia-os/pull/133), preserving the schema foundation and renderer increment through `74810a6c2eb9879e0baa3f500d6df1bd6af5236c`. Original baseline is `35ed2d87ac39affcbb62d39cfd75aa6fdca23de6`; reconciled main `8a2e547f2d1c96c95b1eb40347bf5b5e1cb181b3` adds the approved Phase 14 scope and roadmap, without runtime changes. This phase does not implement the approved 48 finished websites or change their catalogue.
 
 ## Audit and implemented integration
 
@@ -14,7 +14,7 @@ The inherited branch defined v2 schemas, edit guards, three test fixtures and se
 | Draft | Existing `GET/PATCH /api/websites/:id/draft`, organization-scoped home row, real database persistence and revision ETag. New explicit assignment/edit commands are applied to the freshly locked saved definition. |
 | Preview | Existing Studio and Publishing preview use the same validated renderer. Page selection and internal navigation stay within the private preview. Publishing preview loads the confirmed server draft. |
 | Publication | Existing transaction validates the whole saved definition, compares `If-Match`, synchronizes each registered public page and activates the existing hostname. Obsolete paths become private on successful commit. Exceptions roll back all page/hostname changes. |
-| Public pages | Existing `/site/[slug]/[[...path]]` and custom-domain `PublicWebsite` select the authorized published website/page and render the exact requested page. Unknown paths remain 404. Page title and description are rendered as document metadata. |
+| Public pages | Existing `/site/[slug]/[[...path]]` and custom-domain `PublicWebsite` select the authorized published website/page and render the exact requested page. Unknown paths remain 404. Page title and description use Next `generateMetadata` and the same request-cached published-page resolver as rendering; customer titles override the workspace metadata. |
 | Legacy | Existing v1 SiteDraft records, layout IDs, ownership, URLs and adapter remain unchanged. No automatic conversion or migration. |
 
 ## Closed section registry and presentation
@@ -65,11 +65,22 @@ Strict registered data, bounded strings/arrays, React text escaping and fixed to
 5. **Stored-policy edit commands.** Full untrusted replacement would allow permission escalation and Design Lock removal. Commands apply to locked server state, with compare-and-swap revision protection shared with publishing.
 6. **Existing tenant router.** Pages are data under an existing website, not Next modules. Closed paths and reserved prefixes prevent routing ambiguity. Active hostname bindings resolve through the existing `PublicWebsite` helper and take precedence over nonunique tenant-local slugs. To preserve pre-domain-table v1 URLs without silently migrating customer data, an unbound standard hostname may use a single unambiguous published v1 slug. Ambiguous legacy slugs fail closed; v2 requires an active binding. Custom-domain delivery continues to require its active binding. A future controlled legacy-domain backfill can retire this compatibility fallback.
 7. **Atomic multi-page promotion.** The home row stores the complete private composition; publishing snapshots the same definition across its page records in one transaction. Obsolete public paths are retired only on successful promotion. No new database or temporary draft service is needed.
+9. **Framework metadata parity.** Browser acceptance found that JSX title elements inherited the OS title. Next `generateMetadata` now reads the same request-scoped cached resolver as page rendering, with absolute customer titles and page-specific descriptions. No cross-request tenant cache is introduced.
 8. **Build-owned asset URLs.** Static imports produce immutable asset URLs served through the already-approved static boundary, avoiding customer-path rewrites and external storage dependencies.
 
 ## Verification evidence
 
-Current local verification: 531 Vitest tests in 65 files; TypeScript passing; ESLint passing with three pre-existing warnings; Drizzle consistency passing; production build and compiled host-routing HTTP checks passing. Final source/browser and exact-commit CI evidence will be recorded after execution.
+Final local verification: 533 Vitest tests in 65 files; TypeScript passing; ESLint passing with three pre-existing warnings; Drizzle consistency passing; production build and compiled host-routing HTTP checks passing. The final authenticated browser run completed **24 browser checks plus the staff-denial HTTP check**. Final screenshot review caught Haven's white-on-white CTA caused by a legacy `!important` rule. The scoped correction passed a fresh **9-check Haven regression**, including measured CTA contrast ≥4.5:1 and all five viewports; see `haven-contrast-evidence.json`. A separate complete legacy run passed **8 HTTP checks**. Evidence is committed under `docs/acceptance/phase-13/`: `browser-evidence.json`, `legacy-http-evidence.json`, and the three 390px screenshots. Full three-Layout run source fingerprint (before the scoped Haven contrast correction): `4ccab8fe90c9d53e070b1b1b70a90c5417888f924e87b81fcb674079d967d262`. Checks include real creation/assignment/save/reload, unsaved refresh recovery, failed-save retry, saved preview, actual publication, home/interior metadata and navigation, image loading, keyboard focus, reduced motion, overflow, stale/corrupt publication preservation, Design Lock, membership revocation and tenant isolation.
+
+| Emulated viewport | Meridian | Canvas | Haven |
+| --- | --- | --- | --- |
+| 320 × 844 | PASS | PASS | PASS |
+| 390 × 844 | PASS | PASS | PASS |
+| 768 × 1024 | PASS | PASS | PASS |
+| 1180 × 820 | PASS | PASS | PASS |
+| 1440 × 900 | PASS | PASS | PASS |
+
+Final exact-head Quality and Vercel evidence belongs to [PR #133 checks](https://github.com/trendorafindsinc-jpg/lucia-os/pull/133/checks); both must pass before merging. The unrelated, nonrequired Cloudflare Workers build already fails on the baseline; it has not been disabled or represented as passing.
 
 The existing `check-website-foundation-http.mjs` runner remains the isolated authenticated acceptance infrastructure. `WEBSITE_TEST_PREMIUM=1` adds `premium-composition-acceptance.mjs`, using genuine project records, session fixtures, NOBYPASSRLS runtime, API calls, Studio/Publishing browser interactions and public-host requests. The restricted loopback proxy preserves customer URL/Host and forwards actual application responses; it does not mock rendering or authorization. Cleanup removes only synthetic test resources. Physical device, live OAuth, production DNS/TLS and production customer publishing are not claimed.
 
@@ -81,4 +92,22 @@ The first remote Quality run caught missing SVG ambient types on a fresh checkou
 
 No schema changes or migrations. No production migration was executed. Built-in Layout selection, standard website creation, editing, previews and publication remain free. Optional custom-domain access remains the separate ₦5,000 one-time Store/Paystack boundary; no checkout or entitlement activation was invented. S3-compatible customer media remains deferred.
 
-PR #133 must remain draft until mandatory authenticated browser and exact-head CI/Vercel gates pass, and must remain unmerged pending founder approval. Phase 14 can refine the three structural demonstrations through the same registered engine after acceptance. The canonical 48-Layout specification, eight flagship briefs and 8 → 16 → 32 → 48 review gates remain unchanged.
+PR #133 may leave draft only after exact-head CI/Vercel confirmation. The founder subsequently authorized the Phase 13 merge once mandatory release gates pass; do not bypass protections or failed required checks. Phase 14 can refine the three structural demonstrations through the same registered engine after acceptance. The canonical 48-Layout specification, eight flagship briefs and 8 → 16 → 32 → 48 review gates remain unchanged.
+
+## Final corrections and scope limits
+
+Browser execution caught and verified the fix for workspace metadata overriding public website titles. The published-slug uniqueness constraint was confirmed by a real rejected duplicate (`23505`); the fixture was corrected to respect that invariant rather than weakening it. Native select tests now use exact accessible combobox roles; an isolated DOM diagnostic confirmed the original exact label-text selector included option text. No production assertion or authorization requirement was removed.
+
+The complete legacy HTTP rerun passed concurrent 200/409 saves and failed-publication preservation. Intermediate failed executions are not counted as passing evidence. Customer published pages were exercised through a restricted forwarding proxy to the real compiled server, not mocked responses or production DNS. Synthetic records are cleaned up. Physical hardware, live Core OAuth and production DNS/TLS acceptance remain deferred.
+
+Full visual editing and v2 checkpoint-history UX remain future customization work. Phase 14's merged D14-07 decision supersedes the historical three-exemplar target: all 48 approved Layouts belong to Phase 14, reviewed in 8 → 16 → 32 → 48 batches. These three Phase 13 compositions remain structural demonstrations, not accepted premium designs.
+
+## Changed implementation areas
+
+- Existing draft, publishing choices and publishing APIs; standard/custom-host public page and metadata routes.
+- Shared LayoutRenderer and scoped CSS; existing Studio entry and version-aware composition controls; saved Publishing preview.
+- Existing Blueprint v2 exports; composition schemas/permissions, versioned website adapter, structural definitions, build-owned asset manifest and three original SVGs.
+- Existing continuity snapshot validator; SVG type reference for clean CI; validation/rendering/compatibility tests.
+- Existing isolated acceptance runner plus focused premium workflow; this architecture record and committed browser evidence.
+
+No database migrations, production database changes, external payment/storage configuration or LUCIA Core modifications were introduced.

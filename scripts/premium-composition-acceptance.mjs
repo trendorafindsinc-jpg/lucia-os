@@ -22,7 +22,12 @@ export async function checkPremiumComposition({
   page.on("dialog", (d) => d.accept());
   const ctx = (id) => `/api/websites/${id}/draft`;
   const sequences = [];
-  for (const name of ["meridian", "canvas", "haven"]) {
+  const all = ["meridian", "canvas", "haven"];
+  const selected = process.env.WEBSITE_TEST_PREMIUM_LAYOUT
+    ? all.filter((name) => name === process.env.WEBSITE_TEST_PREMIUM_LAYOUT)
+    : all;
+  assert(selected.length > 0, "Choose a registered acceptance Layout");
+  for (const name of selected) {
     const slug = "composition-" + randomBytes(6).toString("hex");
     const creation = await api("a", "/api/onboarding/website", "POST", {
       organisationName: "Continuity organization A",
@@ -40,7 +45,9 @@ export async function checkPremiumComposition({
     await page.goto(`${base}/editor?websiteId=${id}`, {
       waitUntil: "networkidle",
     });
-    await page.getByLabel("Starting composition").selectOption(name);
+    await page
+      .getByRole("combobox", { name: "Starting composition", exact: true })
+      .selectOption(name);
     await page
       .getByRole("button", { name: "Use this composition", exact: true })
       .click();
@@ -79,20 +86,24 @@ export async function checkPremiumComposition({
       404,
     );
     if (name === "canvas")
-      await page.getByLabel("Section", { exact: true }).selectOption("story");
+      await page
+        .getByRole("combobox", { name: "Section", exact: true })
+        .selectOption("story");
     await page
       .getByLabel("Heading", { exact: true })
-      .fill(`${name} persisted browser heading`);
+      .fill(`${name} first saved heading`);
     await page.getByRole("button", { name: "Save draft", exact: true }).click();
     await page
       .getByText("Draft saved to your website", { exact: true })
       .waitFor();
     await page.reload({ waitUntil: "networkidle" });
     if (name === "canvas")
-      await page.getByLabel("Section", { exact: true }).selectOption("story");
+      await page
+        .getByRole("combobox", { name: "Section", exact: true })
+        .selectOption("story");
     assert.equal(
       await page.getByLabel("Heading", { exact: true }).inputValue(),
-      `${name} persisted browser heading`,
+      `${name} first saved heading`,
     );
     // Native refresh exercises the registered Phase 9 composition snapshot adapter.
     await page
@@ -105,7 +116,9 @@ export async function checkPremiumComposition({
       })
       .waitFor();
     if (name === "canvas")
-      await page.getByLabel("Section", { exact: true }).selectOption("story");
+      await page
+        .getByRole("combobox", { name: "Section", exact: true })
+        .selectOption("story");
     assert.equal(
       await page.getByLabel("Heading", { exact: true }).inputValue(),
       `${name} recovered unsaved heading`,
@@ -136,6 +149,13 @@ export async function checkPremiumComposition({
     await page
       .getByText("Draft saved to your website", { exact: true })
       .waitFor();
+    bpass(
+      `${name}: authenticated creation, assignment, editing, real save/reload and unsaved refresh recovery`,
+    );
+    if (name === "meridian")
+      bpass(
+        "Failed network save retains unsaved content and real retry commits it",
+      );
     const latest = await (await api("a", ctx(id))).json();
     assert.equal(
       (
@@ -161,7 +181,9 @@ export async function checkPremiumComposition({
       .click();
     const dialog = page.getByRole("dialog", { name: "Saved website preview" });
     await dialog.waitFor();
-    await dialog.getByLabel("Preview page").selectOption("/about");
+    await dialog
+      .getByRole("combobox", { name: "Preview page", exact: true })
+      .selectOption("/about");
     assert.equal(await dialog.locator('[data-page-path="/about"]').count(), 1);
     await page.keyboard.press("Escape");
     await page
@@ -170,9 +192,13 @@ export async function checkPremiumComposition({
     await page
       .getByRole("link", { name: "Open live website", exact: false })
       .waitFor();
-    // Another published tenant may have the same slug. Hostname binding wins.
+    // Published slugs remain globally unique; a separate published tenant cannot leak through hostname delivery.
     if (name === "meridian") {
-      await admin`UPDATE websites SET slug=${slug},status='published' WHERE id=${f.foreign}`;
+      await assert.rejects(
+        admin`UPDATE websites SET slug=${slug},status='published' WHERE id=${f.foreign}`,
+        (error) => error.code === "23505",
+      );
+      await admin`UPDATE websites SET status='published' WHERE id=${f.foreign}`;
       await admin`UPDATE website_pages SET status='published',published_content=${JSON.stringify({ templateId: "northstar-consulting", siteName: "Foreign public website", headline: "Foreign content must stay on its own host", description: "A separate tenant's published website.", buttonLabel: "Contact us", palette: "original", visibleSections: ["Hero", "Contact"] })} WHERE website_id=${f.foreign} AND path='/'`;
     }
     const currentPublic = await publicSite("/", slug + ".lucia.name.ng");
@@ -195,10 +221,44 @@ export async function checkPremiumComposition({
         { waitUntil: "networkidle" },
       );
       assert.equal(response.status(), 200);
+      assert.equal(await publicPage.title(), latest.draft.pages[0].title);
+      assert.equal(await publicPage.locator("head title").count(), 1);
+      assert.equal(
+        await publicPage
+          .locator('meta[name="description"]')
+          .getAttribute("content"),
+        latest.draft.pages[0].description,
+      );
       assert.equal(
         await publicPage.locator('[data-layout-version="2"]').count(),
         1,
       );
+      const action = publicPage.locator(".layout-primary-action");
+      if (await action.count()) {
+        const colors = await action
+          .first()
+          .evaluate((el) => ({
+            fg: getComputedStyle(el).color,
+            bg: getComputedStyle(el).backgroundColor,
+          }));
+        const luminance = (color) =>
+          color
+            .match(/[\d.]+/g)
+            .slice(0, 3)
+            .map(Number)
+            .map((v) => v / 255)
+            .map((v) =>
+              v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4,
+            )
+            .reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
+        const values = [luminance(colors.fg), luminance(colors.bg)].sort(
+          (a, b) => b - a,
+        );
+        assert(
+          (values[0] + 0.05) / (values[1] + 0.05) >= 4.5,
+          `${name} action text contrast must meet 4.5:1`,
+        );
+      }
       const geometry = await publicPage.evaluate(() => ({
         viewport: innerWidth,
         document: document.documentElement.scrollWidth,
@@ -230,10 +290,26 @@ export async function checkPremiumComposition({
       await publicPage.locator('[data-page-path="/about"]').waitFor();
       await publicPage.reload({ waitUntil: "networkidle" });
       assert.equal(
+        await publicPage.title(),
+        latest.draft.pages.find((p) => p.path === "/about").title,
+      );
+      assert.equal(
         await publicPage.locator('[data-page-path="/about"]').count(),
         1,
       );
       await publicPage.keyboard.press("Tab");
+      assert(
+        await publicPage.evaluate(
+          () =>
+            parseFloat(getComputedStyle(document.activeElement).outlineWidth) >
+            0,
+        ),
+      );
+      assert(
+        await publicPage.evaluate(
+          () => matchMedia("(prefers-reduced-motion: reduce)").matches,
+        ),
+      );
       assert(
         await publicPage.evaluate(
           () => document.activeElement?.tagName === "A",
@@ -321,7 +397,11 @@ export async function checkPremiumComposition({
     );
   }
   assert.equal(errors.length, 0, errors.join("\n"));
-  assert.equal(new Set(sequences).size, 3);
+  assert.equal(new Set(sequences).size, selected.length);
   await page.close();
-  bpass("Three published DOM section sequences are structurally distinct");
+  bpass(
+    selected.length === 3
+      ? "Three published DOM section sequences are structurally distinct"
+      : `${selected[0]} targeted contrast and public-page regression complete`,
+  );
 }
