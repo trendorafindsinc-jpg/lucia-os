@@ -474,6 +474,23 @@ export function applyPremiumEdit(
       };
       check(before, edit.section, "section");
       page.sections[index] = edit.section;
+      // A website's enquiry address is shared content, not a per-page
+      // credential. Keep matching contact panels consistent when a customer
+      // replaces the starter address. Do not overwrite a different address
+      // explicitly customized on another page.
+      if (
+        before.type === "contact-panel" &&
+        edit.section.type === "contact-panel" &&
+        before.email !== edit.section.email
+      ) {
+        for (const otherPage of next.pages) {
+          for (const other of otherPage.sections) {
+            if (other.type === "contact-panel" && other.email === before.email) {
+              other.email = edit.section.email;
+            }
+          }
+        }
+      }
     }
   }
   return parsePremiumLayout(next);
