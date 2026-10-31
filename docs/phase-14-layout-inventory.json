@@ -32,7 +32,7 @@
       "unitTestStatus": "Quality run #? pending after screenshot fixes",
       "responsiveReview": "Previous flagship screenshot evidence passed automated checks; design changes require screenshot recapture and reviewer score",
       "accessibilityReview": "not run",
-      "publishingIntegration": "not run for this candidate",
+      "publishingIntegration": "Isolated synthetic authenticated end-to-end published: PASS; LUCIA Core live OAuth: untested",
       "designScore": null,
       "outstanding": [
         "Individual original imagery and design craft",
@@ -48,7 +48,7 @@
         "releaseStatus": "candidate only; not approved for customer catalogue"
       },
       "visualReview": "No five-viewport screenshots captured or reviewed",
-      "integrationEvidence": "Unit-level mutation/renderer/guard tests; no authenticated browser or disposable-tenant end-to-end pass",
+      "integrationEvidence": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41193600346 artifact phase14-isolated-publishing-evidence",
       "knownIssues": [
         "Individual original imagery and design craft",
         "Five-viewport screenshot and accessibility acceptance",
@@ -75,6 +75,23 @@
         ],
         "automatedChecks": "PASS: no horizontal overflow, broken image, empty link, H1 mismatch or mobile menu failure in 10 screenshots",
         "reviewStatus": "Preliminary screenshot inspection only; no completed design rubric or public publishing acceptance"
+      },
+      "syntheticPublishingEvidence": {
+        "result": "PASS — isolated compiled application, real database and browser, synthetic authenticated sessions",
+        "workflow": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41193600346",
+        "codeCommit": "03c7710e01db748b5ab2b43ecea65500b3351521",
+        "artifact": "phase14-isolated-publishing-evidence",
+        "verifiedChecks": [
+          "real created and persisted website plus canonical flagship assignment",
+          "saved contact, gallery imagery/alt and branding edits after reload",
+          "real public homepage and interior pages through hostname routing",
+          "cross-tenant read/edit/publish denials",
+          "publishing demo emails denied",
+          "failed later publication preserves previous public page",
+          "revoked membership loses protected website and publish access"
+        ],
+        "liveLuciaCoreOAuth": "NOT VERIFIED — external sign-in/callback not exercised",
+        "releaseStatus": "NOT ACCEPTED — missing visual scoring, accessibility, performance and external OAuth acceptance"
       }
     },
     {
@@ -282,7 +299,7 @@
       "unitTestStatus": "Quality run #? pending after screenshot fixes",
       "responsiveReview": "Previous flagship screenshot evidence passed automated checks; design changes require screenshot recapture and reviewer score",
       "accessibilityReview": "not run",
-      "publishingIntegration": "not run for this candidate",
+      "publishingIntegration": "Isolated synthetic authenticated end-to-end published: PASS; LUCIA Core live OAuth: untested",
       "designScore": null,
       "outstanding": [
         "Individual original imagery and design craft",
@@ -298,7 +315,7 @@
         "releaseStatus": "candidate only; not approved for customer catalogue"
       },
       "visualReview": "No five-viewport screenshots captured or reviewed",
-      "integrationEvidence": "Unit-level mutation/renderer/guard tests; no authenticated browser or disposable-tenant end-to-end pass",
+      "integrationEvidence": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41193600346 artifact phase14-isolated-publishing-evidence",
       "knownIssues": [
         "Individual original imagery and design craft",
         "Five-viewport screenshot and accessibility acceptance",
@@ -325,6 +342,23 @@
         ],
         "automatedChecks": "PASS: no horizontal overflow, broken image, empty link, H1 mismatch or mobile menu failure in 10 screenshots",
         "reviewStatus": "Preliminary screenshot inspection only; no completed design rubric or public publishing acceptance"
+      },
+      "syntheticPublishingEvidence": {
+        "result": "PASS — isolated compiled application, real database and browser, synthetic authenticated sessions",
+        "workflow": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41193600346",
+        "codeCommit": "03c7710e01db748b5ab2b43ecea65500b3351521",
+        "artifact": "phase14-isolated-publishing-evidence",
+        "verifiedChecks": [
+          "real created and persisted website plus canonical flagship assignment",
+          "saved contact, gallery imagery/alt and branding edits after reload",
+          "real public homepage and interior pages through hostname routing",
+          "cross-tenant read/edit/publish denials",
+          "publishing demo emails denied",
+          "failed later publication preserves previous public page",
+          "revoked membership loses protected website and publish access"
+        ],
+        "liveLuciaCoreOAuth": "NOT VERIFIED — external sign-in/callback not exercised",
+        "releaseStatus": "NOT ACCEPTED — missing visual scoring, accessibility, performance and external OAuth acceptance"
       }
     },
     {
@@ -567,7 +601,7 @@
       "unitTestStatus": "Quality run #? pending after screenshot fixes",
       "responsiveReview": "Previous flagship screenshot evidence passed automated checks; design changes require screenshot recapture and reviewer score",
       "accessibilityReview": "not run",
-      "publishingIntegration": "not run for this candidate",
+      "publishingIntegration": "Isolated synthetic authenticated end-to-end published: PASS; LUCIA Core live OAuth: untested",
       "designScore": null,
       "outstanding": [
         "Individual original imagery and design craft",
@@ -583,7 +617,7 @@
         "releaseStatus": "candidate only; not approved for customer catalogue"
       },
       "visualReview": "No five-viewport screenshots captured or reviewed",
-      "integrationEvidence": "Unit-level mutation/renderer/guard tests; no authenticated browser or disposable-tenant end-to-end pass",
+      "integrationEvidence": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41193600346 artifact phase14-isolated-publishing-evidence",
       "knownIssues": [
         "Individual original imagery and design craft",
         "Five-viewport screenshot and accessibility acceptance",
@@ -610,6 +644,23 @@
         ],
         "automatedChecks": "PASS: no horizontal overflow, broken image, empty link, H1 mismatch or mobile menu failure in 10 screenshots",
         "reviewStatus": "Preliminary screenshot inspection only; no completed design rubric or public publishing acceptance"
+      },
+      "syntheticPublishingEvidence": {
+        "result": "PASS — isolated compiled application, real database and browser, synthetic authenticated sessions",
+        "workflow": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41193600346",
+        "codeCommit": "03c7710e01db748b5ab2b43ecea65500b3351521",
+        "artifact": "phase14-isolated-publishing-evidence",
+        "verifiedChecks": [
+          "real created and persisted website plus canonical flagship assignment",
+          "saved contact, gallery imagery/alt and branding edits after reload",
+          "real public homepage and interior pages through hostname routing",
+          "cross-tenant read/edit/publish denials",
+          "publishing demo emails denied",
+          "failed later publication preserves previous public page",
+          "revoked membership loses protected website and publish access"
+        ],
+        "liveLuciaCoreOAuth": "NOT VERIFIED — external sign-in/callback not exercised",
+        "releaseStatus": "NOT ACCEPTED — missing visual scoring, accessibility, performance and external OAuth acceptance"
       }
     },
     {
@@ -782,7 +833,7 @@
       "unitTestStatus": "Quality run #? pending after screenshot fixes",
       "responsiveReview": "Previous flagship screenshot evidence passed automated checks; design changes require screenshot recapture and reviewer score",
       "accessibilityReview": "not run",
-      "publishingIntegration": "not run for this candidate",
+      "publishingIntegration": "Isolated synthetic authenticated end-to-end published: PASS; LUCIA Core live OAuth: untested",
       "designScore": null,
       "outstanding": [
         "Individual original imagery and design craft",
@@ -798,7 +849,7 @@
         "releaseStatus": "candidate only; not approved for customer catalogue"
       },
       "visualReview": "No five-viewport screenshots captured or reviewed",
-      "integrationEvidence": "Unit-level mutation/renderer/guard tests; no authenticated browser or disposable-tenant end-to-end pass",
+      "integrationEvidence": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41193600346 artifact phase14-isolated-publishing-evidence",
       "knownIssues": [
         "Individual original imagery and design craft",
         "Five-viewport screenshot and accessibility acceptance",
@@ -825,6 +876,23 @@
         ],
         "automatedChecks": "PASS: no horizontal overflow, broken image, empty link, H1 mismatch or mobile menu failure in 10 screenshots",
         "reviewStatus": "Preliminary screenshot inspection only; no completed design rubric or public publishing acceptance"
+      },
+      "syntheticPublishingEvidence": {
+        "result": "PASS — isolated compiled application, real database and browser, synthetic authenticated sessions",
+        "workflow": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41193600346",
+        "codeCommit": "03c7710e01db748b5ab2b43ecea65500b3351521",
+        "artifact": "phase14-isolated-publishing-evidence",
+        "verifiedChecks": [
+          "real created and persisted website plus canonical flagship assignment",
+          "saved contact, gallery imagery/alt and branding edits after reload",
+          "real public homepage and interior pages through hostname routing",
+          "cross-tenant read/edit/publish denials",
+          "publishing demo emails denied",
+          "failed later publication preserves previous public page",
+          "revoked membership loses protected website and publish access"
+        ],
+        "liveLuciaCoreOAuth": "NOT VERIFIED — external sign-in/callback not exercised",
+        "releaseStatus": "NOT ACCEPTED — missing visual scoring, accessibility, performance and external OAuth acceptance"
       }
     },
     {
@@ -1032,7 +1100,7 @@
       "unitTestStatus": "Quality run #? pending after screenshot fixes",
       "responsiveReview": "Previous flagship screenshot evidence passed automated checks; design changes require screenshot recapture and reviewer score",
       "accessibilityReview": "not run",
-      "publishingIntegration": "not run for this candidate",
+      "publishingIntegration": "Isolated synthetic authenticated end-to-end published: PASS; LUCIA Core live OAuth: untested",
       "designScore": null,
       "outstanding": [
         "Individual original imagery and design craft",
@@ -1048,7 +1116,7 @@
         "releaseStatus": "candidate only; not approved for customer catalogue"
       },
       "visualReview": "No five-viewport screenshots captured or reviewed",
-      "integrationEvidence": "Unit-level mutation/renderer/guard tests; no authenticated browser or disposable-tenant end-to-end pass",
+      "integrationEvidence": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41193600346 artifact phase14-isolated-publishing-evidence",
       "knownIssues": [
         "Individual original imagery and design craft",
         "Five-viewport screenshot and accessibility acceptance",
@@ -1075,6 +1143,23 @@
         ],
         "automatedChecks": "PASS: no horizontal overflow, broken image, empty link, H1 mismatch or mobile menu failure in 10 screenshots",
         "reviewStatus": "Preliminary screenshot inspection only; no completed design rubric or public publishing acceptance"
+      },
+      "syntheticPublishingEvidence": {
+        "result": "PASS — isolated compiled application, real database and browser, synthetic authenticated sessions",
+        "workflow": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41193600346",
+        "codeCommit": "03c7710e01db748b5ab2b43ecea65500b3351521",
+        "artifact": "phase14-isolated-publishing-evidence",
+        "verifiedChecks": [
+          "real created and persisted website plus canonical flagship assignment",
+          "saved contact, gallery imagery/alt and branding edits after reload",
+          "real public homepage and interior pages through hostname routing",
+          "cross-tenant read/edit/publish denials",
+          "publishing demo emails denied",
+          "failed later publication preserves previous public page",
+          "revoked membership loses protected website and publish access"
+        ],
+        "liveLuciaCoreOAuth": "NOT VERIFIED — external sign-in/callback not exercised",
+        "releaseStatus": "NOT ACCEPTED — missing visual scoring, accessibility, performance and external OAuth acceptance"
       }
     },
     {
@@ -1282,7 +1367,7 @@
       "unitTestStatus": "Quality run #? pending after screenshot fixes",
       "responsiveReview": "Previous flagship screenshot evidence passed automated checks; design changes require screenshot recapture and reviewer score",
       "accessibilityReview": "not run",
-      "publishingIntegration": "not run for this candidate",
+      "publishingIntegration": "Isolated synthetic authenticated end-to-end published: PASS; LUCIA Core live OAuth: untested",
       "designScore": null,
       "outstanding": [
         "Individual original imagery and design craft",
@@ -1298,7 +1383,7 @@
         "releaseStatus": "candidate only; not approved for customer catalogue"
       },
       "visualReview": "No five-viewport screenshots captured or reviewed",
-      "integrationEvidence": "Unit-level mutation/renderer/guard tests; no authenticated browser or disposable-tenant end-to-end pass",
+      "integrationEvidence": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41193600346 artifact phase14-isolated-publishing-evidence",
       "knownIssues": [
         "Individual original imagery and design craft",
         "Five-viewport screenshot and accessibility acceptance",
@@ -1325,6 +1410,23 @@
         ],
         "automatedChecks": "PASS: no horizontal overflow, broken image, empty link, H1 mismatch or mobile menu failure in 10 screenshots",
         "reviewStatus": "Preliminary screenshot inspection only; no completed design rubric or public publishing acceptance"
+      },
+      "syntheticPublishingEvidence": {
+        "result": "PASS — isolated compiled application, real database and browser, synthetic authenticated sessions",
+        "workflow": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41193600346",
+        "codeCommit": "03c7710e01db748b5ab2b43ecea65500b3351521",
+        "artifact": "phase14-isolated-publishing-evidence",
+        "verifiedChecks": [
+          "real created and persisted website plus canonical flagship assignment",
+          "saved contact, gallery imagery/alt and branding edits after reload",
+          "real public homepage and interior pages through hostname routing",
+          "cross-tenant read/edit/publish denials",
+          "publishing demo emails denied",
+          "failed later publication preserves previous public page",
+          "revoked membership loses protected website and publish access"
+        ],
+        "liveLuciaCoreOAuth": "NOT VERIFIED — external sign-in/callback not exercised",
+        "releaseStatus": "NOT ACCEPTED — missing visual scoring, accessibility, performance and external OAuth acceptance"
       }
     },
     {
@@ -1532,7 +1634,7 @@
       "unitTestStatus": "Quality run #? pending after screenshot fixes",
       "responsiveReview": "Previous flagship screenshot evidence passed automated checks; design changes require screenshot recapture and reviewer score",
       "accessibilityReview": "not run",
-      "publishingIntegration": "not run for this candidate",
+      "publishingIntegration": "Isolated synthetic authenticated end-to-end published: PASS; LUCIA Core live OAuth: untested",
       "designScore": null,
       "outstanding": [
         "Individual original imagery and design craft",
@@ -1548,7 +1650,7 @@
         "releaseStatus": "candidate only; not approved for customer catalogue"
       },
       "visualReview": "No five-viewport screenshots captured or reviewed",
-      "integrationEvidence": "Unit-level mutation/renderer/guard tests; no authenticated browser or disposable-tenant end-to-end pass",
+      "integrationEvidence": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41193600346 artifact phase14-isolated-publishing-evidence",
       "knownIssues": [
         "Individual original imagery and design craft",
         "Five-viewport screenshot and accessibility acceptance",
@@ -1575,6 +1677,23 @@
         ],
         "automatedChecks": "PASS: no horizontal overflow, broken image, empty link, H1 mismatch or mobile menu failure in 10 screenshots",
         "reviewStatus": "Preliminary screenshot inspection only; no completed design rubric or public publishing acceptance"
+      },
+      "syntheticPublishingEvidence": {
+        "result": "PASS — isolated compiled application, real database and browser, synthetic authenticated sessions",
+        "workflow": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41193600346",
+        "codeCommit": "03c7710e01db748b5ab2b43ecea65500b3351521",
+        "artifact": "phase14-isolated-publishing-evidence",
+        "verifiedChecks": [
+          "real created and persisted website plus canonical flagship assignment",
+          "saved contact, gallery imagery/alt and branding edits after reload",
+          "real public homepage and interior pages through hostname routing",
+          "cross-tenant read/edit/publish denials",
+          "publishing demo emails denied",
+          "failed later publication preserves previous public page",
+          "revoked membership loses protected website and publish access"
+        ],
+        "liveLuciaCoreOAuth": "NOT VERIFIED — external sign-in/callback not exercised",
+        "releaseStatus": "NOT ACCEPTED — missing visual scoring, accessibility, performance and external OAuth acceptance"
       }
     },
     {
@@ -1782,7 +1901,7 @@
       "unitTestStatus": "Quality run #? pending after screenshot fixes",
       "responsiveReview": "Previous flagship screenshot evidence passed automated checks; design changes require screenshot recapture and reviewer score",
       "accessibilityReview": "not run",
-      "publishingIntegration": "not run for this candidate",
+      "publishingIntegration": "Isolated synthetic authenticated end-to-end published: PASS; LUCIA Core live OAuth: untested",
       "designScore": null,
       "outstanding": [
         "Individual original imagery and design craft",
@@ -1798,7 +1917,7 @@
         "releaseStatus": "candidate only; not approved for customer catalogue"
       },
       "visualReview": "No five-viewport screenshots captured or reviewed",
-      "integrationEvidence": "Unit-level mutation/renderer/guard tests; no authenticated browser or disposable-tenant end-to-end pass",
+      "integrationEvidence": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41193600346 artifact phase14-isolated-publishing-evidence",
       "knownIssues": [
         "Individual original imagery and design craft",
         "Five-viewport screenshot and accessibility acceptance",
@@ -1825,6 +1944,23 @@
         ],
         "automatedChecks": "PASS: no horizontal overflow, broken image, empty link, H1 mismatch or mobile menu failure in 10 screenshots",
         "reviewStatus": "Preliminary screenshot inspection only; no completed design rubric or public publishing acceptance"
+      },
+      "syntheticPublishingEvidence": {
+        "result": "PASS — isolated compiled application, real database and browser, synthetic authenticated sessions",
+        "workflow": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41193600346",
+        "codeCommit": "03c7710e01db748b5ab2b43ecea65500b3351521",
+        "artifact": "phase14-isolated-publishing-evidence",
+        "verifiedChecks": [
+          "real created and persisted website plus canonical flagship assignment",
+          "saved contact, gallery imagery/alt and branding edits after reload",
+          "real public homepage and interior pages through hostname routing",
+          "cross-tenant read/edit/publish denials",
+          "publishing demo emails denied",
+          "failed later publication preserves previous public page",
+          "revoked membership loses protected website and publish access"
+        ],
+        "liveLuciaCoreOAuth": "NOT VERIFIED — external sign-in/callback not exercised",
+        "releaseStatus": "NOT ACCEPTED — missing visual scoring, accessibility, performance and external OAuth acceptance"
       }
     },
     {
@@ -2002,5 +2138,7 @@
         "32/40 scored visual review"
       ]
     }
-  ]
+  ],
+  "syntheticPublishingVerified": 8,
+  "liveOAuthPublishingVerified": 0
 }

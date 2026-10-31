@@ -81,3 +81,41 @@ This change refines existing candidates, not the approved catalogue count or its
 The actual inspected imagery exposed notable visual issues: Haven's initial desktop hero used a narrow reading-width token; Maison's original gallery heading and luxury full-bleed hero wrapped awkwardly; the gallery boards reused the same illustration across unrelated projects. Corrections were made on the existing candidate definitions and the production renderer's scoped CSS: wider Haven/Maison/Estate canvas, independent original illustration for each flagship project, registered alternative art choices, corrected Maison gallery heading, and a full-width inner hero text column.
 
 Later browser workflow evidence must be re-captured at the exact correction commit. No design rubric has yet been completed, no real customer publication has been exercised, and no flagship is accepted. The previous screenshot PASS confirms basic browser layout behavior only, not release acceptance.
+
+
+## Isolated authenticated site publishing evidence — eight flagships (31 October 2026)
+
+The existing compiled LUCIA OS application was built, and an entirely new
+lucia_os_acceptance PostgreSQL database was migrated on GitHub Actions.
+A dedicated NOSUPERUSER / NOBYPASSRLS runtime role was granted only
+the rights needed by the application. Synthetic users and hashed, expiring
+application session cookies used the existing fixture contracts. No live
+customer accounts, customer data, or production database were modified.
+
+At code commit 03c7710e01db748b5ab2b43ecea65500b3351521,
+the isolated authenticated workflow passed for Meridian, Canvas, Haven,
+Academia, Maison, Nexus, Impact, and Estate individually. See:
+https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41193600346
+
+For each site, the test performed genuine creation, canonical Layout
+assignment, saved content and image-alt replacement, company-name and
+contact edits, browser reload, and HTTP and Chromium public page delivery.
+It verified other-tenant draft/edit/publish denial, demonstration-email
+publication rejection, and previous-live-version preservation after corrupting
+only an isolated synthetic draft. Revoked owner membership was also denied.
+The workflow artifact phase14-isolated-publishing-evidence contains the
+actual resulting JSON. The recorded source fingerprint is
+aa05c869415d1cc0e6dc50b665b9027c6c81526823a44c28ec14155019963e47.
+Quality checks passed 617 tests across 68 files for that exact code.
+
+Limitations: the synthetic session format is real but a live LUCIA Core OAuth
+sign-in/callback was not exercised. The prior 80 responsive screenshots
+passed browser-automated layout checks, with actual visual inspection identifying
+and fixing defects, but independent 40-point design scorecards, complete
+accessibility review and measured mobile performance are still open.
+All 40 remaining candidates are not approved for publication or Studio
+assignment. Founder review is post-merge, but engineering quality gates
+remain mandatory before any merge.
+
+Strict accounting: 48 candidates; 8 isolated synthetic publishing passes;
+0 live OAuth passes; 0 fully visually accepted; 0 merged.
