@@ -337,7 +337,18 @@ export function applyPremiumEdit(
   const original = parsePremiumLayout(layout);
   const next = structuredClone(original);
   const perms = next.permissions;
-  if (edit.kind === "insert-page" || edit.kind === "remove-page") {
+  if (edit.kind === "brand") {
+    if (!perms.guided.includes("brand"))
+      throw new Error("Brand edit denied");
+    const oldName = next.identity.name;
+    next.identity.name = edit.name;
+    // Keep page metadata in step with the public navigation/brand name.
+    // This does not rewrite the customer's editorial sections.
+    for (const page of next.pages) {
+      if (page.title.includes(oldName))
+        page.title = page.title.replaceAll(oldName, edit.name).slice(0, 120);
+    }
+  } else if (edit.kind === "insert-page" || edit.kind === "remove-page") {
     if (mode !== "advanced" || !perms.advanced.includes("pages"))
       throw new Error("Page structure edit denied");
     if (edit.kind === "insert-page") {
@@ -497,6 +508,10 @@ export function applyPremiumEdit(
 }
 
 export const premiumEditSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("brand"),
+    name: z.string().trim().min(2).max(80),
+  }).strict(),
   z
     .object({
       kind: z.literal("insert-section"),
