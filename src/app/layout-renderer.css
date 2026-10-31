@@ -45,3 +45,53 @@
 /* Customer headings and links must fit their actual preview/public container. */
 .layout-site .layout-hero h1,.layout-hero>.layout-lede,.layout-primary-action{max-width:100%;overflow-wrap:anywhere}
 .layout-brand,.layout-header-action,.layout-site-header nav{min-width:0;overflow-wrap:anywhere}
+
+
+/* Phase 13 registered sections share the established .layout-site CSS boundary. */
+.premium-layout{overflow:visible;overflow-wrap:anywhere}
+.premium-layout .premium-section{min-width:0;padding:clamp(3rem,7vw,7rem) 0}
+.premium-layout .premium-section h1,.premium-layout .premium-section h2{line-height:1.06;letter-spacing:-.055em;margin:0 0 1.5rem;font-size:clamp(2rem,5vw,4.8rem)}
+.premium-layout .premium-section h1{font-size:clamp(2.75rem,8vw,7rem)}
+.premium-layout .premium-section p{max-width:68ch;line-height:1.7}
+.premium-layout .premium-hero,.premium-layout .premium-story,.premium-layout .premium-experience{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);align-items:center;gap:clamp(1.5rem,5vw,5rem)}
+.premium-layout .premium-hero-typographic{display:block;max-width:900px}
+.premium-layout .premium-hero-full-bleed{grid-template-columns:1fr;min-height:75vh;align-content:center}
+.premium-layout .premium-story-narrow{display:block;max-width:780px}
+.premium-layout .premium-story-alternating>:first-child{order:2}
+.premium-layout .premium-asset{min-height:220px;aspect-ratio:4/3;display:grid;place-items:center;text-align:center;padding:1.5rem;border:1px solid currentColor;background:color-mix(in srgb,var(--layout-accent) 18%,var(--layout-paper));border-radius:.25rem}
+.premium-layout .premium-asset span{max-width:32ch;font-size:.9rem;opacity:.7}
+.premium-layout .premium-trust ul{display:flex;flex-wrap:wrap;gap:1rem 2rem;padding:0;list-style:none}
+.premium-layout .premium-trust-stacked ul{display:grid}
+.premium-layout .premium-gallery-grid,.premium-layout .premium-services ol{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(1rem,3vw,3rem);padding:0;list-style:none}
+.premium-layout .premium-gallery-masonry .premium-gallery-grid article:nth-child(3n+2){padding-top:3rem}
+.premium-layout .premium-gallery-rail .premium-gallery-grid{display:flex;overflow-x:auto;scroll-snap-type:x mandatory}
+.premium-layout .premium-gallery-rail .premium-gallery-grid article{flex:0 0 min(70vw,360px);scroll-snap-align:start}
+.premium-layout .premium-services-chapters ol{grid-template-columns:1fr}
+.premium-layout .premium-services ol li{min-width:0;border-top:1px solid currentColor;padding-top:1rem}
+.premium-layout .premium-contact{border-top:1px solid currentColor}
+.premium-layout a:focus-visible{outline:3px solid var(--layout-ink);outline-offset:4px}
+.premium-layout.premium-scale-compact .premium-section{padding-block:2rem}
+.premium-layout.premium-rhythm-spacious .premium-section{padding-block:clamp(4rem,10vw,10rem)}
+.premium-layout.premium-radius-rounded .premium-asset{border-radius:1.5rem}
+@media(max-width:768px){.premium-layout .premium-hero,.premium-layout .premium-story,.premium-layout .premium-experience{grid-template-columns:minmax(0,1fr)}.premium-layout .premium-gallery-grid,.premium-layout .premium-services ol{grid-template-columns:minmax(0,1fr)}.premium-layout .premium-gallery-masonry .premium-gallery-grid article:nth-child(3n+2){padding-top:0}.premium-layout .premium-hero-full-bleed{min-height:0}.premium-layout .premium-section{padding-block:3rem}}
+@media(prefers-reduced-motion:reduce){.premium-layout *{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+
+/* Repository asset dimensions and supported token variants stay inside the site. */
+.premium-layout img.premium-asset{display:block;width:100%;max-width:100%;height:auto;object-fit:cover;padding:0;border:0}
+.premium-layout .premium-hero-full-bleed{position:relative;isolation:isolate;color:#fff;padding:clamp(2rem,7vw,6rem);background:#26382c}
+.premium-layout .premium-hero-full-bleed>img{position:absolute;inset:0;width:100%;height:100%;z-index:-2;opacity:.25;object-fit:cover}
+.premium-layout .premium-hero-full-bleed .layout-primary-action{background:#fff;color:#26382c!important}
+.premium-layout.premium-scale-expressive .premium-section h1{font-size:clamp(3rem,9vw,8rem)}
+.premium-layout.premium-layout.premium-scale-compact .premium-section h1{font-size:clamp(2rem,6vw,5rem)}
+.premium-layout.premium-rhythm-tight .premium-section{padding-block:2rem}
+.premium-layout.premium-radius-square .premium-asset{border-radius:0}
+.premium-layout.premium-radius-subtle .premium-asset{border-radius:.35rem}
+.premium-layout .premium-contact-split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:2rem}
+.premium-layout.premium-responsive-stack .premium-story{grid-template-columns:minmax(0,1fr)}
+.premium-layout.premium-responsive-gallery .premium-gallery-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.composition-controls{display:flex;flex-wrap:wrap;align-items:center;gap:1rem;padding:1rem;max-width:100%;min-width:0}
+.composition-controls label{display:grid;gap:.4rem;min-width:0;max-width:100%}
+.composition-controls input,.composition-controls textarea,.composition-controls select{max-width:100%;min-width:0;padding:.65rem;font:inherit}
+.composition-controls button,.composition-controls a{padding:.7rem;min-height:44px}
+.composition-controls :focus-visible{outline:3px solid #4494dd;outline-offset:3px}
+@media(max-width:768px){.premium-layout .premium-contact-split,.premium-layout.premium-responsive-gallery .premium-gallery-grid{grid-template-columns:minmax(0,1fr)}.premium-layout .premium-hero-full-bleed{padding:1.25rem}}

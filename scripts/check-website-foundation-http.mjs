@@ -93,6 +93,30 @@ const setup = {
   country: "Nigeria",
   siteSlug: "foundation-" + randomBytes(6).toString("hex"),
 };
+  async function publicSite(
+    path = "/",
+    hostname = setup.siteSlug + ".lucia.name.ng",
+  ) {
+    return new Promise((resolve, reject) => {
+      const req = http.get(
+        { hostname: "127.0.0.1", port, path, headers: { host: hostname } },
+        (res) => {
+          let body = "";
+          res.setEncoding("utf8");
+          res.on("data", (d) => (body += d));
+          res.on("end", () =>
+            resolve({ status: res.statusCode, text: async () => body }),
+          );
+        },
+      );
+      req.on("error", reject);
+      req.setTimeout(30000, () =>
+        req.destroy(Error("Public response timed out")),
+      );
+    });
+  }
+
+let id, saved, settings;
 try {
   child = spawn(
     process.execPath,
@@ -126,6 +150,7 @@ try {
       await new Promise((r) => setTimeout(r, 150));
     }
   }
+  if (process.env.WEBSITE_TEST_PREMIUM_FAST !== "1") {
   assert.equal(
     (await api(null, "/api/onboarding/website", "POST", setup)).status,
     401,
@@ -168,13 +193,13 @@ try {
   const response = await api("a", "/api/onboarding/website", "POST", setup);
   const creation = await response.json();
   assert.equal(response.status, 201, creation.error);
-  const id = creation.website.id;
+  id = creation.website.id;
   created.push(id);
   assert.equal(creation.organization.id, f.orgA);
   const retry = await api("a", "/api/onboarding/website", "POST", setup);
   assert.equal(retry.status, 200);
   assert.equal((await retry.json()).website.id, id);
-  let saved = await (await api("a", context(id))).json();
+  saved = await (await api("a", context(id))).json();
   assert.equal(saved.draft.templateId, setup.templateId);
   assert.equal(saved.draft.siteName, setup.websiteName);
   assert.equal(
@@ -232,7 +257,7 @@ try {
   pass(
     "Two concurrent editor saves produce one commit and one 409; invalid and cross-tenant writes cannot change it",
   );
-  const settings = () => ({
+  settings = () => ({
     action: "publish",
     websiteId: id,
     siteSlug: setup.siteSlug,
@@ -292,28 +317,6 @@ try {
   assert.equal(live.organization_id, f.orgA);
   assert.equal(live.website_id, id);
   assert.equal(live.status, "active");
-  async function publicSite(
-    path = "/",
-    hostname = setup.siteSlug + ".lucia.name.ng",
-  ) {
-    return new Promise((resolve, reject) => {
-      const req = http.get(
-        { hostname: "127.0.0.1", port, path, headers: { host: hostname } },
-        (res) => {
-          let body = "";
-          res.setEncoding("utf8");
-          res.on("data", (d) => (body += d));
-          res.on("end", () =>
-            resolve({ status: res.statusCode, text: async () => body }),
-          );
-        },
-      );
-      req.on("error", reject);
-      req.setTimeout(30000, () =>
-        req.destroy(Error("Public response timed out")),
-      );
-    });
-  }
   const publicHome = await publicSite();
   assert.equal(publicHome.status, 200);
   assert((await publicHome.text()).includes(saved.draft.headline));
@@ -382,6 +385,7 @@ try {
     "Corrupt saved drafts are rejected without publishing demo defaults or damaging live content",
   );
   await admin`DELETE FROM organization_memberships WHERE organization_id=${f.orgB} AND user_id=${f.a}`;
+  }
   if (process.env.WEBSITE_TEST_PLAYWRIGHT_MODULE) {
     const { chromium } = await import(
       process.env.WEBSITE_TEST_PLAYWRIGHT_MODULE
@@ -454,6 +458,7 @@ try {
       browserChecks.push(name);
       console.log("PASS browser", name);
     };
+    if (process.env.WEBSITE_TEST_PREMIUM_ONLY !== "1") {
     await page.goto(base + "/templates", { waitUntil: "networkidle" });
     await page
       .getByRole("link", { name: /Preview current design/ })
@@ -997,12 +1002,16 @@ try {
       .getByRole("link", { name: "Open Layout Studio", exact: true })
       .waitFor();
     await noStorage.close();
-    bpass(
-      "Unavailable browser storage does not crash setup or turn a committed project into failure",
-    );
+    bpass("Unavailable browser storage does not crash setup or turn a committed project into failure");
+    }
+    if (process.env.WEBSITE_TEST_PREMIUM === "1") {
+      const {checkPremiumComposition} = await import("./premium-composition-acceptance.mjs");
+      await checkPremiumComposition({api,admin,f,base,browserContext,created,bpass,publicSite});
+    }
     assert.equal(errors.length, 0, errors.join("\n"));
     bpass("No unhandled application errors");
   }
+  if (process.env.WEBSITE_TEST_PREMIUM_FAST !== "1") {
   await admin`UPDATE organization_memberships SET status='revoked' WHERE user_id=${f.a} AND organization_id=${f.orgA}`;
   assert.equal((await api("a", context(id))).status, 404);
   assert.equal(
@@ -1014,6 +1023,7 @@ try {
     403,
   );
   pass("Revoked tenant membership cannot read or publish");
+  }
   assert.equal((await api("b", "/api/staff/grants")).status, 403);
   pass("Ordinary customer session cannot access staff grants");
   console.log(

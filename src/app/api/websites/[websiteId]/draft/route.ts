@@ -10,7 +10,13 @@ import {
   websites,
 } from "@/lib/db/schema";
 import { hasOrganizationPermission } from "@/lib/access/policy";
-import { siteDraftSchema, type SiteDraft } from "@/lib/editor/site-draft";
+import {
+  websiteDefinitionSchema,
+  websiteMutationSchema,
+  mutateWebsite,
+  websiteSummary,
+  type WebsiteDefinition,
+} from "@/lib/layout-blueprint/website-definition";
 import { z } from "zod";
 import {
   draftRevision,
@@ -123,11 +129,11 @@ export async function GET(_request: Request, context: RouteContext) {
     );
 
   const home = found.pages.find((page) => page.path === "/");
-  let draft: SiteDraft | null = null;
+  let draft: WebsiteDefinition | null = null;
   if (home?.content) {
     try {
       const parsed = JSON.parse(home.content) as unknown;
-      const valid = siteDraftSchema.safeParse(parsed);
+      const valid = websiteDefinitionSchema.safeParse(parsed);
       if (valid.success) draft = valid.data;
     } catch {
       // Older plain-text page content is not treated as a structured editor draft.
@@ -177,14 +183,20 @@ export async function PATCH(request: Request, context: RouteContext) {
     );
   let raw: unknown;
   try {
-    raw = await request.json();
+    const body = await request.text();
+    if (body.length > 300_000)
+      return NextResponse.json(
+        { error: "Draft request is too large." },
+        { status: 413 },
+      );
+    raw = JSON.parse(body);
   } catch {
     return NextResponse.json(
       { error: "Submit valid draft data." },
       { status: 400 },
     );
   }
-  const parsed = siteDraftSchema.safeParse(raw);
+  const parsed = websiteMutationSchema.safeParse(raw);
   if (!parsed.success)
     return NextResponse.json(
       {
@@ -210,6 +222,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       { status: 428 },
     );
   const db = getDb();
+  let persisted: WebsiteDefinition | null = null;
   const saved = await db.transaction(async (tx) => {
     await tx.execute(
       sql`select set_config('app.current_user_id', ${user.id}, true)`,
@@ -269,9 +282,19 @@ export async function PATCH(request: Request, context: RouteContext) {
       .for("update");
     if (draftRevision(found.website.id, home?.content) !== expectedRevision)
       return "conflict" as const;
+    let definition: WebsiteDefinition;
+    try {
+      definition = mutateWebsite(
+        JSON.parse(home?.content ?? "null"),
+        parsed.data,
+      );
+    } catch {
+      return "invalid-edit" as const;
+    }
+    persisted = definition;
     await tx
       .update(websites)
-      .set({ name: parsed.data.siteName, updatedAt: new Date() })
+      .set({ name: websiteSummary(definition).siteName, updatedAt: new Date() })
       .where(
         and(
           eq(websites.id, found.website.id),
@@ -283,7 +306,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         .update(websitePages)
         .set({
           title: "Home",
-          content: JSON.stringify(parsed.data),
+          content: JSON.stringify(definition),
           updatedAt: new Date(),
         })
         .where(
@@ -299,11 +322,19 @@ export async function PATCH(request: Request, context: RouteContext) {
         title: "Home",
         path: "/",
         status: "draft",
-        content: JSON.stringify(parsed.data),
+        content: JSON.stringify(definition),
       });
     }
     return true;
   });
+  if (saved === "invalid-edit")
+    return NextResponse.json(
+      {
+        error:
+          "This edit is not permitted by the saved Layout. Reload and check Design Lock and editing permissions.",
+      },
+      { status: 422 },
+    );
   if (saved === "conflict")
     return NextResponse.json(
       {
@@ -323,7 +354,8 @@ export async function PATCH(request: Request, context: RouteContext) {
       saved: true,
       websiteId: found.website.id,
       savedAt: new Date().toISOString(),
-      revision: draftRevision(found.website.id, JSON.stringify(parsed.data)),
+      revision: draftRevision(found.website.id, JSON.stringify(persisted)),
+      draft: persisted,
       status: "draft",
     },
     { headers: { "Cache-Control": "no-store" } },

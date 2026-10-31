@@ -5,7 +5,12 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { hasOrganizationPermission } from "@/lib/access/policy";
 import { getDb } from "@/lib/db/client";
 import { websitePages, websites } from "@/lib/db/schema";
-import { siteDraftSchema } from "@/lib/editor/site-draft";
+import {
+  websiteDefinitionSchema,
+  websiteSummary,
+  type WebsiteDefinition,
+  isPremium,
+} from "@/lib/layout-blueprint/website-definition";
 
 import { draftRevision } from "@/lib/websites/draft-revision";
 
@@ -75,9 +80,9 @@ export async function GET() {
               ),
             )
             .limit(1);
-          let draft: ReturnType<typeof siteDraftSchema.parse> | null = null;
+          let draft: WebsiteDefinition | null = null;
           try {
-            const parsed = siteDraftSchema.safeParse(
+            const parsed = websiteDefinitionSchema.safeParse(
               JSON.parse(home?.content ?? ""),
             );
             if (parsed.success) draft = parsed.data;
@@ -89,8 +94,9 @@ export async function GET() {
             slug: website.slug,
             name: website.name,
             status: website.status,
-            headline: draft?.headline ?? "",
-            description: draft?.description ?? "",
+            headline: draft ? websiteSummary(draft).headline : "",
+            description: draft ? websiteSummary(draft).description : "",
+            composition: draft ? isPremium(draft) : false,
             revision: draftRevision(website.id, home?.content),
             draftValid: Boolean(draft),
           });

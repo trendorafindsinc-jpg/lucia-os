@@ -1,0 +1,33 @@
+{
+  "environment": "compiled local application; synthetic isolated acceptance database; NOBYPASSRLS runtime",
+  "testedSource": "4ccab8fe90c9d53e070b1b1b70a90c5417888f924e87b81fcb674079d967d262",
+  "checks": [
+    "Ordinary customer session cannot access staff grants"
+  ],
+  "browserChecks": [
+    "meridian: authenticated creation, assignment, editing, real save/reload and unsaved refresh recovery",
+    "Failed network save retains unsaved content and real retry commits it",
+    "meridian: public home/interior, refresh, assets, keyboard and width 320×844 (emulated)",
+    "meridian: public home/interior, refresh, assets, keyboard and width 390×844 (emulated)",
+    "meridian: public home/interior, refresh, assets, keyboard and width 768×1024 (emulated)",
+    "meridian: public home/interior, refresh, assets, keyboard and width 1180×820 (emulated)",
+    "meridian: public home/interior, refresh, assets, keyboard and width 1440×900 (emulated)",
+    "meridian: real create→assign→edit→save→reload→preview→publish; tenant/Lock/revision/corrupt/revocation protection",
+    "canvas: authenticated creation, assignment, editing, real save/reload and unsaved refresh recovery",
+    "canvas: public home/interior, refresh, assets, keyboard and width 320×844 (emulated)",
+    "canvas: public home/interior, refresh, assets, keyboard and width 390×844 (emulated)",
+    "canvas: public home/interior, refresh, assets, keyboard and width 768×1024 (emulated)",
+    "canvas: public home/interior, refresh, assets, keyboard and width 1180×820 (emulated)",
+    "canvas: public home/interior, refresh, assets, keyboard and width 1440×900 (emulated)",
+    "canvas: real create→assign→edit→save→reload→preview→publish; tenant/Lock/revision/corrupt/revocation protection",
+    "haven: authenticated creation, assignment, editing, real save/reload and unsaved refresh recovery",
+    "haven: public home/interior, refresh, assets, keyboard and width 320×844 (emulated)",
+    "haven: public home/interior, refresh, assets, keyboard and width 390×844 (emulated)",
+    "haven: public home/interior, refresh, assets, keyboard and width 768×1024 (emulated)",
+    "haven: public home/interior, refresh, assets, keyboard and width 1180×820 (emulated)",
+    "haven: public home/interior, refresh, assets, keyboard and width 1440×900 (emulated)",
+    "haven: real create→assign→edit→save→reload→preview→publish; tenant/Lock/revision/corrupt/revocation protection",
+    "Three published DOM section sequences are structurally distinct",
+    "No unhandled application errors"
+  ]
+}

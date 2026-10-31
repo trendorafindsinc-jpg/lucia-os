@@ -173,3 +173,7 @@ export const loomBlueprintSchema = layoutBlueprintSchema;
 export type LoomBlueprint = LayoutBlueprint;
 export type LoomSection = LayoutSection;
 export const siteDraftToLoomBlueprint = siteDraftToLayoutBlueprint;
+
+// Phase 13 additive v2 contract; v1 persistence and adapter remain unchanged.
+export { premiumLayoutSchema, premiumSectionSchema, premiumSectionRegistry, premiumTokensSchema, parsePremiumLayout, applyPremiumEdit } from "./premium-composition";
+export type { PremiumLayout, PremiumSection, PremiumEdit } from "./premium-composition";
