@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import type { Route } from "next";
 import { LayoutRenderer } from "@/components/layout-studio/layout-renderer";
 import type { PremiumLayout } from "@/lib/layout-blueprint/premium-composition";
 
@@ -31,7 +32,9 @@ export function CandidateReviewSurface({
         pagePath={pagePath}
         idPrefix="phase14-"
         onNavigate={(path) =>
-          router.push("/phase14-review/" + id + (path === "/" ? "" : path))
+          router.push(
+            ("/phase14-review/" + id + (path === "/" ? "" : path)) as Route
+          )
         }
       />
     </div>
