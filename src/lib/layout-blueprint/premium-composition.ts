@@ -380,6 +380,8 @@ export function applyPremiumEdit(
     for (const page of next.pages) {
       if (page.title === oldName)
         page.title = edit.name;
+      else if (page.title.endsWith(" — " + oldName))
+        page.title = page.title.slice(0, -oldName.length) + edit.name;
     }
   } else if (edit.kind === "business-detail") {
     if (!(edit.field === "contactEmail" || edit.field === "phone" || edit.field === "address" ||

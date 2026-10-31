@@ -99,7 +99,9 @@ describe("Phase 16 personalization across all 48 original Layout identities", ()
       kind: "brand", name: "Brighter Hospitality",
     });
     expect(updated.identity.name).toBe("Brighter Hospitality");
-    expect(updated.pages.map((p, i) => before[i] === layout.identity.name ? "Brighter Hospitality" : before[i]))
+    expect(updated.pages.map((p, i) => before[i] === layout.identity.name ? "Brighter Hospitality" :
+        before[i].endsWith(" — " + layout.identity.name) ?
+          before[i].slice(0, -layout.identity.name.length) + "Brighter Hospitality" : before[i]))
       .toEqual(updated.pages.map(p => p.title));
   });
 });
