@@ -80,7 +80,7 @@ Final local verification: 533 Vitest tests in 65 files; TypeScript passing; ESLi
 | 1180 × 820 | PASS | PASS | PASS |
 | 1440 × 900 | PASS | PASS | PASS |
 
-Final exact-head Quality and Vercel evidence belongs to [PR #133 checks](https://github.com/trendorafindsinc-jpg/lucia-os/pull/133/checks); both must pass before merging. The unrelated, nonrequired Cloudflare Workers build already fails on the baseline; it has not been disabled or represented as passing.
+Final exact-head Quality and Vercel evidence belongs to [PR #133 checks](https://github.com/trendorafindsinc-jpg/lucia-os/pull/133/checks); both must pass before merging. The auxiliary, nonrequired Cloudflare Workers build fails for this branch. Current main reports success, so its cause must not be described as a confirmed baseline failure. Provider build logs are not exposed by the available connector. This auxiliary deployment has not been disabled or represented as passing; the approved Vercel target and required Quality checks pass.
 
 The existing `check-website-foundation-http.mjs` runner remains the isolated authenticated acceptance infrastructure. `WEBSITE_TEST_PREMIUM=1` adds `premium-composition-acceptance.mjs`, using genuine project records, session fixtures, NOBYPASSRLS runtime, API calls, Studio/Publishing browser interactions and public-host requests. The restricted loopback proxy preserves customer URL/Host and forwards actual application responses; it does not mock rendering or authorization. Cleanup removes only synthetic test resources. Physical device, live OAuth, production DNS/TLS and production customer publishing are not claimed.
 
