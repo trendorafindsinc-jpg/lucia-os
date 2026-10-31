@@ -191,4 +191,25 @@ describe("Phase 14 canonical premium candidates — not release acceptance", () 
       image: { src: "builtin:premium/flagship-haven" },
     });
   });
+
+  it("can point a flagship hero CTA to an existing page but never an invented destination", () => {
+    const original = premiumCandidate("lucia.layout.nexus");
+    const home = original.pages.find((page) => page.path === "/");
+    const hero = home?.sections.find((section) => section.type === "premium-hero");
+    if (!home || hero?.type !== "premium-hero" || !hero.action)
+      throw Error("Missing required flagship call to action");
+    const edited = applyPremiumEdit(original, "guided", {
+      kind: "replace-section", pageId: home.id,
+      section: { ...hero, action: { label: "Read documentation", href: "/documentation" } },
+    });
+    const rendered = renderToStaticMarkup(<LayoutRenderer blueprint={edited} />);
+    expect(rendered).toContain('href="/documentation"');
+    expect(rendered).toContain("Read documentation");
+    expect(() => applyPremiumEdit(original, "guided", {
+      kind: "replace-section", pageId: home.id,
+      section: { ...hero, action: { label: "Broken", href: "/api/internal" } },
+    })).toThrow();
+    expect(original.pages[0].sections.find((section) => section.id === hero.id))
+      .toEqual(hero);
+  });
 });
