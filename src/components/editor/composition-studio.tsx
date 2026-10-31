@@ -371,6 +371,26 @@ function CompositionEditor({
         className="composition-controls"
         aria-label="Composition controls"
       >
+        {layout.permissions.guided.includes("brand") && (
+          <label>
+            Website name
+            <input
+              key={"brand:" + layout.identity.name}
+              defaultValue={layout.identity.name}
+              maxLength={80}
+              onBlur={(event) => {
+                const name = event.currentTarget.value.trim();
+                if (name.length >= 2 && name !== layout.identity.name)
+                  edit({ kind: "brand", name });
+              }}
+              aria-describedby="website-name-help"
+            />
+            <small id="website-name-help">
+              Changes the website branding and page titles without replacing
+              your editorial content.
+            </small>
+          </label>
+        )}
         <label>
           Editing mode{" "}
           <select
