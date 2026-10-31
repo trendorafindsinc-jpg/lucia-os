@@ -257,7 +257,10 @@ function PremiumLayoutPage({
                   <a
                     key={item.href}
                     href={item.href}
-                    onClick={preview ? (event) => navigate(event, item.href) : undefined}
+                    onClick={preview ? (event) => {
+                      navigate(event, item.href);
+                      event.currentTarget.closest("details")?.removeAttribute("open");
+                    } : undefined}
                     aria-current={item.href === page.path ? "page" : undefined}
                   >
                     {item.label}
@@ -281,11 +284,33 @@ function PremiumLayoutPage({
           />
         ))}
       </div>
-      <footer className="layout-site-footer">
-        <span>{definition.identity.name}</span>
-        <span>
-          {preview ? "Private preview · LUCIA OS" : "Made with LUCIA OS"}
-        </span>
+      <footer className="layout-site-footer premium-site-footer">
+        <div className="premium-footer-identity">
+          <p className="premium-footer-brand">{definition.identity.name}</p>
+          <p className="premium-footer-description">{definition.identity.description}</p>
+        </div>
+        <nav aria-label="Footer navigation" className="premium-footer-navigation">
+          {definition.navigation.map((item) => (
+            <a
+              href={item.href}
+              key={item.href}
+              onClick={preview ? (event) => navigate(event, item.href) : undefined}
+              aria-current={item.href === page.path ? "page" : undefined}
+            >
+              {item.label}
+            </a>
+          ))}
+        </nav>
+        <div className="premium-footer-end">
+          <span>{preview ? "Private preview · LUCIA OS" : "Made with LUCIA OS"}</span>
+          <a
+            href="/"
+            onClick={preview ? (event) => navigate(event, "/") : undefined}
+            aria-label={`Return to ${definition.identity.name} homepage`}
+          >
+            Back to home
+          </a>
+        </div>
       </footer>
     </Root>
   );
