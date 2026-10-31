@@ -23,6 +23,7 @@ import {
 } from "@/lib/layout-blueprint/premium-composition";
 import { structuralLayoutIds } from "@/lib/layout-blueprint/structural-layouts";
 import { premiumFlagshipIds } from "@/lib/layout-blueprint/premium-layouts/catalogue-candidates";
+import { premiumArtworkChoices } from "@/lib/layout-blueprint/premium-layouts/asset-choices";
 
 type Loaded = { draft: WebsiteDefinition; revision: string; context: string };
 export function CompositionStudio({
@@ -471,6 +472,151 @@ function CompositionEditor({
               contact panels across the website. Save the draft before publishing.
             </small>
           </label>
+        )}
+        {(section.type === "premium-hero" ||
+          section.type === "editorial-story" ||
+          section.type === "experience") && section.image && (
+          <>
+            <label>
+              Illustrated artwork
+              <select
+                value={section.image.src}
+                onChange={(event) =>
+                  edit({
+                    kind: "replace-section",
+                    pageId: page.id,
+                    section: {
+                      ...section,
+                      image: { ...section.image!, src: event.target.value },
+                    },
+                  })
+                }
+              >
+                {premiumArtworkChoices.map((asset) => (
+                  <option key={asset.ref} value={asset.ref}>{asset.label}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Image description (alt text)
+              <input
+                key={page.id + ":" + section.id + ":alt:" + section.image.alt}
+                defaultValue={section.image.alt}
+                maxLength={200}
+                onBlur={(event) => {
+                  const alt = event.currentTarget.value.trim();
+                  if (alt && alt !== section.image!.alt)
+                    edit({
+                      kind: "replace-section",
+                      pageId: page.id,
+                      section: { ...section, image: { ...section.image!, alt } },
+                    });
+                }}
+              />
+            </label>
+          </>
+        )}
+        {section.type === "project-gallery" && (
+          <fieldset className="composition-controls" aria-label="Portfolio project cards">
+            <legend>Project cards</legend>
+            {section.projects.map((project, index) => (
+              <div className="composition-controls" key={index}>
+                <label>
+                  Project {index + 1} title
+                  <input
+                    key={page.id + ":" + section.id + ":project:" + index + ":" + project.title}
+                    defaultValue={project.title}
+                    maxLength={120}
+                    onBlur={(event) => {
+                      const title = event.currentTarget.value.trim();
+                      if (title && title !== project.title)
+                        edit({
+                          kind: "replace-section",
+                          pageId: page.id,
+                          section: {
+                            ...section,
+                            projects: section.projects.map((entry, i) =>
+                              i === index ? { ...entry, title } : entry),
+                          },
+                        });
+                    }}
+                  />
+                </label>
+                <label>
+                  Project {index + 1} artwork
+                  <select
+                    value={project.image.src}
+                    onChange={(event) =>
+                      edit({
+                        kind: "replace-section",
+                        pageId: page.id,
+                        section: {
+                          ...section,
+                          projects: section.projects.map((entry, i) =>
+                            i === index
+                              ? { ...entry, image: { ...entry.image, src: event.target.value } }
+                              : entry),
+                        },
+                      })
+                    }
+                  >
+                    {premiumArtworkChoices.map((asset) => (
+                      <option key={asset.ref} value={asset.ref}>{asset.label}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Project {index + 1} image description
+                  <input
+                    key={page.id + ":" + section.id + ":projectalt:" + index + ":" + project.image.alt}
+                    defaultValue={project.image.alt}
+                    maxLength={200}
+                    onBlur={(event) => {
+                      const alt = event.currentTarget.value.trim();
+                      if (alt && alt !== project.image.alt)
+                        edit({
+                          kind: "replace-section",
+                          pageId: page.id,
+                          section: {
+                            ...section,
+                            projects: section.projects.map((entry, i) =>
+                              i === index
+                                ? { ...entry, image: { ...entry.image, alt } }
+                                : entry),
+                          },
+                        });
+                    }}
+                  />
+                </label>
+                <label>
+                  Linked project page
+                  <select
+                    value={project.href ?? ""}
+                    onChange={(event) =>
+                      edit({
+                        kind: "replace-section",
+                        pageId: page.id,
+                        section: {
+                          ...section,
+                          projects: section.projects.map((entry, i) =>
+                            i === index
+                              ? { ...entry, href: event.target.value || undefined }
+                              : entry),
+                        },
+                      })
+                    }
+                  >
+                    <option value="">No link</option>
+                    {layout.pages.map((destination) => (
+                      <option key={destination.path} value={destination.path}>
+                        {destination.title}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            ))}
+          </fieldset>
         )}
         <button
           disabled={
