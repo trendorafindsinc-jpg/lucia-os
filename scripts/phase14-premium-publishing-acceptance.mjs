@@ -205,6 +205,11 @@ export async function checkPhase14FlagshipPublishing({
               }
             }
             await liveBrowser.locator('[data-page-path="' + expectedPath + '"]').waitFor();
+            // Native public links commit a fresh document. A visible SSR root
+            // does not mean its blocking CSS or load lifecycle has completed.
+            await liveBrowser.waitForLoadState("load");
+            await liveBrowser.waitForLoadState("networkidle");
+            await liveBrowser.evaluate(() => document.fonts.ready);
             const metrics = await liveBrowser.evaluate(() => ({
               viewport: innerWidth, width: document.documentElement.scrollWidth,
               performance: window.__phase14Performance,
@@ -220,6 +225,7 @@ export async function checkPhase14FlagshipPublishing({
               await writeFile(path.join(directory, name + "-overflow.json"), JSON.stringify({ expectedPath, viewport, metrics }, null, 2));
               await liveBrowser.screenshot({ path: path.join(directory, name + "-overflow.png"), fullPage: true });
             }
+            assert(metrics.stylesheets.length > 0, name + " public styles did not load");
             assert(metrics.width <= metrics.viewport + 1, name + " public overflow at " + viewport.width + " " + expectedPath + ": " + JSON.stringify(metrics));
             responsive.push({ viewport, path: expectedPath, throttling: throttled ? "1.6Mbps down / 750Kbps up / 150ms latency / CPU4x / cold cache" : "unthrottled", metrics });
           }
