@@ -46,3 +46,17 @@ An earlier Meridian-only revision reported **540 unit tests passing across 66 fi
 4. Apply individual gate scorecards and count **only accepted** sites. Do not publish or merge candidate-only definitions as finished Phase 14.
 
 **Merge/deployment: separate branch only. No production release authorized or performed by these changes.**
+
+## Further engineering: bespoke flagship artwork, editor integration and safer publishing
+
+**Eight new original flagship heroes.** Authored and committed one SVG per flagship under public/layouts/premium/flagships/. Each has unique form, hierarchy and palette and supplements the eight older industry-category illustrations. The works are repository-owned, with no external image, S3 or licence dependency. Separate project imagery and full visual quality acceptance remain necessary.
+
+**Real Studio assignment.** The existing authenticated draft mutation contract now permits eight explicit full canonical flagship IDs alongside the three original Phase 13 structural aliases. IDs of the other 40 unreviewed layouts remain disallowed for assignment. Assignment retains the existing website name, organization-owned database rows, authorization, revision checks and published-version protections. The Studio labels the first eight as *engineering candidates*, not accepted Layouts.
+
+**Useful customization.** The existing Studio now permits verified contact-email replacement, registered local image choices, alt-text updates, portfolio titles and gallery asset/link changes. Updates remain inside Phase 13's closed validation and edit-permission system. Editing the shared example email propagates to other contact panels with that same unmodified address, avoiding separate manual edits across many pages.
+
+**Public safety.** The publication transaction refuses to promote any of these eight flagship candidates while any demonstration contact email remains. Failure returns a clear validation response before published snapshots or hostname activation, preserving the previously live version. Save and preview remain possible. This safeguard does not affect legacy sites or structural demonstrations.
+
+**Outstanding acceptance evidence.** No per-layout five-viewport screenshots, verified screen-reader/contrast review, measured performance, named 32/40 design scores, or authenticated isolated-tenant create/edit/save/preview/publish/denial browser runs have been captured. Real customer catalogue launch is not authorized. The other 40 need bespoke design refinement after the first eight are independently accepted.
+
+Strict founder inventory: 48 candidates; 0 fully implemented, 0 verified, 0 accepted. Do not merge or claim PASS.
