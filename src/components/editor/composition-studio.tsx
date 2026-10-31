@@ -1,4 +1,5 @@
 "use client";
+import { mediaIds } from "@/lib/media/references";
 import { MediaLibrary } from "./media-library";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -353,7 +354,7 @@ function CompositionEditor({
   });
   return (
     <main className="editor-page">
-      {accountId && <MediaLibrary websiteId={websiteId} accountId={accountId} onChange={setOwnedArtwork} />}
+      {accountId && <MediaLibrary websiteId={websiteId} accountId={accountId} onChange={setOwnedArtwork} protectedIds={mediaIds(layout)} />}
       <header className="composition-controls">
         <h1>Layout Studio</h1>
         <p>

@@ -2,7 +2,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 type Item = { id: string; ref: string; bytes: number; width: number; height: number; alt: string; status: string };
-export function MediaLibrary({ websiteId, accountId, onChange }: { websiteId: string; accountId: string; onChange: (items: { ref: string; label: string }[]) => void }) {
+export function MediaLibrary({ websiteId, accountId, onChange, protectedIds }: { websiteId: string; accountId: string; onChange: (items: { ref: string; label: string }[]) => void; protectedIds: string[] }) {
   const [library, setLibrary] = useState<{ items: Item[]; enabled: boolean; usedBytes: number; quotaBytes: number } | null>(null);
   const [notice, setNotice] = useState("Loading your image library…"), [busy, setBusy] = useState(false);
   const endpoint = `/api/websites/${websiteId}/media`;
@@ -43,8 +43,9 @@ export function MediaLibrary({ websiteId, accountId, onChange }: { websiteId: st
     </form>
     <ul>{library?.items.map((item) => <li key={item.id}>
       {item.status === "ready" && <Image unoptimized src={"/_media/" + item.id} alt={item.alt} width={120} height={80} style={{ objectFit: "contain" }} />}
+      {protectedIds.includes(item.id) && <span>In use in this editor. Save a replacement before removing this image.</span>}
       <span>{item.alt} · {Math.ceil(item.bytes / 1000)} KB · {item.status}</span>
-      {item.status === "ready" || item.status === "deleting" || item.status === "pending" ? <button type="button" disabled={busy} onClick={() => remove(item.id)}>Remove unused image</button> : <span>Awaiting storage reconciliation; reserved space remains counted.</span>}
+      {item.status === "ready" || item.status === "deleting" || item.status === "pending" ? <button type="button" disabled={busy || protectedIds.includes(item.id)} onClick={() => remove(item.id)}>Remove unused image</button> : <span>Awaiting storage reconciliation; reserved space remains counted.</span>}
     </li>)}</ul>
   </details>;
 }

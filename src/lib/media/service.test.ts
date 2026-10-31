@@ -47,6 +47,20 @@ describe("media authorization and capacity invariants", () => {
     await expect(uploadMedia(user, website, Buffer.from("x"), "image/png", "Alt")).rejects.toMatchObject({ status: 503 });
     expect(mocks.put).toHaveBeenCalledOnce(); expect(mocks.transaction).toHaveBeenCalledTimes(2);
   });
+  it("does not claim upload success when readiness is not committed", async () => {
+    uploadReservation(0, 1000);
+    mocks.execute.mockResolvedValueOnce([]).mockResolvedValueOnce(member).mockResolvedValueOnce([]);
+    await expect(uploadMedia(user, website, Buffer.from("x"), "image/png", "Alt")).rejects.toMatchObject({ status: 503 });
+    expect(mocks.put).toHaveBeenCalledOnce();
+  });
+  it("returns a durable reference only after provider write and readiness confirmation", async () => {
+    uploadReservation(0, 1000);
+    mocks.execute.mockResolvedValueOnce([]).mockResolvedValueOnce(member).mockResolvedValueOnce([{ id: "confirmed" }]);
+    const image = await uploadMedia(user, website, Buffer.from("x"), "image/png", "Alt");
+    expect(image.ref).toMatch(/^media:[0-9a-f-]{36}$/);
+    expect(image.bytes).toBe(200);
+    expect(mocks.put).toHaveBeenCalledOnce();
+  });
   it("rejects cross-website and missing media inside the caller's save transaction", async () => {
     mocks.execute.mockResolvedValue([]);
     await expect(validateMediaOwnership({ execute: mocks.execute } as never, org, website, { image: { src: "media:" + user } })).rejects.toThrow("another website");

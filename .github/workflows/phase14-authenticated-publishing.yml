@@ -27,7 +27,7 @@ concurrency:
 
 jobs:
   acceptance:
-    name: 48 canonical Layout real HTTP and browser publishing gates
+    name: Registered Layout HTTP/browser publishing and media authorization
     runs-on: ubuntu-latest
     timeout-minutes: 25
     services:
@@ -52,7 +52,7 @@ jobs:
       WEBSITE_TEST_PHASE15: "1"
       WEBSITE_TEST_PHASE16: "1"
       WEBSITE_TEST_MEDIA: "1"
-      WEBSITE_TEST_PHASE14_LAYOUTS: ${{ inputs.layouts || '' }}
+      WEBSITE_TEST_PHASE14_LAYOUTS: ${{ inputs.layouts || (github.event.pull_request.number == 138 && 'flagships' || '') }}
       WEBSITE_TEST_PREMIUM_FAST: "1"
       WEBSITE_TEST_PREMIUM_ONLY: "1"
       WEBSITE_TEST_PLAYWRIGHT_MODULE: playwright

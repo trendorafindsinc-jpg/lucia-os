@@ -71,7 +71,8 @@ export async function uploadMedia(userId: string, websiteId: string, input: Buff
   try { await mediaStorage().put(objectKey, optimized.data); }
   catch { throw new MediaError("Upload could not be confirmed. Its reserved space is retained for reconciliation; do not retry repeatedly.", 503); }
   await withMediaWebsite(userId, websiteId, "website.edit", async (tx) => {
-    await tx.execute(sql`update website_media set status='ready',updated_at=now() where id=${id} and website_id=${websiteId} and status='pending'`);
+    const ready = await tx.execute(sql`update website_media set status='ready',updated_at=now() where id=${id} and website_id=${websiteId} and status='pending' returning id`);
+    if (!ready.length) throw new MediaError("Upload finalization was not confirmed. Refresh the library before retrying.", 503);
   });
   return { id, ref: "media:" + id, bytes: optimized.bytes, width: optimized.width, height: optimized.height, alt };
 }

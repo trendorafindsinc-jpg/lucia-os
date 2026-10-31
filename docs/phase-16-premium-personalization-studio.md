@@ -76,7 +76,7 @@ Configured nonsecret server-side Vercel settings for Production and Preview: `S3
 
 ### Fresh verification and outstanding gates
 
-The local suite passed **834 tests across 75 files**, including actual Sharp compression, format spoofing/corruption/size rejection, server-only request signing, unknown/cross-website references, quota denial, uncertain provider-write reservation retention, deletion reference protection, revoked access and HTTP authentication/account/origin guards. TypeScript, ESLint (three existing warnings), production build, compiled routing and Drizzle consistency were executed; final exact-head CI remains authoritative.
+The local suite passed **836 tests across 75 files**, including actual Sharp compression, format spoofing/corruption/size rejection, server-only request signing, unknown/cross-website references, quota denial, uncertain provider-write reservation retention, deletion reference protection, revoked access and HTTP authentication/account/origin guards. TypeScript, ESLint (three existing warnings), production build, compiled routing and Drizzle consistency were executed; final exact-head CI remains authoritative.
 
 The isolated compiled-application workflow now includes actual PostgreSQL/API media denial cases and the Phase 16 personalization journeys. Synthetic media metadata is used only for **negative authorization tests**, not as evidence of uploaded bytes or a successful storage workflow.
 
@@ -85,3 +85,7 @@ The isolated compiled-application workflow now includes actual PostgreSQL/API me
 ### Additional boundary corrections
 
 Private media authorization uses the actual HTTP Host rather than Next.js's internal server URL. Customer-host rewrites cannot use a platform session to obtain private draft images. Two route-level regression cases cover the internal-URL/customer-Host mismatch and legitimate platform-owner checks. Rate-cap checks now precede decoding as well as atomic reservation, preventing repeated expensive compression once the website upload cap is reached. The first CI attempt exposed a local symlink-contaminated generated lockfile; it was removed, restoring the repository's existing lockfile-free install convention. Final-head Quality and deployment checks must be read on PR #138, not inferred from earlier failures or passes.
+
+Upload success additionally requires a confirmed ready-row update after the provider write; a missing update remains an error with its reservation retained. The Studio disables removal of images referenced by its current unsaved composition, in addition to the server's persisted-reference checks. Browser-only recovery remains distinct from a server-retained snapshot. Two additional service cases cover successful finalization and refusal to claim success when readiness is unconfirmed.
+
+For PR #138, the isolated browser workflow defaults to the eight category flagships while the unit/customization contract still covers all 48 IDs. This avoids repeating the historical all-48 publishing programme for every media correction. The original all-48 path remains available through the workflow's `layouts=all` input and remains the default for other PRs. No assertion is disabled; evidence must report its actual target count. Live customer-owned image acceptance is a separate blocked gate, not replaced by this built-in-image suite.
