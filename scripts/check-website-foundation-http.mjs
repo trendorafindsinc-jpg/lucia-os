@@ -1014,7 +1014,12 @@ try {
       const {checkPremiumComposition} = await import("./premium-composition-acceptance.mjs");
       await checkPremiumComposition({api,admin,f,base,browserContext,created,bpass,publicSite});
     }
-    if (process.env.WEBSITE_TEST_PHASE14 === "1") {
+    if (process.env.WEBSITE_TEST_PHASE15 === "1") {
+      const { checkPhase15AuthenticatedAcceptance } = await import("./phase15-authenticated-acceptance.mjs");
+      phase14Publishing = await checkPhase15AuthenticatedAcceptance({
+        api, admin, f, base, browserContext, created, bpass, publicSite,
+      });
+    } else if (process.env.WEBSITE_TEST_PHASE14 === "1") {
       const { checkPhase14FlagshipPublishing } = await import(
         "./phase14-premium-publishing-acceptance.mjs"
       );
