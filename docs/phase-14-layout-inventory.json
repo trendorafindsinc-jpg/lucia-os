@@ -34,7 +34,7 @@
         "public/layouts/meridian/operations.webp"
       ],
       "assetProvenance": "Four original generated demonstration images; exact prompts, hashes, sizes and disclosure in docs/acceptance/phase-14/meridian/asset-provenance.json",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "Historical eight-flagship synthetic-session PASS at 03c7710; expanded preview/all-public-page/stale-write/five-viewport suite awaits exact-head CI",
@@ -47,9 +47,9 @@
       ],
       "engineeringProgress": {
         "previewPages": "Registered complete v2 page definitions using Phase 13 LayoutRenderer",
-        "studioAssignment": "Exposed via full canonical Layout ID in existing guarded draft mutation and Studio prototype selector",
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
         "contentEditor": "Text, verified shared contact email, image replacement, alt text and project route editing",
-        "publishReadiness": "Historical eight-flagship synthetic-session PASS at 03c7710; expanded preview/all-public-page/stale-write/five-viewport suite awaits exact-head CI",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks.",
         "releaseStatus": "candidate only; not approved for customer catalogue"
       },
       "visualReview": "Actual desktop home and 320px Services screenshots inspected; original photography reconciled and 10 registered pages built. Full rubric and release acceptance remain open.",
@@ -143,7 +143,7 @@
         "public/layouts/premium/business.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -175,7 +175,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.verity",
@@ -200,7 +204,7 @@
         "public/layouts/premium/business.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -234,7 +238,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.summit",
@@ -259,7 +267,7 @@
         "public/layouts/premium/business.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -291,7 +299,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.foundry",
@@ -316,7 +328,7 @@
         "public/layouts/premium/business.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -348,7 +360,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.civic",
@@ -373,7 +389,7 @@
         "public/layouts/premium/business.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -407,7 +423,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.canvas",
@@ -436,7 +456,7 @@
         "public/layouts/premium/creative.svg"
       ],
       "assetProvenance": "Original repository-authored project art, distinct flagship hero and category illustration. Three original registered artwork choices are available for galleries; screenshots and quality review must be refreshed.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "Historical eight-flagship synthetic-session PASS at 03c7710; expanded preview/all-public-page/stale-write/five-viewport suite awaits exact-head CI",
@@ -449,9 +469,9 @@
       ],
       "engineeringProgress": {
         "previewPages": "Registered complete v2 page definitions using Phase 13 LayoutRenderer",
-        "studioAssignment": "Exposed via full canonical Layout ID in existing guarded draft mutation and Studio prototype selector",
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
         "contentEditor": "Text, verified shared contact email, image replacement, alt text and project route editing",
-        "publishReadiness": "Historical eight-flagship synthetic-session PASS at 03c7710; expanded preview/all-public-page/stale-write/five-viewport suite awaits exact-head CI",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks.",
         "releaseStatus": "candidate only; not approved for customer catalogue"
       },
       "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
@@ -545,7 +565,7 @@
         "public/layouts/premium/creative.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -579,7 +599,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.atelier",
@@ -604,7 +628,7 @@
         "public/layouts/premium/creative.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -638,7 +662,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.monograph",
@@ -663,7 +691,7 @@
         "public/layouts/premium/creative.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -695,7 +723,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.frame",
@@ -720,7 +752,7 @@
         "public/layouts/premium/creative.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -754,7 +786,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.muse",
@@ -779,7 +815,7 @@
         "public/layouts/premium/creative.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -813,7 +849,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.savour",
@@ -838,7 +878,7 @@
         "public/layouts/premium/hospitality.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -872,7 +912,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.haven",
@@ -898,10 +942,11 @@
       "assets": [
         "public/layouts/premium/projects/haven.svg",
         "public/layouts/premium/flagships/haven.svg",
-        "public/layouts/premium/hospitality.svg"
+        "public/layouts/premium/hospitality.svg",
+        "public/layouts/premium/photography/haven-v1.webp"
       ],
-      "assetProvenance": "Original repository-authored project art, distinct flagship hero and category illustration. Three original registered artwork choices are available for galleries; screenshots and quality review must be refreshed.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "assetProvenance": "Original repository illustrations plus generated editorial photograph; prompts, hashes, dimensions and synthetic disclosure in docs/acceptance/phase-14/flagship-photography-provenance.json",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "Historical eight-flagship synthetic-session PASS at 03c7710; expanded preview/all-public-page/stale-write/five-viewport suite awaits exact-head CI",
@@ -914,9 +959,9 @@
       ],
       "engineeringProgress": {
         "previewPages": "Registered complete v2 page definitions using Phase 13 LayoutRenderer",
-        "studioAssignment": "Exposed via full canonical Layout ID in existing guarded draft mutation and Studio prototype selector",
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
         "contentEditor": "Text, verified shared contact email, image replacement, alt text and project route editing",
-        "publishReadiness": "Historical eight-flagship synthetic-session PASS at 03c7710; expanded preview/all-public-page/stale-write/five-viewport suite awaits exact-head CI",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks.",
         "releaseStatus": "candidate only; not approved for customer catalogue"
       },
       "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
@@ -1012,7 +1057,7 @@
         "public/layouts/premium/hospitality.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -1046,7 +1091,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.nomad",
@@ -1071,7 +1120,7 @@
         "public/layouts/premium/hospitality.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -1105,7 +1154,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.gather",
@@ -1130,7 +1183,7 @@
         "public/layouts/premium/hospitality.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -1162,7 +1215,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.bistro",
@@ -1187,7 +1244,7 @@
         "public/layouts/premium/hospitality.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -1221,7 +1278,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.academia",
@@ -1250,7 +1311,7 @@
         "public/layouts/premium/education.svg"
       ],
       "assetProvenance": "Original repository-authored project art, distinct flagship hero and category illustration. Three original registered artwork choices are available for galleries; screenshots and quality review must be refreshed.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "Historical eight-flagship synthetic-session PASS at 03c7710; expanded preview/all-public-page/stale-write/five-viewport suite awaits exact-head CI",
@@ -1263,9 +1324,9 @@
       ],
       "engineeringProgress": {
         "previewPages": "Registered complete v2 page definitions using Phase 13 LayoutRenderer",
-        "studioAssignment": "Exposed via full canonical Layout ID in existing guarded draft mutation and Studio prototype selector",
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
         "contentEditor": "Text, verified shared contact email, image replacement, alt text and project route editing",
-        "publishReadiness": "Historical eight-flagship synthetic-session PASS at 03c7710; expanded preview/all-public-page/stale-write/five-viewport suite awaits exact-head CI",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks.",
         "releaseStatus": "candidate only; not approved for customer catalogue"
       },
       "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
@@ -1359,7 +1420,7 @@
         "public/layouts/premium/education.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -1391,7 +1452,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.scholar",
@@ -1416,7 +1481,7 @@
         "public/layouts/premium/education.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -1450,7 +1515,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.mentor",
@@ -1475,7 +1544,7 @@
         "public/layouts/premium/education.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -1507,7 +1576,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.elevate",
@@ -1532,7 +1605,7 @@
         "public/layouts/premium/education.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -1564,7 +1637,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.campus",
@@ -1589,7 +1666,7 @@
         "public/layouts/premium/education.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -1623,7 +1700,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.maison",
@@ -1649,10 +1730,11 @@
       "assets": [
         "public/layouts/premium/projects/maison.svg",
         "public/layouts/premium/flagships/maison.svg",
-        "public/layouts/premium/commerce.svg"
+        "public/layouts/premium/commerce.svg",
+        "public/layouts/premium/photography/maison-v1.webp"
       ],
-      "assetProvenance": "Original repository-authored project art, distinct flagship hero and category illustration. Three original registered artwork choices are available for galleries; screenshots and quality review must be refreshed.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "assetProvenance": "Original repository illustrations plus generated editorial photograph; prompts, hashes, dimensions and synthetic disclosure in docs/acceptance/phase-14/flagship-photography-provenance.json",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "Historical eight-flagship synthetic-session PASS at 03c7710; expanded preview/all-public-page/stale-write/five-viewport suite awaits exact-head CI",
@@ -1665,9 +1747,9 @@
       ],
       "engineeringProgress": {
         "previewPages": "Registered complete v2 page definitions using Phase 13 LayoutRenderer",
-        "studioAssignment": "Exposed via full canonical Layout ID in existing guarded draft mutation and Studio prototype selector",
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
         "contentEditor": "Text, verified shared contact email, image replacement, alt text and project route editing",
-        "publishReadiness": "Historical eight-flagship synthetic-session PASS at 03c7710; expanded preview/all-public-page/stale-write/five-viewport suite awaits exact-head CI",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks.",
         "releaseStatus": "candidate only; not approved for customer catalogue"
       },
       "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
@@ -1763,7 +1845,7 @@
         "public/layouts/premium/commerce.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -1797,7 +1879,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.object",
@@ -1822,7 +1908,7 @@
         "public/layouts/premium/commerce.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -1856,7 +1942,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.harvest",
@@ -1881,7 +1971,7 @@
         "public/layouts/premium/commerce.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -1913,7 +2003,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.lustre",
@@ -1938,7 +2032,7 @@
         "public/layouts/premium/commerce.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -1972,7 +2066,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.craft",
@@ -1997,7 +2095,7 @@
         "public/layouts/premium/commerce.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -2031,7 +2129,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.nexus",
@@ -2060,7 +2162,7 @@
         "public/layouts/premium/technology.svg"
       ],
       "assetProvenance": "Original repository-authored project art, distinct flagship hero and category illustration. Three original registered artwork choices are available for galleries; screenshots and quality review must be refreshed.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "Historical eight-flagship synthetic-session PASS at 03c7710; expanded preview/all-public-page/stale-write/five-viewport suite awaits exact-head CI",
@@ -2073,9 +2175,9 @@
       ],
       "engineeringProgress": {
         "previewPages": "Registered complete v2 page definitions using Phase 13 LayoutRenderer",
-        "studioAssignment": "Exposed via full canonical Layout ID in existing guarded draft mutation and Studio prototype selector",
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
         "contentEditor": "Text, verified shared contact email, image replacement, alt text and project route editing",
-        "publishReadiness": "Historical eight-flagship synthetic-session PASS at 03c7710; expanded preview/all-public-page/stale-write/five-viewport suite awaits exact-head CI",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks.",
         "releaseStatus": "candidate only; not approved for customer catalogue"
       },
       "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
@@ -2171,7 +2273,7 @@
         "public/layouts/premium/technology.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -2203,7 +2305,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.vector",
@@ -2228,7 +2334,7 @@
         "public/layouts/premium/technology.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -2262,7 +2368,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.pulse",
@@ -2287,7 +2397,7 @@
         "public/layouts/premium/technology.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -2321,7 +2431,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.vault",
@@ -2346,7 +2460,7 @@
         "public/layouts/premium/technology.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -2378,7 +2492,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.signal",
@@ -2403,7 +2521,7 @@
         "public/layouts/premium/technology.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -2437,7 +2555,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.impact",
@@ -2466,7 +2588,7 @@
         "public/layouts/premium/community.svg"
       ],
       "assetProvenance": "Original repository-authored project art, distinct flagship hero and category illustration. Three original registered artwork choices are available for galleries; screenshots and quality review must be refreshed.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "Historical eight-flagship synthetic-session PASS at 03c7710; expanded preview/all-public-page/stale-write/five-viewport suite awaits exact-head CI",
@@ -2479,9 +2601,9 @@
       ],
       "engineeringProgress": {
         "previewPages": "Registered complete v2 page definitions using Phase 13 LayoutRenderer",
-        "studioAssignment": "Exposed via full canonical Layout ID in existing guarded draft mutation and Studio prototype selector",
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
         "contentEditor": "Text, verified shared contact email, image replacement, alt text and project route editing",
-        "publishReadiness": "Historical eight-flagship synthetic-session PASS at 03c7710; expanded preview/all-public-page/stale-write/five-viewport suite awaits exact-head CI",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks.",
         "releaseStatus": "candidate only; not approved for customer catalogue"
       },
       "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
@@ -2575,7 +2697,7 @@
         "public/layouts/premium/community.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -2607,7 +2729,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.journal",
@@ -2632,7 +2758,7 @@
         "public/layouts/premium/community.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -2666,7 +2792,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.voice",
@@ -2691,7 +2821,7 @@
         "public/layouts/premium/community.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -2723,7 +2853,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.heritage",
@@ -2748,7 +2882,7 @@
         "public/layouts/premium/community.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -2780,7 +2914,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.collective",
@@ -2805,7 +2943,7 @@
         "public/layouts/premium/community.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -2839,7 +2977,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.estate",
@@ -2865,10 +3007,11 @@
       "assets": [
         "public/layouts/premium/projects/estate.svg",
         "public/layouts/premium/flagships/estate.svg",
-        "public/layouts/premium/services.svg"
+        "public/layouts/premium/services.svg",
+        "public/layouts/premium/photography/estate-v1.webp"
       ],
-      "assetProvenance": "Original repository-authored project art, distinct flagship hero and category illustration. Three original registered artwork choices are available for galleries; screenshots and quality review must be refreshed.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "assetProvenance": "Original repository illustrations plus generated editorial photograph; prompts, hashes, dimensions and synthetic disclosure in docs/acceptance/phase-14/flagship-photography-provenance.json",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "Historical eight-flagship synthetic-session PASS at 03c7710; expanded preview/all-public-page/stale-write/five-viewport suite awaits exact-head CI",
@@ -2881,9 +3024,9 @@
       ],
       "engineeringProgress": {
         "previewPages": "Registered complete v2 page definitions using Phase 13 LayoutRenderer",
-        "studioAssignment": "Exposed via full canonical Layout ID in existing guarded draft mutation and Studio prototype selector",
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
         "contentEditor": "Text, verified shared contact email, image replacement, alt text and project route editing",
-        "publishReadiness": "Historical eight-flagship synthetic-session PASS at 03c7710; expanded preview/all-public-page/stale-write/five-viewport suite awaits exact-head CI",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks.",
         "releaseStatus": "candidate only; not approved for customer catalogue"
       },
       "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
@@ -2979,7 +3122,7 @@
         "public/layouts/premium/services.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -3013,7 +3156,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.build",
@@ -3038,7 +3185,7 @@
         "public/layouts/premium/services.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -3072,7 +3219,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.motion",
@@ -3097,7 +3248,7 @@
         "public/layouts/premium/services.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -3129,7 +3280,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.local",
@@ -3154,7 +3309,7 @@
         "public/layouts/premium/services.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -3188,7 +3343,11 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     },
     {
       "id": "lucia.layout.greenfield",
@@ -3213,7 +3372,7 @@
         "public/layouts/premium/services.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "unitTestStatus": "658 tests across 68 files passed locally after full-catalogue contact/assignment coverage",
       "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
       "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
@@ -3247,12 +3406,17 @@
         "accepted": false,
         "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       },
-      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
+      "engineeringProgress": {
+        "studioAssignment": "Registered canonical candidate is supported by the existing authenticated, tenant-scoped, revision-checked assignment API and Studio selector. This is not visual release acceptance.",
+        "publishReadiness": "All 48 canonical IDs require replacement of demonstration contact emails. Full-catalogue isolated publishing suite is configured; exact-head result belongs to PR #136 checks."
+      }
     }
   ],
   "syntheticPublishingVerified": 8,
   "liveOAuthPublishingVerified": 0,
   "automatedBrowserChecked": 48,
   "visuallyReviewed": 0,
-  "publishingVerifiedHistorical": 8
+  "publishingVerifiedHistorical": 8,
+  "candidateAssignmentEnabled": 48
 }

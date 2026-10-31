@@ -50,8 +50,8 @@ const categoryOrder = [
   "estate", "care", "build", "motion", "local", "greenfield",
 ] as const;
 
-/** Only these flagship candidates are currently available for controlled 
- * layout-assignment integration tests. This list is NOT a release approval. */
+/** The first eight flagship identities define design review order.
+ * The canonical 48-ID list below bounds assignment; neither list is release approval. */
 export const premiumFlagshipIds = [
   "lucia.layout.meridian", "lucia.layout.canvas",
   "lucia.layout.haven", "lucia.layout.academia",
@@ -147,7 +147,7 @@ function buildCandidate(brief: PremiumCandidateBrief, siteName: string): Premium
     id: key + "-contact", type: "contact-panel",
     variant: index % 2 === 0 ? "minimal" : "split",
     heading: "A useful conversation starts here.",
-    body: "Fictional " + brief.name + " website demonstration. The address below is a non-working placeholder. Replace it and confirm enquiry handling before publication.",
+    body: "Fictional " + brief.name + " website demonstration. Use the address below for an enquiry; details and availability are confirmed directly.",
     email: "hello@example.com",
   });
   // These compositions intentionally use different page hierarchies, variants,

@@ -7,7 +7,7 @@ import {
   applyPremiumEdit,
 } from "./premium-composition";
 import { structuralLayout, structuralLayoutIds } from "./structural-layouts";
-import { premiumCandidate, premiumFlagshipIds } from "./premium-layouts/catalogue-candidates";
+import { premiumCandidate, premiumCandidateIds } from "./premium-layouts/catalogue-candidates";
 
 const legacyDefinitionSchema = z
   .object({
@@ -56,7 +56,7 @@ export const websiteMutationSchema = z.union([
   z
     .object({
       kind: z.literal("assign-layout"),
-      layoutId: z.enum([...structuralLayoutIds, ...premiumFlagshipIds]),
+      layoutId: z.enum([...structuralLayoutIds, ...premiumCandidateIds]),
     })
     .strict(),
   z
@@ -84,7 +84,7 @@ export function mutateWebsite(
     // A full canonical ID is deliberately distinct from the old structural
     // demo aliases. Assignment still runs inside existing authenticated,
     // organization-scoped, revision-checked server draft transactions.
-    if (premiumFlagshipIds.some((id) => id === mutation.layoutId))
+    if (premiumCandidateIds.some((id) => id === mutation.layoutId))
       return premiumCandidate(mutation.layoutId, stored.siteName);
     return structuralLayout(mutation.layoutId as (typeof structuralLayoutIds)[number], stored.siteName);
   }

@@ -8,6 +8,8 @@ import {
  * demonstrative and cannot be represented as a working service, verified
  * institution, or licensed photography.
  */
+import { flagshipEditorial } from "./flagship-editorial";
+
 type Interior = {
   path: string;
   label: string;
@@ -90,6 +92,8 @@ export function refineFlagship(base: PremiumLayout): PremiumLayout {
   const direction = directions[name];
   if (!direction) return base;
   const draft = structuredClone(base);
+  const editorial = flagshipEditorial[name];
+  draft.layoutVersion = 2;
   // Immersive hospitality, fashion and property compositions require a
   // deliberate full-width canvas rather than the generic reading measure.
   if (name === "haven" || name === "maison" || name === "estate")
@@ -123,8 +127,8 @@ export function refineFlagship(base: PremiumLayout): PremiumLayout {
   if (!hero || hero.type !== "premium-hero" || !image)
     throw Error("Flagship hero artwork not available");
   const heroArtwork = {
-    src: "builtin:premium/flagship-" + name,
-    alt: "Original editorial illustration developed for the " + name + " Layout"
+    src: ["haven", "maison", "estate"].includes(name) ? "builtin:premium/photograph-" + name : "builtin:premium/flagship-" + name,
+    alt: ["haven", "maison", "estate"].includes(name) ? "Generated fictional " + name + " editorial photograph; not an actual property or available product" : "Original editorial illustration developed for the " + name + " Layout"
   };
   const projectImages = [
     { src: "builtin:premium/project-" + name,
@@ -146,7 +150,28 @@ export function refineFlagship(base: PremiumLayout): PremiumLayout {
   if (hero.variant === "full-bleed" || hero.variant === "offset")
     hero.image = heroArtwork;
   else delete hero.image;
-  for (const [index, interior] of direction.interiors.entries()) {
+  if (editorial) {
+    draft.identity.description = "Fictional " + name + " demonstration. Original illustration and generated imagery; no real clients, products, properties or results are claimed.";
+    for (const page of draft.pages) {
+      for (const section of page.sections) {
+        if (section.type === "project-gallery") { section.heading = editorial.portfolioHeadline; section.projects = section.projects.map((item, i) => ({ ...item, description: editorial.cases[i % 3] })); }
+        if (section.type === "experience") {
+          const index = gallery?.type === "project-gallery" ? gallery.projects.findIndex((project) => section.heading.toLowerCase().includes(project.title.toLowerCase())) : 0;
+          section.body = editorial.cases[Math.max(0, index) % 3];
+        }
+        if (section.type === "contact-panel") section.body = "Tell us what you have in mind using the enquiry address below. This is a fictional design demonstration; no booking, purchase or application is made by sending a message.";
+        if (section.type === "service-journey") section.items = section.items.map((item, i) => ({ ...item, body: editorial.offers[i % 3] }));
+        if (section.type === "editorial-story") section.body = page.id.startsWith("study-") && !section.id.endsWith("-method") ? editorial.cases[(Number(page.id.slice(6)) - 1) % 3] : editorial.story;
+        if (section.type === "premium-hero") {
+          section.body = page.id.startsWith("study-") ? editorial.cases[(Number(page.id.slice(6)) - 1) % 3] : editorial.lead;
+          if (page.id === "offerings") section.heading = editorial.offerHeadline;
+          if (page.id === "portfolio") section.heading = editorial.portfolioHeadline;
+        }
+      }
+    }
+  }
+  for (const [index, originalInterior] of direction.interiors.entries()) {
+    const interior = { ...originalInterior, ...editorial?.pages[originalInterior.path] };
     const id = "flagship-" + (index + 1);
     const sections: PremiumSection[] = [
       {
@@ -170,6 +195,47 @@ export function refineFlagship(base: PremiumLayout): PremiumLayout {
         email: "hello@example.com",
       },
     ];
+    const comparisons: Record<string, { heading: string; items: { title: string; body: string }[] }> = {
+      "/rooms": { heading: "Three room concepts, compared", items: [
+        { title: "Garden Room", body: "An intimate room concept with a reading chair and a sheltered garden outlook. Ask about the actual bed configuration, step-free access and guest capacity." },
+        { title: "Courtyard Suite", body: "A suite concept that separates a sitting area from the sleeping space, with a quieter inward-facing outlook. Confirm the real floor plan and facilities before booking." },
+        { title: "Terrace Studio", body: "A more open studio concept connected to a private outdoor sitting area. Terrace access, safety features and availability must be confirmed directly." },
+      ] },
+      "/admissions": { heading: "From first question to a clear next step", items: [
+        { title: "Explore a subject", body: "Read the programme introduction and identify the topics you want to study in greater depth." },
+        { title: "Prepare your questions", body: "Make a note of your background, preferred timing, access requirements and the information you still need." },
+        { title: "Contact admissions", body: "Use the configured enquiry address to ask about suitability, official entry requirements and the application process." },
+        { title: "Confirm the details", body: "Check recognised status, dates, fees and the formal offer directly with the real institution. This demonstration issues no admissions decisions." },
+      ] },
+      "/process": { heading: "Question. Study. Edit.", items: [
+        { title: "Find the question", body: "Gather references and define what the work needs to communicate before deciding what it should look like." },
+        { title: "Make the studies", body: "Explore several directions through small experiments. Compare what each one makes possible rather than selecting a finish too early." },
+        { title: "Edit for clarity", body: "Develop the selected direction, test it in its intended formats and remove details that distract from the central idea." },
+      ] },
+      "/care-guide": { heading: "A considered approach to aftercare", items: [
+        { title: "Read the label", body: "Follow the instructions attached to the actual garment. Fibre blends and construction can require different treatment." },
+        { title: "Use the gentlest suitable method", body: "Avoid unnecessary heat or friction, and consult a specialist for delicate finishes or unfamiliar fabrics." },
+        { title: "Store with care", body: "Keep garments clean and dry, support their shape and protect sensitive materials from prolonged direct light." },
+      ] },
+      "/documentation": { heading: "Three boundaries worth documenting", items: [
+        { title: "Information", body: "Name required inputs, supported states and expected outputs. Keep the meaning of each field separate from its display." },
+        { title: "Authority", body: "Define who can read or change the information, and recheck that authority when an operation is performed." },
+        { title: "Recovery", body: "Describe retries, conflicts and partial failure so an interrupted workflow has a predictable next step." },
+      ] },
+      "/accountability": { heading: "An evidence-led reporting cycle", items: [
+        { title: "Listen", body: "Record the questions that shape a proposed activity and make room for different perspectives." },
+        { title: "Document", body: "Keep a dated account of decisions, responsibilities and the resources committed." },
+        { title: "Review", body: "Separate observed results from assumptions and explain the limits of the available evidence." },
+        { title: "Report", body: "Share a clear account of what happened, what was learned and which questions remain open. No fabricated outcomes are shown here." },
+      ] },
+      "/area-guide": { heading: "Look at an ordinary week", items: [
+        { title: "Everyday journeys", body: "Explore the routes you would use regularly. Check current transport information and consider different times of day." },
+        { title: "Useful nearby services", body: "Identify the shops, healthcare, learning and other facilities relevant to your needs; verify current details directly." },
+        { title: "The wider setting", body: "Spend time in the neighbourhood and ask about access, shared spaces and practical responsibilities before making a decision." },
+      ] },
+    };
+    const comparison = comparisons[interior.path];
+    if (comparison) sections.splice(2, 0, { id: id + "-guide", type: "service-journey", variant: ["/admissions", "/accountability", "/care-guide"].includes(interior.path) ? "chapters" : "columns", ...comparison });
     draft.pages.push({
       id, path: interior.path, title: interior.title,
       description: interior.lead, navigation: true, sections,

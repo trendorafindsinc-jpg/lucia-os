@@ -166,7 +166,7 @@ describe("Phase 14 canonical premium candidates — not release acceptance", () 
     const layout = premiumCandidate("lucia.layout.haven");
     const hero = layout.pages[0].sections.find((s) => s.type === "premium-hero");
     if (hero?.type !== "premium-hero" || !hero.image) throw Error("Missing hero art");
-    expect(hero.image.src).toBe("builtin:premium/flagship-haven");
+    expect(hero.image.src).toBe("builtin:premium/photograph-haven");
     const edited = applyPremiumEdit(layout, "guided", {
       kind: "replace-section", pageId: "home",
       section: {
@@ -188,7 +188,7 @@ describe("Phase 14 canonical premium candidates — not release acceptance", () 
       },
     })).toThrow();
     expect(layout.pages[0].sections.find((s) => s.id === hero.id)).toMatchObject({
-      image: { src: "builtin:premium/flagship-haven" },
+      image: { src: "builtin:premium/photograph-haven" },
     });
   });
 

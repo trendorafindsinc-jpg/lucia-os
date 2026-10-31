@@ -350,9 +350,13 @@ describe("versioned production website boundary", () => {
     },
   );
 
-  it("allows only the eight specified Phase 14 flagship candidate IDs for assignment", () => {
+  it("allows the registered catalogue IDs and rejects invented or unsafe assignment IDs", () => {
+    for (const registered of ["lucia.layout.keystone", "lucia.layout.greenfield"]) {
+      const value = mutateWebsite(makeInitialDraft("northstar-consulting"), websiteMutationSchema.parse({ kind: "assign-layout", layoutId: registered }));
+      expect(premiumLayoutSchema.parse(value).layoutId).toBe(registered);
+    }
     for (const denied of [
-      "lucia.layout.keystone", "lucia.layout.greenfield", "lucia.layout.fake",
+      "lucia.layout.fake",
       "lucia.layout.meridian/../../staff", "prototype:canvas",
     ]) {
       expect(websiteMutationSchema.safeParse({

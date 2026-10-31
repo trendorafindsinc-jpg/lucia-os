@@ -391,3 +391,14 @@
 /* Local: measured gallery description contrast was 4.47:1 with inherited
  * opacity. Keep the approved green ink opaque on its warm paper. */
 .premium-layout[data-layout-id="lucia.layout.local"] .premium-gallery-grid article p{opacity:1}
+
+/* Revision-2 photographic flagships: a bounded dark overlay guarantees white
+ * copy contrast even against a completely white source pixel. Persisted older
+ * structural versions retain their original treatment. */
+.premium-layout[data-layout-id="lucia.layout.haven"][data-layout-revision="2"] .premium-hero-full-bleed>img,
+.premium-layout[data-layout-id="lucia.layout.maison"][data-layout-revision="2"] .premium-hero-full-bleed>img,
+.premium-layout[data-layout-id="lucia.layout.estate"][data-layout-revision="2"] .premium-hero-full-bleed>img{opacity:1}
+.premium-layout[data-layout-id="lucia.layout.haven"][data-layout-revision="2"] .premium-hero-full-bleed::before,
+.premium-layout[data-layout-id="lucia.layout.maison"][data-layout-revision="2"] .premium-hero-full-bleed::before,
+.premium-layout[data-layout-id="lucia.layout.estate"][data-layout-revision="2"] .premium-hero-full-bleed::before{content:"";position:absolute;inset:0;z-index:-1;background:rgba(0,0,0,.62)}
+.premium-layout[data-layout-revision="2"] .premium-hero-full-bleed .layout-lede{opacity:1}

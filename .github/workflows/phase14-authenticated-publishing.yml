@@ -23,7 +23,7 @@ concurrency:
 
 jobs:
   acceptance:
-    name: Eight flagship real HTTP and browser publishing gates
+    name: 48 canonical Layout real HTTP and browser publishing gates
     runs-on: ubuntu-latest
     timeout-minutes: 25
     services:
@@ -82,7 +82,7 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Create acceptance evidence directory
         run: mkdir -p artifacts/phase14-auth-publish
-      - name: Test eight synthetic customers through real database and public host routing
+      - name: Test all 48 Layouts through real database and public host routing
         run: node scripts/check-website-foundation-http.mjs
       - name: Preserve actual test results and failure diagnostics
         if: always()

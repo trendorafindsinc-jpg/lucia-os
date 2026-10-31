@@ -1,5 +1,5 @@
 import type { PremiumLayout } from "./premium-composition";
-import { premiumFlagshipIds } from "./premium-layouts/catalogue-candidates";
+import { premiumCandidateIds } from "./premium-layouts/catalogue-candidates";
 
 /**
  * A candidate may be previewed and edited for free, but cannot be published
@@ -9,7 +9,7 @@ import { premiumFlagshipIds } from "./premium-layouts/catalogue-candidates";
 export function checkPremiumPublishContacts(
   definition: PremiumLayout,
 ): { ready: true } | { ready: false; reason: string } {
-  if (!premiumFlagshipIds.some((id) => id === definition.layoutId))
+  if (!premiumCandidateIds.some((id) => id === definition.layoutId))
     return { ready: true };
   const contacts = definition.pages.flatMap((page) =>
     page.sections.filter((s) => s.type === "contact-panel"),

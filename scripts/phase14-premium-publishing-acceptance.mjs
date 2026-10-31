@@ -18,7 +18,7 @@ export async function checkPhase14FlagshipPublishing({
   const canonical = inventory.layouts.map((entry) => entry.id.replace("lucia.layout.", ""));
   assert.equal(new Set(canonical).size, 48, "Catalogue must retain 48 canonical identities");
   const selection = process.env.WEBSITE_TEST_PHASE14_LAYOUTS || process.env.WEBSITE_TEST_PHASE14_LAYOUT;
-  const selected = selection === "all" ? canonical : selection ? selection.split(",") : flagships;
+  const selected = selection === "flagships" ? flagships : selection === "all" ? canonical : selection ? selection.split(",") : canonical;
   assert(selected.length && selected.every((name) => canonical.includes(name)), "Unregistered Phase 14 candidate requested");
   assert.equal(new Set(selected).size, selected.length, "Duplicate acceptance targets");
   const evidence = [];
@@ -88,9 +88,10 @@ export async function checkPhase14FlagshipPublishing({
       const gallery = portfolioPage?.sections.find((s) => s.type === "project-gallery");
       assert(gallery && portfolioPage, name + " missing portfolio page");
       const alt = name + " unique editable visual";
+      const replacementImage = gallery.projects[0].image.src === "builtin:portfolio/work-1" ? "builtin:premium/creative" : "builtin:portfolio/work-1";
       const projects = gallery.projects.map((project, i) => i === 0
         ? { ...project, image: {
-          src: "builtin:premium/project-" + name, alt,
+          src: replacementImage, alt,
         }} : project);
       const artUpdated = await api("a", draftRoute(id), "PATCH", {
         kind: "composition-edit", mode: "guided",
@@ -101,6 +102,7 @@ export async function checkPhase14FlagshipPublishing({
       saved = await (await api("a", draftRoute(id))).json();
       assert(saved.draft.pages.find((p) => p.id === portfolioPage.id)
         .sections.find((s) => s.id === gallery.id).projects[0].image.alt === alt);
+      assert.equal(saved.draft.pages.find((p) => p.id === portfolioPage.id).sections.find((s) => s.id === gallery.id).projects[0].image.src, replacementImage);
       const renamed = name + " acceptance website";
       const brandUpdated = await api("a", draftRoute(id), "PATCH", {
         kind: "composition-edit", mode: "guided",
@@ -169,10 +171,22 @@ export async function checkPhase14FlagshipPublishing({
       }
       const liveBrowser = await browserContext.newPage();
       const responsive = [];
+      const cdp = await browserContext.newCDPSession(liveBrowser);
+      await liveBrowser.addInitScript(() => {
+        window.__phase14Performance = { lcp: null, cls: 0 };
+        new PerformanceObserver((list) => { for (const entry of list.getEntries()) window.__phase14Performance.lcp = entry.startTime; }).observe({ type: "largest-contentful-paint", buffered: true });
+        new PerformanceObserver((list) => { for (const entry of list.getEntries()) if (!entry.hadRecentInput) window.__phase14Performance.cls += entry.value; }).observe({ type: "layout-shift", buffered: true });
+      });
       try {
         for (const viewport of [{ width: 320, height: 844 }, { width: 390, height: 844 },
           { width: 768, height: 1024 }, { width: 1180, height: 820 }, { width: 1440, height: 900 }]) {
           await liveBrowser.setViewportSize(viewport);
+          const throttled = viewport.width === 390;
+          await cdp.send("Network.enable");
+          if (throttled) await cdp.send("Network.clearBrowserCache");
+          await cdp.send("Network.setCacheDisabled", { cacheDisabled: throttled });
+          await cdp.send("Network.emulateNetworkConditions", { offline: false, latency: throttled ? 150 : 0, downloadThroughput: throttled ? 200000 : -1, uploadThroughput: throttled ? 93750 : -1 });
+          await cdp.send("Emulation.setCPUThrottlingRate", { rate: throttled ? 4 : 1 });
           const response = await liveBrowser.goto(
             "http://" + host + ":" + new URL(base).port + "/", { waitUntil: "networkidle" });
           assert.equal(response.status(), 200);
@@ -192,11 +206,13 @@ export async function checkPhase14FlagshipPublishing({
             await liveBrowser.locator('[data-page-path="' + expectedPath + '"]').waitFor();
             const metrics = await liveBrowser.evaluate(() => ({
               viewport: innerWidth, width: document.documentElement.scrollWidth,
+              performance: window.__phase14Performance,
+              resourceTransferBytes: performance.getEntriesByType("resource").reduce((total, entry) => total + entry.transferSize, 0),
               images: [...document.querySelectorAll('.premium-layout img')].map((node) => ({ complete: node.complete, width: node.naturalWidth })),
               navigation: performance.getEntriesByType('navigation').map((entry) => ({ domContentLoadedMs: entry.domContentLoadedEventEnd, transferBytes: entry.transferSize })),
             }));
             assert(metrics.width <= metrics.viewport + 1, name + " public overflow at " + viewport.width);
-            responsive.push({ viewport, path: expectedPath, metrics });
+            responsive.push({ viewport, path: expectedPath, throttling: throttled ? "1.6Mbps down / 750Kbps up / 150ms latency / CPU4x / cold cache" : "unthrottled", metrics });
           }
         }
       } finally {

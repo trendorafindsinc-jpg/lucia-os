@@ -4,11 +4,11 @@ import {
   mutateWebsite, websiteMutationSchema, websiteDefinitionSchema,
 } from "./website-definition";
 import { checkPremiumPublishContacts } from "./premium-publish-readiness";
-import { premiumFlagshipIds } from "./premium-layouts/catalogue-candidates";
+import { premiumCandidateIds } from "./premium-layouts/catalogue-candidates";
 import { premiumLayoutSchema } from "./premium-composition";
 
 describe("Phase 14 safe contact configuration before public promotion", () => {
-  it.each(premiumFlagshipIds)(
+  it.each(premiumCandidateIds)(
     "%s: refuses starter contact, propagates one authorized edit and then permits publication",
     (id) => {
       const initial = makeInitialDraft("northstar-consulting");

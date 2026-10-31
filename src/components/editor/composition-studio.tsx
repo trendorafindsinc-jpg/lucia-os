@@ -22,7 +22,7 @@ import {
   type PremiumLayout,
 } from "@/lib/layout-blueprint/premium-composition";
 import { structuralLayoutIds } from "@/lib/layout-blueprint/structural-layouts";
-import { premiumFlagshipIds } from "@/lib/layout-blueprint/premium-layouts/catalogue-candidates";
+import { premiumCandidateIds } from "@/lib/layout-blueprint/premium-layouts/catalogue-candidates";
 import { premiumArtworkChoices } from "@/lib/layout-blueprint/premium-layouts/asset-choices";
 
 type Loaded = { draft: WebsiteDefinition; revision: string; context: string };
@@ -146,8 +146,8 @@ export function CompositionStudio({
         aria-label="Layout starting designs"
       >
         <p>
-          The original engine demonstrations remain available. Eight Phase 14
-          flagship candidates can also be assigned for testing; they have
+          The original engine demonstrations remain available. The 48 registered Phase 14
+          candidates can also be assigned for engineering review; they have
           not passed premium design or publishing acceptance.
         </p>
         <label>
@@ -159,7 +159,7 @@ export function CompositionStudio({
               ))}
             </optgroup>
             <optgroup label="Phase 14 candidates — not accepted">
-              {premiumFlagshipIds.map((id) => (
+              {premiumCandidateIds.map((id) => (
                 <option key={id} value={id}>
                   {id.slice("lucia.layout.".length)}
                 </option>
