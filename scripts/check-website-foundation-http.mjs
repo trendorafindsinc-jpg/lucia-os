@@ -1008,6 +1008,14 @@ try {
       const {checkPremiumComposition} = await import("./premium-composition-acceptance.mjs");
       await checkPremiumComposition({api,admin,f,base,browserContext,created,bpass,publicSite});
     }
+    if (process.env.WEBSITE_TEST_PHASE14 === "1") {
+      const { checkPhase14FlagshipPublishing } = await import(
+        "./phase14-premium-publishing-acceptance.mjs"
+      );
+      await checkPhase14FlagshipPublishing({
+        api, admin, f, base, browserContext, created, bpass, publicSite,
+      });
+    }
     assert.equal(errors.length, 0, errors.join("\n"));
     bpass("No unhandled application errors");
   }
