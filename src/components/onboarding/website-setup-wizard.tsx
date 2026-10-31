@@ -164,6 +164,11 @@ export function WebsiteSetupWizard({ userId }: { userId: string }) {
         /* A local cache failure must not turn a committed project into a failed save. */
       }
       setSubmitted(true);
+      // Open the committed website in the existing editor, never a browser-only mock.
+      // The success screen remains available if a malformed ID is returned.
+      if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(payload.website.id)) {
+        window.location.assign(`/editor?websiteId=${encodeURIComponent(payload.website.id)}`);
+      }
     } catch {
       setSaveError(
         "We couldn’t reach LUCIA OS. Check your connection and try again.",

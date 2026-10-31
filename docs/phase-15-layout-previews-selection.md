@@ -30,3 +30,12 @@ New browser acceptance of the catalogue-to-creation UI is **not yet completed**.
 ## Next acceptance work
 
 Exercise the authenticated catalogue → interior-page preview → create → Studio → save → publish journey; verify 320/390/768/1180/1440 widths, keyboard focus, Back/Forward and refresh. Inspect initial v2 drafts in the existing isolated database suite. Improve discovery without substituting schematic legacy cards for actual previews. Complete per-design professional visual review separately, and retain clear candidate versus accepted status.
+
+## Follow-up engineering corrections (31 October 2026)
+
+- Corrected candidate discovery and filtering so descriptions, industries and Layout IDs can be searched, with a live count and empty-result feedback. Kept legacy starters, and explicitly labelled designs that remain under visual review.
+- Added a labelled preview page selector and keyboard focus restoration on real page changes; preserved the existing production renderer and safe return to the Layout Library.
+- After a successful server-side website creation, setup now directly opens the persisted editor at /editor?websiteId=<id>. No client-only projects or bypass of the authorized creation transaction.
+- Added all-48 homepage route cases to the existing preview test; these require CI execution and do not establish browser acceptance.
+
+**Remaining gates:** Authenticated end-to-end browser journeys, five responsive viewports, two-account real HTTP tenant isolation, external OAuth (where available), accessibility evidence, final-head CI/Vercel and production smoke tests. No fabricated screenshots, real OAuth claims or customer data writes. Phase 15 remains **INCOMPLETE** pending these checks. Global X-Frame-Options: DENY remains intact; no decorative device emulation has been introduced.

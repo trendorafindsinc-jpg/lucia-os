@@ -6,7 +6,7 @@ vi.mock("next/navigation", () => ({
   notFound: () => { throw new Error("not-found"); },
 }));
 import PreviewPage from "./page";
-import { premiumCandidate } from "@/lib/layout-blueprint/premium-layouts/catalogue-candidates";
+import { premiumCandidate, premiumCandidateIds } from "@/lib/layout-blueprint/premium-layouts/catalogue-candidates";
 
 describe("authenticated canonical Layout previews", () => {
   beforeEach(() => { vi.clearAllMocks(); mocks.currentUser.mockResolvedValue({ id: "test-customer" }); });
@@ -16,6 +16,12 @@ describe("authenticated canonical Layout previews", () => {
   });
   it.each([{ id: "staff" }, { id: "lucia.layout.haven", path: ["..", "workspace"] }, { id: "lucia.layout.haven", path: ["missing"] }])("rejects unknown destinations %j", async (params) => {
     await expect(PreviewPage({ params: Promise.resolve(params) })).rejects.toThrow("not-found");
+  });
+  it.each(premiumCandidateIds)("renders the real registered homepage for %s", async (id) => {
+    const definition = premiumCandidate(id);
+    const result = await PreviewPage({ params: Promise.resolve({ id }) });
+    expect(result.props.blueprint).toEqual(definition);
+    expect(result.props.pagePath).toBe("/");
   });
   it("renders the registered interior page with the production definition", async () => {
     const definition = premiumCandidate("lucia.layout.haven");

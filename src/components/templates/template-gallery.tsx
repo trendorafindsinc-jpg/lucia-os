@@ -216,6 +216,17 @@ export function TemplateGallery({
     });
   }, [category, search]);
 
+  const visiblePremium = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return premiumStartingLayouts.filter((layout) => {
+      const matchesCategory = category === "All" || layout.category === category;
+      const matchesSearch = !term || [
+        layout.name, layout.audience, layout.description, layout.category, layout.id,
+      ].join(" ").toLowerCase().includes(term);
+      return matchesCategory && matchesSearch;
+    });
+  }, [category, search]);
+
   return (
     <Root className="template-page">
       <header className="template-topbar">
@@ -243,12 +254,12 @@ export function TemplateGallery({
           <span>feels like you.</span>
         </h1>
         <p className="template-lede">
-          Explore the current Layout starters. Cards illustrate design
-          directions; open the working Studio preview to inspect the supported
-          composition before creating your website.
+          Explore 48 registered multi-page Layout candidates and 37 compatible legacy starters.
+          Open a real website preview to inspect its pages before choosing.
+          Visual acceptance of the premium candidates remains in progress.
         </p>
         <div className="template-count">
-          <strong>{websiteTemplates.length} existing Layout starters</strong>
+          <strong>{premiumStartingLayouts.length} premium candidates · {websiteTemplates.length} legacy starters</strong>
           <span> · {templateCategories.length - 1} categories · Layouts</span>
         </div>
         <div className="template-start-link">
@@ -295,21 +306,25 @@ export function TemplateGallery({
       </section>
       <section aria-labelledby="complete-layouts-title" className="template-results">
         <h2 id="complete-layouts-title">Explore complete multi-page previews</h2>
-        <p>Open the actual pages, navigation and artwork before choosing a starting design. Visual review of this collection is ongoing.</p>
+        <p>Browse the actual registered pages and navigation, then choose a design for your free website. These are candidates undergoing visual review, not 48 independently approved premium designs.</p>
+        <p aria-live="polite">{visiblePremium.length} of {premiumStartingLayouts.length} candidates shown</p>
         <div className="template-grid">
-          {premiumStartingLayouts.filter((layout) => (category === "All" || layout.category === category) && (!search.trim() || (layout.name + " " + layout.audience).toLowerCase().includes(search.trim().toLowerCase()))).map((layout) => (
+          {visiblePremium.map((layout) => (
             <article className="template-card" key={layout.id}>
               <div className="template-card-body">
                 <p className="template-audience">{layout.audience}</p>
                 <h3>{layout.name}</h3>
                 <p>{layout.description}</p>
-                <p>{layout.sections.length} registered pages · Free standard publishing</p>
+                <p>{layout.sections.length} registered pages · Free standard publishing · Visual review in progress</p>
                 <Link className="template-action" href={getLayoutPreviewHref(layout.id)}>Preview all pages →</Link>
                 <Link className="template-action" href={getTemplateSetupHref(layout.id)}>Create with {layout.name} →</Link>
               </div>
             </article>
           ))}
         </div>
+        {visiblePremium.length === 0 && (
+          <p role="status">No premium Layout candidates match these filters. Try another category or search term.</p>
+        )}
       </section>
       <section className="template-results" aria-live="polite">
         <div className="template-results-heading">
