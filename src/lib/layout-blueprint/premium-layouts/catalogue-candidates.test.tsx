@@ -1,0 +1,104 @@
+import React from "react";
+import { describe, expect, it } from "vitest";
+import { renderToStaticMarkup } from "react-dom/server";
+import { LayoutRenderer } from "@/components/layout-studio/layout-renderer";
+import {
+  premiumCandidate,
+  premiumCandidateIds,
+} from "./catalogue-candidates";
+import { premiumCandidateBriefs } from "./candidate-briefs";
+import { applyPremiumEdit, parsePremiumLayout } from "../premium-composition";
+
+describe("Phase 14 canonical premium candidates — not release acceptance", () => {
+  it("declares exactly the 48 unique canonical identities and 47 new authored briefs", () => {
+    expect(premiumCandidateIds).toHaveLength(48);
+    expect(new Set(premiumCandidateIds).size).toBe(48);
+    expect(premiumCandidateBriefs).toHaveLength(47);
+    expect(premiumCandidateIds[0]).toBe("lucia.layout.meridian");
+    expect(premiumCandidateIds[47]).toBe("lucia.layout.greenfield");
+  });
+
+  it.each(premiumCandidateIds)(
+    "%s: validates pages, case routes, ownership-safe paths and meaningful copy",
+    (id) => {
+      const definition = premiumCandidate(id);
+      expect(definition.layoutId).toBe(id);
+      expect(definition.version).toBe(2);
+      expect(definition.pages.length).toBeGreaterThanOrEqual(6);
+      expect(definition.pages.some((p) => p.path === "/contact")).toBe(true);
+      expect(definition.pages.every((p) => p.sections.length >= 2)).toBe(true);
+      expect(new Set(definition.pages.map((p) => p.path)).size).toBe(
+        definition.pages.length,
+      );
+      for (const nav of definition.navigation)
+        expect(definition.pages.some((p) => p.path === nav.href)).toBe(true);
+      const serialized = JSON.stringify(definition);
+      expect(serialized).toContain("Demo");
+      expect(serialized).not.toContain("javascript:");
+      expect(serialized).not.toContain("http://");
+      expect(serialized).not.toContain("https://");
+      expect(definition.pages[0].sections.some((s) => s.type === "contact-panel")).toBe(true);
+      expect(parsePremiumLayout(definition)).toEqual(definition);
+    },
+  );
+
+  it("renders every original flagship candidate on the production shared renderer", () => {
+    for (const id of [
+      "lucia.layout.meridian",
+      "lucia.layout.canvas",
+      "lucia.layout.haven",
+      "lucia.layout.academia",
+      "lucia.layout.maison",
+      "lucia.layout.nexus",
+      "lucia.layout.impact",
+      "lucia.layout.estate",
+    ]) {
+      const definition = premiumCandidate(id);
+      for (const page of definition.pages) {
+        const markup = renderToStaticMarkup(
+          <LayoutRenderer blueprint={definition} pagePath={page.path} />,
+        );
+        expect(markup).toContain('data-layout-version="2"');
+        expect(markup).toContain('data-page-path="' + page.path + '"');
+        expect(markup).toContain("Main navigation");
+      }
+    }
+  });
+
+  it("preserves 48 distinct editorial identities and adequate page diversity", () => {
+    const candidates = premiumCandidateIds.map((id) => premiumCandidate(id));
+    const identities = candidates.map((site) => [
+      site.tokens.background, site.tokens.foreground, site.tokens.accent,
+      site.pages[0].sections.find((s) => s.type === "premium-hero" && s.id === "home-hero")
+        ?.type ?? "meridian",
+      site.pages[0].sections.map((s) => s.type + ":" + s.variant).join(";"),
+    ].join("|"));
+    expect(new Set(identities).size).toBe(48);
+    expect(new Set(candidates.map((site) => site.pages[0].sections.map((s) => s.type).join("|"))).size)
+      .toBeGreaterThan(10);
+    expect(new Set(candidates.map((site) => site.category)).size).toBe(8);
+  });
+
+  it("allows validated content replacement while keeping original candidate unchanged", () => {
+    const original = premiumCandidate("lucia.layout.canvas");
+    const main = original.pages[0];
+    const section = main.sections.find((s) => s.type === "premium-hero");
+    if (!section || section.type !== "premium-hero") throw Error("Expected hero");
+    const edited = applyPremiumEdit(original, "guided", {
+      kind: "replace-section",
+      pageId: "home",
+      section: { ...section, heading: "A personal collection of original work" },
+    });
+    expect(edited.pages[0].sections.some((s) => s.type === "premium-hero" && s.heading === "A personal collection of original work")).toBe(true);
+    expect(original.pages[0].sections.some((s) => s.type === "premium-hero" && s.heading === "A personal collection of original work")).toBe(false);
+  });
+
+  it("rejects unsafe candidate destinations and unknown catalogue IDs", () => {
+    expect(() => premiumCandidate("lucia.layout.unknown")).toThrow();
+    const layout = premiumCandidate("lucia.layout.nexus");
+    const projects = layout.pages[0].sections.find((s) => s.type === "project-gallery");
+    if (!projects || projects.type !== "project-gallery") throw Error("Expected gallery");
+    projects.projects[0].href = "/staff";
+    expect(() => parsePremiumLayout(layout)).toThrow();
+  });
+});
