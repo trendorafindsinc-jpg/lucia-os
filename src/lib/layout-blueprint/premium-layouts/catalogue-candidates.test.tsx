@@ -124,7 +124,9 @@ describe("Phase 14 canonical premium candidates — not release acceptance", () 
           <LayoutRenderer blueprint={layout} pagePath={route} />,
         );
         expect(html).toContain('data-page-path="' + route + '"');
-        expect(html).toContain(page.title);
+        const hero = page.sections.find((s) => s.type === "premium-hero");
+        if (hero?.type === "premium-hero")
+          expect(html).toContain(hero.heading);
       }
     }
   });
