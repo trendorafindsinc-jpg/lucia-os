@@ -95,3 +95,6 @@
 .composition-controls button,.composition-controls a{padding:.7rem;min-height:44px}
 .composition-controls :focus-visible{outline:3px solid #4494dd;outline-offset:3px}
 @media(max-width:768px){.premium-layout .premium-contact-split,.premium-layout.premium-responsive-gallery .premium-gallery-grid{grid-template-columns:minmax(0,1fr)}.premium-layout .premium-hero-full-bleed{padding:1.25rem}}
+
+/* Native case rails remain keyboard reachable as premium compositions expand. */
+.premium-layout .premium-gallery-grid:focus-visible{outline:3px solid var(--layout-ink);outline-offset:4px}

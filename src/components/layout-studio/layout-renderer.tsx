@@ -373,14 +373,45 @@ function PremiumSectionView({
           className={`premium-section premium-gallery premium-gallery-${section.variant}`}
         >
           {heading(section.heading)}
-          <div className="premium-gallery-grid">
+          <div
+            className="premium-gallery-grid"
+            tabIndex={section.variant === "rail" ? 0 : undefined}
+            role={section.variant === "rail" ? "region" : undefined}
+            aria-label={
+              section.variant === "rail"
+                ? `${section.heading} — scrollable projects`
+                : undefined
+            }
+          >
             {section.projects.map((project, index) => (
               <article key={index}>
                 <PremiumAsset
                   alt={project.image.alt}
                   reference={project.image.src}
                 />
-                <h3>{project.title}</h3>
+                <h3>
+                  {project.href ? (
+                    <a
+                      href={
+                        project.href.startsWith("#")
+                          ? `#${prefix}${project.href.slice(1)}`
+                          : project.href
+                      }
+                      onClick={
+                        onNavigate && project.href.startsWith("/")
+                          ? (event) => {
+                              event.preventDefault();
+                              onNavigate(project.href!);
+                            }
+                          : undefined
+                      }
+                    >
+                      {project.title}
+                    </a>
+                  ) : (
+                    project.title
+                  )}
+                </h3>
                 {project.description && <p>{project.description}</p>}
               </article>
             ))}

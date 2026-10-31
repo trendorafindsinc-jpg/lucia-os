@@ -77,6 +77,7 @@ const gallery = z
           .object({
             title: text(120),
             image,
+            href: href.optional(),
             description: text(500).optional(),
           })
           .strict(),
@@ -268,18 +269,28 @@ export const premiumLayoutSchema = z
         });
     for (const [i, p] of definition.pages.entries()) {
       for (const [j, section] of p.sections.entries()) {
-        if (section.type !== "premium-hero" || !section.action) continue;
-        const target = section.action.href;
-        if (
-          !(target.startsWith("#")
-            ? p.sections.some((s) => s.id === target.slice(1))
-            : routes.has(target))
-        )
-          ctx.addIssue({
-            code: "custom",
-            path: ["pages", i, "sections", j, "action"],
-            message: "Action destination not registered",
-          });
+        const targets =
+          section.type === "premium-hero"
+            ? section.action
+              ? [section.action.href]
+              : []
+            : section.type === "project-gallery"
+              ? section.projects.flatMap((project) =>
+                  project.href ? [project.href] : [],
+                )
+              : [];
+        for (const target of targets) {
+          if (
+            !(target.startsWith("#")
+              ? p.sections.some((s) => s.id === target.slice(1))
+              : routes.has(target))
+          )
+            ctx.addIssue({
+              code: "custom",
+              path: ["pages", i, "sections", j],
+              message: "Section destination not registered",
+            });
+        }
       }
     }
     for (const [
