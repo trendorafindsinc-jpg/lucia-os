@@ -1,3 +1,7 @@
+import meridianPortrait from "../../../public/layouts/meridian/portrait.webp";
+import meridianServiceJourney from "../../../public/layouts/meridian/service-journey.webp";
+import meridianDirection from "../../../public/layouts/meridian/direction.webp";
+import meridianOperations from "../../../public/layouts/meridian/operations.webp";
 import meridianProject from "../../../public/layouts/premium/projects/meridian.svg";
 import canvasProject from "../../../public/layouts/premium/projects/canvas.svg";
 import havenProject from "../../../public/layouts/premium/projects/haven.svg";
@@ -31,6 +35,11 @@ import room from "../../../public/layouts/structural/room.svg";
 const path = (asset: string | { src: string }) =>
   typeof asset === "string" ? asset : asset.src;
 export const premiumAssets: Readonly<Record<string, string>> = Object.freeze({
+  "builtin:meridian/portrait": path(meridianPortrait),
+  "builtin:meridian/service-journey": path(meridianServiceJourney),
+  "builtin:meridian/direction": path(meridianDirection),
+  "builtin:meridian/operations": path(meridianOperations),
+
   "builtin:portfolio/work-1": path(portfolio),
   "builtin:hospitality/hero": path(retreat),
   "builtin:hospitality/stay": path(room),
@@ -60,6 +69,11 @@ export const premiumAssets: Readonly<Record<string, string>> = Object.freeze({
   "builtin:premium/project-estate": path(estateProject),
 });
 export const premiumAssetSources = [
+  "public/layouts/meridian/portrait.webp",
+  "public/layouts/meridian/service-journey.webp",
+  "public/layouts/meridian/direction.webp",
+  "public/layouts/meridian/operations.webp",
+
   "public/layouts/structural/portfolio.svg",
   "public/layouts/structural/retreat.svg",
   "public/layouts/structural/room.svg",
@@ -92,4 +106,10 @@ export function resolvePremiumAsset(reference: string): string {
   if (!Object.hasOwn(premiumAssets, reference))
     throw Error("Unknown built-in asset");
   return premiumAssets[reference];
+}
+
+export function premiumAssetDimensions(reference: string): {width: number; height: number} {
+  if (reference === "builtin:meridian/portrait") return { width: 900, height: 1125 };
+  if (reference.startsWith("builtin:meridian/")) return { width: 1100, height: 733 };
+  return { width: 800, height: 500 };
 }

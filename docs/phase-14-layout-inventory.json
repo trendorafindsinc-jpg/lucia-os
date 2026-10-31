@@ -19,20 +19,25 @@
         "/services",
         "/work",
         "/work/service-journey",
+        "/work/strategic-direction",
+        "/work/operating-rhythm",
+        "/about",
         "/insights",
-        "/contact"
+        "/contact",
+        "/privacy"
       ],
       "visualIdentity": "Editorial executive navy with offset case-study composition",
       "assets": [
-        "public/layouts/premium/projects/meridian.svg",
-        "public/layouts/premium/flagships/meridian.svg",
-        "public/layouts/premium/business.svg"
+        "public/layouts/meridian/portrait.webp",
+        "public/layouts/meridian/service-journey.webp",
+        "public/layouts/meridian/direction.webp",
+        "public/layouts/meridian/operations.webp"
       ],
-      "assetProvenance": "Original repository-authored project art, distinct flagship hero and category illustration. Three original registered artwork choices are available for galleries; screenshots and quality review must be refreshed.",
-      "unitTestStatus": "Quality run #? pending after screenshot fixes",
-      "responsiveReview": "Previous flagship screenshot evidence passed automated checks; design changes require screenshot recapture and reviewer score",
-      "accessibilityReview": "not run",
-      "publishingIntegration": "Isolated synthetic authenticated end-to-end published: PASS; LUCIA Core live OAuth: untested",
+      "assetProvenance": "Four original generated demonstration images; exact prompts, hashes, sizes and disclosure in docs/acceptance/phase-14/meridian/asset-provenance.json",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
+      "publishingIntegration": "Historical eight-flagship synthetic-session PASS at 03c7710; expanded preview/all-public-page/stale-write/five-viewport suite awaits exact-head CI",
       "designScore": null,
       "outstanding": [
         "Individual original imagery and design craft",
@@ -44,10 +49,10 @@
         "previewPages": "Registered complete v2 page definitions using Phase 13 LayoutRenderer",
         "studioAssignment": "Exposed via full canonical Layout ID in existing guarded draft mutation and Studio prototype selector",
         "contentEditor": "Text, verified shared contact email, image replacement, alt text and project route editing",
-        "publishReadiness": "Server rejects unfinished sample emails; real authenticated publishing acceptance not yet executed",
+        "publishReadiness": "Historical eight-flagship synthetic-session PASS at 03c7710; expanded preview/all-public-page/stale-write/five-viewport suite awaits exact-head CI",
         "releaseStatus": "candidate only; not approved for customer catalogue"
       },
-      "visualReview": "No five-viewport screenshots captured or reviewed",
+      "visualReview": "Actual desktop home and 320px Services screenshots inspected; original photography reconciled and 10 registered pages built. Full rubric and release acceptance remain open.",
       "integrationEvidence": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41193600346 artifact phase14-isolated-publishing-evidence",
       "knownIssues": [
         "Individual original imagery and design craft",
@@ -77,7 +82,7 @@
         "reviewStatus": "Preliminary screenshot inspection only; no completed design rubric or public publishing acceptance"
       },
       "syntheticPublishingEvidence": {
-        "result": "PASS — isolated compiled application, real database and browser, synthetic authenticated sessions",
+        "result": "PASS \u2014 isolated compiled application, real database and browser, synthetic authenticated sessions",
         "workflow": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41193600346",
         "codeCommit": "03c7710e01db748b5ab2b43ecea65500b3351521",
         "artifact": "phase14-isolated-publishing-evidence",
@@ -90,8 +95,29 @@
           "failed later publication preserves previous public page",
           "revoked membership loses protected website and publish access"
         ],
-        "liveLuciaCoreOAuth": "NOT VERIFIED — external sign-in/callback not exercised",
-        "releaseStatus": "NOT ACCEPTED — missing visual scoring, accessibility, performance and external OAuth acceptance"
+        "liveLuciaCoreOAuth": "NOT VERIFIED \u2014 external sign-in/callback not exercised",
+        "releaseStatus": "NOT ACCEPTED \u2014 missing visual scoring, accessibility, performance and external OAuth acceptance"
+      },
+      "automatedBrowserReview": {
+        "id": "lucia.layout.meridian",
+        "pagesInspected": [
+          "/",
+          "/services"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       }
     },
     {
@@ -117,9 +143,9 @@
         "public/layouts/premium/business.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -127,7 +153,29 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.keystone",
+        "pagesInspected": [
+          "/",
+          "/services"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.verity",
@@ -152,9 +200,9 @@
         "public/layouts/premium/business.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -162,7 +210,31 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.verity",
+        "pagesInspected": [
+          "/",
+          "/services"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [
+          "color-contrast"
+        ],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.summit",
@@ -187,9 +259,9 @@
         "public/layouts/premium/business.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -197,7 +269,29 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.summit",
+        "pagesInspected": [
+          "/",
+          "/services"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.foundry",
@@ -222,9 +316,9 @@
         "public/layouts/premium/business.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -232,7 +326,29 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.foundry",
+        "pagesInspected": [
+          "/",
+          "/services"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.civic",
@@ -257,9 +373,9 @@
         "public/layouts/premium/business.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -267,7 +383,31 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.civic",
+        "pagesInspected": [
+          "/",
+          "/services"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [
+          "color-contrast"
+        ],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.canvas",
@@ -296,10 +436,10 @@
         "public/layouts/premium/creative.svg"
       ],
       "assetProvenance": "Original repository-authored project art, distinct flagship hero and category illustration. Three original registered artwork choices are available for galleries; screenshots and quality review must be refreshed.",
-      "unitTestStatus": "Quality run #? pending after screenshot fixes",
-      "responsiveReview": "Previous flagship screenshot evidence passed automated checks; design changes require screenshot recapture and reviewer score",
-      "accessibilityReview": "not run",
-      "publishingIntegration": "Isolated synthetic authenticated end-to-end published: PASS; LUCIA Core live OAuth: untested",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
+      "publishingIntegration": "Historical eight-flagship synthetic-session PASS at 03c7710; expanded preview/all-public-page/stale-write/five-viewport suite awaits exact-head CI",
       "designScore": null,
       "outstanding": [
         "Individual original imagery and design craft",
@@ -311,10 +451,10 @@
         "previewPages": "Registered complete v2 page definitions using Phase 13 LayoutRenderer",
         "studioAssignment": "Exposed via full canonical Layout ID in existing guarded draft mutation and Studio prototype selector",
         "contentEditor": "Text, verified shared contact email, image replacement, alt text and project route editing",
-        "publishReadiness": "Server rejects unfinished sample emails; real authenticated publishing acceptance not yet executed",
+        "publishReadiness": "Historical eight-flagship synthetic-session PASS at 03c7710; expanded preview/all-public-page/stale-write/five-viewport suite awaits exact-head CI",
         "releaseStatus": "candidate only; not approved for customer catalogue"
       },
-      "visualReview": "No five-viewport screenshots captured or reviewed",
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
       "integrationEvidence": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41193600346 artifact phase14-isolated-publishing-evidence",
       "knownIssues": [
         "Individual original imagery and design craft",
@@ -344,7 +484,7 @@
         "reviewStatus": "Preliminary screenshot inspection only; no completed design rubric or public publishing acceptance"
       },
       "syntheticPublishingEvidence": {
-        "result": "PASS — isolated compiled application, real database and browser, synthetic authenticated sessions",
+        "result": "PASS \u2014 isolated compiled application, real database and browser, synthetic authenticated sessions",
         "workflow": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41193600346",
         "codeCommit": "03c7710e01db748b5ab2b43ecea65500b3351521",
         "artifact": "phase14-isolated-publishing-evidence",
@@ -357,8 +497,29 @@
           "failed later publication preserves previous public page",
           "revoked membership loses protected website and publish access"
         ],
-        "liveLuciaCoreOAuth": "NOT VERIFIED — external sign-in/callback not exercised",
-        "releaseStatus": "NOT ACCEPTED — missing visual scoring, accessibility, performance and external OAuth acceptance"
+        "liveLuciaCoreOAuth": "NOT VERIFIED \u2014 external sign-in/callback not exercised",
+        "releaseStatus": "NOT ACCEPTED \u2014 missing visual scoring, accessibility, performance and external OAuth acceptance"
+      },
+      "automatedBrowserReview": {
+        "id": "lucia.layout.canvas",
+        "pagesInspected": [
+          "/",
+          "/practice"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       }
     },
     {
@@ -384,9 +545,9 @@
         "public/layouts/premium/creative.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -394,7 +555,31 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.prism",
+        "pagesInspected": [
+          "/",
+          "/practice"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [
+          "color-contrast"
+        ],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.atelier",
@@ -419,9 +604,9 @@
         "public/layouts/premium/creative.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -429,7 +614,31 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.atelier",
+        "pagesInspected": [
+          "/",
+          "/practice"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [
+          "color-contrast"
+        ],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.monograph",
@@ -454,9 +663,9 @@
         "public/layouts/premium/creative.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -464,7 +673,29 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.monograph",
+        "pagesInspected": [
+          "/",
+          "/practice"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.frame",
@@ -489,9 +720,9 @@
         "public/layouts/premium/creative.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -499,7 +730,31 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.frame",
+        "pagesInspected": [
+          "/",
+          "/practice"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [
+          "color-contrast"
+        ],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.muse",
@@ -524,9 +779,9 @@
         "public/layouts/premium/creative.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -534,7 +789,31 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.muse",
+        "pagesInspected": [
+          "/",
+          "/practice"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [
+          "color-contrast"
+        ],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.savour",
@@ -559,9 +838,9 @@
         "public/layouts/premium/hospitality.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -569,7 +848,31 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.savour",
+        "pagesInspected": [
+          "/",
+          "/experiences"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [
+          "color-contrast"
+        ],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.haven",
@@ -598,10 +901,10 @@
         "public/layouts/premium/hospitality.svg"
       ],
       "assetProvenance": "Original repository-authored project art, distinct flagship hero and category illustration. Three original registered artwork choices are available for galleries; screenshots and quality review must be refreshed.",
-      "unitTestStatus": "Quality run #? pending after screenshot fixes",
-      "responsiveReview": "Previous flagship screenshot evidence passed automated checks; design changes require screenshot recapture and reviewer score",
-      "accessibilityReview": "not run",
-      "publishingIntegration": "Isolated synthetic authenticated end-to-end published: PASS; LUCIA Core live OAuth: untested",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
+      "publishingIntegration": "Historical eight-flagship synthetic-session PASS at 03c7710; expanded preview/all-public-page/stale-write/five-viewport suite awaits exact-head CI",
       "designScore": null,
       "outstanding": [
         "Individual original imagery and design craft",
@@ -613,10 +916,10 @@
         "previewPages": "Registered complete v2 page definitions using Phase 13 LayoutRenderer",
         "studioAssignment": "Exposed via full canonical Layout ID in existing guarded draft mutation and Studio prototype selector",
         "contentEditor": "Text, verified shared contact email, image replacement, alt text and project route editing",
-        "publishReadiness": "Server rejects unfinished sample emails; real authenticated publishing acceptance not yet executed",
+        "publishReadiness": "Historical eight-flagship synthetic-session PASS at 03c7710; expanded preview/all-public-page/stale-write/five-viewport suite awaits exact-head CI",
         "releaseStatus": "candidate only; not approved for customer catalogue"
       },
-      "visualReview": "No five-viewport screenshots captured or reviewed",
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
       "integrationEvidence": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41193600346 artifact phase14-isolated-publishing-evidence",
       "knownIssues": [
         "Individual original imagery and design craft",
@@ -646,7 +949,7 @@
         "reviewStatus": "Preliminary screenshot inspection only; no completed design rubric or public publishing acceptance"
       },
       "syntheticPublishingEvidence": {
-        "result": "PASS — isolated compiled application, real database and browser, synthetic authenticated sessions",
+        "result": "PASS \u2014 isolated compiled application, real database and browser, synthetic authenticated sessions",
         "workflow": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41193600346",
         "codeCommit": "03c7710e01db748b5ab2b43ecea65500b3351521",
         "artifact": "phase14-isolated-publishing-evidence",
@@ -659,8 +962,31 @@
           "failed later publication preserves previous public page",
           "revoked membership loses protected website and publish access"
         ],
-        "liveLuciaCoreOAuth": "NOT VERIFIED — external sign-in/callback not exercised",
-        "releaseStatus": "NOT ACCEPTED — missing visual scoring, accessibility, performance and external OAuth acceptance"
+        "liveLuciaCoreOAuth": "NOT VERIFIED \u2014 external sign-in/callback not exercised",
+        "releaseStatus": "NOT ACCEPTED \u2014 missing visual scoring, accessibility, performance and external OAuth acceptance"
+      },
+      "automatedBrowserReview": {
+        "id": "lucia.layout.haven",
+        "pagesInspected": [
+          "/",
+          "/experiences"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [
+          "color-contrast"
+        ],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       }
     },
     {
@@ -686,9 +1012,9 @@
         "public/layouts/premium/hospitality.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -696,7 +1022,31 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.bloom",
+        "pagesInspected": [
+          "/",
+          "/experiences"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [
+          "color-contrast"
+        ],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.nomad",
@@ -721,9 +1071,9 @@
         "public/layouts/premium/hospitality.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -731,7 +1081,31 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.nomad",
+        "pagesInspected": [
+          "/",
+          "/experiences"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [
+          "color-contrast"
+        ],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.gather",
@@ -756,9 +1130,9 @@
         "public/layouts/premium/hospitality.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -766,7 +1140,29 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.gather",
+        "pagesInspected": [
+          "/",
+          "/experiences"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.bistro",
@@ -791,9 +1187,9 @@
         "public/layouts/premium/hospitality.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -801,7 +1197,31 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.bistro",
+        "pagesInspected": [
+          "/",
+          "/experiences"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [
+          "color-contrast"
+        ],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.academia",
@@ -830,10 +1250,10 @@
         "public/layouts/premium/education.svg"
       ],
       "assetProvenance": "Original repository-authored project art, distinct flagship hero and category illustration. Three original registered artwork choices are available for galleries; screenshots and quality review must be refreshed.",
-      "unitTestStatus": "Quality run #? pending after screenshot fixes",
-      "responsiveReview": "Previous flagship screenshot evidence passed automated checks; design changes require screenshot recapture and reviewer score",
-      "accessibilityReview": "not run",
-      "publishingIntegration": "Isolated synthetic authenticated end-to-end published: PASS; LUCIA Core live OAuth: untested",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
+      "publishingIntegration": "Historical eight-flagship synthetic-session PASS at 03c7710; expanded preview/all-public-page/stale-write/five-viewport suite awaits exact-head CI",
       "designScore": null,
       "outstanding": [
         "Individual original imagery and design craft",
@@ -845,10 +1265,10 @@
         "previewPages": "Registered complete v2 page definitions using Phase 13 LayoutRenderer",
         "studioAssignment": "Exposed via full canonical Layout ID in existing guarded draft mutation and Studio prototype selector",
         "contentEditor": "Text, verified shared contact email, image replacement, alt text and project route editing",
-        "publishReadiness": "Server rejects unfinished sample emails; real authenticated publishing acceptance not yet executed",
+        "publishReadiness": "Historical eight-flagship synthetic-session PASS at 03c7710; expanded preview/all-public-page/stale-write/five-viewport suite awaits exact-head CI",
         "releaseStatus": "candidate only; not approved for customer catalogue"
       },
-      "visualReview": "No five-viewport screenshots captured or reviewed",
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
       "integrationEvidence": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41193600346 artifact phase14-isolated-publishing-evidence",
       "knownIssues": [
         "Individual original imagery and design craft",
@@ -878,7 +1298,7 @@
         "reviewStatus": "Preliminary screenshot inspection only; no completed design rubric or public publishing acceptance"
       },
       "syntheticPublishingEvidence": {
-        "result": "PASS — isolated compiled application, real database and browser, synthetic authenticated sessions",
+        "result": "PASS \u2014 isolated compiled application, real database and browser, synthetic authenticated sessions",
         "workflow": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41193600346",
         "codeCommit": "03c7710e01db748b5ab2b43ecea65500b3351521",
         "artifact": "phase14-isolated-publishing-evidence",
@@ -891,8 +1311,29 @@
           "failed later publication preserves previous public page",
           "revoked membership loses protected website and publish access"
         ],
-        "liveLuciaCoreOAuth": "NOT VERIFIED — external sign-in/callback not exercised",
-        "releaseStatus": "NOT ACCEPTED — missing visual scoring, accessibility, performance and external OAuth acceptance"
+        "liveLuciaCoreOAuth": "NOT VERIFIED \u2014 external sign-in/callback not exercised",
+        "releaseStatus": "NOT ACCEPTED \u2014 missing visual scoring, accessibility, performance and external OAuth acceptance"
+      },
+      "automatedBrowserReview": {
+        "id": "lucia.layout.academia",
+        "pagesInspected": [
+          "/",
+          "/programmes"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       }
     },
     {
@@ -918,9 +1359,9 @@
         "public/layouts/premium/education.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -928,7 +1369,29 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.sprout",
+        "pagesInspected": [
+          "/",
+          "/programmes"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.scholar",
@@ -953,9 +1416,9 @@
         "public/layouts/premium/education.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -963,7 +1426,31 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.scholar",
+        "pagesInspected": [
+          "/",
+          "/programmes"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [
+          "color-contrast"
+        ],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.mentor",
@@ -988,9 +1475,9 @@
         "public/layouts/premium/education.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -998,7 +1485,29 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.mentor",
+        "pagesInspected": [
+          "/",
+          "/programmes"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.elevate",
@@ -1023,9 +1532,9 @@
         "public/layouts/premium/education.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -1033,7 +1542,29 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.elevate",
+        "pagesInspected": [
+          "/",
+          "/programmes"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.campus",
@@ -1058,9 +1589,9 @@
         "public/layouts/premium/education.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -1068,7 +1599,31 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.campus",
+        "pagesInspected": [
+          "/",
+          "/programmes"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [
+          "color-contrast"
+        ],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.maison",
@@ -1097,10 +1652,10 @@
         "public/layouts/premium/commerce.svg"
       ],
       "assetProvenance": "Original repository-authored project art, distinct flagship hero and category illustration. Three original registered artwork choices are available for galleries; screenshots and quality review must be refreshed.",
-      "unitTestStatus": "Quality run #? pending after screenshot fixes",
-      "responsiveReview": "Previous flagship screenshot evidence passed automated checks; design changes require screenshot recapture and reviewer score",
-      "accessibilityReview": "not run",
-      "publishingIntegration": "Isolated synthetic authenticated end-to-end published: PASS; LUCIA Core live OAuth: untested",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
+      "publishingIntegration": "Historical eight-flagship synthetic-session PASS at 03c7710; expanded preview/all-public-page/stale-write/five-viewport suite awaits exact-head CI",
       "designScore": null,
       "outstanding": [
         "Individual original imagery and design craft",
@@ -1112,10 +1667,10 @@
         "previewPages": "Registered complete v2 page definitions using Phase 13 LayoutRenderer",
         "studioAssignment": "Exposed via full canonical Layout ID in existing guarded draft mutation and Studio prototype selector",
         "contentEditor": "Text, verified shared contact email, image replacement, alt text and project route editing",
-        "publishReadiness": "Server rejects unfinished sample emails; real authenticated publishing acceptance not yet executed",
+        "publishReadiness": "Historical eight-flagship synthetic-session PASS at 03c7710; expanded preview/all-public-page/stale-write/five-viewport suite awaits exact-head CI",
         "releaseStatus": "candidate only; not approved for customer catalogue"
       },
-      "visualReview": "No five-viewport screenshots captured or reviewed",
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
       "integrationEvidence": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41193600346 artifact phase14-isolated-publishing-evidence",
       "knownIssues": [
         "Individual original imagery and design craft",
@@ -1145,7 +1700,7 @@
         "reviewStatus": "Preliminary screenshot inspection only; no completed design rubric or public publishing acceptance"
       },
       "syntheticPublishingEvidence": {
-        "result": "PASS — isolated compiled application, real database and browser, synthetic authenticated sessions",
+        "result": "PASS \u2014 isolated compiled application, real database and browser, synthetic authenticated sessions",
         "workflow": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41193600346",
         "codeCommit": "03c7710e01db748b5ab2b43ecea65500b3351521",
         "artifact": "phase14-isolated-publishing-evidence",
@@ -1158,8 +1713,31 @@
           "failed later publication preserves previous public page",
           "revoked membership loses protected website and publish access"
         ],
-        "liveLuciaCoreOAuth": "NOT VERIFIED — external sign-in/callback not exercised",
-        "releaseStatus": "NOT ACCEPTED — missing visual scoring, accessibility, performance and external OAuth acceptance"
+        "liveLuciaCoreOAuth": "NOT VERIFIED \u2014 external sign-in/callback not exercised",
+        "releaseStatus": "NOT ACCEPTED \u2014 missing visual scoring, accessibility, performance and external OAuth acceptance"
+      },
+      "automatedBrowserReview": {
+        "id": "lucia.layout.maison",
+        "pagesInspected": [
+          "/",
+          "/collections"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [
+          "color-contrast"
+        ],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       }
     },
     {
@@ -1185,9 +1763,9 @@
         "public/layouts/premium/commerce.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -1195,7 +1773,31 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.origin",
+        "pagesInspected": [
+          "/",
+          "/collections"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [
+          "color-contrast"
+        ],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.object",
@@ -1220,9 +1822,9 @@
         "public/layouts/premium/commerce.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -1230,7 +1832,31 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.object",
+        "pagesInspected": [
+          "/",
+          "/collections"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [
+          "color-contrast"
+        ],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.harvest",
@@ -1255,9 +1881,9 @@
         "public/layouts/premium/commerce.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -1265,7 +1891,29 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.harvest",
+        "pagesInspected": [
+          "/",
+          "/collections"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.lustre",
@@ -1290,9 +1938,9 @@
         "public/layouts/premium/commerce.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -1300,7 +1948,31 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.lustre",
+        "pagesInspected": [
+          "/",
+          "/collections"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [
+          "color-contrast"
+        ],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.craft",
@@ -1325,9 +1997,9 @@
         "public/layouts/premium/commerce.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -1335,7 +2007,31 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.craft",
+        "pagesInspected": [
+          "/",
+          "/collections"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [
+          "color-contrast"
+        ],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.nexus",
@@ -1364,10 +2060,10 @@
         "public/layouts/premium/technology.svg"
       ],
       "assetProvenance": "Original repository-authored project art, distinct flagship hero and category illustration. Three original registered artwork choices are available for galleries; screenshots and quality review must be refreshed.",
-      "unitTestStatus": "Quality run #? pending after screenshot fixes",
-      "responsiveReview": "Previous flagship screenshot evidence passed automated checks; design changes require screenshot recapture and reviewer score",
-      "accessibilityReview": "not run",
-      "publishingIntegration": "Isolated synthetic authenticated end-to-end published: PASS; LUCIA Core live OAuth: untested",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
+      "publishingIntegration": "Historical eight-flagship synthetic-session PASS at 03c7710; expanded preview/all-public-page/stale-write/five-viewport suite awaits exact-head CI",
       "designScore": null,
       "outstanding": [
         "Individual original imagery and design craft",
@@ -1379,10 +2075,10 @@
         "previewPages": "Registered complete v2 page definitions using Phase 13 LayoutRenderer",
         "studioAssignment": "Exposed via full canonical Layout ID in existing guarded draft mutation and Studio prototype selector",
         "contentEditor": "Text, verified shared contact email, image replacement, alt text and project route editing",
-        "publishReadiness": "Server rejects unfinished sample emails; real authenticated publishing acceptance not yet executed",
+        "publishReadiness": "Historical eight-flagship synthetic-session PASS at 03c7710; expanded preview/all-public-page/stale-write/five-viewport suite awaits exact-head CI",
         "releaseStatus": "candidate only; not approved for customer catalogue"
       },
-      "visualReview": "No five-viewport screenshots captured or reviewed",
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
       "integrationEvidence": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41193600346 artifact phase14-isolated-publishing-evidence",
       "knownIssues": [
         "Individual original imagery and design craft",
@@ -1412,7 +2108,7 @@
         "reviewStatus": "Preliminary screenshot inspection only; no completed design rubric or public publishing acceptance"
       },
       "syntheticPublishingEvidence": {
-        "result": "PASS — isolated compiled application, real database and browser, synthetic authenticated sessions",
+        "result": "PASS \u2014 isolated compiled application, real database and browser, synthetic authenticated sessions",
         "workflow": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41193600346",
         "codeCommit": "03c7710e01db748b5ab2b43ecea65500b3351521",
         "artifact": "phase14-isolated-publishing-evidence",
@@ -1425,8 +2121,31 @@
           "failed later publication preserves previous public page",
           "revoked membership loses protected website and publish access"
         ],
-        "liveLuciaCoreOAuth": "NOT VERIFIED — external sign-in/callback not exercised",
-        "releaseStatus": "NOT ACCEPTED — missing visual scoring, accessibility, performance and external OAuth acceptance"
+        "liveLuciaCoreOAuth": "NOT VERIFIED \u2014 external sign-in/callback not exercised",
+        "releaseStatus": "NOT ACCEPTED \u2014 missing visual scoring, accessibility, performance and external OAuth acceptance"
+      },
+      "automatedBrowserReview": {
+        "id": "lucia.layout.nexus",
+        "pagesInspected": [
+          "/",
+          "/capabilities"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [
+          "color-contrast"
+        ],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       }
     },
     {
@@ -1452,9 +2171,9 @@
         "public/layouts/premium/technology.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -1462,7 +2181,29 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.orbit",
+        "pagesInspected": [
+          "/",
+          "/capabilities"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.vector",
@@ -1487,9 +2228,9 @@
         "public/layouts/premium/technology.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -1497,7 +2238,31 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.vector",
+        "pagesInspected": [
+          "/",
+          "/capabilities"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [
+          "color-contrast"
+        ],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.pulse",
@@ -1522,9 +2287,9 @@
         "public/layouts/premium/technology.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -1532,7 +2297,31 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.pulse",
+        "pagesInspected": [
+          "/",
+          "/capabilities"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [
+          "color-contrast"
+        ],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.vault",
@@ -1557,9 +2346,9 @@
         "public/layouts/premium/technology.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -1567,7 +2356,29 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.vault",
+        "pagesInspected": [
+          "/",
+          "/capabilities"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.signal",
@@ -1592,9 +2403,9 @@
         "public/layouts/premium/technology.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -1602,7 +2413,31 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.signal",
+        "pagesInspected": [
+          "/",
+          "/capabilities"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [
+          "color-contrast"
+        ],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.impact",
@@ -1631,10 +2466,10 @@
         "public/layouts/premium/community.svg"
       ],
       "assetProvenance": "Original repository-authored project art, distinct flagship hero and category illustration. Three original registered artwork choices are available for galleries; screenshots and quality review must be refreshed.",
-      "unitTestStatus": "Quality run #? pending after screenshot fixes",
-      "responsiveReview": "Previous flagship screenshot evidence passed automated checks; design changes require screenshot recapture and reviewer score",
-      "accessibilityReview": "not run",
-      "publishingIntegration": "Isolated synthetic authenticated end-to-end published: PASS; LUCIA Core live OAuth: untested",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
+      "publishingIntegration": "Historical eight-flagship synthetic-session PASS at 03c7710; expanded preview/all-public-page/stale-write/five-viewport suite awaits exact-head CI",
       "designScore": null,
       "outstanding": [
         "Individual original imagery and design craft",
@@ -1646,10 +2481,10 @@
         "previewPages": "Registered complete v2 page definitions using Phase 13 LayoutRenderer",
         "studioAssignment": "Exposed via full canonical Layout ID in existing guarded draft mutation and Studio prototype selector",
         "contentEditor": "Text, verified shared contact email, image replacement, alt text and project route editing",
-        "publishReadiness": "Server rejects unfinished sample emails; real authenticated publishing acceptance not yet executed",
+        "publishReadiness": "Historical eight-flagship synthetic-session PASS at 03c7710; expanded preview/all-public-page/stale-write/five-viewport suite awaits exact-head CI",
         "releaseStatus": "candidate only; not approved for customer catalogue"
       },
-      "visualReview": "No five-viewport screenshots captured or reviewed",
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
       "integrationEvidence": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41193600346 artifact phase14-isolated-publishing-evidence",
       "knownIssues": [
         "Individual original imagery and design craft",
@@ -1679,7 +2514,7 @@
         "reviewStatus": "Preliminary screenshot inspection only; no completed design rubric or public publishing acceptance"
       },
       "syntheticPublishingEvidence": {
-        "result": "PASS — isolated compiled application, real database and browser, synthetic authenticated sessions",
+        "result": "PASS \u2014 isolated compiled application, real database and browser, synthetic authenticated sessions",
         "workflow": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41193600346",
         "codeCommit": "03c7710e01db748b5ab2b43ecea65500b3351521",
         "artifact": "phase14-isolated-publishing-evidence",
@@ -1692,8 +2527,29 @@
           "failed later publication preserves previous public page",
           "revoked membership loses protected website and publish access"
         ],
-        "liveLuciaCoreOAuth": "NOT VERIFIED — external sign-in/callback not exercised",
-        "releaseStatus": "NOT ACCEPTED — missing visual scoring, accessibility, performance and external OAuth acceptance"
+        "liveLuciaCoreOAuth": "NOT VERIFIED \u2014 external sign-in/callback not exercised",
+        "releaseStatus": "NOT ACCEPTED \u2014 missing visual scoring, accessibility, performance and external OAuth acceptance"
+      },
+      "automatedBrowserReview": {
+        "id": "lucia.layout.impact",
+        "pagesInspected": [
+          "/",
+          "/initiatives"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       }
     },
     {
@@ -1719,9 +2575,9 @@
         "public/layouts/premium/community.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -1729,7 +2585,29 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.together",
+        "pagesInspected": [
+          "/",
+          "/initiatives"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.journal",
@@ -1754,9 +2632,9 @@
         "public/layouts/premium/community.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -1764,7 +2642,31 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.journal",
+        "pagesInspected": [
+          "/",
+          "/initiatives"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [
+          "color-contrast"
+        ],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.voice",
@@ -1789,9 +2691,9 @@
         "public/layouts/premium/community.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -1799,7 +2701,29 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.voice",
+        "pagesInspected": [
+          "/",
+          "/initiatives"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.heritage",
@@ -1824,9 +2748,9 @@
         "public/layouts/premium/community.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -1834,7 +2758,29 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.heritage",
+        "pagesInspected": [
+          "/",
+          "/initiatives"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.collective",
@@ -1859,9 +2805,9 @@
         "public/layouts/premium/community.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -1869,7 +2815,31 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.collective",
+        "pagesInspected": [
+          "/",
+          "/initiatives"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [
+          "color-contrast"
+        ],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.estate",
@@ -1898,10 +2868,10 @@
         "public/layouts/premium/services.svg"
       ],
       "assetProvenance": "Original repository-authored project art, distinct flagship hero and category illustration. Three original registered artwork choices are available for galleries; screenshots and quality review must be refreshed.",
-      "unitTestStatus": "Quality run #? pending after screenshot fixes",
-      "responsiveReview": "Previous flagship screenshot evidence passed automated checks; design changes require screenshot recapture and reviewer score",
-      "accessibilityReview": "not run",
-      "publishingIntegration": "Isolated synthetic authenticated end-to-end published: PASS; LUCIA Core live OAuth: untested",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
+      "publishingIntegration": "Historical eight-flagship synthetic-session PASS at 03c7710; expanded preview/all-public-page/stale-write/five-viewport suite awaits exact-head CI",
       "designScore": null,
       "outstanding": [
         "Individual original imagery and design craft",
@@ -1913,10 +2883,10 @@
         "previewPages": "Registered complete v2 page definitions using Phase 13 LayoutRenderer",
         "studioAssignment": "Exposed via full canonical Layout ID in existing guarded draft mutation and Studio prototype selector",
         "contentEditor": "Text, verified shared contact email, image replacement, alt text and project route editing",
-        "publishReadiness": "Server rejects unfinished sample emails; real authenticated publishing acceptance not yet executed",
+        "publishReadiness": "Historical eight-flagship synthetic-session PASS at 03c7710; expanded preview/all-public-page/stale-write/five-viewport suite awaits exact-head CI",
         "releaseStatus": "candidate only; not approved for customer catalogue"
       },
-      "visualReview": "No five-viewport screenshots captured or reviewed",
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open.",
       "integrationEvidence": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41193600346 artifact phase14-isolated-publishing-evidence",
       "knownIssues": [
         "Individual original imagery and design craft",
@@ -1946,7 +2916,7 @@
         "reviewStatus": "Preliminary screenshot inspection only; no completed design rubric or public publishing acceptance"
       },
       "syntheticPublishingEvidence": {
-        "result": "PASS — isolated compiled application, real database and browser, synthetic authenticated sessions",
+        "result": "PASS \u2014 isolated compiled application, real database and browser, synthetic authenticated sessions",
         "workflow": "https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/41193600346",
         "codeCommit": "03c7710e01db748b5ab2b43ecea65500b3351521",
         "artifact": "phase14-isolated-publishing-evidence",
@@ -1959,8 +2929,31 @@
           "failed later publication preserves previous public page",
           "revoked membership loses protected website and publish access"
         ],
-        "liveLuciaCoreOAuth": "NOT VERIFIED — external sign-in/callback not exercised",
-        "releaseStatus": "NOT ACCEPTED — missing visual scoring, accessibility, performance and external OAuth acceptance"
+        "liveLuciaCoreOAuth": "NOT VERIFIED \u2014 external sign-in/callback not exercised",
+        "releaseStatus": "NOT ACCEPTED \u2014 missing visual scoring, accessibility, performance and external OAuth acceptance"
+      },
+      "automatedBrowserReview": {
+        "id": "lucia.layout.estate",
+        "pagesInspected": [
+          "/",
+          "/services"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [
+          "color-contrast"
+        ],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
       }
     },
     {
@@ -1986,9 +2979,9 @@
         "public/layouts/premium/services.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -1996,7 +2989,31 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.care",
+        "pagesInspected": [
+          "/",
+          "/services"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [
+          "color-contrast"
+        ],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.build",
@@ -2021,9 +3038,9 @@
         "public/layouts/premium/services.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -2031,7 +3048,31 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.build",
+        "pagesInspected": [
+          "/",
+          "/services"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [
+          "color-contrast"
+        ],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.motion",
@@ -2056,9 +3097,9 @@
         "public/layouts/premium/services.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -2066,7 +3107,29 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.motion",
+        "pagesInspected": [
+          "/",
+          "/services"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.local",
@@ -2091,9 +3154,9 @@
         "public/layouts/premium/services.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -2101,7 +3164,31 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.local",
+        "pagesInspected": [
+          "/",
+          "/services"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [
+          "color-contrast"
+        ],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     },
     {
       "id": "lucia.layout.greenfield",
@@ -2126,9 +3213,9 @@
         "public/layouts/premium/services.svg"
       ],
       "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
-      "unitTestStatus": "pending exact-head confirmation",
-      "responsiveReview": "not run",
-      "accessibilityReview": "not run",
+      "unitTestStatus": "618 tests across 68 files passed locally; exact-head CI must be checked independently",
+      "responsiveReview": "PASS for automated geometry, image, heading, link and keyboard/menu checks at five emulated viewports; full human design review remains open",
+      "accessibilityReview": "Four scoped axe WCAG A/AA audits passed; incomplete manual checks retained in evidence. Screen-reader acceptance remains open.",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
@@ -2136,9 +3223,36 @@
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
         "32/40 scored visual review"
-      ]
+      ],
+      "automatedBrowserReview": {
+        "id": "lucia.layout.greenfield",
+        "pagesInspected": [
+          "/",
+          "/services"
+        ],
+        "viewports": [
+          "phone-320",
+          "phone-390",
+          "tablet",
+          "landscape",
+          "desktop"
+        ],
+        "screenshotCount": 10,
+        "axeAudits": 4,
+        "axeViolations": 0,
+        "manualCheckIds": [
+          "color-contrast"
+        ],
+        "visualRubricScore": null,
+        "accepted": false,
+        "evidence": "docs/acceptance/phase-14/catalogue-browser-2026-10-31.json"
+      },
+      "visualReview": "Screenshot capture is not visual acceptance. Complete per-Layout scorecard remains open."
     }
   ],
   "syntheticPublishingVerified": 8,
-  "liveOAuthPublishingVerified": 0
+  "liveOAuthPublishingVerified": 0,
+  "automatedBrowserChecked": 48,
+  "visuallyReviewed": 0,
+  "publishingVerifiedHistorical": 8
 }

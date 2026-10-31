@@ -136,6 +136,7 @@ export function refineFlagship(base: PremiumLayout): PremiumLayout {
   for (const existingPage of draft.pages) {
     for (const section of existingPage.sections) {
       if (section.type !== "project-gallery") continue;
+      if (name === "canvas") section.heading = "Selected works";
       section.projects = section.projects.map((project, i) => ({
         ...project, image: projectImages[i % projectImages.length],
       }));

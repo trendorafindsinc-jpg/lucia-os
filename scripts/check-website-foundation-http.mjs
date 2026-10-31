@@ -18,6 +18,7 @@ const sourceFiles = execFileSync(
     "--others",
     "--exclude-standard",
     "src",
+    "public",
     "scripts",
     "package.json",
     "package-lock.json",
@@ -60,6 +61,7 @@ let child,
   logs = "";
 const checks = [],
   browserChecks = [];
+let phase14Publishing = [];
 const pass = (name) => {
   checks.push(name);
   console.log("PASS", name);
@@ -1020,7 +1022,7 @@ try {
       const { checkPhase14FlagshipPublishing } = await import(
         "./phase14-premium-publishing-acceptance.mjs"
       );
-      await checkPhase14FlagshipPublishing({
+      phase14Publishing = await checkPhase14FlagshipPublishing({
         api, admin, f, base, browserContext, created, bpass, publicSite,
       });
     }
@@ -1059,6 +1061,7 @@ try {
           testedSource,
           checks,
           browserChecks,
+          phase14Publishing,
         },
         null,
         2,

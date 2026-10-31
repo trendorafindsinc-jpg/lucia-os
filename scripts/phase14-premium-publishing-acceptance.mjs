@@ -4,6 +4,7 @@
  */
 import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
+import { readFile } from "node:fs/promises";
 
 const flagships = ["meridian", "canvas", "haven", "academia",
   "maison", "nexus", "impact", "estate"];
@@ -13,10 +14,16 @@ const publishRoute = "/api/publishing/publish";
 export async function checkPhase14FlagshipPublishing({
   api, admin, f, base, browserContext, created, bpass, publicSite,
 }) {
-  const selected = process.env.WEBSITE_TEST_PHASE14_LAYOUT
-    ? flagships.filter((name) => name === process.env.WEBSITE_TEST_PHASE14_LAYOUT)
-    : flagships;
-  assert(selected.length, "Unregistered Phase 14 candidate requested");
+  const inventory = JSON.parse(await readFile("docs/phase-14-layout-inventory.json", "utf8"));
+  const canonical = inventory.layouts.map((entry) => entry.id.replace("lucia.layout.", ""));
+  assert.equal(new Set(canonical).size, 48, "Catalogue must retain 48 canonical identities");
+  const selection = process.env.WEBSITE_TEST_PHASE14_LAYOUTS || process.env.WEBSITE_TEST_PHASE14_LAYOUT;
+  const selected = selection === "all" ? canonical : selection ? selection.split(",") : flagships;
+  assert(selected.length && selected.every((name) => canonical.includes(name)), "Unregistered Phase 14 candidate requested");
+  assert.equal(new Set(selected).size, selected.length, "Duplicate acceptance targets");
+  const evidence = [];
+  // 'all' exercises the real assignment API; unavailable candidates fail closed.
+  // This must never enable unfinished Layouts or bypass the server allow-list.
   const view = await browserContext.newPage();
   view.setDefaultTimeout(45000);
   const errors = [];
@@ -40,6 +47,7 @@ export async function checkPhase14FlagshipPublishing({
       created.push(id);
       assert.equal(createdBody.organization.id, f.orgA);
       let saved = await (await api("a", draftRoute(id))).json();
+      const initialRevision = saved.revision;
       const assigned = await api("a", draftRoute(id), "PATCH", {
         kind: "assign-layout", layoutId: "lucia.layout." + name,
       }, { "if-match": saved.revision });
@@ -112,6 +120,10 @@ export async function checkPhase14FlagshipPublishing({
         kind: "composition-edit", mode: "guided",
         edits: [{ kind: "brand", name: "Stale request" }],
       }, { "if-match": "W/\"invalid\"" })).status, 428);
+      assert.equal((await api("a", draftRoute(id), "PATCH", {
+        kind: "composition-edit", mode: "guided",
+        edits: [{ kind: "brand", name: "Valid but stale revision" }],
+      }, { "if-match": initialRevision })).status, 409);
       const editorResponse = await view.goto(base + "/editor?websiteId=" + id,
         { waitUntil: "networkidle" });
       assert.equal(editorResponse?.status(), 200, name + " editor HTTP");
@@ -130,6 +142,16 @@ export async function checkPhase14FlagshipPublishing({
       await controls.waitFor({ timeout: 12000 });
       const current = await (await api("a", draftRoute(id))).json();
       assert.equal(current.draft.identity.name, renamed);
+      await view.goto(base + "/publish?websiteId=" + id, { waitUntil: "networkidle" });
+      await view.getByRole("button", { name: "Preview website", exact: true }).click();
+      const preview = view.getByRole("dialog");
+      await preview.locator('[data-layout-id="lucia.layout.' + name + '"]').waitFor();
+      assert.equal(await preview.locator('[data-page-path="/"]').count(), 1);
+      await preview.getByRole("navigation", { name: "Main navigation", exact: true })
+        .getByRole("link", { name: "Contact", exact: true }).click();
+      await preview.locator('[data-page-path="/contact"]').waitFor();
+      assert((await preview.innerText()).includes(email), name + " preview lost saved contact");
+      assert.equal(new URL(view.url()).pathname, "/publish", name + " private preview escaped into public routing");
       const published = await api("a", publishRoute, "POST", publishing(current),
         { "if-match": current.revision });
       const response = await published.json();
@@ -137,7 +159,7 @@ export async function checkPhase14FlagshipPublishing({
       assert.equal(response.published, true);
       assert.equal(response.customDomain.status, "not_requested");
       const host = siteSlug + ".lucia.name.ng";
-      for (const route of ["/", "/contact", portfolioPage.path]) {
+      for (const route of current.draft.pages.map((page) => page.path)) {
         const document = await publicSite(route, host);
         assert.equal(document.status, 200, name + " public route " + route);
         const html = await document.text();
@@ -146,20 +168,44 @@ export async function checkPhase14FlagshipPublishing({
         if (route === portfolioPage.path) assert(html.includes(alt));
       }
       const liveBrowser = await browserContext.newPage();
+      const responsive = [];
       try {
-        const response = await liveBrowser.goto(
-          "http://" + host + ":" + new URL(base).port + "/",
-          { waitUntil: "networkidle" },
-        );
-        assert.equal(response.status(), 200);
-        assert.equal(await liveBrowser.locator('[data-layout-version="2"]').count(), 1);
-        await liveBrowser.getByRole("navigation", { name: "Main navigation" })
-          .getByRole("link", { name: "Contact" }).click();
-        await liveBrowser.locator('[data-page-path="/contact"]').waitFor();
+        for (const viewport of [{ width: 320, height: 844 }, { width: 390, height: 844 },
+          { width: 768, height: 1024 }, { width: 1180, height: 820 }, { width: 1440, height: 900 }]) {
+          await liveBrowser.setViewportSize(viewport);
+          const response = await liveBrowser.goto(
+            "http://" + host + ":" + new URL(base).port + "/", { waitUntil: "networkidle" });
+          assert.equal(response.status(), 200);
+          assert.equal(await liveBrowser.locator('[data-layout-version="2"]').count(), 1);
+          for (const expectedPath of ["/", "/contact"]) {
+            if (expectedPath === "/contact") {
+              const mobile = liveBrowser.locator('.premium-mobile-menu summary');
+              if (await mobile.isVisible()) {
+                await mobile.click();
+                await liveBrowser.getByRole("navigation", { name: "Mobile navigation", exact: true })
+                  .getByRole("link", { name: "Contact", exact: true }).click();
+              } else {
+                await liveBrowser.getByRole("navigation", { name: "Main navigation", exact: true })
+                  .getByRole("link", { name: "Contact", exact: true }).click();
+              }
+            }
+            await liveBrowser.locator('[data-page-path="' + expectedPath + '"]').waitFor();
+            const metrics = await liveBrowser.evaluate(() => ({
+              viewport: innerWidth, width: document.documentElement.scrollWidth,
+              images: [...document.querySelectorAll('.premium-layout img')].map((node) => ({ complete: node.complete, width: node.naturalWidth })),
+              navigation: performance.getEntriesByType('navigation').map((entry) => ({ domContentLoadedMs: entry.domContentLoadedEventEnd, transferBytes: entry.transferSize })),
+            }));
+            assert(metrics.width <= metrics.viewport + 1, name + " public overflow at " + viewport.width);
+            responsive.push({ viewport, path: expectedPath, metrics });
+          }
+        }
       } finally {
         await liveBrowser.close();
       }
       const lastGood = await (await publicSite("/", host)).text();
+      assert.equal((await api("a", publishRoute, "POST", publishing(current),
+        { "if-match": initialRevision })).status, 409, name + " stale publication accepted");
+      assert.equal(await (await publicSite("/", host)).text(), lastGood);
       // Intentionally corrupt only this generated, isolated test draft.
       await admin.unsafe("UPDATE website_pages SET content=$1 WHERE website_id=$2 AND path='/'",
         ['{"schema":"lucia.layout-composition","version":2}', id]);
@@ -181,9 +227,14 @@ export async function checkPhase14FlagshipPublishing({
           [f.a, f.orgA]);
       }
       bpass(name + ": real synthetic-session create/assign/edit/reload/publish/public routes, tenant denial and rollback");
+      evidence.push({ layoutId: current.draft.layoutId, pages: current.draft.pages.map((page) => page.path),
+        previewPaths: ["/", "/contact"], publicResponsive: responsive,
+        tenantDenial: "PASS", staleSave: "PASS", stalePublish: "PASS", corruptPublicationPreservesLive: "PASS", revokedMembership: "PASS",
+        authentication: "Synthetic session; not live Core OAuth", result: "PASS" });
     }
     assert.equal(errors.length, 0, errors.join("; "));
   } finally {
     await view.close();
   }
+  return evidence;
 }

@@ -17,10 +17,14 @@ export function meridianCandidate(siteName = "Meridian Advisory · Demo") {
     eyebrow: "Independent advisory / Demonstration",
     heading,
     body,
-    image: {
-      src: "builtin:premium/flagship-meridian",
-      alt: "Original editorial illustration developed for the Meridian advisory Layout",
-    },
+    ...(id === "home-hero" || id === "about-hero"
+      ? {
+          image: {
+            src: "builtin:meridian/portrait",
+            alt: "Generated editorial portrait illustrating a fictional advisory practice",
+          },
+        }
+      : {}),
     action: {
       label:
         href === "/contact"
@@ -79,10 +83,30 @@ export function meridianCandidate(siteName = "Meridian Advisory · Demo") {
         description:
           "A fictional case demonstrating how research becomes an actionable service blueprint.",
         image: {
-          src: "builtin:premium/project-meridian",
-          alt: "Original architectural composition representing a fictional service-design case",
+          src: "builtin:meridian/service-journey",
+          alt: "Generated image of a calm reception space, illustrating a service-design scenario",
         },
         href: "/work/service-journey",
+      },
+      {
+        title: "Choosing what matters",
+        description:
+          "An illustrative strategy scenario: make the choices, assumptions and next steps explicit.",
+        image: {
+          src: "builtin:meridian/direction",
+          alt: "Generated still life of a plan, notebook and brass ruler",
+        },
+        href: "/work/strategic-direction",
+      },
+      {
+        title: "A rhythm for everyday work",
+        description:
+          "An illustrative operating-model scenario: turn a direction into shared responsibilities.",
+        image: {
+          src: "builtin:meridian/operations",
+          alt: "Generated architectural passage with repeated columns and natural light",
+        },
+        href: "/work/operating-rhythm",
       },
     ],
   };
@@ -97,7 +121,7 @@ export function meridianCandidate(siteName = "Meridian Advisory · Demo") {
         hero(
           "home-hero",
           "Decisions with direction.",
-          "Independent thinking for organisations shaping their next chapter. A demonstration of a measured, human approach to advisory work.",
+          "Independent thinking for organisations shaping their next chapter. We bring perspective to complex decisions — and work with you to make progress practical.",
         ),
         {
           id: "home-focus",
@@ -218,6 +242,141 @@ export function meridianCandidate(siteName = "Meridian Advisory · Demo") {
       ],
     },
   ];
+  definitions.splice(
+    4,
+    0,
+    {
+      id: "direction-case",
+      path: "/work/strategic-direction",
+      title: `Choosing what matters — ${siteName}`,
+      description:
+        "An illustrative strategy case: make the choices and assumptions visible.",
+      sections: [
+        hero(
+          "direction-hero",
+          "A shared direction, not another document.",
+          "Illustrative scenario / Strategy. A fictional organisation needs to make priorities clear while preserving the work that already matters.",
+        ),
+        {
+          id: "direction-image",
+          type: "experience",
+          variant: "editorial",
+          heading: "Make the important choices visible.",
+          body: "Generated illustrative image. This is not a photograph of a client engagement.",
+          image: {
+            src: "builtin:meridian/direction",
+            alt: "Generated planning still life with a notebook and brass ruler",
+          },
+        },
+        story(
+          "direction-question",
+          "What deserves attention now?",
+          "Teams can have a long list of good ideas and still disagree about the next step. In this scenario, the task is to define the few choices that change how time, attention and resources are used.",
+        ),
+        story(
+          "direction-method",
+          "Name the trade-offs",
+          "Bring the people responsible for delivery into the conversation. Record the alternatives, make assumptions visible and agree what the organisation will stop doing as well as what it will start.",
+        ),
+        story(
+          "direction-evidence",
+          "Evidence to review",
+          "A real engagement would document its baseline, decision owners and review dates. This fictional example deliberately makes no claim about revenue, growth or actual client outcomes.",
+        ),
+        contact("direction-contact"),
+      ],
+    },
+    {
+      id: "operations-case",
+      path: "/work/operating-rhythm",
+      title: `An operating rhythm — ${siteName}`,
+      description:
+        "An illustrative operating-model case about ownership and practical routines.",
+      sections: [
+        hero(
+          "operations-hero",
+          "A way of working that supports the work.",
+          "Illustrative scenario / Operating model. A fictional organisation wants clearer ownership without adding unnecessary process.",
+        ),
+        {
+          id: "operations-image",
+          type: "experience",
+          variant: "editorial",
+          heading: "Create a structure people can use.",
+          body: "Generated architectural illustration, not an actual client property.",
+          image: {
+            src: "builtin:meridian/operations",
+            alt: "Generated covered passage and courtyard in warm morning light",
+          },
+        },
+        story(
+          "operations-question",
+          "Where does work get stuck?",
+          "Look at the hand-offs between teams, the decisions that wait for approval and the information people need to do their jobs. Begin with the actual work rather than an idealised organisation chart.",
+        ),
+        story(
+          "operations-method",
+          "Define a practical rhythm",
+          "Agree responsibilities, a short set of working routines and a clear escalation path. Test the approach with one real workflow before expanding it. Keep the process proportionate to the problem.",
+        ),
+        story(
+          "operations-evidence",
+          "What would count as progress?",
+          "In a real case, agreed measures might include the time needed to make a decision or the quality of a hand-off. No measured improvement is invented for this demonstration.",
+        ),
+        contact("operations-contact"),
+      ],
+    },
+    {
+      id: "about",
+      path: "/about",
+      title: `About — ${siteName}`,
+      description: "A human, independent approach to advisory work.",
+      sections: [
+        hero(
+          "about-hero",
+          "Independent perspective. Shared ownership.",
+          "A demonstration of an advisory practice built around thoughtful questions, clear choices and the people who carry them forward.",
+        ),
+        story(
+          "about-principles",
+          "Stay close to the people and the problem",
+          "Good recommendations should be understandable to the people expected to act on them. Our sample approach combines independent thinking with practical collaboration, leaving a clear record of choices and assumptions.",
+        ),
+        story(
+          "about-demo",
+          "A fictional practice, clearly presented",
+          "Meridian is a demonstration website. Its portrait and project images are generated illustrations, not actual advisors, client properties or proof of commercial results. Replace the sample content with your own verified business information.",
+        ),
+        contact("about-contact"),
+      ],
+    },
+  );
+  definitions.push({
+    id: "privacy",
+    path: "/privacy",
+    title: `Demonstration privacy notice — ${siteName}`,
+    description:
+      "How the demonstration contact links work and what to replace before launch.",
+    sections: [
+      hero(
+        "privacy-hero",
+        "Clear expectations about contact.",
+        "Demonstration notice — replace this text with the policy that accurately describes your own business before launch.",
+      ),
+      story(
+        "privacy-contact",
+        "Email links, not a submission form",
+        "The contact action opens your own email application. This design does not submit enquiry messages to a built-in customer database or activate an analytics integration. Your email provider handles any message you choose to send.",
+      ),
+      story(
+        "privacy-launch",
+        "Before you publish your own business",
+        "Use a contact address you control. Describe the information your organisation actually collects, the services it uses and how customers can contact it about their data. This sample is not a completed policy for your business.",
+      ),
+      contact("privacy-details"),
+    ],
+  });
   return parsePremiumLayout({
     schema: "lucia.layout-composition",
     version: 2,
@@ -227,13 +386,13 @@ export function meridianCandidate(siteName = "Meridian Advisory · Demo") {
     identity: {
       name: siteName,
       description:
-        "Fictional executive advisory practice. Phase 14 design candidate awaiting visual, asset and publishing acceptance.",
+        "Fictional advisory demonstration. Portrait and project images are generated illustrations, not actual advisors, clients or results.",
     },
     tokens: {
       background: "#F5F1E8",
       foreground: "#10263D",
       accent: "#9D793B",
-      font: "editorial-serif",
+      font: "system-sans",
       scale: "balanced",
       width: "standard",
       radius: "square",
@@ -244,8 +403,10 @@ export function meridianCandidate(siteName = "Meridian Advisory · Demo") {
       { label: "Home", href: "/" },
       { label: "Services", href: "/services" },
       { label: "Work", href: "/work" },
+      { label: "About", href: "/about" },
       { label: "Perspectives", href: "/insights" },
       { label: "Contact", href: "/contact" },
+      { label: "Privacy", href: "/privacy" },
     ],
     pages: definitions.map((p) => ({
       ...p,

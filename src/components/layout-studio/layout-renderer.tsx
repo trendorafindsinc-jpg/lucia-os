@@ -1,4 +1,4 @@
-import { resolvePremiumAsset } from "@/lib/layout-blueprint/premium-assets";
+import { resolvePremiumAsset, premiumAssetDimensions } from "@/lib/layout-blueprint/premium-assets";
 import Image from "next/image";
 import React, { type CSSProperties } from "react";
 import type {
@@ -217,9 +217,10 @@ function PremiumLayoutPage({
   const Root = preview ? "div" : "main";
   return (
     <Root
-      className={`layout-site premium-layout premium-scale-${t.scale} premium-rhythm-${t.rhythm} premium-radius-${t.radius} premium-responsive-${page.responsive}`}
+      className={`layout-site premium-layout premium-design-${definition.layoutId.slice("lucia.layout.".length)}-r${definition.layoutVersion} premium-scale-${t.scale} premium-rhythm-${t.rhythm} premium-radius-${t.radius} premium-responsive-${page.responsive}`}
       style={style}
       data-layout-version="2"
+      data-layout-revision={definition.layoutVersion}
       data-layout-id={definition.layoutId}
       data-page-path={page.path}
     >
@@ -524,8 +525,7 @@ function PremiumAsset({ alt, reference, eager = false }: { alt: string; referenc
       className="premium-asset"
       src={resolvePremiumAsset(reference)}
       alt={alt}
-      width={800}
-      height={500}
+      {...premiumAssetDimensions(reference)}
       loading={eager ? "eager" : "lazy"}
       fetchPriority={eager ? "high" : "auto"}
       sizes="(max-width: 768px) 100vw, (max-width: 1180px) 50vw, 800px"
