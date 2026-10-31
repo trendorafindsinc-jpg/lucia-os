@@ -311,6 +311,7 @@ export const parsePremiumLayout = (input: unknown): PremiumLayout =>
 /** Every edit is applied to an independently validated copy. Server callers
  * must still authenticate, authorize tenant ownership and enforce revisions. */
 export type PremiumEdit =
+  | { kind: "brand"; name: string }
   | {
       kind: "insert-section";
       pageId: string;
