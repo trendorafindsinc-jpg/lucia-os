@@ -94,11 +94,24 @@ export function refineFlagship(base: PremiumLayout): PremiumLayout {
   const portfolio = draft.pages.find((page) => page.id === "portfolio");
   if (!home || !portfolio) throw Error("Flagship requires homepage and portfolio");
   const keys = ["hero", "index", "chapters", "gallery", "story", "feature", "contact"] as const;
-  const map = new Map(keys.map((key) => [key, home.sections.find((section) => section.id === "home-" + key)]));
+  const allSections = draft.pages.flatMap((page) => page.sections);
+  const map = new Map(keys.map((key) => {
+    const original = home.sections.find((section) => section.id === "home-" + key);
+    const fallback = allSections.find((section) => section.id.endsWith("-" + key));
+    const section = original ?? (fallback ? { ...fallback, id: "home-" + key } : undefined);
+    return [key, section] as const;
+  }));
   home.sections = direction.homeSequence.map((key) => {
     const section = map.get(key);
-    if (!section) throw Error("Missing flagship section " + key);
-    return section;
+    if (section) return section;
+    if (key === "index") {
+      const offering = draft.pages.flatMap((page) => page.sections)
+        .find((item) => item.type === "service-journey");
+      if (offering?.type === "service-journey")
+        return { id: "home-index", type: "trust-strip", variant: "inline",
+          items: offering.items.map((item) => item.title) } satisfies PremiumSection;
+    }
+    throw Error("Missing flagship section " + key);
   });
   const hero = home.sections.find((section) => section.type === "premium-hero");
   const gallery = portfolio.sections.find((section) => section.type === "project-gallery");
