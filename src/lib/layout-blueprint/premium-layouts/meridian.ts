@@ -18,8 +18,8 @@ export function meridianCandidate(siteName = "Meridian Advisory · Demo") {
     heading,
     body,
     image: {
-      src: "builtin:premium/business",
-      alt: "Original architectural illustration with arches and geometric forms",
+      src: "builtin:premium/flagship-meridian",
+      alt: "Original editorial illustration developed for the Meridian advisory Layout",
     },
     action: {
       label:
