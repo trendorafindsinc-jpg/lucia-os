@@ -24,15 +24,31 @@
       ],
       "visualIdentity": "Editorial executive navy with offset case-study composition",
       "assets": [
+        "public/layouts/premium/flagships/meridian.svg",
         "public/layouts/premium/business.svg"
       ],
-      "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
+      "assetProvenance": "Original repo-authored per-flagship SVG hero and category-level illustration. Artwork belongs to this repository; per-layout galleries and visual quality still need independent review.",
       "unitTestStatus": "pending exact-head confirmation",
       "responsiveReview": "not run",
       "accessibilityReview": "not run",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
+        "Individual original imagery and design craft",
+        "Five-viewport screenshot and accessibility acceptance",
+        "Authenticated tenant-isolated create/save/preview/publish acceptance",
+        "32/40 scored visual review"
+      ],
+      "engineeringProgress": {
+        "previewPages": "Registered complete v2 page definitions using Phase 13 LayoutRenderer",
+        "studioAssignment": "Exposed via full canonical Layout ID in existing guarded draft mutation and Studio prototype selector",
+        "contentEditor": "Text, verified shared contact email, image replacement, alt text and project route editing",
+        "publishReadiness": "Server rejects unfinished sample emails; real authenticated publishing acceptance not yet executed",
+        "releaseStatus": "candidate only; not approved for customer catalogue"
+      },
+      "visualReview": "No five-viewport screenshots captured or reviewed",
+      "integrationEvidence": "Unit-level mutation/renderer/guard tests; no authenticated browser or disposable-tenant end-to-end pass",
+      "knownIssues": [
         "Individual original imagery and design craft",
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
@@ -236,15 +252,31 @@
       ],
       "visualIdentity": "A quieter way to see the work. An independent artist portfolio that gives each body of work room to speak.",
       "assets": [
+        "public/layouts/premium/flagships/canvas.svg",
         "public/layouts/premium/creative.svg"
       ],
-      "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
+      "assetProvenance": "Original repo-authored per-flagship SVG hero and category-level illustration. Artwork belongs to this repository; per-layout galleries and visual quality still need independent review.",
       "unitTestStatus": "pending exact-head confirmation",
       "responsiveReview": "not run",
       "accessibilityReview": "not run",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
+        "Individual original imagery and design craft",
+        "Five-viewport screenshot and accessibility acceptance",
+        "Authenticated tenant-isolated create/save/preview/publish acceptance",
+        "32/40 scored visual review"
+      ],
+      "engineeringProgress": {
+        "previewPages": "Registered complete v2 page definitions using Phase 13 LayoutRenderer",
+        "studioAssignment": "Exposed via full canonical Layout ID in existing guarded draft mutation and Studio prototype selector",
+        "contentEditor": "Text, verified shared contact email, image replacement, alt text and project route editing",
+        "publishReadiness": "Server rejects unfinished sample emails; real authenticated publishing acceptance not yet executed",
+        "releaseStatus": "candidate only; not approved for customer catalogue"
+      },
+      "visualReview": "No five-viewport screenshots captured or reviewed",
+      "integrationEvidence": "Unit-level mutation/renderer/guard tests; no authenticated browser or disposable-tenant end-to-end pass",
+      "knownIssues": [
         "Individual original imagery and design craft",
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
@@ -483,15 +515,31 @@
       ],
       "visualIdentity": "A place to feel at home. An illustrative boutique retreat presents rooms, surroundings and a clear booking-enquiry route.",
       "assets": [
+        "public/layouts/premium/flagships/haven.svg",
         "public/layouts/premium/hospitality.svg"
       ],
-      "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
+      "assetProvenance": "Original repo-authored per-flagship SVG hero and category-level illustration. Artwork belongs to this repository; per-layout galleries and visual quality still need independent review.",
       "unitTestStatus": "pending exact-head confirmation",
       "responsiveReview": "not run",
       "accessibilityReview": "not run",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
+        "Individual original imagery and design craft",
+        "Five-viewport screenshot and accessibility acceptance",
+        "Authenticated tenant-isolated create/save/preview/publish acceptance",
+        "32/40 scored visual review"
+      ],
+      "engineeringProgress": {
+        "previewPages": "Registered complete v2 page definitions using Phase 13 LayoutRenderer",
+        "studioAssignment": "Exposed via full canonical Layout ID in existing guarded draft mutation and Studio prototype selector",
+        "contentEditor": "Text, verified shared contact email, image replacement, alt text and project route editing",
+        "publishReadiness": "Server rejects unfinished sample emails; real authenticated publishing acceptance not yet executed",
+        "releaseStatus": "candidate only; not approved for customer catalogue"
+      },
+      "visualReview": "No five-viewport screenshots captured or reviewed",
+      "integrationEvidence": "Unit-level mutation/renderer/guard tests; no authenticated browser or disposable-tenant end-to-end pass",
+      "knownIssues": [
         "Individual original imagery and design craft",
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
@@ -660,15 +708,31 @@
       ],
       "visualIdentity": "Ideas begin here. A fictional higher-learning institute introduces programmes, academic life and admissions guidance.",
       "assets": [
+        "public/layouts/premium/flagships/academia.svg",
         "public/layouts/premium/education.svg"
       ],
-      "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
+      "assetProvenance": "Original repo-authored per-flagship SVG hero and category-level illustration. Artwork belongs to this repository; per-layout galleries and visual quality still need independent review.",
       "unitTestStatus": "pending exact-head confirmation",
       "responsiveReview": "not run",
       "accessibilityReview": "not run",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
+        "Individual original imagery and design craft",
+        "Five-viewport screenshot and accessibility acceptance",
+        "Authenticated tenant-isolated create/save/preview/publish acceptance",
+        "32/40 scored visual review"
+      ],
+      "engineeringProgress": {
+        "previewPages": "Registered complete v2 page definitions using Phase 13 LayoutRenderer",
+        "studioAssignment": "Exposed via full canonical Layout ID in existing guarded draft mutation and Studio prototype selector",
+        "contentEditor": "Text, verified shared contact email, image replacement, alt text and project route editing",
+        "publishReadiness": "Server rejects unfinished sample emails; real authenticated publishing acceptance not yet executed",
+        "releaseStatus": "candidate only; not approved for customer catalogue"
+      },
+      "visualReview": "No five-viewport screenshots captured or reviewed",
+      "integrationEvidence": "Unit-level mutation/renderer/guard tests; no authenticated browser or disposable-tenant end-to-end pass",
+      "knownIssues": [
         "Individual original imagery and design craft",
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
@@ -872,15 +936,31 @@
       ],
       "visualIdentity": "A collection with a point of view. A fictional fashion label presents editorial looks, fabric stories and product enquiries.",
       "assets": [
+        "public/layouts/premium/flagships/maison.svg",
         "public/layouts/premium/commerce.svg"
       ],
-      "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
+      "assetProvenance": "Original repo-authored per-flagship SVG hero and category-level illustration. Artwork belongs to this repository; per-layout galleries and visual quality still need independent review.",
       "unitTestStatus": "pending exact-head confirmation",
       "responsiveReview": "not run",
       "accessibilityReview": "not run",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
+        "Individual original imagery and design craft",
+        "Five-viewport screenshot and accessibility acceptance",
+        "Authenticated tenant-isolated create/save/preview/publish acceptance",
+        "32/40 scored visual review"
+      ],
+      "engineeringProgress": {
+        "previewPages": "Registered complete v2 page definitions using Phase 13 LayoutRenderer",
+        "studioAssignment": "Exposed via full canonical Layout ID in existing guarded draft mutation and Studio prototype selector",
+        "contentEditor": "Text, verified shared contact email, image replacement, alt text and project route editing",
+        "publishReadiness": "Server rejects unfinished sample emails; real authenticated publishing acceptance not yet executed",
+        "releaseStatus": "candidate only; not approved for customer catalogue"
+      },
+      "visualReview": "No five-viewport screenshots captured or reviewed",
+      "integrationEvidence": "Unit-level mutation/renderer/guard tests; no authenticated browser or disposable-tenant end-to-end pass",
+      "knownIssues": [
         "Individual original imagery and design craft",
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
@@ -1084,15 +1164,31 @@
       ],
       "visualIdentity": "Clarity for complex workflows. A fictional SaaS platform explains capabilities through realistic product walkthroughs.",
       "assets": [
+        "public/layouts/premium/flagships/nexus.svg",
         "public/layouts/premium/technology.svg"
       ],
-      "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
+      "assetProvenance": "Original repo-authored per-flagship SVG hero and category-level illustration. Artwork belongs to this repository; per-layout galleries and visual quality still need independent review.",
       "unitTestStatus": "pending exact-head confirmation",
       "responsiveReview": "not run",
       "accessibilityReview": "not run",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
+        "Individual original imagery and design craft",
+        "Five-viewport screenshot and accessibility acceptance",
+        "Authenticated tenant-isolated create/save/preview/publish acceptance",
+        "32/40 scored visual review"
+      ],
+      "engineeringProgress": {
+        "previewPages": "Registered complete v2 page definitions using Phase 13 LayoutRenderer",
+        "studioAssignment": "Exposed via full canonical Layout ID in existing guarded draft mutation and Studio prototype selector",
+        "contentEditor": "Text, verified shared contact email, image replacement, alt text and project route editing",
+        "publishReadiness": "Server rejects unfinished sample emails; real authenticated publishing acceptance not yet executed",
+        "releaseStatus": "candidate only; not approved for customer catalogue"
+      },
+      "visualReview": "No five-viewport screenshots captured or reviewed",
+      "integrationEvidence": "Unit-level mutation/renderer/guard tests; no authenticated browser or disposable-tenant end-to-end pass",
+      "knownIssues": [
         "Individual original imagery and design craft",
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
@@ -1296,15 +1392,31 @@
       ],
       "visualIdentity": "People before statistics. A fictional nonprofit uses stories to explain programmes, volunteering and accountability.",
       "assets": [
+        "public/layouts/premium/flagships/impact.svg",
         "public/layouts/premium/community.svg"
       ],
-      "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
+      "assetProvenance": "Original repo-authored per-flagship SVG hero and category-level illustration. Artwork belongs to this repository; per-layout galleries and visual quality still need independent review.",
       "unitTestStatus": "pending exact-head confirmation",
       "responsiveReview": "not run",
       "accessibilityReview": "not run",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
+        "Individual original imagery and design craft",
+        "Five-viewport screenshot and accessibility acceptance",
+        "Authenticated tenant-isolated create/save/preview/publish acceptance",
+        "32/40 scored visual review"
+      ],
+      "engineeringProgress": {
+        "previewPages": "Registered complete v2 page definitions using Phase 13 LayoutRenderer",
+        "studioAssignment": "Exposed via full canonical Layout ID in existing guarded draft mutation and Studio prototype selector",
+        "contentEditor": "Text, verified shared contact email, image replacement, alt text and project route editing",
+        "publishReadiness": "Server rejects unfinished sample emails; real authenticated publishing acceptance not yet executed",
+        "releaseStatus": "candidate only; not approved for customer catalogue"
+      },
+      "visualReview": "No five-viewport screenshots captured or reviewed",
+      "integrationEvidence": "Unit-level mutation/renderer/guard tests; no authenticated browser or disposable-tenant end-to-end pass",
+      "knownIssues": [
         "Individual original imagery and design craft",
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
@@ -1508,15 +1620,31 @@
       ],
       "visualIdentity": "Places worth imagining. An illustrative property practice presents sample listings, area guides and viewing enquiries.",
       "assets": [
+        "public/layouts/premium/flagships/estate.svg",
         "public/layouts/premium/services.svg"
       ],
-      "assetProvenance": "Original repository-authored SVG. Generic category illustration; per-layout imagery still required.",
+      "assetProvenance": "Original repo-authored per-flagship SVG hero and category-level illustration. Artwork belongs to this repository; per-layout galleries and visual quality still need independent review.",
       "unitTestStatus": "pending exact-head confirmation",
       "responsiveReview": "not run",
       "accessibilityReview": "not run",
       "publishingIntegration": "not run for this candidate",
       "designScore": null,
       "outstanding": [
+        "Individual original imagery and design craft",
+        "Five-viewport screenshot and accessibility acceptance",
+        "Authenticated tenant-isolated create/save/preview/publish acceptance",
+        "32/40 scored visual review"
+      ],
+      "engineeringProgress": {
+        "previewPages": "Registered complete v2 page definitions using Phase 13 LayoutRenderer",
+        "studioAssignment": "Exposed via full canonical Layout ID in existing guarded draft mutation and Studio prototype selector",
+        "contentEditor": "Text, verified shared contact email, image replacement, alt text and project route editing",
+        "publishReadiness": "Server rejects unfinished sample emails; real authenticated publishing acceptance not yet executed",
+        "releaseStatus": "candidate only; not approved for customer catalogue"
+      },
+      "visualReview": "No five-viewport screenshots captured or reviewed",
+      "integrationEvidence": "Unit-level mutation/renderer/guard tests; no authenticated browser or disposable-tenant end-to-end pass",
+      "knownIssues": [
         "Individual original imagery and design craft",
         "Five-viewport screenshot and accessibility acceptance",
         "Authenticated tenant-isolated create/save/preview/publish acceptance",
