@@ -62,7 +62,7 @@ $$;
 -- SECURITY DEFINER functions otherwise grant EXECUTE to PUBLIC by default.
 REVOKE ALL ON FUNCTION lucia_public_media(uuid) FROM PUBLIC;
 --> statement-breakpoint
-DO $ BEGIN
+DO $$ BEGIN
  IF EXISTS(SELECT 1 FROM pg_roles WHERE rolname='lucia_os_runtime') THEN
  GRANT SELECT,INSERT,UPDATE ON website_media,media_storage_budget,website_media_limits TO lucia_os_runtime;
  GRANT EXECUTE ON FUNCTION lucia_public_media(uuid) TO lucia_os_runtime;
