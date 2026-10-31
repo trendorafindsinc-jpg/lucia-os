@@ -13,6 +13,7 @@ import {
 } from "@/lib/db/schema";
 import { siteDraftSchema } from "@/lib/editor/site-draft";
 import { premiumLayoutSchema } from "@/lib/layout-blueprint/premium-composition";
+import { checkPremiumPublishContacts } from "@/lib/layout-blueprint/premium-publish-readiness";
 import {
   isPremium,
   websiteDefinitionSchema,
@@ -257,6 +258,11 @@ export async function POST(request: Request) {
           };
         }
 
+        if (isPremium(definition)) {
+          const review = checkPremiumPublishContacts(definition);
+          if (!review.ready) throw new Error("PREMIUM_CONTACT_NOT_READY");
+        }
+
         // The public renderer expects a validated site-draft snapshot for every
         // published path. Previously only "/" received one, leaving seeded
         // About/Services/Contact routes permanently 404 after publishing.
@@ -458,6 +464,11 @@ export async function POST(request: Request) {
         return jsonError(
           "The address does not match the selected website. Reload the selected project.",
           409,
+        );
+      if (message === "PREMIUM_CONTACT_NOT_READY")
+        return jsonError(
+          "Replace the sample contact email in Layout Studio before publishing. Your previous live version is unchanged.",
+          422,
         );
       if (message === "INVALID_SAVED_DRAFT")
         return jsonError(
