@@ -103,16 +103,16 @@ Test layout selection → content replacement → save → preview → publish �
 ## Section 3 — Loom verified professional network (Phases 20–24)
 
 ### Phase 20 — Loom access and verification policy
-Specify spectator vs verified-member permissions, eligibility evidence, custom-domain/business review, staff interview and decision workflow, appeals, evidence access/retention, and audit requirements. Badge colours (blue/green) remain undecided. Paid application/review cannot guarantee verification.
+Specify spectator vs verified-member permissions, eligibility evidence, custom-domain/business review, staff interview and decision workflow, appeals, evidence access/retention, and audit requirements. Use approved green standard-approval and blue paid-priority-approval badge semantics; optional priority bids begin at ₦5,000. Define review scheduling, refund and payment terms before collection. Paid application/review cannot guarantee verification. See `docs/loom-staff-verification-policy.md`.
 
 ### Phase 21 — Loom information architecture and responsive UI
-Audit existing Loom implementation, then design the first-class workspace destination for professional discovery, discussions, groups, business directory, connections, messaging, and collaboration. Use original LUCIA styling, readable structure, and responsive desktop/mobile/tablet behaviour.
+Audit existing Loom implementation and design the distinct, permission-gated **Loom management section in the LUCIA staff workspace**, then design the first-class customer workspace destination for professional discovery, discussions, groups, business directory, connections, messaging, and collaboration. Use original LUCIA styling, readable structure, and responsive desktop/mobile/tablet behaviour.
 
 ### Phase 22 — Real community and connection flows
 Implement only the scoped flows that have defined data and permissions: post/discussion, groups, profiles, discovery, connection consent, messaging, and collaboration as approved. No fabricated activity, inert actions, or UI-only authorization.
 
 ### Phase 23 — Staff verification workflow
-Build application intake, evidence review, interview outcomes, approve/reject/review-again decisions, audit events, restricted evidence access, and appeals. Verify business existence separately from representative authority. Purchasing a product must not automatically verify a person/business.
+Build staff Loom management for application intake, optional paid priority bids, verified payments (only after finalized consumer terms), evidence review, interview outcomes, approve/reject/review-again decisions, audit events, restricted evidence access, and appeals. Verify business existence separately from representative authority. Purchasing a product must not automatically verify a person/business.
 
 ### Phase 24 — Loom trust, safety, and acceptance
 Verify public/read-only spectator boundaries, verified-member participation, blocking, reporting, moderation, appeals, abuse prevention, privacy, consent, evidence retention, and tenant boundaries. Paid status and sponsored placements must not silently affect trust badges.
