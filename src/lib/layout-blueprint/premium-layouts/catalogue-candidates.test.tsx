@@ -7,6 +7,8 @@ import {
   premiumCandidateIds,
 } from "./catalogue-candidates";
 import { premiumCandidateBriefs } from "./candidate-briefs";
+import { premiumArtworkChoices } from "./asset-choices";
+import { premiumAssets } from "../premium-assets";
 import { applyPremiumEdit, parsePremiumLayout } from "../premium-composition";
 
 describe("Phase 14 canonical premium candidates — not release acceptance", () => {
@@ -150,5 +152,38 @@ describe("Phase 14 canonical premium candidates — not release acceptance", () 
       ...layout,
       navigation: [...layout.navigation, { label: "Staff", href: "/staff" }],
     })).toThrow();
+  });
+
+  it("exposes only registered artwork selections and handles image replacement safely", () => {
+    expect(new Set(premiumArtworkChoices.map((asset) => asset.ref))).toEqual(
+      new Set(Object.keys(premiumAssets)),
+    );
+    const layout = premiumCandidate("lucia.layout.haven");
+    const hero = layout.pages[0].sections.find((s) => s.type === "premium-hero");
+    if (hero?.type !== "premium-hero" || !hero.image) throw Error("Missing hero art");
+    expect(hero.image.src).toBe("builtin:premium/flagship-haven");
+    const edited = applyPremiumEdit(layout, "guided", {
+      kind: "replace-section", pageId: "home",
+      section: {
+        ...hero,
+        image: {
+          src: "builtin:premium/hospitality",
+          alt: "An original abstract courtyard composition",
+        },
+      },
+    });
+    expect(edited.pages[0].sections.find((s) => s.id === hero.id)).toMatchObject({
+      image: { src: "builtin:premium/hospitality" },
+    });
+    expect(() => applyPremiumEdit(layout, "guided", {
+      kind: "replace-section", pageId: "home",
+      section: {
+        ...hero,
+        image: { src: "https://tracking.example/image.jpg", alt: "Invalid" },
+      },
+    })).toThrow();
+    expect(layout.pages[0].sections.find((s) => s.id === hero.id)).toMatchObject({
+      image: { src: "builtin:premium/flagship-haven" },
+    });
   });
 });
