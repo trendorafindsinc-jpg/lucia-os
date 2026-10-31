@@ -10,6 +10,7 @@ import { describe, expect, it } from "vitest";
 import { LayoutRenderer } from "@/components/layout-studio/layout-renderer";
 import { makeInitialDraft } from "@/lib/editor/site-draft";
 import { structuralLayout, structuralLayoutIds } from "./structural-layouts";
+import { premiumFlagshipIds } from "./premium-layouts/catalogue-candidates";
 import {
   websiteDefinitionSchema,
   mutateWebsite,
@@ -303,5 +304,64 @@ describe("versioned production website boundary", () => {
         version: 3,
       }).success,
     ).toBe(false);
+  });
+
+  it.each(premiumFlagshipIds)(
+    "assigns %s through the real revision-protected website mutation contract",
+    (id) => {
+      const initial = makeInitialDraft("northstar-consulting");
+      const canonical = websiteMutationSchema.parse({
+        kind: "assign-layout", layoutId: id,
+      });
+      const created = mutateWebsite(initial, canonical);
+      const validated = premiumLayoutSchema.parse(
+        websiteDefinitionSchema.parse(JSON.parse(JSON.stringify(created))),
+      );
+      expect(validated.layoutId).toBe(id);
+      expect(validated.identity.name).toBe(initial.siteName);
+      expect(validated.pages.length).toBeGreaterThanOrEqual(6);
+      const home = renderToStaticMarkup(
+        <LayoutRenderer blueprint={websiteBlueprint(validated)} />,
+      );
+      expect(home).toContain('data-layout-id="' + id + '"');
+      const firstPage = validated.pages.find((page) => page.path !== "/");
+      if (!firstPage) throw Error("Expected a meaningful interior page");
+      const interior = renderToStaticMarkup(
+        <LayoutRenderer blueprint={websiteBlueprint(validated)} pagePath={firstPage.path} />,
+      );
+      expect(interior).toContain('data-page-path="' + firstPage.path + '"');
+      const hero = validated.pages[0].sections.find((part) => part.type === "premium-hero");
+      if (hero?.type !== "premium-hero") throw Error("Expected content-editable hero");
+      const changed = mutateWebsite(validated, websiteMutationSchema.parse({
+        kind: "composition-edit", mode: "guided",
+        edits: [{
+          kind: "replace-section", pageId: "home",
+          section: { ...hero, heading: "Customer authored landing page" },
+        }],
+      }));
+      const persisted = websiteDefinitionSchema.parse(JSON.parse(JSON.stringify(changed)));
+      expect(premiumLayoutSchema.parse(persisted).pages[0].sections)
+        .toContainEqual(expect.objectContaining({ heading: "Customer authored landing page" }));
+      expect(validated.pages[0].sections.some((section) =>
+        section.type === "premium-hero" && section.heading === "Customer authored landing page"
+      )).toBe(false);
+      expect(() => mutateWebsite(validated, initial)).toThrow();
+      expect(() => mutateWebsite(validated, canonical)).toThrow();
+    },
+  );
+
+  it("allows only the eight specified Phase 14 flagship candidate IDs for assignment", () => {
+    for (const denied of [
+      "lucia.layout.keystone", "lucia.layout.greenfield", "lucia.layout.fake",
+      "lucia.layout.meridian/../../staff", "prototype:canvas",
+    ]) {
+      expect(websiteMutationSchema.safeParse({
+        kind: "assign-layout", layoutId: denied,
+      }).success).toBe(false);
+    }
+    expect(websiteMutationSchema.safeParse({
+      kind: "assign-layout", layoutId: "lucia.layout.canvas",
+      permissions: { lockedSections: [] },
+    }).success).toBe(false);
   });
 });
