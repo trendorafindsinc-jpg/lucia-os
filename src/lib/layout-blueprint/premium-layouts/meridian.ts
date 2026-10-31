@@ -253,7 +253,7 @@ export function meridianCandidate(siteName = "Meridian Advisory · Demo") {
       responsive: p.id === "home" ? "asymmetric" : "stack",
     })),
     permissions: {
-      guided: ["text", "image", "link", "contact", "reorder"],
+      guided: ["text", "image", "link", "brand", "contact", "reorder"],
       advanced: [
         "variant",
         "tokens",
