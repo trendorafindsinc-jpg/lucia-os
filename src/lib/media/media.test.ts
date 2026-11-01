@@ -35,6 +35,9 @@ describe("customer media boundary", () => {
     expect(() => mediaIds(nested)).toThrow("too deep");
     expect(mediaIds({ items: ["media:" + id, "media:" + id, "javascript:alert(1)"] })).toEqual([id]);
     expect(mediaIds({body:"[Watch](media:"+id+")"})).toEqual([id]);
+    expect(mediaIds({body:"![Owned](/_media/"+id+")"})).toEqual([id]);
+    expect(mediaIds({body:'<img src="/_media/'+id+'" alt="owned">'})).toEqual([id]);
+    expect(mediaIds({body:'<video><source src="/_media/'+id+'" type="video/mp4"></video>'})).toEqual([id]);
   });
   it("signs provider requests on the server and rejects caller-controlled keys", async () => {
     vi.stubEnv("S3_ENDPOINT", "https://s3.eu-west-3.idrivee2.com"); vi.stubEnv("S3_REGION", "eu-west-3"); vi.stubEnv("S3_BUCKET", "lucia-os-customer-media-2026");
