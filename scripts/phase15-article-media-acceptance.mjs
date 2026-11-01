@@ -113,6 +113,8 @@ export async function checkPhase15ArticleMediaAcceptance({
     assert(detailHtml.includes("/_media/"+pdfAsset),"Published PDF link must resolve to the tenant media route");
     const publicVideo=await admin`SELECT * FROM lucia_public_media(${videoAsset}::uuid)`;assert.equal(publicVideo.length,1,"Published article body must authorize its video asset");
     const publicPdf=await admin`SELECT * FROM lucia_public_media(${pdfAsset}::uuid)`;assert.equal(publicPdf.length,1,"Published article body must authorize its PDF asset");
+    const blogContract=JSON.parse(await (await publicSite("/api/public/v1/content",host)).text());
+    assert(blogContract.content.blog.some(item=>item.slug===article.slug&&item.tags.includes("customer-story")&&item.seoTitle===article.seoTitle),"Published Blog metadata must be exposed through the versioned public contract");
     const publicImage = await admin`SELECT * FROM lucia_public_media(${blogImage}::uuid)`;
     assert.equal(publicImage.length, 1, "Published article snapshot must authorize its featured image");
     const privateReplacement = await admin`SELECT * FROM lucia_public_media(${draftImage}::uuid)`;
@@ -181,7 +183,7 @@ export async function checkPhase15ArticleMediaAcceptance({
     const correctedHtml=await correctedPage.text();assert(correctedHtml.includes(correctedDraft.correctionNote));assert(correctedHtml.includes(newsRecord.publishedSlug));assert(correctedHtml.includes("Events"));
     const publicContract=JSON.parse(await (await publicSite("/api/public/v1/content",host)).text());
     assert.equal(publicContract.contract,"lucia.published-content.v1");assert(publicContract.content.news.some(item=>item.slug===correctedRecord.publishedSlug&&item.isFeatured&&item.correctsSlug===newsRecord.publishedSlug));
-    assert(publicContract.content.blog.some(item=>item.slug===article.slug&&item.tags.includes("customer-story")));
+    assert(!publicContract.content.blog.some(item=>item.slug===article.slug),"Unpublished Blog content must disappear from the public contract");
     const home=await publicSite("/",host);const homeHtml=await home.text();assert(homeHtml.includes(correctedTitle));assert(homeHtml.includes('href="/blog"'));assert(homeHtml.includes('href="/news"'));
     const newsUnpublish = await patchArticle(newsId, newsRecord, null, "unpublish");
     assert.equal(newsUnpublish.status, 200, (await newsUnpublish.clone().json()).error);
