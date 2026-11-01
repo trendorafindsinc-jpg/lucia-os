@@ -23,8 +23,8 @@ export function editableText(section: PremiumSection, selection: TextSelection):
   if (field === "action-label" && section.type === "premium-hero") return section.action?.label ?? null;
   if (field === "eyebrow" && section.type === "premium-hero") return section.eyebrow;
   if (field === "email" && section.type === "contact-panel") return section.email ?? "";
-  if ((field === "heading" || field === "body") && "heading" in section)
-    return section[field] ?? null;
+  if (field === "heading" && "heading" in section) return section.heading;
+  if (field === "body" && "body" in section) return section.body;
   return null;
 }
 
@@ -61,8 +61,8 @@ export function replaceEditableText(section: PremiumSection, selection: TextSele
     return { ...section, action: { ...section.action, label: value } };
   if (field === "eyebrow" && section.type === "premium-hero") return { ...section, eyebrow: value };
   if (field === "email" && section.type === "contact-panel") return { ...section, email: value || undefined };
-  if ((field === "heading" || field === "body") && "heading" in section)
-    return { ...section, [field]: value };
+  if (field === "heading" && "heading" in section) return { ...section, heading: value };
+  if (field === "body" && "body" in section) return { ...section, body: value };
   throw Error("This element cannot be edited directly.");
 }
 
