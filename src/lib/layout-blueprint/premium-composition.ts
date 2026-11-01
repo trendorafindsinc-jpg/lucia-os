@@ -622,7 +622,7 @@ export function applyPremiumEdit(
           return;
         }
         const capability =
-          key === "email" ? "contact" : key === "href" ? "link" : "text";
+          key === "email" ? "contact" : key === "href" || key === "url" ? "link" : "text";
         if (!perms.guided.includes(capability))
           throw new Error("Content edit denied");
       };
