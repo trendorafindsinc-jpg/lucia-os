@@ -1,4 +1,3 @@
-import { PublicContentHighlights } from "@/lib/content/public-articles";
 import { resolvePremiumAsset, premiumAssetDimensions } from "@/lib/layout-blueprint/premium-assets";
 import Image from "next/image";
 import React, { type CSSProperties } from "react";
@@ -92,7 +91,6 @@ export function LayoutRenderer({
           />
         ))}
       </div>
-      {!preview&&pagePath==="/"&&<PublicContentHighlights/>}
       <footer className="layout-site-footer">
         <span>{blueprint.site.name}</span>
         <span>
@@ -311,7 +309,6 @@ function PremiumLayoutPage({
           />
         ))}
       </div>
-      {!preview&&pagePath==="/"&&<PublicContentHighlights/>}
       <footer className="layout-site-footer premium-site-footer">
         <div className="premium-footer-identity">
           <p className="premium-footer-brand">{definition.identity.name}</p>
