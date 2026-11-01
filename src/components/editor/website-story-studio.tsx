@@ -23,6 +23,9 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
  const [newTitle,setNewTitle]=useState("");
  const [busy,setBusy]=useState(false);
  const [importBusy,setImportBusy]=useState(false);
+ const [showHistory,setShowHistory]=useState(false);
+ const [history,setHistory]=useState<{revision:number;event:string;createdAt:string}[]>([]);
+ const [historyBusy,setHistoryBusy]=useState(false);
  const [loading,setLoading]=useState(true);
  const [message,setMessage]=useState("");
  const [preview,setPreview]=useState(false);\n const [contentMode,setContentMode]=useState<"markdown"|"html">("markdown");
@@ -55,6 +58,16 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
  function choose(id:string) {
   if(dirty && !window.confirm("Discard unsaved changes to this article?"))return;
   setDirty(false);setSelected(id);setPreview(false);
+ }
+ async function loadHistory(){
+  if(!draft||historyBusy)return;setHistoryBusy(true);
+  try{const response=await fetch("/api/websites/"+encodeURIComponent(websiteId)+"/articles/"+draft.id+"/revisions",{cache:"no-store",headers});const payload=await response.json();if(!response.ok)throw Error(payload.error||"Revision history unavailable.");setHistory(payload.revisions);setShowHistory(true);}
+  catch(error){setMessage(error instanceof Error?error.message:"Revision history unavailable.");}finally{setHistoryBusy(false);}
+ }
+ async function restoreRevision(targetRevision:number){
+  if(!draft||busy||historyBusy)return;setHistoryBusy(true);
+  try{const response=await fetch("/api/websites/"+encodeURIComponent(websiteId)+"/articles/"+draft.id+"/revisions",{method:"POST",headers:{"Content-Type":"application/json",...headers},body:JSON.stringify({currentRevision:draft.revision,targetRevision})});const payload=await response.json();if(!response.ok)throw Error(payload.error||"Revision could not be restored.");setDraft(payload.article);setArticles(previous=>previous.map(item=>item.id===payload.article.id?payload.article:item));setDirty(false);setShowHistory(false);setMessage("Revision restored as the current draft. Your existing live article was not changed; publish when ready.");}
+  catch(error){setMessage(error instanceof Error?error.message:"Revision restore failed.");}finally{setHistoryBusy(false);}
  }
  async function importLegacy(){
   if(importBusy||busy)return;
@@ -155,12 +168,14 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
       </div>}
      <div className="story-studio-actions">
       <button type="button" onClick={()=>setPreview(p=>!p)}>{preview?"Edit article":"Preview draft"}</button>
+      <button type="button" disabled={busy||loading||historyBusy} onClick={()=>void loadHistory()}>{historyBusy?"Loading history…":"Version history"}</button>
       <button type="button" disabled={busy||loading||!dirty} onClick={()=>void save("save")}>Save draft</button>
       <button className="story-studio-live" type="button" disabled={busy||loading} onClick={()=>void save("publish")}>{busy?"Publishing…":"Publish"}</button>
       <button type="button" disabled={busy||loading||!draft.scheduledAt||draft.status==="published"} onClick={()=>void save("schedule")}>Schedule</button>
       {draft.status==="published"&&<button type="button" disabled={busy} onClick={()=>void save("unpublish")}>Unpublish</button>}
       {draft.status==="scheduled"&&<button type="button" disabled={busy} onClick={()=>void save("save")}>Keep as draft</button>}
      </div>
+     {showHistory&&<section className="story-revision-history" aria-label="Article revision history"><div><strong>Revision history</strong><button type="button" onClick={()=>setShowHistory(false)}>Close</button></div>{history.length?history.map(item=><article key={item.revision}><span>Revision {item.revision} · {item.event}</span><time dateTime={item.createdAt}>{new Date(item.createdAt).toLocaleString()}</time><button type="button" disabled={historyBusy||item.revision===draft.revision} onClick={()=>void restoreRevision(item.revision)}>Restore as draft</button></article>):<p>No earlier revisions are available yet.</p>}</section>}
      {draft.status==="published"&&draft.publishedSlug&&siteSlug&&
        <p><a target="_blank" rel="noopener noreferrer" href={"https://"+siteSlug+".lucia.name.ng"+articleRoute(draft.kind,draft.publishedSlug)}>View live article ↗</a></p>}
     </>:<p>Choose an article or create your first draft.</p>}
