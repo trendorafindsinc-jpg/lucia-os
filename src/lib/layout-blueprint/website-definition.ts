@@ -86,8 +86,9 @@ export function mutateWebsite(
         throw new Error("Design token changes are not permitted for this website");
       const candidate = premiumCandidate(mutation.layoutId, stored.identity.name);
       const tokens = { ...candidate.tokens };
-      for (const locked of stored.permissions.lockedTokens)
-        tokens[locked] = stored.tokens[locked];
+      Object.assign(tokens, Object.fromEntries(
+        stored.permissions.lockedTokens.map((locked) => [locked, stored.tokens[locked]]),
+      ));
       const visualExperience = stored.permissions.visualExperienceLocked
         ? stored.visualExperience
         : candidate.visualExperience;
