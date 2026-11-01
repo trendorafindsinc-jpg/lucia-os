@@ -433,9 +433,13 @@ export async function checkPhase15AuthenticatedAcceptance({
             await view.setViewportSize({ width, height: width < 500 ? 844 : 900 });
             const dimensions = await view.evaluate(() => ({
               viewport: innerWidth, document: document.documentElement.scrollWidth,
+              overflowing: [...document.querySelectorAll("body *")].map((node) => {
+                const rect=node.getBoundingClientRect();
+                return {tag:node.tagName,className:String(node.className||""),left:Math.round(rect.left),right:Math.round(rect.right),width:Math.round(rect.width),scrollWidth:node.scrollWidth,clientWidth:node.clientWidth,overflowX:getComputedStyle(node).overflowX};
+              }).filter((node) => node.right > innerWidth + 1 || node.left < -1).slice(0,16),
             }));
             assert(dimensions.document <= dimensions.viewport + 1,
-              "Editor horizontally overflows at " + width);
+              "Editor horizontally overflows at " + width + ": " + JSON.stringify(dimensions));
           }
           await view.setViewportSize({ width: 390, height: 844 });
           await view.getByRole("button", { name: "1. Business identity" }).click();
