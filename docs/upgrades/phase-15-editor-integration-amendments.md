@@ -21,6 +21,7 @@ An existing website must be editable as one connected project. Pages, navigation
 ## 2. Pages & Navigation in the Visual Editor
 
 - Page selection and navigation clicks use the same active website composition.
+- The existing `/pages?websiteId` entry point hands premium websites into the Visual Editor's Pages & Navigation panel instead of loading the legacy isolated structure draft.
 - Create, rename and remove non-home pages; preserve the home page.
 - Page title and description are saved with the page record.
 - Toggle page visibility in the website navigation.
