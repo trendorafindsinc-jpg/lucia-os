@@ -22,6 +22,14 @@ describe("safe article rich content", () => {
     expect(html).not.toContain("evil.example");
   });
 
+  it("resolves only valid website-owned video and document references",()=>{
+    const id="123e4567-e89b-42d3-a456-426614174000";
+    const html=renderArticleMarkdown("[Watch the video](media:"+id+")\\n\\n[Download the PDF](media:"+id+")");
+    expect(html).toContain('href="/_media/'+id+'"');
+    expect(html).not.toContain("media:"+id);
+    expect(renderArticleMarkdown("[Unsafe](media:../../private)")).not.toContain("../../private");
+  });
+
   it("allows only HTTPS embeds from the approved video hosts and paths", () => {
     const allowed = renderArticleMarkdown('<iframe src="https://www.youtube-nocookie.com/embed/abcdefghijk" title="Demo"></iframe>');
     const blocked = renderArticleMarkdown('<iframe src="https://evil.example/embed/abcdefghijk"></iframe>');
