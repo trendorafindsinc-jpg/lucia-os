@@ -9,7 +9,7 @@ export const websiteFirstSetupSchema = z.object({
   whatDoYouDo: z.string().trim().min(2).max(160),
   purpose: z.enum(websiteGoals),
   contact: z.string().trim().max(254)
-    .refine((value) => !value || /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(value) || /^\\+?[0-9 ()-]{7,24}$/.test(value),
+    .refine((value) => !value || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) || /^\+?[0-9 ()-]{7,24}$/.test(value),
       "Enter a valid email address or telephone number").optional().default(""),
   style: z.enum(["No preference", "Modern", "Classic", "Bold", "Warm"]).optional().default("No preference"),
   layoutId: z.string().refine(isPremiumStartingLayout, "Choose one of the 48 registered Layouts"),
