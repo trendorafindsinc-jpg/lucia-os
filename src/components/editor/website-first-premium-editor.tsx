@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { LayoutRenderer } from "@/components/layout-studio/layout-renderer";
 import { MediaLibrary } from "@/components/editor/media-library";
 import { mediaIds } from "@/lib/media/references";
 import { premiumArtworkChoices } from "@/lib/layout-blueprint/premium-layouts/asset-choices";
+import { premiumCandidate, premiumCandidateIds } from "@/lib/layout-blueprint/premium-layouts/catalogue-candidates";
 import {
   applyPremiumEdit, compositionRecoverySchema,
   type PremiumEdit, type PremiumLayout, type PremiumSection,
@@ -36,6 +37,18 @@ function withSectionImage(section: PremiumSection, image: { src: string; alt: st
 
 function reverseEdit(layout: PremiumLayout, edit: PremiumEdit): PremiumEdit | null {
   const page = "pageId" in edit ? layout.pages.find((entry) => entry.id === edit.pageId) : null;
+  if (edit.kind === "page-details") {
+    const before = layout.pages.find((entry) => entry.id === edit.pageId);
+    return before ? { kind: "page-details", pageId: edit.pageId, title: before.title, description: before.description, navigation: before.navigation } : null;
+  }
+  if (edit.kind === "navigation-order")
+    return { kind: "navigation-order", hrefs: layout.navigation.map((item) => item.href) };
+  if (edit.kind === "insert-page")
+    return { kind: "remove-page", pageId: edit.page.id };
+  if (edit.kind === "remove-page") {
+    const before = layout.pages.find((entry) => entry.id === edit.pageId);
+    return before ? { kind: "insert-page", page: before } : null;
+  }
   if (edit.kind === "replace-section") {
     const before = page?.sections.find((entry) => entry.id === edit.section.id);
     return before ? { kind: "replace-section", pageId: edit.pageId, section: before } : null;
@@ -75,6 +88,9 @@ export function WebsiteFirstPremiumEditor({
   const [showPublish, setShowPublish] = useState(false);
   const [storyKind, setStoryKind] = useState<ArticleKind|null>(null);
   const [showMedia, setShowMedia] = useState(false);
+  const [showPages, setShowPages] = useState(false);
+  const [showLayouts, setShowLayouts] = useState(false);
+  const [layoutChoice, setLayoutChoice] = useState(initial.layoutId);
   useEffect(() => { const requested = new URLSearchParams(window.location.search).get("content");
     if (requested === "blog" || requested === "news") setStoryKind(requested);
   }, []);
@@ -89,6 +105,13 @@ export function WebsiteFirstPremiumEditor({
   const live = useRef(true);
   const dragged = useRef("");
   const page = layout.pages.find((entry) => entry.id === pageId) ?? layout.pages[0];
+  const layoutPreview = useMemo(() => {
+    try {
+      const candidate = premiumCandidate(layoutChoice, layout.identity.name);
+      return { ...layout, layoutId: candidate.layoutId, layoutVersion: candidate.layoutVersion,
+        category: candidate.category, tokens: candidate.tokens, visualExperience: candidate.visualExperience };
+    } catch { return null; }
+  }, [layoutChoice, layout]);
   const section = page.sections.find((entry) => entry.id === selected) ?? page.sections[0];
 
   useEffect(() => {
@@ -212,6 +235,77 @@ export function WebsiteFirstPremiumEditor({
     }
   }, [websiteId, base, accountId, edits, busy, saveState, setActiveTabDirty, clearSnapshot, key]);
 
+  async function applyLayoutChoice() {
+    if (!layoutPreview || busy || edits.length || saveState !== "saved" || layoutChoice === layout.layoutId) return;
+    if (!window.confirm("Apply this design to your existing website? Your pages, navigation, text, images and media references will be preserved.")) return;
+    setBusy(true); setSaveState("saving");
+    try {
+      const response = await fetch("/api/websites/" + encodeURIComponent(websiteId) + "/draft", {
+        method: "PATCH",
+        headers: { "content-type": "application/json", "if-match": base,
+          ...(accountId ? { "x-lucia-workspace-account": accountId } : {}) },
+        body: JSON.stringify({ kind: "assign-layout", layoutId: layoutChoice }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        if (response.status === 409) setSaveState("conflict");
+        else setSaveState("failed");
+        setNotice(result.error || "The new design could not be applied. Your saved website is unchanged.");
+        return;
+      }
+      committed.current = result.draft;
+      setLayout(result.draft); setBase(result.revision); setLayoutChoice(result.draft.layoutId);
+      setHistory([]); setRedoHistory([]); setEdits([]);
+      clearSnapshot(key); setActiveTabDirty(false); setSaveState("saved");
+      setNotice("Design changed. Your existing pages, navigation and content were preserved. The website is not published.");
+      setShowLayouts(false);
+    } catch {
+      setSaveState("failed");
+      setNotice("The design change could not be confirmed. Your previous saved website remains unchanged.");
+    } finally { setBusy(false); }
+  }
+
+  function updatePageDetails(pageId: string, patch: { title?: string; description?: string; navigation?: boolean }) {
+    const target = layout.pages.find((entry) => entry.id === pageId);
+    if (!target) return;
+    const title = (patch.title ?? target.title).trim();
+    const description = (patch.description ?? target.description).trim();
+    const navigation = patch.navigation ?? target.navigation;
+    if (!title || !description) { setNotice("Page title and description cannot be empty."); return; }
+    if (title === target.title && description === target.description && navigation === target.navigation) return;
+    perform({ kind: "page-details", pageId, title, description, navigation });
+  }
+
+  function addPage() {
+    if (layout.pages.length >= 30) { setNotice("This website has reached its 30-page limit."); return; }
+    const title = window.prompt("Name your new page", "About us")?.trim();
+    if (!title) return;
+    const slug = title.toLowerCase().normalize("NFKD").replace(/[\\u0300-\\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
+    if (!slug) { setNotice("Choose a page name containing letters or numbers."); return; }
+    const path = "/" + slug;
+    if (layout.pages.some((entry) => entry.path === path)) { setNotice("A page already uses that address."); return; }
+    const id = "page-" + crypto.randomUUID().replaceAll("-", "");
+    const sectionId = id + "-intro";
+    perform({ kind: "insert-page", page: { id, path, title: title.slice(0, 120),
+      description: "A new page on " + layout.identity.name + ".", navigation: true,
+      responsive: "stack", sections: [{ id: sectionId, type: "editorial-story", variant: "narrow",
+        heading: title.slice(0, 150), body: "Add the information visitors need on this page." }] } });
+    setPageId(id); setSelected(sectionId); setField(null);
+  }
+
+  function removePage(targetId: string) {
+    const target = layout.pages.find((entry) => entry.id === targetId);
+    if (!target || target.path === "/") return;
+    if (!window.confirm("Remove the " + target.title + " page and its navigation link?")) return;
+    perform({ kind: "remove-page", pageId: targetId });
+    if (pageId === targetId) {
+      const home = layout.pages.find((entry) => entry.path === "/");
+      if (home) setPageId(home.id);
+      setSelected("");
+    }
+  }
+
   useEffect(() => {
     if (!edits.length || busy || saveState !== "unsaved" || !navigator.onLine) return;
     const timer = window.setTimeout(() => { void save(); }, 1100);
@@ -318,6 +412,8 @@ export function WebsiteFirstPremiumEditor({
       <label>Page <select value={page.id} onChange={(event) => { setPageId(event.target.value); setSelected(""); setField(null); }}>
         {layout.pages.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
       </select></label>
+      <button type="button" onClick={() => { setShowPages((value) => !value); setShowLayouts(false); }}>Pages & Navigation</button>
+      <button type="button" onClick={() => { setShowLayouts((value) => !value); setShowPages(false); setLayoutChoice(layout.layoutId); }}>Change Website Design</button>
       <button type="button" onClick={undo} disabled={!history.length || busy} aria-label="Undo edit">↶ Undo</button>
       <button type="button" onClick={redo} disabled={!redoHistory.length || busy} aria-label="Redo edit">↷ Redo</button>
       <span className={"website-first-editor-status state-" + saveState} role="status" aria-live="polite">{saveState === "saved" ? "✓ Saved" : saveState === "unsaved" ? "● Unsaved" : saveState === "saving" ? "Saving…" : saveState === "offline" ? "Offline · unsaved" : saveState === "conflict" ? "Conflict" : "Save failed"}</span>
@@ -328,10 +424,46 @@ export function WebsiteFirstPremiumEditor({
       <button type="button" className="website-first-editor-publish" onClick={() => setShowPublish(true)}
         disabled={busy || edits.length > 0 || saveState !== "saved"}>Publish</button>
       {(edits.length > 0 || saveState !== "saved") && <span className="website-first-editor-not-ready">Save before publishing</span>}
-      <Link href={{ pathname: "/editor", query: { websiteId, studio: "classic" } }}>Detailed settings</Link>
+      <Link href={{ pathname: "/editor", query: { websiteId, studio: "classic" } }}>Next: Detailed Settings →</Link>
       <span title="Full source editing will arrive in Phase 16">Advanced Mode · Phase 16</span>
     </header>
     <p className="website-first-editor-notice" role="status">{notice}</p>
+    {!previewOnly && showPages && <section className="website-first-editor-panel" aria-label="Pages and navigation">
+      <header><div><h2>Pages & Navigation</h2><p>Manage the pages on this website. Selecting a page opens it in the same live editor.</p></div>
+        <button type="button" onClick={() => setShowPages(false)}>Close</button></header>
+      <button type="button" onClick={addPage} disabled={busy || saveState === "conflict"}>+ Add page</button>
+      <div className="website-first-page-list">{layout.pages.map((item) => <article key={item.id}>
+        <div className="website-first-page-heading"><button type="button" aria-pressed={page.id === item.id}
+          onClick={() => { setPageId(item.id); setSelected(""); setField(null); }}>{item.title}</button>
+          <span>{item.path}</span></div>
+        <label>Page title<input key={item.id + item.title} defaultValue={item.title} maxLength={120}
+          onBlur={(event) => updatePageDetails(item.id, { title: event.target.value })}/></label>
+        <label>Search description<input key={item.id + item.description} defaultValue={item.description} maxLength={160}
+          onBlur={(event) => updatePageDetails(item.id, { description: event.target.value })}/></label>
+        <label className="website-first-page-nav-toggle"><input type="checkbox" checked={item.navigation}
+          onChange={(event) => updatePageDetails(item.id, { navigation: event.target.checked })}/> Show in website navigation</label>
+        {item.path !== "/" && <button type="button" onClick={() => removePage(item.id)} disabled={busy || saveState === "conflict"}>Remove page</button>}
+      </article>)}</div>
+      <h3>Navigation order</h3>
+      <ol className="website-first-navigation-list">{layout.navigation.map((item, index) => <li key={item.href}>
+        <span>{item.label}</span><small>{item.href}</small>
+        <button type="button" disabled={busy || index === 0} onClick={() => { const hrefs = layout.navigation.map((entry) => entry.href); [hrefs[index-1], hrefs[index]] = [hrefs[index], hrefs[index-1]]; perform({ kind: "navigation-order", hrefs }); }}>↑</button>
+        <button type="button" disabled={busy || index === layout.navigation.length-1} onClick={() => { const hrefs = layout.navigation.map((entry) => entry.href); [hrefs[index+1], hrefs[index]] = [hrefs[index], hrefs[index+1]]; perform({ kind: "navigation-order", hrefs }); }}>↓</button>
+      </li>)}</ol>
+    </section>}
+    {!previewOnly && showLayouts && <section className="website-first-editor-panel" aria-label="Change website design">
+      <header><div><h2>Change Website Design</h2><p>Preview a different visual system using your existing website content. Your pages, paths, navigation, text and media stay in place.</p></div>
+        <button type="button" onClick={() => setShowLayouts(false)}>Close</button></header>
+      <label>Choose a design<select value={layoutChoice} onChange={(event) => setLayoutChoice(event.target.value)}>
+        {premiumCandidateIds.map((id) => <option key={id} value={id}>{id.replace("lucia.layout.", "").replace(/-/g, " ").replace(/\\b\\w/g, (letter) => letter.toUpperCase())}</option>)}
+      </select></label>
+      {layoutPreview ? <div className="website-first-layout-preview"><LayoutRenderer blueprint={layoutPreview} pagePath={page.path} preview idPrefix="layout-choice-"/></div> : <p role="alert">This design preview is unavailable.</p>}
+      <div className="website-first-layout-actions"><button type="button" onClick={() => setLayoutChoice(layout.layoutId)}>Restore current design</button>
+        <button type="button" disabled={busy || edits.length > 0 || saveState !== "saved" || layoutChoice === layout.layoutId || !layoutPreview}
+          onClick={() => void applyLayoutChoice()}>{busy ? "Applying design…" : "Apply to existing website"}</button></div>
+      {(edits.length > 0 || saveState !== "saved") && <p>Save your current edits before changing the website design.</p>}
+    </section>}
+
     {saveState === "conflict" && <button type="button" onClick={() => {
       if (window.confirm("Discard local edits and load the latest saved website?")) { discard(); reload(); }
     }}>Load latest saved website</button>}
