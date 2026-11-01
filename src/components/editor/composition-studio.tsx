@@ -1,5 +1,6 @@
 "use client";
 import { mediaIds } from "@/lib/media/references";
+import { WebsiteFirstPremiumEditor } from "./website-first-premium-editor";
 import { VisualExperienceControls } from "./visual-experience-controls";
 import { MediaLibrary } from "./media-library";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -134,7 +135,7 @@ export function CompositionStudio({
     );
   if (isPremium(loaded.draft))
     return (
-      <CompositionEditor
+      <WebsiteFirstPremiumEditor
         key={identity}
         websiteId={websiteId}
         initial={loaded.draft}
