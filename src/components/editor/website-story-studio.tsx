@@ -4,7 +4,7 @@ import type { ArticleKind } from "@/lib/content/article-model";
 import Image from "next/image";
 import { MediaLibrary, type MediaLibraryItem } from "./media-library";
 import { articleRoute, newArticleSlug } from "@/lib/content/article-model";
-import { renderArticleMarkdown } from "@/lib/content/rich-content";
+import { renderArticleHtml, renderArticleMarkdown } from "@/lib/content/rich-content";
 import "./website-story-studio.css";
 type Story = {
  id:string;kind:ArticleKind;title:string;slug:string;excerpt:string;body:string;category:string;authorName?:string|null;eventAt:string|null;isFeatured:boolean;correctionNote:string|null;correctsSlug:string|null;tags:string[];seoTitle:string|null;seoDescription:string|null;
@@ -25,7 +25,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
  const [importBusy,setImportBusy]=useState(false);
  const [loading,setLoading]=useState(true);
  const [message,setMessage]=useState("");
- const [preview,setPreview]=useState(false);
+ const [preview,setPreview]=useState(false);\n const [contentMode,setContentMode]=useState<"markdown"|"html">("markdown");
  const [dirty,setDirty]=useState(false);
  const [availableMediaCount,setAvailableMediaCount]=useState<number|null>(null);
  const onMediaChange=useCallback((items:{ref:string;label:string}[])=>setAvailableMediaCount(items.length),[]);
@@ -126,7 +126,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
    <div className="story-studio-editor">
     {draft?<>
      <div className="story-studio-info"><span>{draft.status==="published"?"Live version exists":draft.status==="scheduled"?"Scheduled publication":"Private draft"}</span><span>{dirty?"Unsaved edits":"All edits saved"}</span></div>
-     {preview?<article className="story-studio-preview"><small>Draft preview · Not a public URL</small><h3>{draft.title}</h3><p>{draft.excerpt}</p>{draft.featuredMediaRef&&<Image unoptimized className="story-studio-featured-preview" src={"/_media/"+draft.featuredMediaRef.slice(6)} alt={draft.featuredMediaAlt||""} width={1200} height={750}/>}<div dangerouslySetInnerHTML={{__html:renderArticleMarkdown(draft.body)}}/></article>:
+     {preview?<article className="story-studio-preview"><small>Draft preview · Not a public URL</small><h3>{draft.title}</h3><p>{draft.excerpt}</p>{draft.featuredMediaRef&&<Image unoptimized className="story-studio-featured-preview" src={"/_media/"+draft.featuredMediaRef.slice(6)} alt={draft.featuredMediaAlt||""} width={1200} height={750}/>}<div dangerouslySetInnerHTML={{__html:contentMode==="html"?renderArticleHtml(draft.body):renderArticleMarkdown(draft.body)}}/></article>:
       <div className="story-studio-fields">
        <label>Headline<input value={draft.title} maxLength={150} onChange={e=>change("title",e.target.value)}/></label>
        <label>Article URL<input value={draft.slug} maxLength={120} onChange={e=>change("slug",newArticleSlug(e.target.value))}/></label>
@@ -143,13 +143,13 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
         <label>SEO description (160 characters maximum)<textarea value={draft.seoDescription??""} maxLength={160} rows={2} onChange={e=>change("seoDescription",e.target.value||"")}/></label>
        </details>
        <label>Summary<textarea value={draft.excerpt} maxLength={320} rows={3} onChange={e=>change("excerpt",e.target.value)}/></label>
-       <label>Article content (Markdown)<div className="story-markdown-toolbar" role="toolbar" aria-label="Article formatting">
+       <label>Article content<div className="story-content-mode" role="group" aria-label="Content editor mode"><button type="button" aria-pressed={contentMode==="markdown"} onClick={()=>setContentMode("markdown")}>Visual / Markdown</button><button type="button" aria-pressed={contentMode==="html"} onClick={()=>setContentMode("html")}>HTML source</button></div>{contentMode==="markdown"?<div className="story-markdown-toolbar" role="toolbar" aria-label="Article formatting">
         <button type="button" onClick={()=>change("body",draft.body+"\n\n## Heading")}>Heading</button>
         <button type="button" onClick={()=>change("body",draft.body+"\n\n**Bold text**")}>Bold</button>
         <button type="button" onClick={()=>change("body",draft.body+"\n\n[Link text](https://example.com)")}>Link</button>
         <button type="button" onClick={()=>change("body",draft.body+"\n\n- List item")}>Bullet list</button>
         <button type="button" onClick={()=>change("body",draft.body+"\n\n> Quote")}>Quote</button>
-       </div><textarea value={draft.body} maxLength={50000} rows={14} onChange={e=>change("body",e.target.value)} placeholder="Write your story. Use the formatting tools or Markdown for headings, links, lists and emphasis."/><small>Formatting is rendered safely. Raw scripts and unsafe links are removed; images must use this website’s approved media library.</small></label>
+       </div>:<p className="story-html-help">HTML source mode is for authors who prefer writing or pasting markup. Semantic HTML is supported; scripts, event handlers, styles, unsafe URLs and unapproved embeds are stripped before publication.</p>}<textarea className={contentMode==="html"?"story-html-source":""} aria-label={contentMode==="html"?"HTML source":"Markdown article content"} spellCheck={contentMode!=="html"} value={draft.body} maxLength={50000} rows={14} onChange={e=>change("body",e.target.value)} placeholder={contentMode==="html"?"<h2>Your heading</h2>\n<p>Write your article in HTML…</p>":"Write your story. Use the formatting tools or Markdown for headings, links, lists and emphasis."}/><small>{contentMode==="html"?"Allowed HTML is sanitized on preview and publication. Use website media-library URLs for images.":"Formatting is rendered safely. Raw scripts and unsafe links are removed; images must use this website’s approved media library."}</small></label>
        <label>Schedule publication (your device time)<input type="datetime-local" value={draft.scheduledAt?toLocalDateTime(draft.scheduledAt):""} onChange={e=>{setDraft(previous=>previous?{...previous,scheduledAt:e.target.value?new Date(e.target.value).toISOString():null}:previous);setDirty(true);}}/><small>Choose a time at least two minutes ahead.</small></label>
        <div className="story-studio-featured"><div><strong>Featured image</strong><p>Choose an image already stored for this website, or upload one to the same secure image library.</p>{availableMediaCount!==null&&<small>{availableMediaCount} ready image{availableMediaCount===1?"":"s"} in this website library.</small>}</div>{draft.featuredMediaRef&&<Image unoptimized className="story-studio-featured-preview" src={"/_media/"+draft.featuredMediaRef.slice(6)} alt={draft.featuredMediaAlt||""} width={900} height={560}/>}{draft.featuredMediaRef&&<button type="button" disabled={busy} onClick={()=>{setDraft(previous=>previous?{...previous,featuredMediaRef:null,featuredMediaAlt:null}:previous);setDirty(true);}}>Remove featured image</button>}<MediaLibrary websiteId={websiteId} accountId={accountId??""} onChange={onMediaChange} onSelect={(item:MediaLibraryItem)=>{setDraft(previous=>previous?{...previous,featuredMediaRef:item.ref,featuredMediaAlt:item.alt}:previous);setDirty(true);setMessage("");}} selectedRef={draft.featuredMediaRef} protectedIds={Array.from(new Set([...articles.flatMap(article=>[article.featuredMediaRef,article.publishedSnapshot?.featuredMediaRef]),draft.featuredMediaRef,draft.publishedSnapshot?.featuredMediaRef].filter((ref):ref is string=>Boolean(ref)).map(ref=>ref.slice(6))) )}/></div>
       </div>}

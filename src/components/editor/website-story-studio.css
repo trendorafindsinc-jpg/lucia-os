@@ -6,3 +6,5 @@
 .story-studio-fields label>small{display:block;margin-top:6px;color:var(--muted,#697386);font-size:12px;line-height:1.5}
 
 .story-seo-fields{border:1px solid #dce5f0;border-radius:12px;padding:12px;background:#f8faff}.story-seo-fields summary{cursor:pointer;font-size:12px;font-weight:750;margin-bottom:10px}.story-studio input[type="datetime-local"]{font-variant-numeric:tabular-nums}
+
+.story-content-mode{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0}.story-content-mode button[aria-pressed=true]{background:#e6efff;border-color:#5878ba;font-weight:760}.story-html-help{font-size:12px;line-height:1.6;color:#536b86;margin:7px 0}.story-studio textarea.story-html-source{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:12px;line-height:1.7;tab-size:2;white-space:pre;overflow:auto;min-height:340px}

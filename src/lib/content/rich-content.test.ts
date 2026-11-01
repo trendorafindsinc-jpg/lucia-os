@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderArticleMarkdown } from "./rich-content";
+import { renderArticleHtml, renderArticleMarkdown } from "./rich-content";
 
 describe("safe article rich content", () => {
   it("renders semantic Markdown headings, lists, emphasis and links", () => {
@@ -29,5 +29,22 @@ describe("safe article rich content", () => {
     expect(blocked).not.toContain("evil.example");
     const wrongPath = renderArticleMarkdown('<iframe src="https://www.youtube.com/watch?v=abcdefghijk"></iframe>');
     expect(wrongPath).not.toContain("youtube.com/watch");
+  });
+});
+
+
+describe("safe article HTML source mode", () => {
+  it("preserves semantic HTML and website-owned media", () => {
+    const html = renderArticleHtml('<section><h2>Welcome</h2><figure><img src="/_media/123e4567-e89b-42d3-a456-426614174000" alt="A view"><figcaption>Our view</figcaption></figure><p><strong>Readable</strong> HTML.</p></section>');
+    expect(html).toContain("<section>");
+    expect(html).toContain("<figure>");
+    expect(html).toContain("<figcaption>Our view</figcaption>");
+    expect(html).toContain('/_media/123e4567-e89b-42d3-a456-426614174000');
+  });
+
+  it("removes scripts, event handlers, styles, unsafe URLs and unapproved embeds", () => {
+    const html = renderArticleHtml('<script>alert(1)</script><p onclick="alert(1)" style="color:red">Safe text <a href="javascript:alert(1)">bad link</a></p><iframe src="https://evil.example/embed/abc"></iframe>');
+    expect(html).not.toMatch(/<script|onclick|style=|javascript:|evil\\.example/i);
+    expect(html).toContain("Safe text");
   });
 });
