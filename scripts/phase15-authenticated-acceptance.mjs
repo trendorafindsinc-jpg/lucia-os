@@ -63,7 +63,8 @@ export async function checkPhase15AuthenticatedAcceptance({
         await menu.click();
         await accessiblePage.getByRole("navigation", { name: "Mobile navigation" })
           .getByRole("link", { name: "Home" }).click();
-        await accessiblePage.locator('[data-page-path="/"]').waitFor();
+        await accessiblePage.waitForURL((url) => url.pathname === "/templates/preview/lucia.layout.haven");
+        await accessiblePage.locator('main[data-preview-page-path="/"]').waitFor();
       }
       await accessiblePage.getByRole("link", { name: "Back to Layout Library" }).click();
       await accessiblePage.getByLabel("Search layouts").waitFor();
