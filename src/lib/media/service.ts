@@ -39,7 +39,7 @@ export async function validateMediaOwnership(tx: MediaTransaction, organizationI
     const record = value as Record<string, unknown>;
     if (record.type === "media-embed" && typeof record.mediaRef === "string") {
       const match = mediaReferencePattern.exec(record.mediaRef);
-      if (match && (record.kind === "video" || record.kind === "document"))
+      if (match && (record.kind === "image" || record.kind === "video" || record.kind === "document"))
         expectedKinds.set(match[1], record.kind);
     }
     Object.values(record).forEach(collectExpectedKinds);
