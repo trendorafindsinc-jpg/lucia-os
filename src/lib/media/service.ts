@@ -89,12 +89,14 @@ export async function removeMedia(userId: string, websiteId: string, id: string)
     if (!image) throw new MediaError("Image not found.", 404);
     const pattern = '%"media:' + id + '"%';
     const bodyPattern = '%media:' + id + '%';
-    const refs = await tx.execute(sql`select 1 from website_pages where website_id=${websiteId} and (content like ${pattern} or published_content like ${pattern}) union all select 1 from website_versions where website_id=${websiteId} and snapshot like ${pattern} union all select 1 from website_posts where website_id=${websiteId} and (featured_media_id=${id} or published_snapshot->>$key$featuredMediaRef$key$=${"media:"+id} or body like ${bodyPattern} or published_snapshot->>$key$body$key$ like ${bodyPattern}) union all select 1 from website_post_revisions where website_id=${websiteId} and snapshot::text like ${pattern} limit 1`);
+    const refs = await tx.execute(sql`select 1 from website_pages where website_id=${websiteId} and (content like ${pattern} or published_content like ${pattern}) union all select 1 from website_versions where website_id=${websiteId} and snapshot like ${pattern} union all select 1 from website_posts where website_id=${websiteId} and (featured_media_id=${id} or published_snapshot->>$key$featuredMediaRef$key$=${"media:"+id} or body like ${bodyPattern} or published_snapshot->>$key$body$key$ like ${bodyPattern}) union all select 1 from website_post_revisions where website_id=${websiteId} and (snapshot::text like ${pattern} or snapshot::text like ${bodyPattern}) limit 1`);
     if (refs.length || (image.last_published_at && new Date(String(image.last_published_at)).getTime() > Date.now() - 30 * 86400000)) throw new MediaError("This image is retained by a draft, publication, recovery version or the 30-day publication grace period.", 409);
     await tx.execute(sql`update website_media set status='deleting',updated_at=now() where id=${id}`);
     return image as MediaRow;
   });
-  if(row.kind==="image")await mediaStorage().remove(row.object_key);else await multipartStorage.remove(row.object_key);
+  if(row.kind==="image")await mediaStorage().remove(row.object_key);
+  else if(row.status==="pending"&&row.upload_id){try{await multipartStorage.abort(row.object_key,row.upload_id);}catch{await multipartStorage.remove(row.object_key);}}
+  else await multipartStorage.remove(row.object_key);
   await withMediaWebsite(userId, websiteId, "website.edit", async (tx) => {
     const removed = await tx.execute(sql`update website_media set status='deleted',updated_at=now() where id=${id} and status='deleting' returning bytes`);
     if (removed.length) await tx.execute(sql`update media_storage_budget set reserved_bytes=reserved_bytes-${row.bytes} where product='lucia-os'`);
