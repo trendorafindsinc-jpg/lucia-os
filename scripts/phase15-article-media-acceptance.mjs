@@ -8,11 +8,11 @@ export async function checkPhase15ArticleMediaAcceptance({
   api, admin, f, base, browserContext, siteId, siteSlug, bpass, publicSite,
 }) {
   const host = siteSlug + ".lucia.name.ng";
-  const mediaIds = [randomUUID(), randomUUID(), randomUUID()];
-  const [blogImage, draftImage, foreignImage] = mediaIds;
-  const alts = ["Synthetic Blog featured image", "Synthetic replacement image", "Foreign tenant image"];
+  const mediaIds = [randomUUID(), randomUUID(), randomUUID(), randomUUID(), randomUUID()];
+  const [blogImage, draftImage, foreignImage, videoAsset, pdfAsset] = mediaIds;
+  const alts = ["Synthetic Blog featured image", "Synthetic replacement image", "Foreign tenant image", "Synthetic demo video", "Synthetic report PDF"];
   const articleRoute = "/api/websites/" + siteId + "/articles";
-  let articleId = null, newsId = null, reservedBytes = 0;
+  let articleId = null, newsId = null, correctedNewsId = null, scheduledNewsId = null, reservedBytes = 0;
   async function seedMedia(id, orgId, websiteId, userId, alt) {
     const objectKey = "os/" + orgId + "/" + websiteId + "/" + id + ".webp";
     await admin`INSERT INTO website_media
@@ -21,17 +21,27 @@ export async function checkPhase15ArticleMediaAcceptance({
     await admin`UPDATE media_storage_budget SET reserved_bytes=reserved_bytes+200 WHERE product='lucia-os'`;
     reservedBytes += 200;
   }
+  async function seedTypedMedia(id,kind,mime,extension,originalName,alt,checksum){
+    const objectKey="os/"+f.orgA+"/"+siteId+"/"+id+"."+extension;
+    await admin`INSERT INTO website_media (id,organization_id,website_id,created_by_user_id,object_key,kind,mime,original_name,checksum,etag,bytes,width,height,alt,status)
+      VALUES (${id},${f.orgA},${siteId},${f.a},${objectKey},${kind},${mime},${originalName},${checksum},'0123456789abcdef0123456789abcdef',200,0,0,${alt},'ready')`;
+    await admin`UPDATE media_storage_budget SET reserved_bytes=reserved_bytes+200 WHERE product='lucia-os'`;reservedBytes+=200;
+  }
   async function patchArticle(id, article, featuredMediaRef, action) {
     return api("a", articleRoute + "/" + id, "PATCH", {
       title: article.title, slug: article.slug, excerpt: article.excerpt,
-      body: article.body, category: article.category,
-      featuredMediaRef, revision: article.revision, action,
+      body: article.body, category: article.category,eventAt:article.eventAt??null,isFeatured:article.isFeatured??false,
+      correctionNote:article.correctionNote??null,correctsSlug:article.correctsSlug??null,tags:article.tags??[],
+      seoTitle:article.seoTitle??null,seoDescription:article.seoDescription??null,
+      featuredMediaRef,scheduledAt:article.scheduledAt??null,revision: article.revision, action,
     });
   }
   try {
     await seedMedia(blogImage, f.orgA, siteId, f.a, alts[0]);
     await seedMedia(draftImage, f.orgA, siteId, f.a, alts[1]);
     await seedMedia(foreignImage, f.orgB, f.foreign, f.b, alts[2]);
+    await seedTypedMedia(videoAsset,"video","video/mp4","mp4","demo.mp4",alts[3],"a".repeat(64));
+    await seedTypedMedia(pdfAsset,"document","application/pdf","pdf","report.pdf",alts[4],"b".repeat(64));
 
     const title = "Phase 15 blog " + randomBytes(5).toString("hex");
     const created = await api("a", articleRoute, "POST", { kind: "blog", title });
