@@ -34,12 +34,26 @@ function presignedPart(key:string,uploadId:string,partNumber:number,expires=900)
 }
 export const MULTIPART_PART_BYTES=8*1024*1024;
 export function isSafeMediaObjectKey(key:string){return safeKey.test(key);}
+function bucketUrl(query:Record<string,string>){const {endpoint,bucket}=config();const url=new URL("/"+bucket,endpoint);const qs=canonicalQuery(query);if(qs)url.search=qs;return url;}
+async function signedBucketRequest(method:string,query:Record<string,string>={}){
+ const c=config(),url=bucketUrl(query),date=new Date().toISOString().replace(/[:-]|\\.\\d{3}/g,""),day=date.slice(0,8),payload=digest("");
+ const headers:Record<string,string>={host:url.host,"x-amz-content-sha256":payload,"x-amz-date":date};const names=Object.keys(headers).sort();
+ const canonicalHeaders=names.map(name=>name+":"+headers[name].trim()+"\\n").join("");const scope=day+"/"+c.region+"/s3/aws4_request";
+ const canonical=[method,url.pathname,url.search.slice(1),canonicalHeaders,names.join(";"),payload].join("\\n");
+ const stringToSign="AWS4-HMAC-SHA256\\n"+date+"\\n"+scope+"\\n"+digest(canonical);
+ const signingKey=hmac(hmac(hmac(hmac("AWS4"+c.secret,day),c.region),"s3"),"aws4_request");
+ const signature=createHmac("sha256",signingKey).update(stringToSign).digest("hex");
+ headers.authorization="AWS4-HMAC-SHA256 Credential="+c.access+"/"+scope+", SignedHeaders="+names.join(";")+", Signature="+signature;
+ return fetch(url,{method,headers,signal:AbortSignal.timeout(30000),redirect:"error",cache:"no-store"});
+}
+function decodeXml(value:string){return value.replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&apos;/g,"'");}
 export const multipartStorage={
  async create(key:string,mime:string,kind:"video"|"document",checksum:string){
   const response=await signedRequest("POST",key,{uploads:""},{"content-type":mime,"x-amz-server-side-encryption":"AES256","x-amz-meta-sha256":checksum,"x-amz-meta-kind":kind});
   if(!response.ok)throw Error("Could not start the customer media upload.");const xml=await response.text();const id=xml.match(/<UploadId>([^<]+)<\\/UploadId>/)?.[1];if(!id)throw Error("Storage did not return a multipart upload identifier.");return id;
  },
  signPart(key:string,uploadId:string,partNumber:number){if(!Number.isInteger(partNumber)||partNumber<1||partNumber>10000)throw Error("Invalid upload part.");return presignedPart(key,uploadId,partNumber);},
+ async listIncomplete(prefix="os/",limit=1000){const response=await signedBucketRequest("GET",{uploads:"",prefix,"max-uploads":String(Math.min(1000,Math.max(1,limit)))});if(!response.ok)throw Error("Incomplete multipart uploads could not be listed.");const xml=await response.text();return [...xml.matchAll(/<Upload>([\\s\\S]*?)<\\/Upload>/g)].map(match=>{const key=decodeXml(match[1].match(/<Key>([\\s\\S]*?)<\\/Key>/)?.[1]??"");const uploadId=decodeXml(match[1].match(/<UploadId>([\\s\\S]*?)<\\/UploadId>/)?.[1]??"");const initiated=match[1].match(/<Initiated>([\\s\\S]*?)<\\/Initiated>/)?.[1]??"";return {key,uploadId,initiated:Date.parse(initiated)};}).filter(item=>isSafeMediaObjectKey(item.key)&&item.uploadId&&Number.isFinite(item.initiated));},
  async complete(key:string,uploadId:string,parts:CompletedPart[]){
   const xml="<CompleteMultipartUpload>"+parts.map(p=>"<Part><PartNumber>"+p.partNumber+"</PartNumber><ETag>"+p.etag.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")+"</ETag></Part>").join("")+"</CompleteMultipartUpload>";
   const response=await signedRequest("POST",key,{uploadId},{"content-type":"application/xml"},xml);const text=await response.text();if(!response.ok||/<Error>/.test(text))throw Error("Storage could not complete the multipart upload.");return text.match(/<ETag>([^<]+)<\\/ETag>/)?.[1]??null;
