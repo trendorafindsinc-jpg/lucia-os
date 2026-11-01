@@ -69,7 +69,7 @@ export function MediaLibrary({ websiteId, accountId, onChange, protectedIds, onS
       {onInsert && item.status === "ready" && item.kind!=="image" && <button type="button" disabled={busy} onClick={()=>onInsert(item)}>Insert link in article</button>}
       {item.status==="ready"&&item.kind!=="image"&&<a href={"/_media/"+item.id} target="_blank" rel="noopener noreferrer">{item.kind==="video"?"Open video":"Download PDF"}</a>}
       <span>{item.original_name||item.alt} · {Math.ceil(item.bytes / 1000)} KB · {item.status}</span>
-      {item.status === "ready" || item.status === "deleting" || item.status === "pending" ? <button type="button" disabled={busy || protectedIds.includes(item.id)} onClick={() => remove(item.id)}>Remove unused image</button> : <span>Awaiting storage reconciliation; reserved space remains counted.</span>}
+      {item.status === "ready" || item.status === "deleting" || item.status === "pending" ? <button type="button" disabled={busy || protectedIds.includes(item.id)} onClick={() => remove(item.id)}>Remove unused asset</button> : <span>Awaiting storage reconciliation; reserved space remains counted.</span>}
     </li>)}</ul>
   </details>;
 }
