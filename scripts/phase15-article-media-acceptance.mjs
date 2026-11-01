@@ -203,9 +203,27 @@ export async function checkPhase15ArticleMediaAcceptance({
     const scheduledRecord=(await scheduledResponse.json()).article;assert.equal(scheduledRecord.status,"scheduled");
     assert.equal((await publicSite("/news/"+scheduledRecord.slug,host)).status,404);
     await admin`UPDATE website_posts SET scheduled_at=now()-interval '1 minute' WHERE id=${scheduledNewsId} AND website_id=${siteId} AND status='scheduled'`;
+    assert.equal((await api(null,"/api/cron/publish-articles")).status,401,"Scheduled publishing must reject requests without a cron secret");
+    assert.equal((await api(null,"/api/cron/publish-articles","GET",undefined,{authorization:"Bearer invalid-secret"})).status,401,"Scheduled publishing must reject an invalid cron secret");
+    await admin.unsafe("UPDATE website_posts SET scheduled_at=now()-interval '1 minute' WHERE id=$1 AND website_id=$2 AND status='scheduled'",[scheduledNewsId,siteId]);
+    await admin.unsafe("ALTER TABLE website_posts ADD CONSTRAINT phase15_test_fail_schedule CHECK(status <> 'published') NOT VALID");
+    const failedCron=await api(null,"/api/cron/publish-articles","GET",undefined,{authorization:"Bearer "+process.env.CRON_SECRET});
+    assert.equal(failedCron.status,503,"A worker database failure must be surfaced for retry");
+    const queuedAfterFailure=await admin.unsafe("SELECT status,revision,scheduled_at FROM website_posts WHERE id=$1",[scheduledNewsId]);
+    assert.equal(queuedAfterFailure[0].status,"scheduled","A failed worker transaction must leave the due article queued");
+    assert(queuedAfterFailure[0].scheduled_at,"A failed worker transaction must preserve its due timestamp");
+    await admin.unsafe("ALTER TABLE website_posts DROP CONSTRAINT phase15_test_fail_schedule");
     const cron=await api(null,"/api/cron/publish-articles","GET",undefined,{authorization:"Bearer "+process.env.CRON_SECRET});
     assert.equal(cron.status,200,"The scheduled publisher must accept the isolated cron secret");
-    const cronResult=await cron.json();assert(cronResult.published>=1,"The due scheduled News article must be published by the worker");
+    const cronResult=await cron.json();assert.equal(cronResult.published,1,"The retry must publish exactly one due News article");
+    const afterFirstPublish=await admin.unsafe("SELECT status,revision,scheduled_at FROM website_posts WHERE id=$1",[scheduledNewsId]);
+    assert.equal(afterFirstPublish[0].status,"published");
+    assert.equal(afterFirstPublish[0].scheduled_at,null);
+    const repeatedCron=await api(null,"/api/cron/publish-articles","GET",undefined,{authorization:"Bearer "+process.env.CRON_SECRET});
+    assert.equal(repeatedCron.status,200);
+    assert.equal((await repeatedCron.json()).published,0,"A committed scheduled article must never publish twice");
+    const afterRepeat=await admin.unsafe("SELECT revision FROM website_posts WHERE id=$1",[scheduledNewsId]);
+    assert.equal(afterRepeat[0].revision,afterFirstPublish[0].revision,"A repeated worker run must not create another publication revision");
     const publishedScheduled=await publicSite("/news/"+scheduledRecord.slug,host);assert.equal(publishedScheduled.status,200);assert((await publishedScheduled.text()).includes(scheduledTitle));
     bpass("News customer journey: author/SEO/tags, event metadata, featured correction notices, public content contract and scheduled worker; Blog media references and revision restore are tenant-isolated");
   } finally {
