@@ -8,6 +8,7 @@ import { headers } from "next/headers";
 import { notFound, permanentRedirect } from "next/navigation";
 import { getDb } from "@/lib/db/client";
 import { normalizeHostname } from "@/lib/domains/hostname";
+import { isPlatformHostname } from "@/lib/publishing/platform-hosts";
 import { articleDraftSchema, articleRoute } from "@/lib/content/article-model";
 import { websiteDomains, websitePosts, websites, organizations } from "@/lib/db/schema";
 import styles from "./public-articles.module.css";
@@ -16,7 +17,7 @@ import { renderArticleMarkdown } from "./rich-content";
 export function isArticlePath(path: string) {
  return /^(?:\/)?(?:blog|news)(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)?\/?$/.test(path);
 }
-const readPublished = cache(async (path: string) => {
+const readPublished = cache(async (path: string, websiteSlug?: string) => {
  const segments=path.replace(/^\/|\/$/g,"").split("/");
  const kind=segments[0],slug=segments[1] ?? null;
  if ((kind!=="blog" && kind!=="news") || segments.length>2) notFound();
@@ -25,11 +26,17 @@ const readPublished = cache(async (path: string) => {
  let hostname:string;
  try{hostname=normalizeHostname(new URL("http://"+host).hostname);}catch{notFound();}
  const db=getDb();
- const [site]=await db.select({id:websites.id,organizationId:websites.organizationId,name:websites.name})
+ let [site]=await db.select({id:websites.id,organizationId:websites.organizationId,name:websites.name})
   .from(websiteDomains).innerJoin(websites,and(eq(websiteDomains.websiteId,websites.id),eq(websiteDomains.organizationId,websites.organizationId)))
   .innerJoin(organizations,eq(organizations.id,websites.organizationId))
   .where(and(eq(websiteDomains.hostname,hostname),eq(websiteDomains.status,"active"),
    eq(websites.status,"published"),eq(organizations.status,"active"))).limit(1);
+ if(!site&&websiteSlug&&isPlatformHostname(hostname)){
+  const [platformSite]=await db.select({id:websites.id,organizationId:websites.organizationId,name:websites.name})
+   .from(websites).innerJoin(organizations,eq(organizations.id,websites.organizationId))
+   .where(and(eq(websites.slug,websiteSlug),eq(websites.status,"published"),eq(organizations.status,"active"))).limit(1);
+  site=platformSite;
+ }
  if(!site)notFound();
  const base=and(eq(websitePosts.websiteId,site.id),eq(websitePosts.organizationId,site.organizationId),
   eq(websitePosts.kind,kind),eq(websitePosts.status,"published"));
@@ -55,16 +62,16 @@ const readPublished = cache(async (path: string) => {
  }
  return {site,hostname,kind:kind as "blog"|"news",posts,slug};
 });
-export async function publicArticleMetadata(path:string):Promise<Metadata> {
- const data=await readPublished(path);
+export async function publicArticleMetadata(path:string,websiteSlug?:string):Promise<Metadata> {
+ const data=await readPublished(path,websiteSlug);
  const article=data.slug ? data.posts[0] : null;
  const title=article ? (article.seoTitle || article.title) : data.kind==="blog" ? "Blog" : "News";
  const description=article?.seoDescription || article?.excerpt || "Latest "+data.kind+" from "+data.site.name;
  const image=article?.featuredMediaRef ? "https://"+data.hostname+"/_media/"+article.featuredMediaRef.slice(6) : undefined;
  return {title:{absolute:title+" | "+data.site.name},description,openGraph:{type:"article",title,description,images:image?[image]:undefined},twitter:{card:image?"summary_large_image":"summary",title,description,images:image?[image]:undefined},robots:{index:true,follow:true}};
 }
-export async function PublicArticlePage({path,searchParams}:{path:string;searchParams?:Record<string,string|string[]|undefined>}) {
- const {site,kind,posts,slug}=await readPublished(path);
+export async function PublicArticlePage({path,searchParams,websiteSlug}:{path:string;searchParams?:Record<string,string|string[]|undefined>;websiteSlug?:string}) {
+ const {site,kind,posts,slug}=await readPublished(path,websiteSlug);
  const categoryValue=typeof searchParams?.category==="string"?searchParams.category:"";
  const tagValue=typeof searchParams?.tag==="string"?searchParams.tag:"";
  const filteredPosts=slug?posts:posts.filter(post=>(!categoryValue||post.category===categoryValue)&&(!tagValue||post.tags.includes(tagValue)));
@@ -104,8 +111,8 @@ export async function PublicArticlePage({path,searchParams}:{path:string;searchP
  </main>;
 }
 
-export async function readPublishedContentContract(){
- const [blog,news]=await Promise.all([readPublished("/blog"),readPublished("/news")]);
+export async function readPublishedContentContract(websiteSlug?:string){
+ const [blog,news]=await Promise.all([readPublished("/blog",websiteSlug),readPublished("/news",websiteSlug)]);
  const serialize=(article:typeof blog.posts[number],kind:"blog"|"news")=>({
   kind,title:article.title,slug:article.slug,route:articleRoute(kind,article.slug),excerpt:article.excerpt,body:article.body,
   category:article.category,tags:article.tags,author:article.authorName,eventAt:article.eventAt,isFeatured:article.isFeatured,
@@ -115,8 +122,9 @@ export async function readPublishedContentContract(){
  });
  return {contract:"lucia.published-content.v1",site:{name:blog.site.name,hostname:blog.hostname},content:{blog:blog.posts.map(post=>serialize(post,"blog")),news:news.posts.map(post=>serialize(post,"news"))}};
 }
-export async function PublicContentHighlights(){
- const data=await readPublishedContentContract();
+export async function PublicContentHighlights({websiteSlug}:{websiteSlug?:string}={}){
+ let data:Awaited<ReturnType<typeof readPublishedContentContract>>;
+ try{data=await readPublishedContentContract(websiteSlug);}catch(error){if(error&&typeof error==="object"&&"digest" in error) return null;throw error;}
  const posts=[...data.content.blog,...data.content.news].sort((a,b)=>Number(b.isFeatured)-Number(a.isFeatured)||new Date(b.publishedAt??0).getTime()-new Date(a.publishedAt??0).getTime()).slice(0,3);
  if(!posts.length)return null;
  return <section className={styles.highlights} aria-labelledby="published-content-heading">
