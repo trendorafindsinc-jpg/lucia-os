@@ -14,7 +14,7 @@ import {
   websitePageDetails,
 } from "@/lib/layout-blueprint/website-definition";
 import { LayoutRenderer } from "@/components/layout-studio/layout-renderer";
-import { isArticlePath, publicArticleMetadata, PublicArticlePage } from "@/lib/content/public-articles";
+import { isArticlePath, publicArticleMetadata, PublicArticlePage, PublicContentHighlights } from "@/lib/content/public-articles";
 
 // React cache is request-local: metadata and rendering share one resolution;
 // requests for different tenant hosts never share cached authorization/data.
@@ -95,5 +95,5 @@ export async function publicWebsiteMetadata(path: string): Promise<Metadata> {
 export async function PublicWebsite({ path }: { path: string }) {
   if (isArticlePath(path)) return <PublicArticlePage path={path} />;
   const page = await readPublicWebsitePage(path);
-  return <LayoutRenderer blueprint={page.blueprint} pagePath={page.pagePath} />;
+  return <><LayoutRenderer blueprint={page.blueprint} pagePath={page.pagePath} />{(path==="/"||path==="")&&<PublicContentHighlights/>}</>;
 }

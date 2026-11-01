@@ -96,6 +96,7 @@ export function LayoutRenderer({
         <span>
           {preview ? "Private preview · LUCIA OS" : "Made with LUCIA OS"}
         </span>
+        {!preview&&<nav aria-label="Blog and news" style={{display:"flex",gap:"1rem"}}><a href="/blog">Blog</a><a href="/news">News</a></nav>}
       </footer>
     </Root>
   );
@@ -338,6 +339,7 @@ function PremiumLayoutPage({
           ))}
         </nav>
         <div className="premium-footer-end">
+          {!preview&&<nav aria-label="Blog and news" style={{display:"flex",gap:"1rem"}}><a href="/blog">Blog</a><a href="/news">News</a></nav>}
           <span>{preview ? "Private preview · LUCIA OS" : "Made with LUCIA OS"}</span>
           {/* Customer hostname navigation must issue a document request. */}
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}

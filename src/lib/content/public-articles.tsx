@@ -89,3 +89,29 @@ export async function PublicArticlePage({path}:{path:string}) {
   </section>}
  </main>;
 }
+
+export async function readPublishedContentContract(){
+ const [blog,news]=await Promise.all([readPublished("/blog"),readPublished("/news")]);
+ const serialize=(article:typeof blog.posts[number],kind:"blog"|"news")=>({
+  kind,title:article.title,slug:article.slug,route:articleRoute(kind,article.slug),excerpt:article.excerpt,body:article.body,
+  category:article.category,tags:article.tags,author:article.authorName,eventAt:article.eventAt,isFeatured:article.isFeatured,
+  correctionNote:article.correctionNote,correctsSlug:article.correctsSlug,seoTitle:article.seoTitle,seoDescription:article.seoDescription,
+  publishedAt:article.publishedAt?.toISOString()??null,
+  featuredMedia:article.featuredMediaRef?{ref:article.featuredMediaRef,url:"https://"+blog.hostname+"/_media/"+article.featuredMediaRef.slice(6),alt:article.featuredMediaAlt}:null
+ });
+ return {contract:"lucia.published-content.v1",site:{name:blog.site.name,hostname:blog.hostname},content:{blog:blog.posts.map(post=>serialize(post,"blog")),news:news.posts.map(post=>serialize(post,"news"))}};
+}
+export async function PublicContentHighlights(){
+ const data=await readPublishedContentContract();
+ const posts=[...data.content.blog,...data.content.news].sort((a,b)=>Number(b.isFeatured)-Number(a.isFeatured)||new Date(b.publishedAt??0).getTime()-new Date(a.publishedAt??0).getTime()).slice(0,3);
+ if(!posts.length)return null;
+ return <section className={styles.highlights} aria-labelledby="published-content-heading">
+  <header><p className={styles.eyebrow}>{data.site.name} / Journal</p><h2 id="published-content-heading">Stories & updates</h2><p>Ideas, news and recent highlights.</p></header>
+  <div className={styles.highlightGrid}>{posts.map(post=><article key={post.kind+":"+post.slug}>
+   {post.featuredMedia&&<Image unoptimized className={styles.cardImage} src={"/_media/"+post.featuredMedia.ref.slice(6)} alt={post.featuredMedia.alt||""} width={800} height={500}/>}
+   <p className={styles.eyebrow}>{post.isFeatured?"Featured · ":""}{post.kind==="blog"?"Blog":"News"}{post.category?" · "+post.category:""}</p>
+   <h3><Link href={post.route as Route}>{post.title}</Link></h3><p>{post.excerpt}</p>
+  </article>)}</div>
+  <nav aria-label="All published content"><Link href={"/blog" as Route}>All Blog posts</Link><Link href={"/news" as Route}>All News</Link></nav>
+ </section>;
+}
