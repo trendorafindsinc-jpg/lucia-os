@@ -1049,6 +1049,46 @@ try {
   );
   pass("Revoked tenant membership cannot read or publish");
   }
+
+  if (process.env.WEBSITE_TEST_WEBSITE_REMOVAL === "1") {
+    const site = f.siteB, route = "/api/websites/" + site;
+    const [before] = await admin`select slug, name from websites where id=${site}`;
+    const hostname = before.slug + ".lucia.name.ng";
+    // This site belongs to the disposable synthetic fixture, never customer data.
+    await admin`update websites set status='published' where id=${site}`;
+    await admin`update website_pages set status='published', published_content=content where website_id=${site}`;
+    await admin`insert into website_domains(organization_id,website_id,hostname,domain_type,status,verified_at)
+      values(${f.orgA},${site},${hostname},'lucia_subdomain','active',now())`;
+    assert.equal((await publicSite("/", hostname)).status, 200);
+    assert.equal((await api(null, route, "DELETE", { confirmation: before.name })).status, 401);
+    assert.equal((await api("b", route, "DELETE", { confirmation: before.name })).status, 404);
+    assert.equal((await api("a", route, "DELETE", { confirmation: "Wrong name" })).status, 409);
+    assert.equal((await api("a", route, "DELETE", { confirmation: before.name }, { origin: "https://evil.test" })).status, 403);
+    const removed = await api("a", route, "DELETE", { confirmation: before.name });
+    assert.equal(removed.status, 200, "Owner website removal");
+    assert.equal((await removed.json()).dataErased, false);
+    assert.equal((await publicSite("/", hostname)).status, 404);
+    assert.equal((await api("a", route + "/draft")).status, 404);
+    assert.equal((await api("a", route + "/seo")).status, 404);
+    assert.equal((await api("a", route + "/structure")).status, 404);
+    assert.equal((await api("a", route + "/content-library")).status, 404);
+    assert.equal((await api("a", route + "/versions")).status, 404);
+    assert.equal((await api("a", route + "/media")).status, 404);
+    const own = await (await api("a", "/api/websites/manage")).json();
+    assert(own.websites.some((item) => item.id === f.siteA));
+    assert(!own.websites.some((item) => item.id === site));
+    const publishable = await (await api("a", "/api/publishing/websites")).json();
+    assert(!publishable.websites.some((item) => item.id === site));
+    const [saved] = await admin`select status,slug from websites where id=${site}`;
+    assert.equal(saved.status, "deleted");
+    assert.equal(saved.slug, "deleted-" + site);
+    assert.equal((await admin`select id from website_domains where website_id=${site}`).length, 0);
+    assert.equal((await admin`select id from website_pages where website_id=${site}`).length, 1,
+      "Safe removal retains the website page for recovery");
+    assert.equal((await api("a", route, "DELETE", { confirmation: before.name })).status, 404);
+    pass("Owner-confirmed website removal: no cross-tenant deletion, public host offline, hostname released, private routes denied and original data retained");
+  }
+
   assert.equal((await api("b", "/api/staff/grants")).status, 403);
   pass("Ordinary customer session cannot access staff grants");
   console.log(
