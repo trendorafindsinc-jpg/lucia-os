@@ -89,3 +89,13 @@
 
 /* Keep editor actions usable at narrow widths instead of overflowing the page. */
 @media(max-width:700px){.editor-topbar{flex-wrap:wrap;padding-block:12px}.editor-topbar-actions{min-width:0;flex-wrap:wrap;justify-content:flex-end}.editor-topbar-actions>*{max-width:100%;overflow-wrap:anywhere}}
+
+/* Phase 16 narrow-screen acceptance: keep form controls inside the editor viewport. */
+.editor-page,.editor-page *{box-sizing:border-box}
+.editor-page{min-width:0;max-width:100%}
+.editor-page>*{min-width:0;max-width:100%}
+.editor-page .composition-controls,.editor-page .composition-controls.studio-panel,
+.editor-page .studio-task-nav,.editor-page .studio-panel,.editor-page .studio-subfields,
+.editor-page .studio-media-library{box-sizing:border-box;min-width:0;max-width:100%}
+.editor-page .studio-task-nav button{box-sizing:border-box;min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere}
+.editor-page :is(input,select,textarea,button){box-sizing:border-box;max-width:100%}
