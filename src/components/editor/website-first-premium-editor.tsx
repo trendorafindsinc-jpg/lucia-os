@@ -9,7 +9,7 @@ import { premiumArtworkChoices } from "@/lib/layout-blueprint/premium-layouts/as
 import { premiumCandidate, premiumCandidateIds } from "@/lib/layout-blueprint/premium-layouts/catalogue-candidates";
 import { resolveExternalEmbed } from "@/lib/media/embed-providers";
 import {
-  applyPremiumEdit, compositionRecoverySchema,
+  applyPremiumEdit, compositionRecoverySchema, premiumPathSchema,
   type PremiumEdit, type PremiumLayout, type PremiumSection,
 } from "@/lib/layout-blueprint/premium-composition";
 import { useWorkspaceAdapter, useWorkspaceTab } from "@/components/workspace/workspace-tab-shell";
@@ -278,6 +278,10 @@ export function WebsiteFirstPremiumEditor({
     const nextPath = rawPath === "/" ? "/" : rawPath.startsWith("/") ? rawPath : "/" + rawPath;
     const navigation = patch.navigation ?? target.navigation;
     if (!title || !description) { setNotice("Page title and description cannot be empty."); return; }
+    if (!premiumPathSchema.safeParse(nextPath).success || /^\/(?:api|workspace|staff|admin|auth|login|logout|site|tenant-site-internal|_next)(?:\/|$)/.test(nextPath)) {
+      setNotice("Use a safe page address such as /about or /our-story.");
+      return;
+    }
     if ((target.path === "/") !== (nextPath === "/")) { setNotice("Only the homepage can use the root address (/)."); return; }
     if (layout.pages.some((entry) => entry.id !== pageId && entry.path === nextPath)) { setNotice("That page address is already in use."); return; }
     if (title === target.title && description === target.description && navigation === target.navigation && nextPath === target.path) return;
