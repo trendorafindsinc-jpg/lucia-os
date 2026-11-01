@@ -25,4 +25,22 @@ export function renderArticleMarkdown(source: string): string {
     allowedAttributes: {
       a: ["href", "title", "target", "rel"],
       img: ["src", "alt", "title", "loading", "decoding"],
-      iframe: ["src", "title", "allow", "a¶»§q«^
+      iframe: ["src", "title", "allow", "allowfullscreen", "loading", "referrerpolicy"],
+      th: ["colspan", "rowspan"], td: ["colspan", "rowspan"],
+    },
+    allowedSchemes: ["https", "http", "mailto", "tel"],
+    allowProtocolRelative: false,
+    allowedIframeHostnames: [...embedHosts],
+    transformTags: {
+      a: (_tagName, attribs) => ({ tagName: "a", attribs: { ...attribs, target: "_blank", rel: "noopener noreferrer nofollow" } }),
+      img: (_tagName, attribs) => ({ tagName: "img", attribs: { ...attribs, loading: "lazy", decoding: "async" } }),
+      iframe: (_tagName, attribs) => {
+        const src = safeEmbedSource(attribs.src);
+        return src
+          ? { tagName: "iframe", attribs: { src, title: (attribs.title || "Embedded media").slice(0, 120), loading: "lazy", referrerpolicy: "strict-origin-when-cross-origin", allow: "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share", allowfullscreen: "" } }
+          : { tagName: "span", attribs: {} as Record<string, string> };
+      },
+    },
+    exclusiveFilter: (frame) => frame.tag === "img" && !localMediaPath.test(frame.attribs.src || ""),
+  });
+}

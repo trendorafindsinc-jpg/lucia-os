@@ -24,4 +24,10 @@ describe("safe article rich content", () => {
 
   it("allows only HTTPS embeds from the approved video hosts and paths", () => {
     const allowed = renderArticleMarkdown('<iframe src="https://www.youtube-nocookie.com/embed/abcdefghijk" title="Demo"></iframe>');
-    const blocked = renderArticleMarkdown('<iframe sr¶»§q«^
+    const blocked = renderArticleMarkdown('<iframe src="https://evil.example/embed/abcdefghijk"></iframe>');
+    expect(allowed).toContain("youtube-nocookie.com/embed/abcdefghijk");
+    expect(blocked).not.toContain("evil.example");
+    const wrongPath = renderArticleMarkdown('<iframe src="https://www.youtube.com/watch?v=abcdefghijk"></iframe>');
+    expect(wrongPath).not.toContain("youtube.com/watch");
+  });
+});
