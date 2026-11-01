@@ -488,11 +488,11 @@ export function WebsiteFirstPremiumEditor({
         <div className="website-first-page-heading"><button type="button" aria-pressed={page.id === item.id}
           onClick={() => { setPageId(item.id); setSelected(""); setField(null); }}>{item.title}</button>
           <span>{item.path}</span></div>
-        <label>Page title<input key={item.id + item.title} defaultValue={item.title} maxLength={120}
+        <label>Page title<input key={item.id + item.title} defaultValue={item.title} maxLength={120} disabled={!layout.permissions.advanced.includes("pages")}
           onBlur={(event) => updatePageDetails(item.id, { title: event.target.value })}/></label>
-        <label>Search description<input key={item.id + item.description} defaultValue={item.description} maxLength={160}
+        <label>Search description<input key={item.id + item.description} defaultValue={item.description} maxLength={160} disabled={!layout.permissions.advanced.includes("pages")}
           onBlur={(event) => updatePageDetails(item.id, { description: event.target.value })}/></label>
-        <label className="website-first-page-nav-toggle"><input type="checkbox" checked={item.navigation}
+        <label className="website-first-page-nav-toggle"><input type="checkbox" checked={item.navigation} disabled={!layout.permissions.advanced.includes("pages")}
           onChange={(event) => updatePageDetails(item.id, { navigation: event.target.checked })}/> Show in website navigation</label>
         {item.path !== "/" && <button type="button" onClick={() => removePage(item.id)} disabled={busy || saveState === "conflict" || !layout.permissions.advanced.includes("pages")}>Remove page</button>}
       </article>)}</div>
