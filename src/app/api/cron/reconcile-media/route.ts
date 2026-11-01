@@ -1,4 +1,4 @@
-import { timingSafeEqual } from "node:crypto";
+import { isAuthorizedCronRequest } from "@/lib/cron/authorization";
 import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { mediaStorage } from "@/lib/media/storage";
@@ -6,7 +6,7 @@ import { multipartStorage } from "@/lib/media/multipart-storage";
 export const runtime="nodejs";export const dynamic="force-dynamic";export const maxDuration=60;
 function authorized(request:Request){const expected=process.env.CRON_SECRET;const supplied=request.headers.get("authorization")?.replace(/^Bearer\s+/i,"")??"";if(!expected||!supplied)return false;const a=Buffer.from(expected),b=Buffer.from(supplied);return a.length===b.length&&timingSafeEqual(a,b);}
 export async function GET(request:Request){
- if(!authorized(request))return Response.json({error:"Unauthorized."},{status:401,headers:{"Cache-Control":"no-store"}});
+ if(!(await isAuthorizedCronRequest(request)))return Response.json({error:"Unauthorized."},{status:401,headers:{"Cache-Control":"no-store"}});
  let recovered=0,removed=0,failed=0,orphaned=0;
  try{
   const db=getDb();const rows=await db.execute(sql`select * from lucia_claim_stale_media_uploads(5)`);
