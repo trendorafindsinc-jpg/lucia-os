@@ -1,10 +1,13 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ArticleKind } from "@/lib/content/article-model";
+import Image from "next/image";
+import { MediaLibrary, type MediaLibraryItem } from "./media-library";
 import { articleRoute, newArticleSlug } from "@/lib/content/article-model";
 import "./website-story-studio.css";
 type Story = {
  id:string;kind:ArticleKind;title:string;slug:string;excerpt:string;body:string;category:string;
+ featuredMediaRef:string|null;featuredMediaAlt:string|null;publishedSnapshot:{featuredMediaRef?:string|null}|null;
  revision:number;status:"draft"|"published";publishedSlug:string|null;publishedAt:string|null;
 };
 export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
@@ -21,6 +24,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
  const [message,setMessage]=useState("");
  const [preview,setPreview]=useState(false);
  const [dirty,setDirty]=useState(false);
+ const onMediaChange=useCallback((_items:{ref:string;label:string}[])=>{},[]);
  const headers = useMemo<Record<string,string>>(()=>{ const value:Record<string,string>={}; if(accountId)value["x-lucia-workspace-account"]=accountId; return value; },[accountId]);
  const load = useCallback(async () => {
   setLoading(true);setMessage("");
@@ -72,7 +76,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
    const response=await fetch("/api/websites/"+websiteId+"/articles/"+draft.id,{
     method:"PATCH",headers:{"Content-Type":"application/json",...headers},
     body:JSON.stringify({title:draft.title,slug:draft.slug,excerpt:draft.excerpt,
-     body:draft.body,category:draft.category,revision:draft.revision,action}),
+     body:draft.body,category:draft.category,featuredMediaRef:draft.featuredMediaRef,revision:draft.revision,action}),
    });
    const payload=await response.json();
    if(!response.ok)throw Error(payload.error || "Article could not be saved.");
@@ -104,13 +108,14 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
    <div className="story-studio-editor">
     {draft?<>
      <div className="story-studio-info"><span>{draft.status==="published"?"Live version exists":"Private draft"}</span><span>{dirty?"Unsaved edits":"All edits saved"}</span></div>
-     {preview?<article className="story-studio-preview"><small>Draft preview · Not a public URL</small><h3>{draft.title}</h3><p>{draft.excerpt}</p>{draft.body.split(/\n{2,}/).map((line,i)=><p key={i}>{line}</p>)}</article>:
+     {preview?<article className="story-studio-preview"><small>Draft preview · Not a public URL</small><h3>{draft.title}</h3><p>{draft.excerpt}</p>{draft.featuredMediaRef&&<Image unoptimized className="story-studio-featured-preview" src={"/_media/"+draft.featuredMediaRef.slice(6)} alt={draft.featuredMediaAlt||""} width={1200} height={750}/>}{draft.body.split(/\n{2,}/).map((line,i)=><p key={i}>{line}</p>)}</article>:
       <div className="story-studio-fields">
        <label>Headline<input value={draft.title} maxLength={150} onChange={e=>change("title",e.target.value)}/></label>
        <label>Article URL<input value={draft.slug} maxLength={120} onChange={e=>change("slug",newArticleSlug(e.target.value))}/></label>
        <label>Category (optional)<input value={draft.category} maxLength={80} onChange={e=>change("category",e.target.value)}/></label>
        <label>Summary<textarea value={draft.excerpt} maxLength={320} rows={3} onChange={e=>change("excerpt",e.target.value)}/></label>
        <label>Article content (plain text)<textarea value={draft.body} maxLength={50000} rows={12} onChange={e=>change("body",e.target.value)}/></label>
+       <div className="story-studio-featured"><div><strong>Featured image</strong><p>Choose an image already stored for this website, or upload one to the same secure image library.</p></div>{draft.featuredMediaRef&&<Image unoptimized className="story-studio-featured-preview" src={"/_media/"+draft.featuredMediaRef.slice(6)} alt={draft.featuredMediaAlt||""} width={900} height={560}/>}{draft.featuredMediaRef&&<button type="button" disabled={busy} onClick={()=>{setDraft(previous=>previous?{...previous,featuredMediaRef:null,featuredMediaAlt:null}:previous);setDirty(true);}}>Remove featured image</button>}<MediaLibrary websiteId={websiteId} accountId={accountId??""} onChange={onMediaChange} onSelect={(item:MediaLibraryItem)=>{setDraft(previous=>previous?{...previous,featuredMediaRef:item.ref,featuredMediaAlt:item.alt}:previous);setDirty(true);setMessage("");}} selectedRef={draft.featuredMediaRef} protectedIds={Array.from(new Set([...articles.flatMap(article=>[article.featuredMediaRef,article.publishedSnapshot?.featuredMediaRef]),draft.featuredMediaRef,draft.publishedSnapshot?.featuredMediaRef].filter((ref):ref is string=>Boolean(ref)).map(ref=>ref.slice(6))) )}/></div>
       </div>}
      <div className="story-studio-actions">
       <button type="button" onClick={()=>setPreview(p=>!p)}>{preview?"Edit article":"Preview draft"}</button>
