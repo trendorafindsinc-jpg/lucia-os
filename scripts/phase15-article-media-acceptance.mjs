@@ -47,6 +47,10 @@ export async function checkPhase15ArticleMediaAcceptance({
       body: "This is a synthetic article body with enough detail to be published safely.",
       category: "Acceptance",
     };
+    const initialized = await patchArticle(articleId, article, null, "save");
+    const initializedBody = await initialized.json();
+    assert.equal(initialized.status, 200, initializedBody.error);
+    article = initializedBody.article;
     const foreignRef = await patchArticle(articleId, article, "media:" + foreignImage, "save");
     assert.equal(foreignRef.status, 422, "A different tenant's media must not be attachable");
     await assert.rejects(admin`UPDATE website_posts SET featured_media_id=${foreignImage} WHERE id=${articleId}`, /website_posts_featured_media_fk/);
