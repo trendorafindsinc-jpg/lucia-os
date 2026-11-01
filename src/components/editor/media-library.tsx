@@ -26,19 +26,21 @@ export function MediaLibrary({ websiteId, accountId, onChange, protectedIds, onS
     finally { setBusy(false); }
   }
   async function uploadAsset(event:React.FormEvent<HTMLFormElement>){
-    event.preventDefault();const form=event.currentTarget;const data=new FormData(form);const file=data.get("asset") as File|null;const alt=String(data.get("assetAlt")||"").trim();const caption=String(data.get("assetCaption")||"").trim()||null;
-    if(!file||!file.size){setNotice("Choose a video or PDF first.");return;}
-    const kind=file.type.startsWith("video/")?"video":"document";setBusy(true);setNotice("Preparing a secure multipart upload…");let created:{mediaId:string;uploadId:string;partSize:number;parts:{partNumber:number;url:string}[]}|null=null;
+    event.preventDefault();const form=event.currentTarget;const data=new FormData(form);const fileValue=data.get("asset");const alt=String(data.get("assetAlt")||"").trim();const caption=String(data.get("assetCaption")||"").trim()||null;
+    if(!(fileValue instanceof File)||fileValue.size<=0){setNotice("Choose a video or PDF first.");return;}
+    const uploadFile:File=fileValue;const kind=uploadFile.type.startsWith("video/")?"video":"document";setBusy(true);setNotice("Preparing a secure multipart upload…");
+    let created:{mediaId:string;uploadId:string;partSize:number;parts:{partNumber:number;url:string}[]}|null=null;
     try{
-      const max=kind==="video"?100_000_000:25_000_000;if(file.size>max)throw Error(kind==="video"?"Videos are limited to 100 MB.":"PDF documents are limited to 25 MB.");
-      const checksumBuffer=await crypto.subtle.digest("SHA-256",await file.arrayBuffer());const checksum=Array.from(new Uint8Array(checksumBuffer),b=>b.toString(16).padStart(2,"0")).join("");
-      const headerBytes=new Uint8Array(await file.slice(0,32).arrayBuffer());const headerBase64=btoa(Array.from(headerBytes,b=>String.fromCharCode(b)).join(""));
-      const response=await fetch(endpoint+"/assets",{method:"POST",headers:{"content-type":"application/json","x-lucia-workspace-account":accountId},body:JSON.stringify({action:"create",kind,mime:file.type,filename:file.name,bytes:file.size,sha256:checksum,headerBase64,alt,caption})});
-      const payload=await response.json();if(!response.ok)throw Error(payload.error||"Upload could not be started.");created=payload;
-      const completed:{partNumber:number;etag:string}[]=new Array(created.parts.length);let next=0,done=0;
-      async function worker(){while(true){const index=next++;if(index>=created!.parts.length)return;const part=created!.parts[index];const start=(part.partNumber-1)*created!.partSize;const chunk=file.slice(start,Math.min(file.size,start+created!.partSize));const uploaded=await fetch(part.url,{method:"PUT",body:chunk});if(!uploaded.ok)throw Error("A media upload part failed. The incomplete upload will be cancelled.");const etag=uploaded.headers.get("ETag");if(!etag)throw Error("Storage did not expose the uploaded part checksum. Check bucket CORS before retrying.");completed[index]={partNumber:part.partNumber,etag};done++;setNotice("Uploading "+file.name+" · "+done+" of "+created!.parts.length+" parts…");}}
-      await Promise.all(Array.from({length:Math.min(3,created.parts.length)},()=>worker()));
-      const finalized=await fetch(endpoint+"/assets",{method:"POST",headers:{"content-type":"application/json","x-lucia-workspace-account":accountId},body:JSON.stringify({action:"complete",mediaId:created.mediaId,uploadId:created.uploadId,parts:completed})});const result=await finalized.json();if(!finalized.ok)throw Error(result.error||"The uploaded media could not be verified.");
+      const max=kind==="video"?100_000_000:25_000_000;if(uploadFile.size>max)throw Error(kind==="video"?"Videos are limited to 100 MB.":"PDF documents are limited to 25 MB.");
+      const checksumBuffer=await crypto.subtle.digest("SHA-256",await uploadFile.arrayBuffer());const checksum=Array.from(new Uint8Array(checksumBuffer),b=>b.toString(16).padStart(2,"0")).join("");
+      const headerBytes=new Uint8Array(await uploadFile.slice(0,32).arrayBuffer());const headerBase64=btoa(Array.from(headerBytes,b=>String.fromCharCode(b)).join(""));
+      const response=await fetch(endpoint+"/assets",{method:"POST",headers:{"content-type":"application/json","x-lucia-workspace-account":accountId},body:JSON.stringify({action:"create",kind,mime:uploadFile.type,filename:uploadFile.name,bytes:uploadFile.size,sha256:checksum,headerBase64,alt,caption})});
+      const payload=await response.json();if(!response.ok)throw Error(payload.error||"Upload could not be started.");
+      const session=payload as {mediaId:string;uploadId:string;partSize:number;parts:{partNumber:number;url:string}[]};created=session;
+      const completed:{partNumber:number;etag:string}[]=new Array(session.parts.length);let next=0,done=0;
+      async function worker(){while(true){const index=next++;if(index>=session.parts.length)return;const part=session.parts[index];const startOffset=(part.partNumber-1)*session.partSize;const chunk=uploadFile.slice(startOffset,Math.min(uploadFile.size,startOffset+session.partSize));const uploaded=await fetch(part.url,{method:"PUT",body:chunk});if(!uploaded.ok)throw Error("A media upload part failed. The incomplete upload will be cancelled.");const etag=uploaded.headers.get("ETag");if(!etag)throw Error("Storage did not expose the uploaded part checksum. Check bucket CORS before retrying.");completed[index]={partNumber:part.partNumber,etag};done++;setNotice("Uploading "+uploadFile.name+" · "+done+" of "+session.parts.length+" parts…");}}
+      await Promise.all(Array.from({length:Math.min(3,session.parts.length)},()=>worker()));
+      const finalized=await fetch(endpoint+"/assets",{method:"POST",headers:{"content-type":"application/json","x-lucia-workspace-account":accountId},body:JSON.stringify({action:"complete",mediaId:session.mediaId,uploadId:session.uploadId,parts:completed})});const result=await finalized.json();if(!finalized.ok)throw Error(result.error||"The uploaded media could not be verified.");
       await load();form.reset();setNotice((kind==="video"?"Video":"PDF")+" stored and checked against its upload metadata. Insert its link into your article or use it from the published media URL.");
     }catch(error){if(created){try{await fetch(endpoint+"/assets",{method:"POST",headers:{"content-type":"application/json","x-lucia-workspace-account":accountId},body:JSON.stringify({action:"abort",mediaId:created.mediaId,uploadId:created.uploadId})});}catch{}}
       setNotice(error instanceof Error?error.message:"Media upload failed. Any uncertain reservation remains safely pending for reconciliation.");}
