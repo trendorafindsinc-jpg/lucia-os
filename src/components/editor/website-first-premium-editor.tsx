@@ -410,21 +410,24 @@ export function WebsiteFirstPremiumEditor({
   }
 
   function insertUploadedMedia(item: MediaLibraryItem) {
-    if (item.kind === "image") return;
     const id = "media-" + crypto.randomUUID().replaceAll("-", "");
+    const isImage = item.kind === "image";
     const isVideo = item.kind === "video";
     const replacement = { id, type: "media-embed" as const, variant: "wide" as const,
-      kind: isVideo ? "video" as const : "document" as const,
+      kind: isImage ? "image" as const : isVideo ? "video" as const : "document" as const,
       title: (item.original_name || item.alt).slice(0, 120),
-      ...(item.caption ? { description: item.caption.slice(0, 500) } : {}),
-      mediaRef: item.ref, ...(isVideo ? { mime: item.mime === "video/webm" ? "video/webm" as const : "video/mp4" as const } : {}) };
+      ...((isImage ? item.alt : item.caption) ? { description: (isImage ? item.alt : item.caption)!.slice(0, 500) } : {}),
+      mediaRef: item.ref,
+      ...(isVideo ? { mime: item.mime === "video/webm" ? "video/webm" as const : "video/mp4" as const } : {}) };
     if (section?.type === "media-embed" && section.kind === replacement.kind)
       perform({ kind: "replace-section", pageId: page.id, section: { ...replacement, id: section.id, variant: section.variant } });
     else
       perform({ kind: "insert-section", pageId: page.id, index: page.sections.length, section: replacement });
     setSelected(section?.type === "media-embed" && section.kind === replacement.kind ? section.id : id);
     setShowSectionTools(true); setShowMedia(false);
-    setNotice(isVideo ? "Video section added to this page. Save your website to keep it." : "Download section added to this page. Save your website to keep it.");
+    setNotice(isImage ? "Image section added to this page. Save your website to keep it."
+      : isVideo ? "Video section added to this page. Save your website to keep it."
+      : "Download section added to this page. Save your website to keep it.");
   }
 
   function insertExternalEmbed() {
