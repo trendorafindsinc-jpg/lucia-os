@@ -21,7 +21,7 @@ async function signedRequest(method:string,key:string,query:Record<string,string
  const signingKey=hmac(hmac(hmac(hmac("AWS4"+c.secret,day),c.region),"s3"),"aws4_request");
  const signature=createHmac("sha256",signingKey).update(stringToSign).digest("hex");
  headers.authorization="AWS4-HMAC-SHA256 Credential="+c.access+"/"+scope+", SignedHeaders="+names.join(";")+", Signature="+signature;
- return fetch(url,{method,headers,...(body?{body}:{}),signal:AbortSignal.timeout(30000),redirect:"error",cache:"no-store"});
+ return fetch(url,{method,headers,...(body?{body}:{}),signal:AbortSignal.timeout(15000),redirect:"error",cache:"no-store"});
 }
 function presignedPart(key:string,uploadId:string,partNumber:number,expires=900){
  const c=config(),date=new Date().toISOString().replace(/[:-]|\.\d{3}/g,""),day=date.slice(0,8),scope=day+"/"+c.region+"/s3/aws4_request";
@@ -44,7 +44,7 @@ async function signedBucketRequest(method:string,query:Record<string,string>={})
  const signingKey=hmac(hmac(hmac(hmac("AWS4"+c.secret,day),c.region),"s3"),"aws4_request");
  const signature=createHmac("sha256",signingKey).update(stringToSign).digest("hex");
  headers.authorization="AWS4-HMAC-SHA256 Credential="+c.access+"/"+scope+", SignedHeaders="+names.join(";")+", Signature="+signature;
- return fetch(url,{method,headers,signal:AbortSignal.timeout(30000),redirect:"error",cache:"no-store"});
+ return fetch(url,{method,headers,signal:AbortSignal.timeout(15000),redirect:"error",cache:"no-store"});
 }
 function decodeXml(value:string){return value.replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&apos;/g,"'");}
 export const multipartStorage={
