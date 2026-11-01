@@ -65,6 +65,8 @@ export async function POST(request:Request,context:Context){
    let head=await multipartStorage.head(record.objectKey);
    if(!head){await multipartStorage.complete(record.objectKey,input.uploadId,input.parts.map(p=>({partNumber:p.partNumber,etag:p.etag})));head=await multipartStorage.head(record.objectKey);}
    if(!head||head.bytes!==record.bytes||head.mime!==record.mime||head.checksum!==record.checksum||!head.etag)return json({error:"The stored object did not pass size, type and checksum metadata verification. Its reservation remains pending."},503);
+   const verified=await multipartStorage.verify(record.objectKey,record.bytes);
+   if(verified.bytes!==record.bytes||verified.checksum!==record.checksum)return json({error:"The stored object bytes did not match the declared SHA-256 checksum. Its reservation remains pending for safe reconciliation."},503);
    await withMediaWebsite(user.id,websiteId,"website.edit",async tx=>{
     const ready=await tx.update(websiteMedia).set({status:"ready",etag:head!.etag,uploadId:null,updatedAt:new Date()}).where(and(eq(websiteMedia.id,input.mediaId),eq(websiteMedia.status,"pending"),eq(websiteMedia.uploadId,input.uploadId))).returning({id:websiteMedia.id});
     if(!ready.length){const [current]=await tx.select({status:websiteMedia.status}).from(websiteMedia).where(eq(websiteMedia.id,input.mediaId)).limit(1);if(current?.status!=="ready")throw new MediaError("Upload finalization was not confirmed.",503);}
