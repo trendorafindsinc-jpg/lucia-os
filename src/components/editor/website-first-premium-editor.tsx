@@ -281,6 +281,7 @@ export function WebsiteFirstPremiumEditor({
   }
 
   function addPage() {
+    if (!layout.permissions.advanced.includes("pages")) { setNotice("This website's current design does not allow page-structure changes."); return; }
     if (layout.pages.length >= 30) { setNotice("This website has reached its 30-page limit."); return; }
     const title = newPageTitle.trim();
     if (!title) { setNotice("Enter a name for the new page."); return; }
