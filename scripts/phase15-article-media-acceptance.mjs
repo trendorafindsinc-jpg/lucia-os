@@ -54,8 +54,8 @@ export async function checkPhase15ArticleMediaAcceptance({
     let article = {
       ...createdBody.article,
       excerpt: "A useful summary for our customers.",
-      body: "This is a synthetic article body with enough detail to be published safely.",
-      category: "Acceptance",
+      body: "This is a synthetic article body with enough detail to be published safely.\\n\\n[Watch the demo](media:"+videoAsset+")\\n\\n[Download the report](media:"+pdfAsset+")",
+      category: "Acceptance",tags:["customer-story","media"],seoTitle:title+" | LUCIA",seoDescription:"A useful public summary for our customers.",
     };
     const initialized = await patchArticle(articleId, article, null, "save");
     const initializedBody = await initialized.json();
@@ -63,6 +63,18 @@ export async function checkPhase15ArticleMediaAcceptance({
     article = initializedBody.article;
     const foreignRef = await patchArticle(articleId, article, "media:" + foreignImage, "save");
     assert.equal(foreignRef.status, 422, "A different tenant's media must not be attachable");
+    const foreignBody=await patchArticle(articleId,{...article,body:article.body+"\\n\\n[Foreign](media:"+foreignImage+")"},null,"save");
+    assert.equal(foreignBody.status,422,"Markdown body references from another tenant must be rejected");
+    const videoFeatured=await patchArticle(articleId,article,"media:"+videoAsset,"save");
+    assert.equal(videoFeatured.status,422,"Video assets cannot be used as article featured images");
+    const firstHistory=await api("a",articleRoute+"/"+articleId+"/revisions");assert.equal(firstHistory.status,200);
+    assert.deepEqual((await firstHistory.json()).revisions.map(item=>item.revision).sort((a,b)=>a-b),[1,2]);
+    assert.equal((await api("b",articleRoute+"/"+articleId+"/revisions")).status,404);
+    const changedRevision=await patchArticle(articleId,{...article,title:title+" private draft"},null,"save");
+    assert.equal(changedRevision.status,200);const changedRevisionArticle=(await changedRevision.json()).article;
+    const restoredRevision=await api("a",articleRoute+"/"+articleId+"/revisions","POST",{currentRevision:changedRevisionArticle.revision,targetRevision:2});
+    assert.equal(restoredRevision.status,200);article=(await restoredRevision.json()).article;
+    assert.equal(article.revision,4);assert.equal(article.title,title);assert(article.body.includes("media:"+videoAsset));
     await assert.rejects(admin`UPDATE website_posts SET featured_media_id=${foreignImage} WHERE id=${articleId}`, /website_posts_featured_media_fk/);
     const privateBefore = await admin`SELECT * FROM lucia_public_media(${blogImage}::uuid)`;
     assert.equal(privateBefore.length, 0, "A ready image without a published article must remain private");
