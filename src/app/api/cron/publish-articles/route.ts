@@ -1,4 +1,4 @@
-import { timingSafeEqual } from "node:crypto";
+import { isAuthorizedCronRequest } from "@/lib/cron/authorization";
 import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 export const runtime="nodejs";export const dynamic="force-dynamic";
