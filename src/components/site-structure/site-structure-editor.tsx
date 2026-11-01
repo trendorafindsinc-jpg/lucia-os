@@ -26,7 +26,7 @@ export function SiteStructureEditor() {
   const previewBlueprint = useMemo(() => siteStructurePageToBlueprint(previewDraft, structure, selectedPageId), [previewDraft, structure, selectedPageId]);
 
   useEffect(() => {
-    const requestedWebsiteId = new URLSearchParams(window.location.search).get("websiteId");
+    const requestedWebsiteId = new URLSearchParams(window.location.search).get("websiteId") ?? "";
     if (!requestedWebsiteId) return;
     let cancelled = false;
     setWebsiteId(requestedWebsiteId);
