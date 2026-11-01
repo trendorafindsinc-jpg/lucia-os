@@ -65,6 +65,21 @@ describe("media authorization and capacity invariants", () => {
     mocks.execute.mockResolvedValue([]);
     await expect(validateMediaOwnership({ execute: mocks.execute } as never, org, website, { image: { src: "media:" + user } })).rejects.toThrow("another website");
   });
+  it("validates inline HTML media paths against the same website before publication", async () => {
+    mocks.execute.mockResolvedValueOnce([{id:user,alt:"Inline image",kind:"image"}]).mockResolvedValueOnce([]);
+    await expect(validateMediaOwnership({execute:mocks.execute} as never,org,website,{body:'<img src="/_media/'+user+'" alt="Inline image">'},true)).resolves.toEqual({[user]:"Inline image"});
+    expect(mocks.execute).toHaveBeenCalledTimes(2);
+  });
+  it("rejects foreign inline media paths in HTML source mode", async () => {
+    mocks.execute.mockResolvedValue([]);
+    await expect(validateMediaOwnership({execute:mocks.execute} as never,org,website,{body:'<video><source src="/_media/'+user+'" type="video/mp4"></video>'})).rejects.toThrow("another website");
+  });
+  it("returns canonical alt text for a valid article featured image", async () => {
+    mocks.execute.mockResolvedValueOnce([{id:user,alt:"The shop interior",kind:"image"}]).mockResolvedValueOnce([]);
+    const result=await validateMediaOwnership({execute:mocks.execute} as never,org,website,{featuredMediaRef:"media:"+user},true);
+    expect(result[user]).toBe("The shop interior");
+    expect(mocks.execute).toHaveBeenCalledTimes(2);
+  });
   it("never deletes an object referenced by a saved version", async () => {
     mocks.execute.mockResolvedValueOnce([]).mockResolvedValueOnce(member).mockResolvedValueOnce([])
       .mockResolvedValueOnce([{ id: user, status: "ready", bytes: 200 }]).mockResolvedValueOnce([{ exists: 1 }]);

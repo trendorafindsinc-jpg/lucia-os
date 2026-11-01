@@ -59,9 +59,11 @@ export default async function WorkspaceWebsitesPage() {
                 <p className="studio-picker-address">{address}</p><p className="studio-picker-updated">Updated {site.updatedAt.toLocaleDateString()}</p>
                 <div className="studio-picker-actions"><Link className="studio-picker-primary" href={{ pathname: "/editor", query: { websiteId: site.id } }}>Edit Website</Link>
                   {site.status === "published" ? <a href={"https://" + address} target="_blank" rel="noopener noreferrer">View live website</a> : null}
-                  <Link href={{ pathname: "/editor", query: { websiteId: site.id }, hash: "media-library" }}>Manage Media in editor</Link>
+                  <Link href={{ pathname: "/editor", query: { websiteId: site.id, content: "blog" } }}>Write Blog</Link>
+                  <Link href={{ pathname: "/editor", query: { websiteId: site.id, content: "news" } }}>Publish News</Link>
+                  <Link href={{ pathname: "/editor", query: { websiteId: site.id }, hash: "media-library" }}>Manage Media</Link>
                 </div>
-                <p className="studio-picker-coming">Blog and News publishing arrive with Phase 15, in this same website.</p>
+                <p className="studio-picker-coming">Open Edit Website to change its design, manage pages and navigation, and work with images, videos, documents and supported embeds.</p>
               </div>
             </article>;
           })}

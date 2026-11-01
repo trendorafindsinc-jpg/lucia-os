@@ -63,7 +63,8 @@ export async function checkPhase15AuthenticatedAcceptance({
         await menu.click();
         await accessiblePage.getByRole("navigation", { name: "Mobile navigation" })
           .getByRole("link", { name: "Home" }).click();
-        await accessiblePage.locator('[data-page-path="/"]').waitFor();
+        await accessiblePage.waitForURL((url) => url.pathname === "/templates/preview/lucia.layout.haven");
+        await accessiblePage.locator('main[data-preview-page-path="/"]').waitFor();
       }
       await accessiblePage.getByRole("link", { name: "Back to Layout Library" }).click();
       await accessiblePage.getByLabel("Search layouts").waitFor();
@@ -120,6 +121,110 @@ export async function checkPhase15AuthenticatedAcceptance({
         createdBody = await creation.json();
         assert.equal(creation.status, 201, name + " persisted creation: " + createdBody.error);
         id = createdBody.website.id;
+        await view.goto(base + "/editor?websiteId=" + id, { waitUntil: "networkidle" });
+        await view.locator(".website-first-editor").waitFor();
+        await view.getByRole("button", { name: "Pages & Navigation", exact: true }).click();
+        const pagesPanel = view.getByRole("region", { name: "Pages and navigation" });
+        await pagesPanel.waitFor();
+        await pagesPanel.getByLabel("New page name").waitFor();
+        if (name === selected[0]) {
+          async function waitForEditorSave() {
+            await view.locator(".website-first-editor-status").filter({ hasText: "● Unsaved" }).waitFor();
+            await view.locator(".website-first-editor-status").filter({ hasText: "✓ Saved" }).waitFor();
+          }
+          await pagesPanel.getByLabel("New page name").fill("Phase 15 journey");
+          await pagesPanel.getByRole("button", { name: "+ Add page", exact: true }).click();
+          await waitForEditorSave();
+          const newPageCard = pagesPanel.locator(".website-first-page-list article").filter({ hasText: "Phase 15" });
+          await newPageCard.waitFor();
+          await newPageCard.getByLabel("Page address").fill("/phase-15-customer-journey");
+          await newPageCard.getByLabel("Page address").blur();
+          await waitForEditorSave();
+          await newPageCard.getByLabel("Page title").fill("Phase 15 customer journey");
+          await newPageCard.getByLabel("Page title").blur();
+          await waitForEditorSave();
+          await newPageCard.getByLabel("Show in website navigation").uncheck();
+          await waitForEditorSave();
+          assert.equal(await pagesPanel.locator(".website-first-navigation-list li").filter({ hasText: "Phase 15 customer journey" }).count(), 0);
+          await newPageCard.getByLabel("Show in website navigation").check();
+          await waitForEditorSave();
+          const navEntry = pagesPanel.locator(".website-first-navigation-list li").filter({ hasText: "Phase 15 customer journey" });
+          await navEntry.waitFor();
+          assert((await navEntry.innerText()).includes("/phase-15-customer-journey"));
+          await navEntry.getByRole("button", { name: "↑" }).click();
+          await waitForEditorSave();
+          view.once("dialog", (dialog) => dialog.accept());
+          await newPageCard.getByRole("button", { name: "Remove page", exact: true }).click();
+          await waitForEditorSave();
+          assert.equal(await pagesPanel.locator(".website-first-page-list article").filter({ hasText: "Phase 15 customer journey" }).count(), 0);
+        }
+        await pagesPanel.getByRole("button", { name: "Close", exact: true }).click();
+        await view.getByRole("button", { name: "Manage Media", exact: true }).click();
+        const mediaPanel = view.getByRole("region", { name: "Website image replacement" });
+        await mediaPanel.waitFor();
+        await mediaPanel.getByText("Your media library", { exact: true }).click();
+        const imageUpload = mediaPanel.getByLabel("Customer image (JPEG, PNG or WebP, up to 4 MB)");
+        const videoUpload = mediaPanel.getByLabel("Video (MP4/WebM up to 100 MB) or PDF (up to 25 MB)");
+        await imageUpload.waitFor();
+        await videoUpload.waitFor();
+        assert.equal(await imageUpload.getAttribute("accept"), "image/jpeg,image/png,image/webp");
+        assert.equal(await videoUpload.getAttribute("accept"), "video/mp4,video/webm,application/pdf");
+        await mediaPanel.getByLabel("Embed external content").waitFor();
+        await mediaPanel.getByRole("button", { name: "Add embed to page", exact: true }).waitFor();
+        await mediaPanel.getByLabel("Download or external link label").waitFor();
+        await mediaPanel.getByLabel("Secure external destination").waitFor();
+        await mediaPanel.getByRole("button", { name: "Add external link to page", exact: true }).waitFor();
+        await mediaPanel.getByRole("button", { name: "Close", exact: true }).click();
+        await view.getByRole("button", { name: "Change Website Design", exact: true }).click();
+        const designPanel = view.getByRole("region", { name: "Change website design" });
+        await designPanel.waitFor();
+        await designPanel.getByLabel("Choose a design").waitFor();
+        await designPanel.locator(".website-first-layout-preview [data-layout-id]").waitFor();
+        if (name === selected[0]) {
+          const originalDesign = await (await api("a", draftRoute(id))).json();
+          const nextDesign = originalDesign.draft.layoutId === "lucia.layout.canvas"
+            ? "lucia.layout.meridian" : "lucia.layout.canvas";
+          await designPanel.getByLabel("Choose a design").selectOption(nextDesign);
+          view.once("dialog", (dialog) => dialog.accept());
+          await designPanel.getByRole("button", { name: "Apply to existing website", exact: true }).click();
+          await view.locator(".website-first-editor-status").filter({ hasText: "✓ Saved" }).waitFor();
+          const switchedDesign = await (await api("a", draftRoute(id))).json();
+          assert.equal(switchedDesign.draft.layoutId, nextDesign);
+          assert.deepEqual(switchedDesign.draft.identity, originalDesign.draft.identity);
+          assert.deepEqual(switchedDesign.draft.pages, originalDesign.draft.pages);
+          assert.deepEqual(switchedDesign.draft.navigation, originalDesign.draft.navigation);
+          const restoredDesign = await api("a", draftRoute(id), "PATCH", {
+            kind: "assign-layout", layoutId: originalDesign.draft.layoutId,
+          }, { "if-match": switchedDesign.revision });
+          assert.equal(restoredDesign.status, 200, "Visual Editor should restore the original design");
+          await view.goto(base + "/editor?websiteId=" + id, { waitUntil: "networkidle" });
+          await view.locator(".website-first-editor").waitFor();
+        } else {
+          await designPanel.getByRole("button", { name: "Close", exact: true }).click();
+        }
+        await view.goto(base + "/pages?websiteId=" + id, { waitUntil: "networkidle" });
+        await view.waitForURL((url) => url.pathname === "/editor" && url.hash === "#pages-navigation");
+        await view.getByRole("region", { name: "Pages and navigation" }).waitFor();
+        await view.goto(base + "/editor?websiteId=" + id, { waitUntil: "networkidle" });
+        await view.locator(".website-first-editor-next-step").waitFor();
+        await view.getByRole("link", { name: "Continue to Detailed Settings →" }).click();
+        await view.locator(".studio-settings-destinations").waitFor();
+        await view.getByRole("link", { name: "Open SEO & social settings →" }).waitFor();
+        await view.getByRole("link", { name: "Manage website domains →" }).waitFor();
+        assert(await view.locator(".studio-settings-unavailable").innerText().then((value) => value.includes("Not connected")));
+        if (phase15 && name === selected[0]) {
+          const seoRoute = "/api/websites/" + id + "/seo";
+          const originalSeo = await (await api("a", seoRoute)).json();
+          await view.goto(base + "/seo?websiteId=" + id, { waitUntil: "networkidle" });
+          await view.locator(".seo-workspace").waitFor();
+          await view.getByLabel("Search title").fill("Phase 15 persisted SEO acceptance");
+          await view.getByRole("button", { name: "Save SEO", exact: true }).click();
+          await view.getByText(/SEO settings saved to the website workspace/).waitFor();
+          const persistedSeo = await (await api("a", seoRoute)).json();
+          assert.equal(persistedSeo.settings.title, "Phase 15 persisted SEO acceptance");
+          const restoredSeo = await api("a", seoRoute, "PATCH", originalSeo.settings);
+          assert.equal(restoredSeo.status, 200, "SEO acceptance must restore its original saved settings");
+        }
         await view.goto(base + "/editor?websiteId=" + id, { waitUntil: "networkidle" });
         await view.locator(".website-first-editor").waitFor();
         saved = await (await api("a", draftRoute(id))).json();
@@ -337,6 +442,31 @@ export async function checkPhase15AuthenticatedAcceptance({
         await liveBrowser.close();
       }
       const lastGood = await (await publicSite("/", host)).text();
+      if (phase15) {
+        const beforeLayoutChange = await (await api("a", draftRoute(id))).json();
+        const targetLayoutId = beforeLayoutChange.draft.layoutId === "lucia.layout.canvas"
+          ? "lucia.layout.meridian" : "lucia.layout.canvas";
+        const switched = await api("a", draftRoute(id), "PATCH", {
+          kind: "assign-layout", layoutId: targetLayoutId,
+        }, { "if-match": beforeLayoutChange.revision });
+        assert.equal(switched.status, 200, name + " existing website layout change");
+        const switchedBody = await switched.json();
+        assert.equal(switchedBody.draft.layoutId, targetLayoutId);
+        assert.deepEqual(switchedBody.draft.identity, beforeLayoutChange.draft.identity);
+        assert.deepEqual(switchedBody.draft.pages, beforeLayoutChange.draft.pages);
+        assert.deepEqual(switchedBody.draft.navigation, beforeLayoutChange.draft.navigation);
+        assert.deepEqual(switchedBody.draft.permissions, beforeLayoutChange.draft.permissions);
+        const stillLive = await (await publicSite("/", host)).text();
+        assert(stillLive.includes('data-layout-id="lucia.layout.' + name + '"'),
+          name + " draft layout switch changed the live website before publishing");
+        const restoredLayout = await api("a", draftRoute(id), "PATCH", {
+          kind: "assign-layout", layoutId: beforeLayoutChange.draft.layoutId,
+        }, { "if-match": switchedBody.revision });
+        assert.equal(restoredLayout.status, 200, name + " restore original design");
+        const restoredBody = await restoredLayout.json();
+        assert.deepEqual(restoredBody.draft.pages, beforeLayoutChange.draft.pages);
+        assert.deepEqual(restoredBody.draft.navigation, beforeLayoutChange.draft.navigation);
+      }
       assert.equal((await api("a", publishRoute, "POST", publishing(current),
         { "if-match": initialRevision })).status, 409, name + " stale publication accepted");
       assert.equal(await (await publicSite("/", host)).text(), lastGood);
@@ -361,6 +491,10 @@ export async function checkPhase15AuthenticatedAcceptance({
           [f.a, f.orgA]);
       }
       bpass(name + ": real synthetic-session create/assign/edit/reload/publish/public routes, tenant denial and rollback");
+      if (phase15 && name === selected[0]) {
+        const { checkPhase15ArticleMediaAcceptance } = await import("./phase15-article-media-acceptance.mjs");
+        await checkPhase15ArticleMediaAcceptance({ api, admin, f, base, browserContext, siteId: id, siteSlug, bpass, publicSite });
+      }
       if (process.env.WEBSITE_TEST_PHASE16 === "1") {
         // Continue on the exact same persisted, already-published test project.
         // This is a real browser and database test, never a mock editor state.
@@ -429,9 +563,13 @@ export async function checkPhase15AuthenticatedAcceptance({
             await view.setViewportSize({ width, height: width < 500 ? 844 : 900 });
             const dimensions = await view.evaluate(() => ({
               viewport: innerWidth, document: document.documentElement.scrollWidth,
+              overflowing: [...document.querySelectorAll("body *")].map((node) => {
+                const rect=node.getBoundingClientRect();
+                return {tag:node.tagName,className:String(node.className||""),left:Math.round(rect.left),right:Math.round(rect.right),width:Math.round(rect.width),scrollWidth:node.scrollWidth,clientWidth:node.clientWidth,overflowX:getComputedStyle(node).overflowX};
+              }).filter((node) => node.right > innerWidth + 1 || node.left < -1).slice(0,16),
             }));
             assert(dimensions.document <= dimensions.viewport + 1,
-              "Editor horizontally overflows at " + width);
+              "Editor horizontally overflows at " + width + ": " + JSON.stringify(dimensions));
           }
           await view.setViewportSize({ width: 390, height: 844 });
           await view.getByRole("button", { name: "1. Business identity" }).click();

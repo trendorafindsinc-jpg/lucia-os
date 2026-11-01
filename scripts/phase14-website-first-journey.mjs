@@ -7,7 +7,7 @@ import assert from "node:assert/strict";
 import { mkdir, writeFile } from "node:fs/promises";
 
 export async function checkWebsiteFirstJourney({
-  api, f, base, browserContext, created, bpass, publicSite,
+  api, admin, f, base, browserContext, created, bpass, publicSite,
 }) {
   const page = await browserContext.newPage();
   const issues = [];
@@ -141,6 +141,78 @@ export async function checkWebsiteFirstJourney({
       assert.equal((await api("b", "/api/websites/" + siteId + "/draft")).status, 404);
       await dialog.getByRole("button", { name: "Return to website" }).click();
       assert(new URL(page.url()).pathname === "/editor");
+    });
+    await test("Blog and News use tenant-safe drafts, public snapshots, revision restore and the versioned content contract",async()=>{
+      const articlesPath="/api/websites/"+siteId+"/articles";
+      const listingResponse=await api("a",articlesPath);assert.equal(listingResponse.status,200);
+      const listing=await listingResponse.json();const host=listing.siteSlug+".lucia.name.ng";
+      assert.equal((await api("b",articlesPath)).status,404);
+      assert.equal((await api(null,articlesPath)).status,401);
+      const createdResponse=await api("a",articlesPath,"POST",{kind:"blog",title:"Continuity Blog Story"});
+      assert.equal(createdResponse.status,201);const createdArticle=(await createdResponse.json()).article;
+      const articlePath=articlesPath+"/"+createdArticle.id;
+      const baseDraft={title:"Continuity Blog Story",slug:createdArticle.slug,excerpt:"A useful summary for the first customer story.",body:"This is a meaningful published article body for the continuity acceptance journey.",category:"Community",eventAt:null,isFeatured:false,correctionNote:null,correctsSlug:null,tags:["community","launch"],seoTitle:"Continuity Blog Story | LUCIA",seoDescription:"A useful public summary for the first customer story.",featuredMediaRef:null,scheduledAt:null};
+      const saveOne=await api("a",articlePath,"PATCH",{...baseDraft,revision:1,action:"save"});assert.equal(saveOne.status,200);
+      const firstSaved=(await saveOne.json()).article;assert.equal(firstSaved.revision,2);
+      const privateArticle=await publicSite("/blog/"+createdArticle.slug,host);assert.equal(privateArticle.status,404);
+      const saveTwo=await api("a",articlePath,"PATCH",{...baseDraft,title:"Continuity Blog Story — Private Draft",body:"This second private draft must not replace the public snapshot.",revision:2,action:"save"});
+      assert.equal(saveTwo.status,200);const secondSaved=(await saveTwo.json()).article;assert.equal(secondSaved.revision,3);
+      const revisionsResponse=await api("a",articlePath+"/revisions");assert.equal(revisionsResponse.status,200);
+      const revisions=(await revisionsResponse.json()).revisions;assert.deepEqual(revisions.map(item=>item.revision).sort((a,b)=>a-b),[1,2,3]);
+      const restoredResponse=await api("a",articlePath+"/revisions","POST",{currentRevision:3,targetRevision:2});assert.equal(restoredResponse.status,200);
+      const restored=(await restoredResponse.json()).article;assert.equal(restored.revision,4);assert.equal(restored.title,baseDraft.title);assert.equal(restored.body,baseDraft.body);
+      const publishedResponse=await api("a",articlePath,"PATCH",{...baseDraft,revision:4,action:"publish"});assert.equal(publishedResponse.status,200);
+      const published=(await publishedResponse.json()).article;assert.equal(published.status,"published");
+      const publicArticle=await publicSite("/blog/"+createdArticle.slug,host);assert.equal(publicArticle.status,200);
+      assert((await publicArticle.text()).includes(baseDraft.body));
+      const privateEdit=await api("a",articlePath,"PATCH",{...baseDraft,title:"Never public until republished",body:"Private editorial changes must remain separate from the live article.",revision:5,action:"save"});
+      assert.equal(privateEdit.status,200);
+      const liveAfterSave=await publicSite("/blog/"+createdArticle.slug,host);assert.equal(liveAfterSave.status,200);
+      assert((await liveAfterSave.text()).includes(baseDraft.body));
+      assert(!(await liveAfterSave.text()).includes("Private editorial changes"));
+      const latest=(await privateEdit.json()).article;
+      const restoreLiveDraft=await api("a",articlePath+"/revisions","POST",{currentRevision:latest.revision,targetRevision:4});
+      assert.equal(restoreLiveDraft.status,200);
+      const stillLive=await publicSite("/blog/"+createdArticle.slug,host);assert.equal(stillLive.status,200);assert((await stillLive.text()).includes(baseDraft.body));
+      assert.equal((await api("b",articlePath+"/revisions")).status,404);
+      assert.equal((await api("b",articlePath+"/revisions","POST",{currentRevision:7,targetRevision:2})).status,404);
+      const blogIndex=await publicSite("/blog",host);assert.equal(blogIndex.status,200);assert((await blogIndex.text()).includes("Continuity Blog Story"));
+      const publicContract=await publicSite("/api/public/v1/content",host);assert.equal(publicContract.status,200);
+      const contract=JSON.parse(await publicContract.text());assert.equal(contract.contract,"lucia.published-content.v1");assert(contract.content.blog.some(item=>item.slug===createdArticle.slug));
+      const homepage=await publicSite("/",host);const homepageHtml=await homepage.text();assert(homepageHtml.includes("Stories &amp; updates")||homepageHtml.includes("Stories & updates"));assert(homepageHtml.includes('href="/blog"'));assert(homepageHtml.includes('href="/news"'));
+      const unpublishDraft={...baseDraft,revision:7,action:"unpublish"};
+      const unpublished=await api("a",articlePath,"PATCH",unpublishDraft);assert.equal(unpublished.status,200);
+      assert.equal((await publicSite("/blog/"+createdArticle.slug,host)).status,404);
+
+      const previousNewsResponse=await api("a",articlesPath,"POST",{kind:"news",title:"Continuity Previous News"});assert.equal(previousNewsResponse.status,201);
+      const previous=(await previousNewsResponse.json()).article;
+      const newsDraft={title:"Continuity Previous News",slug:previous.slug,excerpt:"An earlier verified local news update.",body:"This is the original report used to verify the News correction and update workflow.",category:"Community",eventAt:null,isFeatured:false,correctionNote:null,correctsSlug:null,tags:["community","news"],seoTitle:"Continuity Previous News",seoDescription:"An earlier verified local news update.",featuredMediaRef:null,scheduledAt:null};
+      const previousSave=await api("a",articlesPath+"/"+previous.id,"PATCH",{...newsDraft,revision:1,action:"save"});assert.equal(previousSave.status,200);
+      const previousPublish=await api("a",articlesPath+"/"+previous.id,"PATCH",{...newsDraft,revision:2,action:"publish"});assert.equal(previousPublish.status,200);
+      const updateNewsResponse=await api("a",articlesPath,"POST",{kind:"news",title:"Continuity Updated News"});assert.equal(updateNewsResponse.status,201);
+      const updated=(await updateNewsResponse.json()).article;
+      const updateDraft={title:"Continuity Updated News",slug:updated.slug,excerpt:"The corrected event details and verified update.",body:"This updated report records the corrected venue and event information for the community.",category:"Events",eventAt:"2026-11-02T10:00:00.000Z",isFeatured:true,correctionNote:"Correction: the event venue has changed. This report contains the verified venue.",correctsSlug:previous.slug,tags:["events","correction"],seoTitle:"Continuity Updated News",seoDescription:"The corrected event details and verified update.",featuredMediaRef:null,scheduledAt:null};
+      const updateSave=await api("a",articlesPath+"/"+updated.id,"PATCH",{...updateDraft,revision:1,action:"save"});assert.equal(updateSave.status,200);
+      const updatePublish=await api("a",articlesPath+"/"+updated.id,"PATCH",{...updateDraft,revision:2,action:"publish"});assert.equal(updatePublish.status,200);
+      const newsPage=await publicSite("/news/"+updated.slug,host);assert.equal(newsPage.status,200);const newsHtml=await newsPage.text();
+      assert(newsHtml.includes("Correction: the event venue has changed"));assert(newsHtml.includes(previous.slug));assert(newsHtml.includes("Events"));
+      const newsIndex=await publicSite("/news",host);assert.equal(newsIndex.status,200);assert((await newsIndex.text()).includes("Continuity Updated News"));
+      const contractAfterNews=JSON.parse(await (await publicSite("/api/public/v1/content",host)).text());assert(contractAfterNews.content.news.some(item=>item.slug===updated.slug&&item.isFeatured));
+      const homepageAfterNews=await publicSite("/",host);assert((await homepageAfterNews.text()).includes("Continuity Updated News"));
+    });
+
+    await test("scheduled News stays private until the database-backed publisher claims it",async()=>{
+      const articlesPath="/api/websites/"+siteId+"/articles";
+      const createdResponse=await api("a",articlesPath,"POST",{kind:"news",title:"Continuity Scheduled News"});assert.equal(createdResponse.status,201);
+      const createdArticle=(await createdResponse.json()).article;
+      const draft={title:"Continuity Scheduled News",slug:createdArticle.slug,excerpt:"A verified story scheduled for release.",body:"This scheduled article is held privately until its publication time is reached by the worker.",category:"Updates",eventAt:null,isFeatured:false,correctionNote:null,correctsSlug:null,tags:["scheduled"],seoTitle:"Continuity Scheduled News",seoDescription:"A verified story scheduled for release.",featuredMediaRef:null,scheduledAt:new Date(Date.now()+10*60*1000).toISOString()};
+      const scheduled=await api("a",articlesPath+"/"+createdArticle.id,"PATCH",{...draft,revision:1,action:"schedule"});assert.equal(scheduled.status,200);
+      assert.equal((await publicSite("/news/"+createdArticle.slug,(await (await api("a",articlesPath)).json()).siteSlug+".lucia.name.ng")).status,404);
+      await admin`UPDATE website_posts SET scheduled_at=now()-interval '1 minute' WHERE id=${createdArticle.id} AND website_id=${siteId} AND status='scheduled'`;
+      const cron=await api(null,"/api/cron/publish-articles","GET",undefined,{authorization:"Bearer "+process.env.CRON_SECRET});assert.equal(cron.status,200);
+      const cronResult=await cron.json();assert(cronResult.published>=1);
+      const host=(await (await api("a",articlesPath)).json()).siteSlug+".lucia.name.ng";
+      const publicScheduled=await publicSite("/news/"+createdArticle.slug,host);assert.equal(publicScheduled.status,200);assert((await publicScheduled.text()).includes("Continuity Scheduled News"));
     });
     assert.equal(issues.length, 0, issues.join("; "));
     bpass("Website-first: no unhandled Chromium page exceptions");

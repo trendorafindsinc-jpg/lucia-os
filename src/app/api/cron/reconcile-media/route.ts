@@ -1,0 +1,30 @@
+import { isAuthorizedCronRequest } from "@/lib/cron/authorization";
+import { sql } from "drizzle-orm";
+import { getDb } from "@/lib/db/client";
+import { mediaStorage } from "@/lib/media/storage";
+import { multipartStorage } from "@/lib/media/multipart-storage";
+export const runtime="nodejs";export const dynamic="force-dynamic";export const maxDuration=60;
+export async function GET(request:Request){
+ if(!(await isAuthorizedCronRequest(request)))return Response.json({error:"Unauthorized."},{status:401,headers:{"Cache-Control":"no-store"}});
+ let recovered=0,removed=0,failed=0,orphaned=0;
+ try{
+  const db=getDb();const rows=await db.execute(sql`select * from lucia_claim_stale_media_uploads(5)`);
+  await Promise.all((rows as unknown as {id:string;object_key:string;upload_id:string|null;bytes:number;mime:string;checksum:string|null;kind:string;width:number;height:number}[]).map(async row=>{
+   try{
+    if(row.kind==="image"){
+     let data:Buffer|null=null;try{data=await mediaStorage().get(row.object_key);}catch{data=null;}
+     if(data&&data.length===row.bytes){await db.execute(sql`select lucia_finalize_media_upload(${row.id}::uuid,'ready',null)`);recovered++;}
+     else{await mediaStorage().remove(row.object_key);await db.execute(sql`select lucia_finalize_media_upload(${row.id}::uuid,'deleted',null)`);removed++;}
+    }else{
+     const head=await multipartStorage.head(row.object_key);
+     const verified=head&&head.bytes===row.bytes&&head.mime===row.mime&&head.checksum===row.checksum?await multipartStorage.verify(row.object_key,row.bytes):null;
+     if(head&&verified&&verified.bytes===row.bytes&&verified.checksum===row.checksum&&head.etag){await db.execute(sql`select lucia_finalize_media_upload(${row.id}::uuid,'ready',${head.etag})`);recovered++;}
+     else{if(row.upload_id)await multipartStorage.abort(row.object_key,row.upload_id);if(head)await multipartStorage.remove(row.object_key);await db.execute(sql`select lucia_finalize_media_upload(${row.id}::uuid,'deleted',null)`);removed++;}
+    }
+   }catch{failed++;}
+  }));
+  const uploads=await multipartStorage.listIncomplete("os/",1000);const cutoff=Date.now()-7*86400000;
+  await Promise.all(uploads.filter(upload=>upload.initiated<cutoff).slice(0,10).map(async upload=>{try{await multipartStorage.abort(upload.key,upload.uploadId);orphaned++;}catch{failed++;}}));
+  return Response.json({ok:failed===0,recovered,removed,orphaned,failed},{headers:{"Cache-Control":"no-store"}});
+ }catch{return Response.json({error:"Media reconciliation is temporarily unavailable. Pending reservations remain intact."},{status:503,headers:{"Cache-Control":"no-store"}});}
+}

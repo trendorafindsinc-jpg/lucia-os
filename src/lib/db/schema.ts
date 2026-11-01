@@ -433,6 +433,14 @@ export const websiteMedia = pgTable("website_media", {
   websiteId: uuid("website_id").notNull(),
   createdByUserId: uuid("created_by_user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
   objectKey: text("object_key").notNull(),
+  kind: text("kind").notNull().default("image"),
+  mime: text("mime").notNull().default("image/webp"),
+  originalName: text("original_name"),
+  checksum: text("checksum"),
+  etag: text("etag"),
+  uploadId: text("upload_id"),
+  caption: text("caption"),
+  durationMs: integer("duration_ms"),
   lastPublishedAt: timestamp("last_published_at", { withTimezone: true }),
   bytes: integer("bytes").notNull(),
   width: integer("width").notNull(), height: integer("height").notNull(),
@@ -442,6 +450,7 @@ export const websiteMedia = pgTable("website_media", {
 }, (table) => [
   foreignKey({ name: "website_media_website_org_fk", columns: [table.organizationId, table.websiteId], foreignColumns: [websites.organizationId, websites.id] }).onDelete("restrict"),
   uniqueIndex("website_media_key_uq").on(table.objectKey),
+  uniqueIndex("website_media_org_website_id_uq").on(table.organizationId,table.websiteId,table.id),
   index("website_media_owner_idx").on(table.organizationId, table.websiteId, table.status),
 ]);
 export const mediaStorageBudget = pgTable("media_storage_budget", {
@@ -451,4 +460,61 @@ export const mediaStorageBudget = pgTable("media_storage_budget", {
 export const websiteMediaLimits = pgTable("website_media_limits", {
   websiteId: uuid("website_id").primaryKey().references(() => websites.id, { onDelete: "restrict" }),
   quotaBytes: integer("quota_bytes").notNull(),
+  videoQuotaBytes: bigint("video_quota_bytes", { mode: "number" }).notNull().default(500_000_000),
+  documentQuotaBytes: bigint("document_quota_bytes", { mode: "number" }).notNull().default(50_000_000),
 });
+
+
+/** Phase 15: normalized Blog/News records. Public delivery only consumes publishedSnapshot. */
+export const websitePosts = pgTable("website_posts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
+  websiteId: uuid("website_id").notNull(),
+  authorUserId: uuid("author_user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
+  kind: text("kind").notNull(),
+  slug: text("slug").notNull(),
+  title: text("title").notNull(),
+  excerpt: text("excerpt").notNull().default(""),
+  body: text("body").notNull().default(""),
+  category: text("category").notNull().default(""),
+  eventAt: timestamp("event_at", { withTimezone: true }),
+  isFeatured: boolean("is_featured").notNull().default(false),
+  correctionNote: text("correction_note"),
+  correctsSlug: text("corrects_slug"),
+  tags: jsonb("tags").$type<string[]>().notNull().default([]),
+  seoTitle: text("seo_title"),
+  seoDescription: text("seo_description"),
+  legacySourceId: text("legacy_source_id"),
+  featuredMediaId: uuid("featured_media_id"),
+  status: text("status").notNull().default("draft"),
+  revision: integer("revision").notNull().default(1),
+  publishedSnapshot: jsonb("published_snapshot").$type<import("@/lib/content/article-model").PublishedArticle | null>(),
+  publishedSlug: text("published_slug"),
+  publishedAt: timestamp("published_at", { withTimezone: true }),
+  scheduledAt: timestamp("scheduled_at", { withTimezone: true }),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+}, (table) => [
+  foreignKey({ name: "website_posts_website_org_fk", columns: [table.organizationId,table.websiteId], foreignColumns: [websites.organizationId,websites.id] }).onDelete("cascade"),
+  foreignKey({ name: "website_posts_featured_media_fk", columns: [table.organizationId,table.websiteId,table.featuredMediaId], foreignColumns: [websiteMedia.organizationId,websiteMedia.websiteId,websiteMedia.id] }).onDelete("restrict"),
+  uniqueIndex("website_posts_site_slug_uq").on(table.organizationId,table.websiteId,table.kind,table.slug),
+  uniqueIndex("website_posts_legacy_source_uq").on(table.organizationId,table.websiteId,table.legacySourceId).where(sql`legacy_source_id IS NOT NULL`),
+  uniqueIndex("website_posts_legacy_source_uq").on(table.organizationId,table.websiteId,table.legacySourceId).where(sql`legacy_source_id IS NOT NULL`),
+  uniqueIndex("website_posts_public_slug_uq").on(table.organizationId,table.websiteId,table.kind,table.publishedSlug),
+  index("website_posts_owner_idx").on(table.organizationId,table.websiteId,table.updatedAt),
+]);
+
+export const websitePostRevisions = pgTable("website_post_revisions", {
+ id: uuid("id").primaryKey().defaultRandom(),
+ organizationId: uuid("organization_id").notNull(),
+ websiteId: uuid("website_id").notNull(),
+ postId: uuid("post_id").notNull().references(() => websitePosts.id, { onDelete: "cascade" }),
+ actorUserId: uuid("actor_user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
+ revision: integer("revision").notNull(),
+ event: text("event").notNull(),
+ snapshot: jsonb("snapshot").notNull(),
+ createdAt: createdAt(),
+}, (table) => [
+ foreignKey({ name: "website_post_revisions_website_org_fk", columns: [table.organizationId,table.websiteId], foreignColumns: [websites.organizationId,websites.id] }).onDelete("cascade"),
+ uniqueIndex("website_post_revisions_unique").on(table.postId,table.revision),
+]);

@@ -2,6 +2,7 @@ import { visualExperienceSchema, supportedExpressions, type VisualExperience } f
 import { z } from "zod";
 import { mediaReferencePattern } from "@/lib/media/references";
 import { premiumAssets } from "./premium-assets";
+import { resolveExternalEmbed, resolveExternalHttpsLink } from "@/lib/media/embed-providers";
 
 /**
  * Phase 13 additive contract. Legacy lucia.loom-blueprint v1 is deliberately
@@ -140,6 +141,38 @@ const contact = z
     email: z.string().email().max(254).optional(),
   })
   .strict();
+const mediaEmbed = z.object({
+  id,
+  type: z.literal("media-embed"),
+  variant: z.enum(["wide", "compact"]),
+  kind: z.enum(["image", "video", "document", "embed", "link"]),
+  title: text(120),
+  description: text(500).optional(),
+  mediaRef: z.string().max(160).optional(),
+  mime: z.enum(["video/mp4", "video/webm"]).optional(),
+  url: z.string().url().max(500).optional(),
+}).strict().superRefine((section, ctx) => {
+  if (section.kind === "embed") {
+    if (!section.url || !resolveExternalEmbed(section.url))
+      ctx.addIssue({ code: "custom", path: ["url"], message: "Choose a supported HTTPS embed URL." });
+    if (section.mediaRef || section.mime)
+      ctx.addIssue({ code: "custom", path: ["mediaRef"], message: "External embeds cannot reference uploaded media." });
+  } else if (section.kind === "link") {
+    if (!section.url || !resolveExternalHttpsLink(section.url))
+      ctx.addIssue({ code: "custom", path: ["url"], message: "Choose a secure external HTTPS destination." });
+    if (section.mediaRef || section.mime)
+      ctx.addIssue({ code: "custom", path: ["mediaRef"], message: "External links cannot reference uploaded media." });
+  } else {
+    if (!section.mediaRef || !mediaReferencePattern.test(section.mediaRef))
+      ctx.addIssue({ code: "custom", path: ["mediaRef"], message: "Choose a media asset from this website's library." });
+    if (section.url)
+      ctx.addIssue({ code: "custom", path: ["url"], message: "Uploaded media cannot use an external URL." });
+    if (section.kind === "video" && !section.mime)
+      ctx.addIssue({ code: "custom", path: ["mime"], message: "Video format is required." });
+    if (section.kind !== "video" && section.mime)
+      ctx.addIssue({ code: "custom", path: ["mime"], message: "Only video assets use video formats." });
+  }
+});
 
 /** Closed section registry: no customer-provided components or module paths. */
 export const premiumSectionRegistry = {
@@ -150,6 +183,7 @@ export const premiumSectionRegistry = {
   "service-journey": services,
   experience: experience,
   "contact-panel": contact,
+  "media-embed": mediaEmbed,
 } as const;
 export const premiumSectionSchema = z.discriminatedUnion("type", [
   hero,
@@ -159,6 +193,7 @@ export const premiumSectionSchema = z.discriminatedUnion("type", [
   services,
   experience,
   contact,
+  mediaEmbed,
 ]);
 export type PremiumSection = z.infer<typeof premiumSectionSchema>;
 export type PremiumSectionType = PremiumSection["type"];
@@ -354,6 +389,8 @@ export type PremiumEdit =
   | { kind: "remove-section"; pageId: string; sectionId: string }
   | { kind: "insert-page"; page: z.infer<typeof premiumPageSchema> }
   | { kind: "remove-page"; pageId: string }
+  | { kind: "page-details"; pageId: string; path: string; title: string; description: string; navigation: boolean }
+  | { kind: "navigation-order"; hrefs: string[] }
   | { kind: "replace-section"; pageId: string; section: PremiumSection }
   | { kind: "reorder"; pageId: string; sectionIds: string[] }
   | { kind: "token"; key: keyof PremiumLayout["tokens"]; value: string }
@@ -443,6 +480,49 @@ export function applyPremiumEdit(
       next.pages = next.pages.filter((p) => p.id !== edit.pageId);
       next.navigation = next.navigation.filter((n) => n.href !== removed.path);
     }
+  } else if (edit.kind === "page-details") {
+    if (mode !== "advanced" || !perms.advanced.includes("pages"))
+      throw new Error("Page settings edit denied");
+    const page = next.pages.find((entry) => entry.id === edit.pageId);
+    if (!page) throw new Error("Unknown page");
+    if ((page.path === "/") !== (edit.path === "/"))
+      throw new Error("Only the homepage can use the root address");
+    const nextPath = path.parse(edit.path);
+    if (nextPath !== page.path && next.pages.some((entry) => entry.id !== page.id && entry.path === nextPath))
+      throw new Error("That page address is already in use");
+    const previousPath = page.path;
+    page.path = nextPath;
+    page.title = text(120).parse(edit.title);
+    page.description = text(160).parse(edit.description);
+    page.navigation = edit.navigation;
+    if (previousPath !== nextPath) {
+      next.navigation = next.navigation.map((item) => item.href === previousPath ? { ...item, href: nextPath } : item);
+      const updateLinks = (value: unknown): void => {
+        if (Array.isArray(value)) { value.forEach(updateLinks); return; }
+        if (!value || typeof value !== "object") return;
+        for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
+          if (key === "href" && child === previousPath)
+            (value as Record<string, unknown>)[key] = nextPath;
+          else updateLinks(child);
+        }
+      };
+      for (const entry of next.pages) updateLinks(entry.sections);
+    }
+    const existing = next.navigation.find((item) => item.href === page.path);
+    if (edit.navigation) {
+      if (existing) existing.label = page.title.slice(0, 50);
+      else next.navigation.push({ label: page.title.slice(0, 50), href: page.path });
+    } else {
+      next.navigation = next.navigation.filter((item) => item.href !== page.path);
+    }
+  } else if (edit.kind === "navigation-order") {
+    if (mode !== "advanced" || !perms.advanced.includes("pages"))
+      throw new Error("Navigation settings edit denied");
+    if (edit.hrefs.length !== next.navigation.length ||
+        new Set(edit.hrefs).size !== next.navigation.length ||
+        edit.hrefs.some((href) => !next.navigation.some((item) => item.href === href)))
+      throw new Error("Invalid navigation order");
+    next.navigation = edit.hrefs.map((href) => next.navigation.find((item) => item.href === href)!);
   } else if (edit.kind === "token") {
     if (
       mode !== "advanced" ||
@@ -551,9 +631,9 @@ export function applyPremiumEdit(
           a.forEach((value, i) => check(value, b[i], key));
           return;
         }
-        if (key === "image") {
+        if (key === "image" || key === "mediaRef" || key === "mime") {
           if (!perms.guided.includes("image"))
-            throw new Error("Image edit denied");
+            throw new Error("Media edit denied");
           return;
         }
         if (a && b && typeof a === "object" && typeof b === "object") {
@@ -567,7 +647,7 @@ export function applyPremiumEdit(
           return;
         }
         const capability =
-          key === "email" ? "contact" : key === "href" ? "link" : "text";
+          key === "email" ? "contact" : key === "href" || key === "url" ? "link" : "text";
         if (!perms.guided.includes(capability))
           throw new Error("Content edit denied");
       };
@@ -631,6 +711,18 @@ export const premiumEditSchema = z.discriminatedUnion("kind", [
     .object({ kind: z.literal("insert-page"), page: premiumPageSchema })
     .strict(),
   z.object({ kind: z.literal("remove-page"), pageId: id }).strict(),
+  z.object({
+    kind: z.literal("page-details"),
+    pageId: id,
+    path,
+    title: text(120),
+    description: text(160),
+    navigation: z.boolean(),
+  }).strict(),
+  z.object({
+    kind: z.literal("navigation-order"),
+    hrefs: z.array(path).max(12),
+  }).strict(),
   z
     .object({
       kind: z.literal("replace-section"),

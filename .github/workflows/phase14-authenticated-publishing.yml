@@ -18,6 +18,18 @@ on:
       - 'scripts/check-website-foundation-http.mjs'
       - 'src/app/api/media/**'
       - 'src/app/api/websites/**/media/**'
+      - 'src/app/api/websites/[websiteId]/articles/**'
+      - 'src/lib/cron/**'
+      - 'src/app/api/cron/**'
+      - 'src/lib/workspace/tabs.ts'
+      - 'src/lib/workspace/tabs.test.ts'
+      - 'vercel.json'
+      - '.github/workflows/phase15-scheduled-workers.yml'
+      - 'docs/contracts/phase15-scheduled-workers.md'
+      - 'src/lib/content/article-model.ts'
+      - 'src/lib/content/public-articles.tsx'
+      - 'scripts/phase15-authenticated-acceptance.mjs'
+      - 'scripts/phase15-article-media-acceptance.mjs'
       - 'scripts/media-security-acceptance.mjs'
       - 'scripts/phase14-premium-publishing-acceptance.mjs'
       - '.github/workflows/phase14-authenticated-publishing.yml'
@@ -55,6 +67,7 @@ jobs:
       WEBSITE_TEST_PHASE14: ${{ github.event.pull_request.number == 140 && '0' || '1' }}
       WEBSITE_TEST_PHASE15: ${{ github.event.pull_request.number == 140 && '0' || '1' }}
       WEBSITE_TEST_PHASE16: "1"
+      CRON_SECRET: "phase15-isolated-cron-secret-for-disposable-ci-only"
       WEBSITE_TEST_MEDIA: "1"
       WEBSITE_TEST_WEBSITE_REMOVAL: "1"
       WEBSITE_TEST_PHASE14_LAYOUTS: ${{ inputs.layouts || ((github.event.pull_request.number == 138 || github.event.pull_request.number == 140) && 'flagships' || '') }}
@@ -86,6 +99,7 @@ jobs:
           GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO lucia_acceptance_runtime;
           GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO lucia_acceptance_runtime;
           GRANT EXECUTE ON FUNCTION public.lucia_public_media(uuid) TO lucia_acceptance_runtime;
+          GRANT EXECUTE ON FUNCTION public.lucia_publish_due_articles(integer) TO lucia_acceptance_runtime;
           SQL
       - name: Build actual production application
         run: npm run build

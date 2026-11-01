@@ -18,7 +18,7 @@ const tokens = {
 };
 const permissions = {
   guided: ["text", "reorder"],
-  advanced: ["variant", "tokens", "section-order", "page-responsive"],
+  advanced: ["variant", "tokens", "section-order", "page-responsive", "pages"],
   lockedSections: ["hero"],
   lockedTokens: ["font"],
 };
@@ -154,7 +154,7 @@ describe("Phase 13 premium layout contract", () => {
     expect(() => parsePremiumLayout(malformed)).toThrow();
   });
   it("registers only fixed section types", () => {
-    expect(Object.keys(premiumSectionRegistry)).toHaveLength(7);
+    expect(Object.keys(premiumSectionRegistry)).toHaveLength(8);
     expect(() =>
       parsePremiumLayout(
         fixture(
@@ -173,6 +173,57 @@ describe("Phase 13 premium layout contract", () => {
     const parsed = parsePremiumLayout(layout);
     expect(parsed.pages.map((p) => p.path)).toEqual(["/", "/about"]);
     expect(parsed.pages[0].sections.length).toBeGreaterThan(2);
+  });
+  it("keeps page metadata and navigation in one validated composition", () => {
+    const parsed = parsePremiumLayout(meridian);
+    const renamed = applyPremiumEdit(parsed, "advanced", {
+      kind: "page-details", pageId: "about", path: "/about", title: "Our story",
+      description: "Learn more about the team.", navigation: true,
+    });
+    expect(renamed.pages[1]).toMatchObject({ title: "Our story", description: "Learn more about the team." });
+    expect(renamed.navigation[1]).toEqual({ label: "Our story", href: "/about" });
+    const hidden = applyPremiumEdit(renamed, "advanced", {
+      kind: "page-details", pageId: "about", path: "/about", title: "Our story",
+      description: "Learn more about the team.", navigation: false,
+    });
+    expect(hidden.navigation).toEqual([{ label: "Home", href: "/" }]);
+    const reordered = applyPremiumEdit(parsed, "advanced", {
+      kind: "navigation-order", hrefs: ["/about", "/"],
+    });
+    expect(reordered.navigation.map((item) => item.href)).toEqual(["/about", "/"]);
+    const withInternalLink = structuredClone(parsed);
+    const homeHero = withInternalLink.pages[0].sections.find((section) => section.type === "premium-hero");
+    if (!homeHero || homeHero.type !== "premium-hero") throw new Error("Missing hero");
+    homeHero.action = { label: "Read our story", href: "/about" };
+    const pathChanged = applyPremiumEdit(withInternalLink, "advanced", {
+      kind: "page-details", pageId: "about", path: "/our-story", title: "Our story",
+      description: "Learn more about the team.", navigation: true,
+    });
+    expect(pathChanged.pages[1].path).toBe("/our-story");
+    expect(pathChanged.navigation[1].href).toBe("/our-story");
+    const updatedHero = pathChanged.pages[0].sections.find((section) => section.type === "premium-hero");
+    expect(updatedHero?.type === "premium-hero" ? updatedHero.action?.href : null).toBe("/our-story");
+  });
+  it("accepts only typed customer media and allowlisted external embeds", () => {
+    const video = {
+      id: "home-video", type: "media-embed", variant: "wide", kind: "video",
+      title: "A short introduction", mediaRef: "media:550e8400-e29b-41d4-a716-446655440000",
+      mime: "video/mp4",
+    };
+    expect(() => parsePremiumLayout(fixture("media", [hero, video], [story]))).not.toThrow();
+    const image = {
+      id: "home-image", type: "media-embed", variant: "wide", kind: "image",
+      title: "Our team", mediaRef: "media:550e8400-e29b-41d4-a716-446655440001",
+      description: "Our team at work",
+    };
+    expect(() => parsePremiumLayout(fixture("media", [hero, image], [story]))).not.toThrow();
+    const spotify = {
+      id: "home-audio", type: "media-embed", variant: "wide", kind: "embed",
+      title: "Our playlist", url: "https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M",
+    };
+    expect(() => parsePremiumLayout(fixture("media", [hero, spotify], [story]))).not.toThrow();
+    const unsafe = { ...spotify, url: "https://evil.example/embed/track" };
+    expect(() => parsePremiumLayout(fixture("media", [hero, unsafe], [story]))).toThrow();
   });
   it("rejects duplicate paths and unsupported page destinations", () => {
     const duplicate = structuredClone(meridian);

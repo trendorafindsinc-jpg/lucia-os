@@ -37,6 +37,7 @@ export function middleware(request: NextRequest) {
     destination.pathname = "/api/media/" + media[1];
     return NextResponse.rewrite(destination);
   }
+  if (request.nextUrl.pathname === "/api/public/v1/content") return NextResponse.next();
   if (isPlatformHost(hostname)) return NextResponse.next();
 
   const pathname = request.nextUrl.pathname;

@@ -25,6 +25,23 @@ describe("workspace tab routing", () => {
     });
   });
 
+  it("keeps premium Layout previews inside the existing Layouts workspace tab", () => {
+    const catalogue = describeWorkspaceRoute("/templates", "");
+    const preview = describeWorkspaceRoute("/templates/preview/lucia.layout.meridian", "");
+    expect(preview).toMatchObject({ appKey: "layouts", context: "catalogue" });
+    expect(isSafeWorkspaceTabHref("/templates/preview/lucia.layout.meridian")).toBe(true);
+    expect(getWorkspaceTabId(preview!)).toBe(getWorkspaceTabId(catalogue!));
+  });
+
+  it.each([
+    "/templates/preview/not-a-registered-layout",
+    "/templates/preview/lucia.layout.meridian/extra",
+    "/templates/preview/lucia.layout.MERIDIAN",
+  ])("rejects malformed premium preview routes %s", (href) => {
+    expect(describeWorkspaceRoute(new URL(href, "https://workspace.invalid").pathname, "")).toBeNull();
+    expect(isSafeWorkspaceTabHref(href)).toBe(false);
+  });
+
   it.each([
     ["/pages", "Pages & navigation"],
     ["/content", "Blog & media"],

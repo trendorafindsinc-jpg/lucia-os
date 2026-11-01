@@ -4,6 +4,7 @@ import { isPlatformHostname } from "@/lib/publishing/platform-hosts";
 import { cache } from "react";
 import type { Metadata } from "next";
 import { readPublicWebsitePage } from "@/lib/domains/public-site";
+import { isArticlePath, publicArticleMetadata, PublicArticlePage, PublicContentHighlights } from "@/lib/content/public-articles";
 import { notFound } from "next/navigation";
 import { getDb } from "@/lib/db/client";
 import { websiteDomains, websitePages, websites } from "@/lib/db/schema";
@@ -20,7 +21,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-type PageProps = { params: Promise<{ slug: string; path?: string[] }> };
+type PageProps = { params: Promise<{ slug: string; path?: string[] }>; searchParams: Promise<Record<string,string|string[]|undefined>> };
 
 const readSitePage = cache(async (slug: string, path: string) => {
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) notFound();
@@ -106,11 +107,15 @@ export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { slug, path = [] } = await params;
-  const page = await readSitePage(slug, path.length ? path.join("/") : "/");
+  const routePath=path.join("/");
+  if(isArticlePath(routePath))return publicArticleMetadata(routePath,slug);
+  const page = await readSitePage(slug, path.length ? routePath : "/");
   return { title: { absolute: page.title }, description: page.description };
 }
-export default async function PublishedWebsitePage({ params }: PageProps) {
-  const { slug, path = [] } = await params;
-  const page = await readSitePage(slug, path.length ? path.join("/") : "/");
-  return <LayoutRenderer blueprint={page.blueprint} pagePath={page.pagePath} />;
+export default async function PublishedWebsitePage({ params, searchParams }: PageProps) {
+  const [{ slug, path = [] }, query] = await Promise.all([params, searchParams]);
+  const routePath=path.join("/");
+  if(isArticlePath(routePath))return <PublicArticlePage path={routePath} searchParams={query} websiteSlug={slug} />;
+  const page = await readSitePage(slug, path.length ? routePath : "/");
+  return <><LayoutRenderer blueprint={page.blueprint} pagePath={page.pagePath} />{page.pagePath === "/" ? <PublicContentHighlights websiteSlug={slug} /> : null}</>;
 }
