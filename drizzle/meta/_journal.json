@@ -162,6 +162,13 @@
       "when": 1793552400000,
       "tag": "0022_news_story_metadata",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1793553000000,
+      "tag": "0023_article_revision_restore",
+      "breakpoints": true
     }
   ]
 }
