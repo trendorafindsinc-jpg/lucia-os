@@ -37,7 +37,8 @@ describe("authenticated free website setup entry", () => {
     const html = renderToStaticMarkup(
       await CreateWebsitePage({ searchParams: Promise.resolve({}) }),
     );
-    expect(html).toContain("Organisation name");
+    expect(html).toContain("What is the name of your business or website?");
+    expect(html).toContain("View all 48 Layouts");
     expect(html).not.toContain("Sign in to create");
     expect(html).not.toContain("lucia.site");
   });

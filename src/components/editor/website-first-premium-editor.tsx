@@ -63,6 +63,7 @@ export function WebsiteFirstPremiumEditor({
   const [redoHistory, setRedoHistory] = useState<HistoryItem[]>([]);
   const [pageId, setPageId] = useState(initial.pages[0].id);
   const [selected, setSelected] = useState(initial.pages[0].sections[0]?.id ?? "");
+  const [projectIndex, setProjectIndex] = useState<number | null>(null);
   const [field, setField] = useState<Field | null>(null);
   const [showMedia, setShowMedia] = useState(false);
   const [showSectionTools, setShowSectionTools] = useState(false);
@@ -249,7 +250,15 @@ export function WebsiteFirstPremiumEditor({
     const item = page.sections.find((candidate) => "studio-" + candidate.id === container.id);
     if (!item) return;
     setSelected(item.id);
-    if (target.closest("img")) { setShowMedia(true); return; }
+    setProjectIndex(null);
+    if (target.closest("img")) {
+      if (item.type === "project-gallery") {
+        const article = target.closest("article");
+        const index = article && article.parentElement ? Array.from(article.parentElement.children).indexOf(article) : -1;
+        if (index >= 0 && index < item.projects.length) setProjectIndex(index);
+      }
+      setShowMedia(true); return;
+    }
     if (target.closest("a,button,summary")) return;
     const actual = target.textContent?.trim();
     if (!actual) return;
@@ -272,7 +281,17 @@ export function WebsiteFirstPremiumEditor({
   }
 
   const fieldValue = field && section && field in section ? String(section[field as keyof PremiumSection] ?? "") : "";
-  const selectedImage = section && "image" in section ? section.image : undefined;
+  const selectedImage = section?.type === "project-gallery" && projectIndex !== null
+    ? section.projects[projectIndex]?.image
+    : section && "image" in section ? section.image : undefined;
+  function replaceImage(image: { src: string; alt: string }) {
+    if (!section) return;
+    const replacement: PremiumSection = section.type === "project-gallery" && projectIndex !== null
+      ? { ...section, projects: section.projects.map((item, index) =>
+          index === projectIndex ? { ...item, image } : item) }
+      : withSectionImage(section, image);
+    perform({ kind: "replace-section", pageId: page.id, section: replacement });
+  }
   const options = [...premiumArtworkChoices, ...ownedArtwork];
   return <main className="website-first-editor">
     <header className="website-first-editor-toolbar">
@@ -319,8 +338,8 @@ export function WebsiteFirstPremiumEditor({
           }}>
           <button type="button" aria-pressed={selected === item.id} onClick={() => { setSelected(item.id); setField(null); }} title="Select section">
             {locked ? "🔒" : "⠿"} {"heading" in item ? item.heading : "Trust indicators"}</button>
-          <button type="button" onClick={() => reorder(item.id, -1)} disabled={busy || index === 0 || locked} aria-label="Move section up">↑</button>
-          <button type="button" onClick={() => reorder(item.id, 1)} disabled={busy || index === page.sections.length - 1 || locked} aria-label="Move section down">↓</button>
+          <button type="button" onClick={() => reorder(item.id, -1)} disabled={busy || index === 0 || locked || (index > 0 && layout.permissions.lockedSections.includes(page.sections[index - 1].id))} aria-label="Move section up">↑</button>
+          <button type="button" onClick={() => reorder(item.id, 1)} disabled={busy || index === page.sections.length - 1 || locked || (index + 1 < page.sections.length && layout.permissions.lockedSections.includes(page.sections[index + 1].id))} aria-label="Move section down">↓</button>
         </div>;
       })}
     </div>}
@@ -336,13 +355,10 @@ export function WebsiteFirstPremiumEditor({
       <div className="website-first-editor-media-header"><h2>Media & artwork</h2><button type="button" onClick={() => setShowMedia(false)}>Close</button></div>
       {selectedImage && section && <div className="website-first-editor-media-picker">
         <p>Choose an approved image for the selected section.</p>
-        <label>Image<select value={selectedImage.src} onChange={(e) => perform({ kind: "replace-section", pageId: page.id,
-          section: withSectionImage(section, { ...selectedImage, src: e.target.value }) })}>
+        <label>Image<select value={selectedImage.src} onChange={(e) => replaceImage({ ...selectedImage, src: e.target.value })}>
           {options.map((option) => <option key={option.ref} value={option.ref}>{option.label}</option>)}</select></label>
         <label>Image description <input key={selectedImage.alt} defaultValue={selectedImage.alt} maxLength={200}
-          onBlur={(e) => { const alt = e.target.value.trim(); if (alt && alt !== selectedImage.alt) perform({
-            kind: "replace-section", pageId: page.id, section: withSectionImage(section, { ...selectedImage, alt }),
-          }); }} /></label>
+          onBlur={(e) => { const alt = e.target.value.trim(); if (alt && alt !== selectedImage.alt) replaceImage({ ...selectedImage, alt }); }} /></label>
       </div>}
       {accountId ? <MediaLibrary websiteId={websiteId} accountId={accountId} onChange={setOwnedArtwork}
         protectedIds={mediaIds(layout)} /> : <p>Image uploads require an authenticated website session.</p>}
