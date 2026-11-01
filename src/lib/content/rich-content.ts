@@ -44,7 +44,7 @@ export function renderArticleHtml(source:string):string {
 
 /** Markdown is converted to HTML, then passed through the same public-output sanitizer. */
 export function renderArticleMarkdown(source:string):string {
-  const mediaLinked=source.replace(/(\\]\\()media:([0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})(\\))/gi,"$1/_media/$2$3");
+  const mediaLinked=source.replace(/\]\(media:([0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})\)/gi,"](/_media/$1)");
   const rendered=marked.parse(mediaLinked,{async:false,gfm:true,breaks:false,pedantic:false});
   return typeof rendered==="string"?renderArticleHtml(rendered):"";
 }
