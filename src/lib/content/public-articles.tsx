@@ -9,7 +9,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { getDb } from "@/lib/db/client";
 import { normalizeHostname } from "@/lib/domains/hostname";
 import { articleDraftSchema, articleRoute } from "@/lib/content/article-model";
-import { websiteDomains, websitePosts, websites, organizations } from "@/lib/db/schema";
+import { websiteDomains, websitePosts, websites } from "@/lib/db/schema";
 import styles from "./public-articles.module.css";
 import { renderArticleMarkdown } from "./rich-content";
 
@@ -25,22 +25,22 @@ const readPublished = cache(async (path: string, websiteSlug?: string) => {
  let hostname:string;
  try{hostname=normalizeHostname(new URL("http://"+host).hostname);}catch{notFound();}
  const db=getDb();
- let site: {id:string;organizationId:string;name:string}|undefined;
- // A platform subdomain carries the canonical website slug in the route. Resolve
- // that exact site first; hostname bindings remain the authority for custom domains.
- if(websiteSlug){
-  const [platformSite]=await db.select({id:websites.id,organizationId:websites.organizationId,name:websites.name})
-   .from(websites).innerJoin(organizations,eq(organizations.id,websites.organizationId))
-   .where(and(eq(websites.slug,websiteSlug),eq(websites.status,"published"),eq(organizations.status,"active"))).limit(1);
-  site=platformSite;
- }
- if(!site){
-  const [domainSite]=await db.select({id:websites.id,organizationId:websites.organizationId,name:websites.name})
-   .from(websiteDomains).innerJoin(websites,and(eq(websiteDomains.websiteId,websites.id),eq(websiteDomains.organizationId,websites.organizationId)))
-   .innerJoin(organizations,eq(organizations.id,websites.organizationId))
-   .where(and(eq(websiteDomains.hostname,hostname),eq(websiteDomains.status,"active"),
-    eq(websites.status,"published"),eq(organizations.status,"active"))).limit(1);
-  site=domainSite;
+ let site: {id:string;organizationId:string;name:string;slug:string}|undefined;
+ // The active hostname binding is the public tenant boundary for both LUCIA
+ // subdomains and custom domains. Resolve it before considering a legacy slug;
+ // this also keeps anonymous reads compatible with the website renderer's RLS
+ // policy instead of requiring a direct read of the private organizations row.
+ const [domainSite]=await db.select({id:websites.id,organizationId:websites.organizationId,name:websites.name,slug:websites.slug})
+  .from(websiteDomains).innerJoin(websites,and(eq(websiteDomains.websiteId,websites.id),eq(websiteDomains.organizationId,websites.organizationId)))
+  .where(and(eq(websiteDomains.hostname,hostname),eq(websiteDomains.status,"active"),eq(websites.status,"published"))).limit(1);
+ site=domainSite;
+ if(site && websiteSlug && site.slug!==websiteSlug)notFound();
+ // Preserve legacy slug-only platform URLs only when the slug resolves to one
+ // published website. Ambiguous tenant-local slugs fail closed.
+ if(!site && websiteSlug){
+  const candidates=await db.select({id:websites.id,organizationId:websites.organizationId,name:websites.name,slug:websites.slug})
+   .from(websites).where(and(eq(websites.slug,websiteSlug),eq(websites.status,"published"))).limit(2);
+  site=candidates.length===1?candidates[0]:undefined;
  }
  if(!site)notFound();
  const base=and(eq(websitePosts.websiteId,site.id),eq(websitePosts.organizationId,site.organizationId),
