@@ -11,6 +11,7 @@ type Story = {
  featuredMediaRef:string|null;featuredMediaAlt:string|null;publishedSnapshot:{featuredMediaRef?:string|null}|null;
  revision:number;status:"draft"|"scheduled"|"published";publishedSlug:string|null;publishedAt:string|null;scheduledAt:string|null;
 };
+function toLocalDateTime(value:string){const date=new Date(value);return new Date(date.getTime()-date.getTimezoneOffset()*60000).toISOString().slice(0,16);}
 export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
  websiteId:string;accountId?:string|null;initialKind:ArticleKind;onClose:()=>void;
 }) {
@@ -128,14 +129,14 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
         <button type="button" onClick={()=>change("body",draft.body+"\n\n- List item")}>Bullet list</button>
         <button type="button" onClick={()=>change("body",draft.body+"\n\n> Quote")}>Quote</button>
        </div><textarea value={draft.body} maxLength={50000} rows={14} onChange={e=>change("body",e.target.value)} placeholder="Write your story. Use the formatting tools or Markdown for headings, links, lists and emphasis."/><small>Formatting is rendered safely. Raw scripts and unsafe links are removed; images must use this website’s approved media library.</small></label>
-       <label>Schedule publication (your device time)<input type="datetime-local" value={draft.scheduledAt?new Date(draft.scheduledAt).toISOString().slice(0,16):""} onChange={e=>{setDraft(previous=>previous?{...previous,scheduledAt:e.target.value?new Date(e.target.value).toISOString():null}:previous);setDirty(true);}}/><small>Scheduling is available for unpublished articles. Choose a time at least two minutes ahead.</small></label>
+       <label>Schedule publication (your device time)<input type="datetime-local" value={draft.scheduledAt?toLocalDateTime(draft.scheduledAt):""} onChange={e=>{setDraft(previous=>previous?{...previous,scheduledAt:e.target.value?new Date(e.target.value).toISOString():null}:previous);setDirty(true);}}/><small>Scheduling is available for unpublished articles. Choose a time at least two minutes ahead.</small></label>
        <div className="story-studio-featured"><div><strong>Featured image</strong><p>Choose an image already stored for this website, or upload one to the same secure image library.</p>{availableMediaCount!==null&&<small>{availableMediaCount} ready image{availableMediaCount===1?"":"s"} in this website library.</small>}</div>{draft.featuredMediaRef&&<Image unoptimized className="story-studio-featured-preview" src={"/_media/"+draft.featuredMediaRef.slice(6)} alt={draft.featuredMediaAlt||""} width={900} height={560}/>}{draft.featuredMediaRef&&<button type="button" disabled={busy} onClick={()=>{setDraft(previous=>previous?{...previous,featuredMediaRef:null,featuredMediaAlt:null}:previous);setDirty(true);}}>Remove featured image</button>}<MediaLibrary websiteId={websiteId} accountId={accountId??""} onChange={onMediaChange} onSelect={(item:MediaLibraryItem)=>{setDraft(previous=>previous?{...previous,featuredMediaRef:item.ref,featuredMediaAlt:item.alt}:previous);setDirty(true);setMessage("");}} selectedRef={draft.featuredMediaRef} protectedIds={Array.from(new Set([...articles.flatMap(article=>[article.featuredMediaRef,article.publishedSnapshot?.featuredMediaRef]),draft.featuredMediaRef,draft.publishedSnapshot?.featuredMediaRef].filter((ref):ref is string=>Boolean(ref)).map(ref=>ref.slice(6))) )}/></div>
       </div>}
      <div className="story-studio-actions">
       <button type="button" onClick={()=>setPreview(p=>!p)}>{preview?"Edit article":"Preview draft"}</button>
       <button type="button" disabled={busy||loading||!dirty} onClick={()=>void save("save")}>Save draft</button>
       <button className="story-studio-live" type="button" disabled={busy||loading} onClick={()=>void save("publish")}>{busy?"Working…":"Publish now"}</button>
-      <button type="button" disabled={busy||loading||!draft.scheduledAt} onClick={()=>void save("schedule")}>Schedule</button>
+      <button type="button" disabled={busy||loading||!draft.scheduledAt||draft.status==="published"} onClick={()=>void save("schedule")}>Schedule</button>
       {draft.status==="published"&&<button type="button" disabled={busy} onClick={()=>void save("unpublish")}>Unpublish</button>}
       {draft.status==="scheduled"&&<button type="button" disabled={busy} onClick={()=>void save("save")}>Keep as draft</button>}
      </div>

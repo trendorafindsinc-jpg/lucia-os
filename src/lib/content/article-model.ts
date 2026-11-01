@@ -2,7 +2,8 @@ import { z } from "zod";
 import { makeSlug } from "@/lib/content/content-library";
 import { mediaReferencePattern } from "@/lib/media/references";
 
-// Article data is normalized in PostgreSQL; public snapshots include only validated metadata and safe Markdown.
+// Initial production-safe plain-text format: JSX escapes output; HTML paste is not executed.
+// Rich blocks and media links follow only after dedicated sanitization and reference verification.
 export const articleKind = z.enum(["blog","news"]);
 export const articleDraftSchema = z.object({
   kind: articleKind,
@@ -11,9 +12,6 @@ export const articleDraftSchema = z.object({
   excerpt: z.string().max(320),
   body: z.string().max(50000),
   category: z.string().trim().max(80),
-  tags: z.array(z.string().trim().min(1).max(32)).max(12).default([]),
-  seoTitle: z.string().trim().max(70).nullable().default(null),
-  seoDescription: z.string().trim().max(160).nullable().default(null),
   featuredMediaRef: z.string().regex(mediaReferencePattern).nullable().default(null),
   featuredMediaAlt: z.string().max(200).nullable().default(null),
 }).strict();
@@ -23,11 +21,8 @@ export const createArticleSchema = z.object({
 }).strict();
 export const updateArticleSchema = articleDraftSchema.omit({kind:true,featuredMediaAlt:true}).extend({
   revision: z.number().int().positive(),
-  action: z.enum(["save","publish","unpublish","schedule"]),
-  scheduledAt: z.string().datetime().nullable().default(null),
-}).strict().superRefine((value, context) => {
-  if (value.action === "schedule" && !value.scheduledAt) context.addIssue({ code: "custom", path: ["scheduledAt"], message: "Choose a publication date and time." });
-});
+  action: z.enum(["save","publish","unpublish"]),
+}).strict();
 export type PublishedArticle = z.infer<typeof articleDraftSchema>;
 export type ArticleKind = z.infer<typeof articleKind>;
 export function newArticleSlug(title: string) { return makeSlug(title); }

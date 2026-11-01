@@ -4,3 +4,5 @@
 .story-markdown-toolbar button{border:1px solid var(--line,#d9dce3);border-radius:8px;background:var(--surface,#fff);padding:6px 10px;font:inherit;font-size:12px;cursor:pointer}
 .story-markdown-toolbar button:focus-visible{outline:2px solid var(--accent,#4263eb);outline-offset:2px}
 .story-studio-fields label>small{display:block;margin-top:6px;color:var(--muted,#697386);font-size:12px;line-height:1.5}
+
+.story-seo-fields{border:1px solid #dce5f0;border-radius:12px;padding:12px;background:#f8faff}.story-seo-fields summary{cursor:pointer;font-size:12px;font-weight:750;margin-bottom:10px}.story-studio input[type="datetime-local"]{font-variant-numeric:tabular-nums}

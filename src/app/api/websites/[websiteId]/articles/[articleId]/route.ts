@@ -51,7 +51,7 @@ export async function PATCH(request:Request,context:Context){
     const featuredMediaId=input.featuredMediaRef ? input.featuredMediaRef.slice(6) : null;
     const featuredMediaAlt=featuredMediaId ? mediaAltById[featuredMediaId] ?? null : null;
     const draft:PublishedArticle={kind:current.kind as "blog"|"news",title:input.title,slug:input.slug,excerpt:input.excerpt,body:input.body,category:input.category,tags:input.tags,seoTitle:input.seoTitle,seoDescription:input.seoDescription,featuredMediaRef:input.featuredMediaRef,featuredMediaAlt};
-    if(input.action==="publish" && !publicationReady(draft))return {validation:"Add a meaningful summary and article body before publishing."};
+    if((input.action==="publish" || input.action==="schedule") && !publicationReady(draft))return {validation:"Add a meaningful summary and article body before publishing."};
     const live= input.action==="publish" ? draft : input.action==="unpublish" || input.action==="schedule" ? null : current.publishedSnapshot;
     const status= input.action==="schedule" ? "scheduled" : live ? "published" : "draft";
     const publishedSlug=live ? (input.action==="publish" ? draft.slug : current.publishedSlug) : null;
