@@ -7,9 +7,10 @@ import { hasOrganizationPermission } from "@/lib/access/policy";
 import { mediaIds } from "./references";
 import { compressImage } from "./image";
 import { mediaStorage, storageConfigured } from "./storage";
+import { multipartStorage } from "./multipart-storage";
 export type MediaTransaction = Parameters<Parameters<ReturnType<typeof getDb>["transaction"]>[0]>[0];
 export class MediaError extends Error { constructor(message: string, public status = 422) { super(message); } }
-type MediaRow = { id: string; website_id: string; organization_id: string; object_key: string; bytes: number; width: number; height: number; alt: string; status: string };
+type MediaRow = { id: string; website_id: string; organization_id: string; object_key: string; bytes: number; width: number; height: number; alt: string; status: string; kind: string };
 export function boundedQuota(value: string | undefined, fallback: number) { const n = Number(value); return Number.isSafeInteger(n) && n > 0 && n <= 10_000_000_000 ? n : fallback; }
 export const uploadsEnabled = () => process.env.MEDIA_UPLOADS_ENABLED === "1" && storageConfigured();
 export async function withMediaWebsite<T>(userId: string, websiteId: string, permission: string, operation: (tx: MediaTransaction, organizationId: string) => Promise<T>): Promise<T> {
@@ -40,7 +41,7 @@ export async function validateMediaOwnership(tx: MediaTransaction, organizationI
 }
 export async function listMedia(userId: string, websiteId: string) {
   return withMediaWebsite(userId, websiteId, "website.read", async (tx) => {
-    const rows = await tx.execute(sql`select id,bytes,width,height,alt,status,created_at from website_media where website_id=${websiteId} and status <> 'deleted' order by created_at desc limit 200`);
+    const rows = await tx.execute(sql`select id,bytes,width,height,alt,status,kind,mime,original_name,checksum,etag,caption,duration_ms,created_at from website_media where website_id=${websiteId} and status <> 'deleted' order by created_at desc limit 200`);
     const [usage] = await tx.execute(sql`select coalesce(sum(bytes),0)::bigint as used,count(*)::int as count from website_media where website_id=${websiteId} and status <> 'deleted'`);
     const [limit] = await tx.execute(sql`select quota_bytes from website_media_limits where website_id=${websiteId}`);
     return { enabled: uploadsEnabled(), items: rows.map((row) => ({ ...row, ref: "media:" + row.id })), usedBytes: Number(usage?.used ?? 0), quotaBytes: Number(limit?.quota_bytes ?? boundedQuota(process.env.MEDIA_WEBSITE_QUOTA_BYTES, 5_000_000)) };
@@ -92,7 +93,7 @@ export async function removeMedia(userId: string, websiteId: string, id: string)
     await tx.execute(sql`update website_media set status='deleting',updated_at=now() where id=${id}`);
     return image as MediaRow;
   });
-  await mediaStorage().remove(row.object_key);
+  if(row.kind==="image")await mediaStorage().remove(row.object_key);else await multipartStorage.remove(row.object_key);
   await withMediaWebsite(userId, websiteId, "website.edit", async (tx) => {
     const removed = await tx.execute(sql`update website_media set status='deleted',updated_at=now() where id=${id} and status='deleting' returning bytes`);
     if (removed.length) await tx.execute(sql`update media_storage_budget set reserved_bytes=reserved_bytes-${row.bytes} where product='lucia-os'`);
