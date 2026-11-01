@@ -3,7 +3,7 @@ import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 export type MediaLibraryItem = { id: string; ref: string; bytes: number; width: number; height: number; alt: string; status: string; kind:"image"|"video"|"document";mime:string;original_name?:string|null;caption?:string|null };
 export function MediaLibrary({ websiteId, accountId, onChange, protectedIds, onSelect, onInsert, selectedRef }: { websiteId: string; accountId: string; onChange: (items: { ref: string; label: string }[]) => void; protectedIds: string[]; onSelect?: (item: MediaLibraryItem) => void; onInsert?: (item:MediaLibraryItem)=>void; selectedRef?: string | null }) {
-  const [library, setLibrary] = useState<{ items: MediaLibraryItem[]; enabled: boolean; usedBytes: number; quotaBytes: number } | null>(null);
+  const [library, setLibrary] = useState<{ items: MediaLibraryItem[]; enabled: boolean; usedBytes: number; quotaBytes: number; imageUsedBytes:number;videoUsedBytes:number;videoQuotaBytes:number;documentUsedBytes:number;documentQuotaBytes:number } | null>(null);
   const [notice, setNotice] = useState("Loading your image library…"), [busy, setBusy] = useState(false);
   const endpoint = `/api/websites/${websiteId}/media`;
   const load = useCallback(async () => {
@@ -52,7 +52,7 @@ export function MediaLibrary({ websiteId, accountId, onChange, protectedIds, onS
   }
   return <details className="studio-media-library"><summary>Your media library</summary>
     <p role="status" aria-live="polite">{notice}</p>
-    {library && <p>{(library.usedBytes / 1_000_000).toFixed(2)} MB used of {(library.quotaBytes / 1_000_000).toFixed(2)} MB. Images are compressed; original files are not retained.</p>}
+    {library && <p>Images: {(library.imageUsedBytes/1_000_000).toFixed(1)} / {(library.quotaBytes/1_000_000).toFixed(0)} MB · Videos: {(library.videoUsedBytes/1_000_000).toFixed(1)} / {(library.videoQuotaBytes/1_000_000).toFixed(0)} MB · PDFs: {(library.documentUsedBytes/1_000_000).toFixed(1)} / {(library.documentQuotaBytes/1_000_000).toFixed(0)} MB. Total reserved: {(library.usedBytes/1_000_000).toFixed(1)} MB. Images are compressed; original image files are not retained.</p>}
     {!library?.enabled && <p>Customer uploads are not enabled yet. You can continue with built-in artwork.</p>}
     <form onSubmit={upload} className="composition-controls">
       <label>Customer image (JPEG, PNG or WebP, up to 4 MB)<input name="file" type="file" accept="image/jpeg,image/png,image/webp" required disabled={busy || !library?.enabled} /></label>
