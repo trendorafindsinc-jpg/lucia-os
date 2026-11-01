@@ -67,10 +67,11 @@ export async function POST(request: Request, context: Context) {
      kind:checked.data.kind,slug:newArticleSlug(checked.data.title),title:checked.data.title,
      excerpt:"",body:"",category:"",eventAt:null,isFeatured:false,correctionNote:null,correctsSlug:null,tags:[],seoTitle:null,seoDescription:null,status:"draft",revision:1,
     }).returning();
+    const initialDraft={kind:created.kind as "blog"|"news",title:created.title,slug:created.slug,excerpt:"",body:"",category:"",authorName:null,eventAt:null,isFeatured:false,correctionNote:null,correctsSlug:null,tags:[],seoTitle:null,seoDescription:null,featuredMediaRef:null,featuredMediaAlt:null};
     await tx.insert(websitePostRevisions).values({
      organizationId:org.id,websiteId:site.id,postId:created.id,
      actorUserId:user.id,revision:1,event:"create",
-     snapshot:{title:created.title,slug:created.slug,body:"",status:"draft"},
+     snapshot:{draft:initialDraft,live:null,status:"draft",publishedSlug:null,at:new Date().toISOString()},
     });
     return created;
    }
