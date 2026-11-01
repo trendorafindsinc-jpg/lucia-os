@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { websiteGoals, organisationTypes, makeSiteSlug } from "@/lib/onboarding/website-setup";
-import { isPremiumStartingLayout } from "@/lib/templates/starting-layouts";
+import { getStartingLayoutById } from "@/lib/templates/starting-layouts";
 import { createHash } from "node:crypto";
 
 export const websiteFirstSetupSchema = z.object({
@@ -12,7 +12,7 @@ export const websiteFirstSetupSchema = z.object({
     .refine((value) => !value || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) || /^\+?[0-9 ()-]{7,24}$/.test(value),
       "Enter a valid email address or telephone number").optional().default(""),
   style: z.enum(["No preference", "Modern", "Classic", "Bold", "Warm"]).optional().default("No preference"),
-  layoutId: z.string().refine(isPremiumStartingLayout, "Choose one of the 48 registered Layouts"),
+  layoutId: z.string().refine((id) => Boolean(getStartingLayoutById(id)), "Choose a registered Layout"),
 }).strict();
 export type WebsiteFirstSetup = z.infer<typeof websiteFirstSetupSchema>;
 

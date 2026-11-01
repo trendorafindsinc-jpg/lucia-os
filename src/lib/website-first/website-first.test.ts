@@ -25,6 +25,7 @@ describe("website-first creation contract", () => {
     expect(websiteFirstSetupSchema.safeParse(input).success).toBe(true);
     expect(websiteFirstSetupSchema.safeParse({ ...input, whatDoYouDo: "" }).success).toBe(false);
     expect(websiteFirstSetupSchema.safeParse({ ...input, layoutId: "fake" }).success).toBe(false);
+    expect(websiteFirstSetupSchema.safeParse({ ...input, layoutId: "northstar-consulting" }).success).toBe(true);
     expect(websiteFirstSetupSchema.safeParse({ ...input, contact: "not a phone or email" }).success).toBe(false);
     expect(websiteFirstSetupSchema.safeParse({ ...input, contact: "hello@example.com" }).success).toBe(true);
   });

@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { websiteGoals } from "@/lib/onboarding/website-setup";
 import { allCanonicalWebsiteLayouts, recommendWebsiteLayouts } from "@/lib/website-first/recommendations";
-import { isPremiumStartingLayout, getLayoutPreviewHref } from "@/lib/templates/starting-layouts";
+import { isPremiumStartingLayout, getStartingLayoutById, getLayoutPreviewHref } from "@/lib/templates/starting-layouts";
 
 export function WebsiteSetupWizard({ userId }: { userId: string }) {
   const [name, setName] = useState("");
@@ -17,11 +17,15 @@ export function WebsiteSetupWizard({ userId }: { userId: string }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const all = useMemo(() => allCanonicalWebsiteLayouts(), []);
+  useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get("template");
+    if (requested && getStartingLayoutById(requested)) setSelected(requested);
+  }, []);
   const recommended = useMemo(() => recommendWebsiteLayouts(description, purpose, style), [description, purpose, style]);
   const chosenId = selected || recommended[0]?.id || "";
   const candidates = showAll ? all : recommended;
   const valid = name.trim().length >= 2 && description.trim().length >= 2 &&
-    isPremiumStartingLayout(chosenId);
+    Boolean(getStartingLayoutById(chosenId));
 
   async function createWebsite() {
     if (!valid || saving) return;
@@ -70,6 +74,10 @@ export function WebsiteSetupWizard({ userId }: { userId: string }) {
         </div>
       </details>
     </section>
+    {selected && !isPremiumStartingLayout(selected) && <p role="status">
+      Your earlier registered design is selected. It will open in the compatible classic website editor.
+      <button type="button" onClick={() => setSelected("")}>Choose a premium Layout instead</button>
+    </p>}
     <section className="website-first-results" aria-labelledby="recommended-layouts">
       <div className="website-first-heading-row"><div><p className="website-first-eyebrow">YOUR DESIGNS</p>
         <h2 id="recommended-layouts">{showAll ? "All 48 premium Layouts" : "Three designs to start with"}</h2>
