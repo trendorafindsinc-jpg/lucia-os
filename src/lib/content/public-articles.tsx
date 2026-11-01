@@ -50,7 +50,7 @@ const readPublished = cache(async (path: string) => {
    where r.organization_id=${site.organizationId}::uuid and r.website_id=${site.id}::uuid
    and r.kind=${kind} and r.old_slug=${slug} and p.status='published' and p.published_slug is not null limit 1`);
   const target=(redirects[0] as {published_slug?:string}|undefined)?.published_slug;
-  if(target)permanentRedirect("/"+kind+"/"+target);
+  if(target)permanentRedirect(("/"+kind+"/"+target) as Route);
   notFound();
  }
  return {site,hostname,kind:kind as "blog"|"news",posts,slug};
