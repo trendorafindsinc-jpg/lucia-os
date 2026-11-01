@@ -442,6 +442,7 @@ export const websiteMedia = pgTable("website_media", {
 }, (table) => [
   foreignKey({ name: "website_media_website_org_fk", columns: [table.organizationId, table.websiteId], foreignColumns: [websites.organizationId, websites.id] }).onDelete("restrict"),
   uniqueIndex("website_media_key_uq").on(table.objectKey),
+  uniqueIndex("website_media_org_website_id_uq").on(table.organizationId,table.websiteId,table.id),
   index("website_media_owner_idx").on(table.organizationId, table.websiteId, table.status),
 ]);
 export const mediaStorageBudget = pgTable("media_storage_budget", {
@@ -466,7 +467,7 @@ export const websitePosts = pgTable("website_posts", {
   excerpt: text("excerpt").notNull().default(""),
   body: text("body").notNull().default(""),
   category: text("category").notNull().default(""),
-  featuredMediaId: uuid("featured_media_id").references(() => websiteMedia.id, { onDelete: "restrict" }),
+  featuredMediaId: uuid("featured_media_id"),
   status: text("status").notNull().default("draft"),
   revision: integer("revision").notNull().default(1),
   publishedSnapshot: jsonb("published_snapshot").$type<import("@/lib/content/article-model").PublishedArticle | null>(),
@@ -476,6 +477,7 @@ export const websitePosts = pgTable("website_posts", {
   updatedAt: updatedAt(),
 }, (table) => [
   foreignKey({ name: "website_posts_website_org_fk", columns: [table.organizationId,table.websiteId], foreignColumns: [websites.organizationId,websites.id] }).onDelete("cascade"),
+  foreignKey({ name: "website_posts_featured_media_fk", columns: [table.organizationId,table.websiteId,table.featuredMediaId], foreignColumns: [websiteMedia.organizationId,websiteMedia.websiteId,websiteMedia.id] }).onDelete("restrict"),
   uniqueIndex("website_posts_site_slug_uq").on(table.organizationId,table.websiteId,table.kind,table.slug),
   uniqueIndex("website_posts_public_slug_uq").on(table.organizationId,table.websiteId,table.kind,table.publishedSlug),
   index("website_posts_owner_idx").on(table.organizationId,table.websiteId,table.updatedAt),
