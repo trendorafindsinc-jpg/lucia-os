@@ -32,7 +32,7 @@ describe("existing premium website design changes", () => {
     const stored = premiumCandidate("lucia.layout.meridian", "Existing Company");
     expect(() => mutateWebsite(stored, {
       kind: "assign-layout",
-      layoutId: "lucia.layout.meridian",
-    })).not.toThrow();
+      layoutId: "meridian",
+    })).toThrow();
   });
 });
