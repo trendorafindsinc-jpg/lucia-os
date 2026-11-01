@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { isAuthorizedCronRequest } from "./authorization";
 
 const pair = generateKeyPairSync("rsa", { modulusLength: 2048 });
-const publicJwk = pair.publicKey.export({ format: "jwk" });
+const publicJwk = { ...pair.publicKey.export({ format: "jwk" }), kid: "phase15-test-key" };
 const now = Math.floor(Date.now() / 1000);
 const expectedClaims = {
   iss: "https://token.actions.githubusercontent.com",
