@@ -40,6 +40,7 @@ export async function checkPhase15ArticleMediaAcceptance({
     await seedMedia(blogImage, f.orgA, siteId, f.a, alts[0]);
     await seedMedia(draftImage, f.orgA, siteId, f.a, alts[1]);
     await seedMedia(foreignImage, f.orgB, f.foreign, f.b, alts[2]);
+    await seedMedia(inlineImage, f.orgA, siteId, f.a, alts[3]);
     await seedTypedMedia(videoAsset,"video","video/mp4","mp4","demo.mp4",alts[3],"a".repeat(64));
     await seedTypedMedia(pdfAsset,"document","application/pdf","pdf","report.pdf",alts[4],"b".repeat(64));
 
@@ -78,6 +79,7 @@ export async function checkPhase15ArticleMediaAcceptance({
     await assert.rejects(admin`UPDATE website_posts SET featured_media_id=${foreignImage} WHERE id=${articleId}`, /website_posts_featured_media_fk/);
     const privateBefore = await admin`SELECT * FROM lucia_public_media(${blogImage}::uuid)`;
     assert.equal(privateBefore.length, 0, "A ready image without a published article must remain private");
+    assert.equal((await admin`SELECT * FROM lucia_public_media(${inlineImage}::uuid)`).length, 0, "An inline media path in a draft must remain private");
 
     // Exercise the actual website-first customer editor and its image selector.
     const page = await browserContext.newPage();
@@ -108,6 +110,7 @@ export async function checkPhase15ArticleMediaAcceptance({
     const detailHtml = await publicDetail.text();
     assert(detailHtml.includes(title));
     assert(detailHtml.includes("/_media/" + blogImage));
+    assert(detailHtml.includes("/_media/" + inlineImage), "Published HTML/Markdown inline media path must render");
     assert(detailHtml.includes(alts[0]));
     assert(detailHtml.includes("/_media/"+videoAsset),"Published video link must resolve to the tenant media route");
     assert(detailHtml.includes("/_media/"+pdfAsset),"Published PDF link must resolve to the tenant media route");
@@ -117,6 +120,7 @@ export async function checkPhase15ArticleMediaAcceptance({
     assert(blogContract.content.blog.some(item=>item.slug===article.slug&&item.tags.includes("customer-story")&&item.seoTitle===article.seoTitle),"Published Blog metadata must be exposed through the versioned public contract");
     const publicImage = await admin`SELECT * FROM lucia_public_media(${blogImage}::uuid)`;
     assert.equal(publicImage.length, 1, "Published article snapshot must authorize its featured image");
+    assert.equal((await admin`SELECT * FROM lucia_public_media(${inlineImage}::uuid)`).length, 1, "Published article body must authorize its inline image path");
     const privateReplacement = await admin`SELECT * FROM lucia_public_media(${draftImage}::uuid)`;
     assert.equal(privateReplacement.length, 0, "An unpublished replacement must not be publicly resolved");
     bpass("Blog customer journey: create → choose website-owned image → save → publish → public article and published-only image authorization");
