@@ -44,7 +44,7 @@ export async function PATCH(request:Request,context:Context){
     if((input.action==="publish" || input.action==="schedule") && site.status!=="published")return {validation:"Publish the website before publishing articles."};
     if(input.action==="schedule" && current.publishedSnapshot)return {validation:"Unpublish this article before scheduling a new publication. Existing live content is never replaced by a queued draft."};
     if(input.action==="schedule"){const at=new Date(input.scheduledAt!);if(!Number.isFinite(at.getTime())||at.getTime()<Date.now()+120000||at.getTime()>Date.now()+365*86400000)return {validation:"Choose a publication time at least two minutes from now and within the next year."};}
-    const mediaAltById=input.action==="unpublish" ? {} : await validateMediaOwnership(tx,org.id,site.id,{featuredMediaRef:input.featuredMediaRef},input.action==="publish");
+    const mediaAltById=input.action==="unpublish" ? {} : await validateMediaOwnership(tx,org.id,site.id,{featuredMediaRef:input.featuredMediaRef,body:input.body},input.action==="publish");
     const featuredMediaId=input.featuredMediaRef ? input.featuredMediaRef.slice(6) : null;
     const featuredMediaAlt=featuredMediaId ? mediaAltById[featuredMediaId] ?? null : null;
     const [author]=await tx.select({displayName:appUsers.displayName}).from(appUsers).where(eq(appUsers.id,user.id)).limit(1);
