@@ -557,7 +557,7 @@ export function WebsiteFirstPremiumEditor({
         <p>Supported providers: YouTube, Vimeo, Spotify, SoundCloud, Apple Podcasts, TikTok and Instagram.</p>
       </div>
       {accountId ? <MediaLibrary websiteId={websiteId} accountId={accountId} onChange={setOwnedArtwork}
-        protectedIds={mediaIds(layout)} onInsert={insertUploadedMedia} /> : <p>Media uploads require an authenticated website session.</p>}
+        protectedIds={mediaIds(layout)} onInsert={insertUploadedMedia} insertLabel="Add to website" /> : <p>Media uploads require an authenticated website session.</p>}
     </section>}
     <div hidden={Boolean(storyKind)} className="website-first-editor-canvas" style={{ width: previewWidth, maxWidth: "100%" }}
       onClickCapture={clickWebsite} aria-label={previewOnly ? "Website preview" : "Click any heading or paragraph in your actual website to edit"}>
