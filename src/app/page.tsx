@@ -32,7 +32,7 @@ const buildingBlocks = [
     description: "Your websites, available apps, organisation and account controls have a place to work together.",
     url: "/api/auth/login?returnTo=%2Fworkspace", action: "Open the workspace",
   },
-];
+] as const;
 
 const opportunity = [
   { n: "01", title: "Establish", copy: "Begin with a real digital presence. Let customers see what you can do." },
