@@ -4,7 +4,7 @@ import type { ArticleKind } from "@/lib/content/article-model";
 import Image from "next/image";
 import { MediaLibrary, type MediaLibraryItem } from "./media-library";
 import { articleRoute, newArticleSlug } from "@/lib/content/article-model";
-import { renderArticleHtml, renderArticleMarkdown } from "@/lib/content/rich-content";
+import { createArticleEmbedHtml, renderArticleHtml, renderArticleMarkdown } from "@/lib/content/rich-content";
 import "./website-story-studio.css";
 type Story = {
  id:string;kind:ArticleKind;title:string;slug:string;excerpt:string;body:string;category:string;authorName?:string|null;eventAt:string|null;isFeatured:boolean;correctionNote:string|null;correctsSlug:string|null;tags:string[];seoTitle:string|null;seoDescription:string|null;
@@ -28,7 +28,9 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
  const [historyBusy,setHistoryBusy]=useState(false);
  const [loading,setLoading]=useState(true);
  const [message,setMessage]=useState("");
- const [preview,setPreview]=useState(false);\n const [contentMode,setContentMode]=useState<"markdown"|"html">("markdown");
+ const [preview,setPreview]=useState(false);
+ const [embedUrl,setEmbedUrl]=useState("");
+ const [contentMode,setContentMode]=useState<"markdown"|"html">("markdown");
  const [dirty,setDirty]=useState(false);
  const [availableMediaCount,setAvailableMediaCount]=useState<number|null>(null);
  const onMediaChange=useCallback((items:{ref:string;label:string}[])=>setAvailableMediaCount(items.length),[]);
@@ -156,7 +158,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
         <label>SEO description (160 characters maximum)<textarea value={draft.seoDescription??""} maxLength={160} rows={2} onChange={e=>change("seoDescription",e.target.value||"")}/></label>
        </details>
        <label>Summary<textarea value={draft.excerpt} maxLength={320} rows={3} onChange={e=>change("excerpt",e.target.value)}/></label>
-       <label>Article content<div className="story-content-mode" role="group" aria-label="Content editor mode"><button type="button" aria-pressed={contentMode==="markdown"} onClick={()=>setContentMode("markdown")}>Visual / Markdown</button><button type="button" aria-pressed={contentMode==="html"} onClick={()=>setContentMode("html")}>HTML source</button></div>{contentMode==="markdown"?<div className="story-markdown-toolbar" role="toolbar" aria-label="Article formatting">
+       <label>Article content<div className="story-content-mode" role="group" aria-label="Content editor mode"><button type="button" aria-pressed={contentMode==="markdown"} onClick={()=>setContentMode("markdown")}>Visual / Markdown</button><button type="button" aria-pressed={contentMode==="html"} onClick={()=>setContentMode("html")}>HTML source</button></div>{contentMode==="markdown"?<div className="story-embed-tools" aria-label="External media embeds"><label htmlFor="story-embed-url">Embed from a supported app<input id="story-embed-url" type="url" inputMode="url" placeholder="Paste YouTube, Spotify, Vimeo, SoundCloud, TikTok, Instagram or Apple Podcasts URL" value={embedUrl} onChange={e=>setEmbedUrl(e.target.value)}/></label><button type="button" disabled={!embedUrl.trim()} onClick={()=>{const block=createArticleEmbedHtml(embedUrl);if(!block){setMessage("Unsupported embed URL. You can still add it as a normal external link.");return;}change("body",draft.body+"\n\n"+block);setEmbedUrl("");setMessage("Responsive embed inserted. Preview it before publishing.");}}>Insert embed</button><small>Only approved provider URLs are embedded. Other links remain available as ordinary links.</small></div><div className="story-markdown-toolbar" role="toolbar" aria-label="Article formatting">
         <button type="button" onClick={()=>change("body",draft.body+"\n\n## Heading")}>Heading</button>
         <button type="button" onClick={()=>change("body",draft.body+"\n\n**Bold text**")}>Bold</button>
         <button type="button" onClick={()=>change("body",draft.body+"\n\n[Link text](https://example.com)")}>Link</button>

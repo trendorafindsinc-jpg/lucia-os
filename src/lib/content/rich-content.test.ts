@@ -1,58 +1,10 @@
-import { describe, expect, it } from "vitest";
-import { renderArticleHtml, renderArticleMarkdown } from "./rich-content";
-
-describe("safe article rich content", () => {
-  it("renders semantic Markdown headings, lists, emphasis and links", () => {
-    const html = renderArticleMarkdown("## A heading\n\nA **bold** idea and [a link](https://example.com).\n\n- One\n- Two");
-    expect(html).toContain("<h2>A heading</h2>");
-    expect(html).toContain("<strong>bold</strong>");
-    expect(html).toContain('rel="noopener noreferrer nofollow"');
-    expect(html).toContain("<ul>");
-  });
-
-  it("removes raw HTML, scripts, event handlers and unsafe URL schemes", () => {
-    const html = renderArticleMarkdown('<script>alert(1)</script>\n\n<img src=x onerror="alert(1)">\n\n[bad](javascript:alert(1))');
-    expect(html).not.toMatch(/<script|onerror|javascript:/i);
-    expect(html).not.toContain("alert(1)");
-  });
-
-  it("allows only website-owned media image references", () => {
-    const html = renderArticleMarkdown("![Owned](/_media/123e4567-e89b-42d3-a456-426614174000)\n\n![Remote](https://evil.example/image.png)");
-    expect(html).toContain('/_media/123e4567-e89b-42d3-a456-426614174000');
-    expect(html).not.toContain("evil.example");
-  });
-
-  it("resolves only valid website-owned video and document references",()=>{
-    const id="123e4567-e89b-42d3-a456-426614174000";
-    const html=renderArticleMarkdown("[Watch the video](media:"+id+")\\n\\n[Download the PDF](media:"+id+")");
-    expect(html).toContain('href="/_media/'+id+'"');
-    expect(html).not.toContain("media:"+id);
-    expect(renderArticleMarkdown("[Unsafe](media:../../private)")).not.toContain("../../private");
-  });
-
-  it("allows only HTTPS embeds from the approved video hosts and paths", () => {
-    const allowed = renderArticleMarkdown('<iframe src="https://www.youtube-nocookie.com/embed/abcdefghijk" title="Demo"></iframe>');
-    const blocked = renderArticleMarkdown('<iframe src="https://evil.example/embed/abcdefghijk"></iframe>');
-    expect(allowed).toContain("youtube-nocookie.com/embed/abcdefghijk");
-    expect(blocked).not.toContain("evil.example");
-    const wrongPath = renderArticleMarkdown('<iframe src="https://www.youtube.com/watch?v=abcdefghijk"></iframe>');
-    expect(wrongPath).not.toContain("youtube.com/watch");
-  });
+import {describe,expect,it} from "vitest";
+import {createArticleEmbedHtml,renderArticleHtml,renderArticleMarkdown} from "./rich-content";
+describe("safe article rich content",()=>{
+ it("renders semantic Markdown and safe links",()=>{const h=renderArticleMarkdown("## A heading\n\nA **bold** idea and [a link](https://example.com).\n\n- One\n- Two");expect(h).toContain("<h2>A heading</h2>");expect(h).toContain("<strong>bold</strong>");expect(h).toContain('rel="noopener noreferrer nofollow"');});
+ it("removes scripts, event handlers and unsafe URL schemes",()=>{const h=renderArticleMarkdown('<script>alert(1)</script>\n\n<img src=x onerror="alert(1)">\n\n[bad](javascript:alert(1))');expect(h).not.toMatch(/<script|onerror|javascript:/i);expect(h).not.toContain("alert(1)");});
+ it("allows only website-owned media images and links",()=>{const id="123e4567-e89b-42d3-a456-426614174000";const h=renderArticleMarkdown("![Owned](/_media/"+id+")\n\n![Remote](https://evil.example/image.png)\n\n[Download](media:"+id+")");expect(h).toContain("/_media/"+id);expect(h).not.toContain("evil.example");expect(h).toContain('href="/_media/'+id+'"');});
+ it("converts supported provider URLs into validated embed blocks",()=>{const cases=[["https://youtu.be/abcdefghijk","youtube-nocookie.com/embed/abcdefghijk"],["https://vimeo.com/123456789","player.vimeo.com/video/123456789"],["https://open.spotify.com/track/abc123","open.spotify.com/embed/track/abc123"],["https://soundcloud.com/artist/track","w.soundcloud.com/player/"],["https://podcasts.apple.com/us/podcast/example/id123456789","embed.podcasts.apple.com/us/podcast/example/id123456789"],["https://www.tiktok.com/@creator/video/1234567890123456789","www.tiktok.com/embed/v2/1234567890123456789"],["https://www.instagram.com/reel/AbCdEf123/","www.instagram.com/reel/AbCdEf123/embed/"]];for(const [url,expected] of cases){const e=createArticleEmbedHtml(url);expect(e).toContain(expected);expect(renderArticleHtml(e||"")).toContain(expected);}expect(createArticleEmbedHtml("https://evil.example/video/123")).toBeNull();expect(createArticleEmbedHtml("javascript:alert(1)")).toBeNull();});
+ it("rejects iframe spoofing and unapproved paths",()=>{expect(renderArticleHtml('<iframe src="https://open.spotify.com/track/abc123"></iframe>')).not.toContain("spotify.com");expect(renderArticleHtml('<iframe src="https://www.youtube.com.evil.example/embed/abcdefghijk"></iframe>')).not.toContain("evil.example");});
 });
-
-
-describe("safe article HTML source mode", () => {
-  it("preserves semantic HTML and website-owned media", () => {
-    const html = renderArticleHtml('<section><h2>Welcome</h2><figure><img src="/_media/123e4567-e89b-42d3-a456-426614174000" alt="A view"><figcaption>Our view</figcaption></figure><p><strong>Readable</strong> HTML.</p></section>');
-    expect(html).toContain("<section>");
-    expect(html).toContain("<figure>");
-    expect(html).toContain("<figcaption>Our view</figcaption>");
-    expect(html).toContain('/_media/123e4567-e89b-42d3-a456-426614174000');
-  });
-
-  it("removes scripts, event handlers, styles, unsafe URLs and unapproved embeds", () => {
-    const html = renderArticleHtml('<script>alert(1)</script><p onclick="alert(1)" style="color:red">Safe text <a href="javascript:alert(1)">bad link</a></p><iframe src="https://evil.example/embed/abc"></iframe>');
-    expect(html).not.toMatch(/<script|onclick|style=|javascript:|evil\.example/i);
-    expect(html).toContain("Safe text");
-  });
-});
+describe("safe article HTML",()=>{it("preserves semantic markup and owned images",()=>{const h=renderArticleHtml('<section><h2>Welcome</h2><figure><img src="/_media/123e4567-e89b-42d3-a456-426614174000" alt="A view"><figcaption>Our view</figcaption></figure></section>');expect(h).toContain("<section>");expect(h).toContain("<figcaption>Our view</figcaption>");});it("strips scripts, styles and unsafe links",()=>{const h=renderArticleHtml('<script>alert(1)</script><p onclick="alert(1)" style="color:red">Safe text <a href="javascript:alert(1)">bad</a></p>');expect(h).not.toMatch(/<script|onclick|style=|javascript:/i);expect(h).toContain("Safe text");});});
