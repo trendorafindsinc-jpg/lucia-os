@@ -567,7 +567,11 @@ function PremiumSectionView({
         >
           {heading(section.title)}
           {section.description && <p>{section.description}</p>}
-          {section.kind === "embed" && embed ? (
+          {section.kind === "image" && mediaId ? (
+            <Image unoptimized src={`/_media/${mediaId}`} alt={section.description || section.title}
+              width={1600} height={1000} sizes="(max-width: 900px) 100vw, 1200px"
+              className="premium-media-image" />
+          ) : section.kind === "embed" && embed ? (
             <div className="premium-media-frame">
               <iframe src={embed.src} title={section.title || embed.title} loading="lazy"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
