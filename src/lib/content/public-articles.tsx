@@ -49,9 +49,12 @@ const readPublished = cache(async (path: string) => {
 export async function publicArticleMetadata(path:string):Promise<Metadata> {
  const data=await readPublished(path);
  const article=data.slug ? data.posts[0] : null;
- const title=article ? article.title : data.kind==="blog" ? "Blog" : "News";
- return {title:{absolute:title+" | "+data.site.name},
-  description:article?.excerpt || "Latest "+data.kind+" from "+data.site.name,
+ const title=article ? (article.seoTitle || article.title) : data.kind==="blog" ? "Blog" : "News";
+ const description=article?.seoDescription || article?.excerpt || "Latest "+data.kind+" from "+data.site.name;
+ const image=article?.featuredMediaRef ? "https://"+data.site.name+"/_media/"+article.featuredMediaRef.slice(6) : undefined;
+ return {title:{absolute:title+" | "+data.site.name},description,
+  openGraph:{type:"article",title,description,images:image?[image]:undefined},
+  twitter:{card:image?"summary_large_image":"summary",title,description,images:image?[image]:undefined},
   robots:{index:true,follow:true}};
 }
 export async function PublicArticlePage({path}:{path:string}) {
@@ -64,6 +67,7 @@ export async function PublicArticlePage({path}:{path:string}) {
   </nav>
   {item ? <article className={styles.article}>
    <p className={styles.eyebrow}>{label}{item.category?" · "+item.category:""}</p>
+   {item.tags.length>0&&<p className={styles.eyebrow}>{item.tags.join(" · ")}</p>}
    <h1>{item.title}</h1><p className={styles.excerpt}>{item.excerpt}</p>
    {item.featuredMediaRef && <Image unoptimized className={styles.featuredImage} src={"/_media/"+item.featuredMediaRef.slice(6)} alt={item.featuredMediaAlt||""} width={1600} height={1000}/>}
    {item.publishedAt && <time dateTime={item.publishedAt.toISOString()}>{item.publishedAt.toLocaleDateString("en-GB",{dateStyle:"long"})}</time>}

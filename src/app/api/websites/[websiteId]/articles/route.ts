@@ -65,7 +65,7 @@ export async function POST(request: Request, context: Context) {
     const [created]=await tx.insert(websitePosts).values({
      organizationId:org.id,websiteId:site.id,authorUserId:user.id,
      kind:checked.data.kind,slug:newArticleSlug(checked.data.title),title:checked.data.title,
-     excerpt:"",body:"",category:"",status:"draft",revision:1,
+     excerpt:"",body:"",category:"",tags:[],seoTitle:null,seoDescription:null,status:"draft",revision:1,
     }).returning();
     await tx.insert(websitePostRevisions).values({
      organizationId:org.id,websiteId:site.id,postId:created.id,

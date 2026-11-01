@@ -45,13 +45,13 @@ export async function PATCH(request:Request,context:Context){
     const mediaAltById=input.action==="unpublish" ? {} : await validateMediaOwnership(tx,org.id,site.id,{featuredMediaRef:input.featuredMediaRef},input.action==="publish");
     const featuredMediaId=input.featuredMediaRef ? input.featuredMediaRef.slice(6) : null;
     const featuredMediaAlt=featuredMediaId ? mediaAltById[featuredMediaId] ?? null : null;
-    const draft:PublishedArticle={kind:current.kind as "blog"|"news",title:input.title,slug:input.slug,excerpt:input.excerpt,body:input.body,category:input.category,featuredMediaRef:input.featuredMediaRef,featuredMediaAlt};
+    const draft:PublishedArticle={kind:current.kind as "blog"|"news",title:input.title,slug:input.slug,excerpt:input.excerpt,body:input.body,category:input.category,tags:input.tags,seoTitle:input.seoTitle,seoDescription:input.seoDescription,featuredMediaRef:input.featuredMediaRef,featuredMediaAlt};
     if(input.action==="publish" && !publicationReady(draft))return {validation:"Add a meaningful summary and article body before publishing."};
     const live= input.action==="publish" ? draft : input.action==="unpublish" ? null : current.publishedSnapshot;
     const status=live ? "published" : "draft";
     const publishedSlug=live ? (input.action==="publish" ? draft.slug : current.publishedSlug) : null;
     const [saved]=await tx.update(websitePosts).set({
-     title:input.title,slug:input.slug,excerpt:input.excerpt,body:input.body,category:input.category,featuredMediaId,
+     title:input.title,slug:input.slug,excerpt:input.excerpt,body:input.body,category:input.category,tags:input.tags,seoTitle:input.seoTitle,seoDescription:input.seoDescription,featuredMediaId,
      revision:current.revision+1,status,publishedSnapshot:live,publishedSlug,
      publishedAt:live ? (input.action==="publish" ? new Date() : current.publishedAt) : null,updatedAt:new Date(),
     }).where(and(eq(websitePosts.id,current.id),eq(websitePosts.organizationId,org.id))).returning();

@@ -2,8 +2,7 @@ import { z } from "zod";
 import { makeSlug } from "@/lib/content/content-library";
 import { mediaReferencePattern } from "@/lib/media/references";
 
-// Initial production-safe plain-text format: JSX escapes output; HTML paste is not executed.
-// Rich blocks and media links follow only after dedicated sanitization and reference verification.
+// Article data is normalized in PostgreSQL; public snapshots include only validated metadata and safe Markdown.
 export const articleKind = z.enum(["blog","news"]);
 export const articleDraftSchema = z.object({
   kind: articleKind,
@@ -12,6 +11,9 @@ export const articleDraftSchema = z.object({
   excerpt: z.string().max(320),
   body: z.string().max(50000),
   category: z.string().trim().max(80),
+  tags: z.array(z.string().trim().min(1).max(32)).max(12).default([]),
+  seoTitle: z.string().trim().max(70).nullable().default(null),
+  seoDescription: z.string().trim().max(160).nullable().default(null),
   featuredMediaRef: z.string().regex(mediaReferencePattern).nullable().default(null),
   featuredMediaAlt: z.string().max(200).nullable().default(null),
 }).strict();

@@ -7,7 +7,7 @@ import { articleRoute, newArticleSlug } from "@/lib/content/article-model";
 import { renderArticleMarkdown } from "@/lib/content/rich-content";
 import "./website-story-studio.css";
 type Story = {
- id:string;kind:ArticleKind;title:string;slug:string;excerpt:string;body:string;category:string;
+ id:string;kind:ArticleKind;title:string;slug:string;excerpt:string;body:string;category:string;tags:string[];seoTitle:string|null;seoDescription:string|null;
  featuredMediaRef:string|null;featuredMediaAlt:string|null;publishedSnapshot:{featuredMediaRef?:string|null}|null;
  revision:number;status:"draft"|"published";publishedSlug:string|null;publishedAt:string|null;
 };
@@ -46,7 +46,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
   if(dirty)return;
   setDraft(articles.find(a=>a.id===selected)??null);
  },[articles,selected,dirty]);
- function change(field:"title"|"slug"|"excerpt"|"body"|"category",value:string) {
+ function change(field:"title"|"slug"|"excerpt"|"body"|"category"|"seoTitle"|"seoDescription",value:string) {
   setDraft(previous=>previous?{...previous,[field]:value}:previous);
   setDirty(true);setMessage("");
  }
@@ -78,7 +78,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
    const response=await fetch("/api/websites/"+websiteId+"/articles/"+draft.id,{
     method:"PATCH",headers:{"Content-Type":"application/json",...headers},
     body:JSON.stringify({title:draft.title,slug:draft.slug,excerpt:draft.excerpt,
-     body:draft.body,category:draft.category,featuredMediaRef:draft.featuredMediaRef,revision:draft.revision,action}),
+     body:draft.body,category:draft.category,tags:draft.tags,seoTitle:draft.seoTitle,seoDescription:draft.seoDescription,featuredMediaRef:draft.featuredMediaRef,revision:draft.revision,action}),
    });
    const payload=await response.json();
    if(!response.ok)throw Error(payload.error || "Article could not be saved.");
@@ -115,6 +115,11 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
        <label>Headline<input value={draft.title} maxLength={150} onChange={e=>change("title",e.target.value)}/></label>
        <label>Article URL<input value={draft.slug} maxLength={120} onChange={e=>change("slug",newArticleSlug(e.target.value))}/></label>
        <label>Category (optional)<input value={draft.category} maxLength={80} onChange={e=>change("category",e.target.value)}/></label>
+       <label>Tags (comma separated)<input value={draft.tags.join(", ")} maxLength={400} onChange={e=>{setDraft(previous=>previous?{...previous,tags:Array.from(new Set(e.target.value.split(",").map(tag=>tag.trim()).filter(Boolean))).slice(0,12)}:previous);setDirty(true);}} placeholder="updates, community, events"/></label>
+       <details className="story-seo-fields"><summary>Search and social preview (SEO)</summary>
+        <label>SEO title (70 characters maximum)<input value={draft.seoTitle??""} maxLength={70} onChange={e=>change("seoTitle",e.target.value||"")}/></label>
+        <label>SEO description (160 characters maximum)<textarea value={draft.seoDescription??""} maxLength={160} rows={2} onChange={e=>change("seoDescription",e.target.value||"")}/></label>
+       </details>
        <label>Summary<textarea value={draft.excerpt} maxLength={320} rows={3} onChange={e=>change("excerpt",e.target.value)}/></label>
        <label>Article content (Markdown)<div className="story-markdown-toolbar" role="toolbar" aria-label="Article formatting">
         <button type="button" onClick={()=>change("body",draft.body+"\n\n## Heading")}>Heading</button>
