@@ -4,6 +4,7 @@ import { getStartingLayoutById as getTemplateById } from "@/lib/templates/starti
 import type { Metadata } from "next";
 import { WebsiteSetupWizard } from "@/components/onboarding/website-setup-wizard";
 import "./create.css";
+import "./website-first.css";
 
 export const metadata: Metadata = {
   title: "Create your website",

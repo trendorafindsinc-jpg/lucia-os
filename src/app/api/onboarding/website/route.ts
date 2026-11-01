@@ -4,6 +4,7 @@ import {
   isUniqueWebsiteWrite,
 } from "@/lib/websites/draft-revision";
 import { randomBytes } from "node:crypto";
+import { websiteFirstSetupSchema, deriveWebsiteSlug, deriveOrganizationType } from "@/lib/website-first/setup";
 import { and, eq, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db/client";
@@ -63,7 +64,17 @@ export async function POST(request: Request) {
     return jsonError("Please submit a valid setup form.", 400);
   }
 
-  const parsed = websiteSetupSchema.safeParse(payload);
+  const first = websiteFirstSetupSchema.safeParse(payload);
+  const setupInput = first.success ? {
+    organisationName: first.data.websiteName,
+    websiteName: first.data.websiteName,
+    organisationType: deriveOrganizationType(first.data.whatDoYouDo),
+    goal: first.data.purpose,
+    templateId: first.data.layoutId,
+    country: "Global",
+    siteSlug: deriveWebsiteSlug(first.data.websiteName, user.id),
+  } : payload;
+  const parsed = websiteSetupSchema.safeParse(setupInput);
   if (!parsed.success) {
     return NextResponse.json(
       {
@@ -213,6 +224,18 @@ export async function POST(request: Request) {
         setup.templateId,
         setup.websiteName,
       );
+      if (first.success && isPremium(initialDefinition)) {
+        initialDefinition.identity.description = first.data.whatDoYouDo;
+        const contact = first.data.contact;
+        const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact);
+        const validPhone = /^\+?[0-9 ()-]{7,24}$/.test(contact);
+        if (validEmail || validPhone) {
+          initialDefinition.identity.profile = {
+            ...initialDefinition.identity.profile,
+            ...(validEmail ? { contactEmail: contact, enquiryEmail: contact } : { phone: contact }),
+          };
+        }
+      }
       const serializedInitialDraft = JSON.stringify(initialDefinition);
       const pages = isPremium(initialDefinition)
         ? initialDefinition.pages.map((page) => ({ title: page.title, path: page.path }))
