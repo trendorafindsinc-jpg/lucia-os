@@ -8,8 +8,8 @@ describe("safe article rich content",()=>{
  it("renders uploaded videos only from website-owned media paths",()=>{
   const id="123e4567-e89b-42d3-a456-426614174000";
   const safe=renderArticleHtml('<video autoplay><source src="/_media/'+id+'" type="video/mp4"></video>');
-  expect(safe).toContain('<video controls="" preload="metadata" playsinline="">');
-  expect(safe).toContain('<source src="/_media/'+id+'" type="video/mp4">');
+  expect(safe).toContain("<video controls preload=\"metadata\" playsinline>");
+  expect(safe).toContain('<source src="/_media/'+id+'" type="video/mp4"></source>');
   expect(safe).not.toContain("autoplay");
   const remote=renderArticleHtml('<video controls><source src="https://evil.example/movie.mp4" type="video/mp4"></video>');
   expect(remote).not.toContain("evil.example");
