@@ -1,0 +1,59 @@
+.continuity-dialog {
+  width: min(440px, calc(100vw - 32px));
+  padding: 28px;
+  border: 1px solid #7aabdf;
+  border-radius: 22px;
+  color: #f2f7ff;
+  background: #0b203b;
+  box-shadow: 0 24px 80px #030d1f66;
+}
+.continuity-dialog::backdrop {
+  background: #030c1e99;
+}
+.continuity-dialog p {
+  line-height: 1.7;
+  color: #c5d7ef;
+}
+.continuity-dialog > div {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.continuity-dialog button,
+.continuity-notice button {
+  min-height: 44px;
+  border: 1px solid #779ac7;
+  border-radius: 12px;
+  padding: 10px 14px;
+  background: #1a426f;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+.continuity-dialog button:disabled {
+  opacity: 0.5;
+}
+.continuity-dialog button:focus-visible {
+  outline: 3px solid #80b8ff;
+  outline-offset: 3px;
+}
+.continuity-notice {
+  margin: 0;
+  padding: 12px 20px;
+  background: #0b203b;
+  color: #f2f7ff;
+  line-height: 1.5;
+  font-size: 13px;
+}
+.workspace-tablist {
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.continuity-dialog:not([open]) {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .continuity-dialog {
+    scroll-behavior: auto;
+  }
+}

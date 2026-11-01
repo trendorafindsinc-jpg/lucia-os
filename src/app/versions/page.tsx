@@ -1,0 +1,13 @@
+import { Suspense } from "react";
+import type { Metadata } from "next";
+import { VersionWorkspace } from "@/components/versions/version-workspace";
+import "./versions.css";
+
+export const metadata: Metadata = {
+  title: "Drafts, Preview & Rollback | LUCIA OS",
+  description: "Create durable draft checkpoints, preview versions and safely restore an earlier website draft.",
+};
+
+export default function VersionsPage() {
+  return <Suspense fallback={<main className="version-shell"><p>Opening version history…</p></main>}><VersionWorkspace /></Suspense>;
+}

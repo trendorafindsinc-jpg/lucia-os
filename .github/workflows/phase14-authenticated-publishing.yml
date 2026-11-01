@@ -1,0 +1,112 @@
+name: Phase 14 isolated authenticated publishing
+
+on:
+  workflow_dispatch:
+    inputs:
+      layouts:
+        description: 'Comma-separated canonical slugs, or all for the 48-candidate release gate; unavailable assignments must fail'
+        required: false
+        default: ''
+  pull_request:
+    paths:
+      - 'src/lib/layout-blueprint/**'
+      - 'src/components/publishing/**'
+      - 'src/lib/media/**'
+      - 'src/app/api/websites/manage/**'
+      - 'src/app/api/websites/[websiteId]/route.ts'
+      - 'src/app/workspace/settings/**'
+      - 'scripts/check-website-foundation-http.mjs'
+      - 'src/app/api/media/**'
+      - 'src/app/api/websites/**/media/**'
+      - 'src/app/api/websites/[websiteId]/articles/**'
+      - 'src/lib/content/article-model.ts'
+      - 'src/lib/content/public-articles.tsx'
+      - 'scripts/phase15-authenticated-acceptance.mjs'
+      - 'scripts/phase15-article-media-acceptance.mjs'
+      - 'scripts/media-security-acceptance.mjs'
+      - 'scripts/phase14-premium-publishing-acceptance.mjs'
+      - '.github/workflows/phase14-authenticated-publishing.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phase14-authenticated-\${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  acceptance:
+    name: Registered Layout HTTP/browser publishing and media authorization
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: lucia_os_acceptance
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ephemeral_acceptance_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d lucia_os_acceptance"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://postgres:ephemeral_acceptance_only@127.0.0.1:5432/lucia_os_acceptance
+      WEBSITE_TEST_ADMIN_URL: postgres://postgres:ephemeral_acceptance_only@127.0.0.1:5432/lucia_os_acceptance
+      WEBSITE_TEST_RUNTIME_URL: postgres://lucia_acceptance_runtime:isolated_runtime_only@127.0.0.1:5432/lucia_os_acceptance
+      WEBSITE_TEST_PHASE14: ${{ github.event.pull_request.number == 140 && '0' || '1' }}
+      WEBSITE_TEST_PHASE15: ${{ github.event.pull_request.number == 140 && '0' || '1' }}
+      WEBSITE_TEST_PHASE16: "1"
+      WEBSITE_TEST_MEDIA: "1"
+      WEBSITE_TEST_WEBSITE_REMOVAL: "1"
+      WEBSITE_TEST_PHASE14_LAYOUTS: ${{ inputs.layouts || ((github.event.pull_request.number == 138 || github.event.pull_request.number == 140) && 'flagships' || '') }}
+      WEBSITE_TEST_PREMIUM_FAST: "1"
+      WEBSITE_TEST_PREMIUM_ONLY: "1"
+      WEBSITE_TEST_PLAYWRIGHT_MODULE: playwright
+      WEBSITE_TEST_EVIDENCE_FILE: artifacts/phase14-auth-publish/results.json
+      WEBSITE_TEST_FAILURE_LOG: artifacts/phase14-auth-publish/next-error.log
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - name: Check out exact PR head
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install app dependencies
+        run: npm install --no-audit --no-fund
+      - name: Migrate the isolated acceptance database
+        run: npm run db:migrate
+      - name: Create least-privilege runtime role in disposable database
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE ROLE lucia_acceptance_runtime WITH LOGIN PASSWORD 'isolated_runtime_only' NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
+          GRANT CONNECT ON DATABASE lucia_os_acceptance TO lucia_acceptance_runtime;
+          GRANT USAGE ON SCHEMA public TO lucia_acceptance_runtime;
+          GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO lucia_acceptance_runtime;
+          GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO lucia_acceptance_runtime;
+          GRANT EXECUTE ON FUNCTION public.lucia_public_media(uuid) TO lucia_acceptance_runtime;
+          SQL
+      - name: Build actual production application
+        run: npm run build
+      - name: Install isolated Chromium browser
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Create acceptance evidence directory
+        run: mkdir -p artifacts/phase14-auth-publish
+      - name: Exercise isolated website removal and registered Layout publishing
+        run: node scripts/check-website-foundation-http.mjs
+      - name: Preserve actual test results and failure diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase14-isolated-publishing-evidence
+          path: artifacts/phase14-auth-publish/
+          if-no-files-found: warn
+          retention-days: 7

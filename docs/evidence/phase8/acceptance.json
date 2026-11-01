@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-30",
+  "environment": "Compiled local Next.js production build connected to isolated Neon acceptance database using a synthetic NOBYPASSRLS role",
+  "checks": [
+    "Accessibility controls, keyboard navigation and reduced effects including shared Orb",
+    "Lattice retains its bounded vertical scrollport",
+    "Customer session cannot gain staff operations through preferences",
+    "No browser page errors",
+    "Signed-out browser Settings denial"
+  ],
+  "physicalTablet": "deferred",
+  "limitations": [
+    "Browser emulation does not establish physical touch behavior",
+    "LUCIA ID customer account-management destination is unverified"
+  ]
+}

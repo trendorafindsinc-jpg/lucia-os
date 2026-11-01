@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-30",
+  "environment": "Real compiled local application connected to isolated Neon database with synthetic users and NOBYPASSRLS runtime",
+  "checks": [
+    "Editor app switch restores valid and temporarily invalid text without save claims",
+    "Two website contexts keep independent drafts and routes",
+    "Inactive dirty close supports Cancel and discards only that resource",
+    "Save and Continue invokes real authorized database persistence",
+    "Failed save retains dirty work; genuine retry clears it only after success",
+    "Back and Forward preserve address, context and recoverable preview draft",
+    "Preview-only dirty close offers no fabricated save action",
+    "Settings unsaved choices recover; account save remains authoritative",
+    "Layouts filter adapter restores catalogue browsing state",
+    "Lattice independent panes, close cancellation, mode/order/ratio and reload recovery",
+    "Responsive Lattice continuity and overflow 390x844",
+    "Responsive Lattice continuity and overflow 768x1024",
+    "Responsive Lattice continuity and overflow 820x1180",
+    "Responsive Lattice continuity and overflow 1024x768",
+    "Responsive Lattice continuity and overflow 1180x820",
+    "Responsive Lattice continuity and overflow 1280x800",
+    "Responsive Lattice continuity and overflow 1440x900",
+    "Mobile switcher and Orb launch preserve Settings and independent Lattice context",
+    "Foreign tenant resource cannot be opened or saved",
+    "Revoked membership prevents private draft restoration",
+    "Account switch derives a separate recovery namespace from authenticated session",
+    "No unhandled browser application errors"
+  ],
+  "physicalTablet": "deferred",
+  "previewRuntime": "not claimed"
+}
