@@ -12,6 +12,10 @@ on:
       - 'src/lib/layout-blueprint/**'
       - 'src/components/publishing/**'
       - 'src/lib/media/**'
+      - 'src/app/api/websites/manage/**'
+      - 'src/app/api/websites/[websiteId]/route.ts'
+      - 'src/app/workspace/settings/**'
+      - 'scripts/check-website-foundation-http.mjs'
       - 'src/app/api/media/**'
       - 'src/app/api/websites/**/media/**'
       - 'scripts/media-security-acceptance.mjs'
@@ -52,6 +56,7 @@ jobs:
       WEBSITE_TEST_PHASE15: "1"
       WEBSITE_TEST_PHASE16: "1"
       WEBSITE_TEST_MEDIA: "1"
+      WEBSITE_TEST_WEBSITE_REMOVAL: "1"
       WEBSITE_TEST_PHASE14_LAYOUTS: ${{ inputs.layouts || (github.event.pull_request.number == 138 && 'flagships' || '') }}
       WEBSITE_TEST_PREMIUM_FAST: "1"
       WEBSITE_TEST_PREMIUM_ONLY: "1"

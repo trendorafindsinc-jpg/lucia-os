@@ -1,4 +1,4 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { ne, and, desc, eq, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -33,7 +33,7 @@ async function locateWebsite(websiteId: string, userId: string, permission: stri
       const [organization] = await tx.select({ status: organizations.status }).from(organizations).where(eq(organizations.id, org.id)).limit(1);
       if (!organization || organization.status !== "active") return null;
       const [website] = await tx.select({ id: websites.id, organizationId: websites.organizationId })
-        .from(websites).where(and(eq(websites.id, websiteId), eq(websites.organizationId, org.id))).limit(1);
+        .from(websites).where(and(eq(websites.id, websiteId), eq(websites.organizationId, org.id), ne(websites.status, "deleted"))).limit(1);
       return website ?? null;
     });
     if (found) return found;
@@ -60,7 +60,7 @@ export async function GET(_request: Request, context: RouteContext) {
     const [organization] = await tx.select({ status: organizations.status }).from(organizations).where(eq(organizations.id, website.organizationId)).limit(1);
     if (!organization || organization.status !== "active") return null;
     const [websiteStillAccessible] = await tx.select({ id: websites.id }).from(websites)
-      .where(and(eq(websites.id, website.id), eq(websites.organizationId, website.organizationId))).limit(1);
+      .where(and(eq(websites.id, website.id), eq(websites.organizationId, website.organizationId), ne(websites.status, "deleted"))).limit(1);
     if (!websiteStillAccessible) return null;
     return tx.select().from(websiteVersions)
       .where(and(eq(websiteVersions.websiteId, website.id), eq(websiteVersions.organizationId, website.organizationId)))
@@ -99,7 +99,7 @@ export async function POST(request: Request, context: RouteContext) {
     const [organization] = await tx.select({ status: organizations.status }).from(organizations).where(eq(organizations.id, website.organizationId)).limit(1);
     if (!organization || organization.status !== "active") return null;
     const [websiteStillAccessible] = await tx.select({ id: websites.id }).from(websites)
-      .where(and(eq(websites.id, website.id), eq(websites.organizationId, website.organizationId))).limit(1);
+      .where(and(eq(websites.id, website.id), eq(websites.organizationId, website.organizationId), ne(websites.status, "deleted"))).limit(1);
     if (!websiteStillAccessible) return null;
     await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${website.id}))`);
     const [row] = await tx.insert(websiteVersions).values({
