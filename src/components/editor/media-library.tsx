@@ -68,7 +68,7 @@ export function MediaLibrary({ websiteId, accountId, onChange, protectedIds, onS
       {item.status === "ready" && item.kind!=="image" && <span>{item.kind==="video"?"Video asset":"PDF document"}</span>}
       {protectedIds.includes(item.id) && <span>In use in this editor. Save a replacement before removing this asset.</span>}
       {onSelect && item.status === "ready" && item.kind==="image" && <button type="button" aria-pressed={selectedRef === item.ref} disabled={busy} onClick={() => onSelect(item)}>{selectedRef === item.ref ? "Selected for article" : "Use as featured image"}</button>}
-      {onInsert && item.status === "ready" && item.kind!=="image" && <button type="button" disabled={busy} onClick={()=>onInsert(item)}>{insertLabel || "Insert link in article"}</button>}
+      {onInsert && item.status === "ready" && (item.kind!=="image" || Boolean(insertLabel)) && <button type="button" disabled={busy} onClick={()=>onInsert(item)}>{insertLabel || "Insert link in article"}</button>}
       {item.status==="ready"&&item.kind!=="image"&&<a href={"/_media/"+item.id} target="_blank" rel="noopener noreferrer">{item.kind==="video"?"Open video":"Download PDF"}</a>}
       <span>{item.original_name||item.alt}{item.caption?" · "+item.caption:""} · {Math.ceil(item.bytes / 1000)} KB · {item.status}</span>
       {(item.status==="ready"||item.status==="deleting"||(item.status==="pending"&&Date.now()-new Date(item.created_at||0).getTime()>24*60*60*1000))?<button type="button" disabled={busy||protectedIds.includes(item.id)} onClick={()=>remove(item.id)}>Remove unused asset</button>:item.status==="pending"?<span>Upload pending. Abandoned uploads are reconciled automatically.</span>:<span>Awaiting storage reconciliation; reserved space remains counted.</span>}
