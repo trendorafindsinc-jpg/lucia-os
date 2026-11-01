@@ -169,6 +169,13 @@
       "when": 1793553000000,
       "tag": "0023_article_revision_restore",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1793553600000,
+      "tag": "0024_typed_customer_media",
+      "breakpoints": true
     }
   ]
 }
