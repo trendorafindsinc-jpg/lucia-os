@@ -10,7 +10,7 @@ import { mediaStorage, storageConfigured } from "./storage";
 import { multipartStorage } from "./multipart-storage";
 export type MediaTransaction = Parameters<Parameters<ReturnType<typeof getDb>["transaction"]>[0]>[0];
 export class MediaError extends Error { constructor(message: string, public status = 422) { super(message); } }
-type MediaRow = { id: string; website_id: string; organization_id: string; object_key: string; bytes: number; width: number; height: number; alt: string; status: string; kind: string };
+type MediaRow = { id: string; website_id: string; organization_id: string; object_key: string; bytes: number; width: number; height: number; alt: string; status: string; kind: string; mime:string; original_name:string|null; checksum:string|null; etag:string|null; caption:string|null; duration_ms:number|null; upload_id:string|null };
 export function boundedQuota(value: string | undefined, fallback: number) { const n = Number(value); return Number.isSafeInteger(n) && n > 0 && n <= 10_000_000_000 ? n : fallback; }
 export const uploadsEnabled = () => process.env.MEDIA_UPLOADS_ENABLED === "1" && storageConfigured();
 export async function withMediaWebsite<T>(userId: string, websiteId: string, permission: string, operation: (tx: MediaTransaction, organizationId: string) => Promise<T>): Promise<T> {
