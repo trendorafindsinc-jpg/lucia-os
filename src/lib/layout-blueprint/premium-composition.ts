@@ -354,6 +354,8 @@ export type PremiumEdit =
   | { kind: "remove-section"; pageId: string; sectionId: string }
   | { kind: "insert-page"; page: z.infer<typeof premiumPageSchema> }
   | { kind: "remove-page"; pageId: string }
+  | { kind: "page-details"; pageId: string; title: string; description: string; navigation: boolean }
+  | { kind: "navigation-order"; hrefs: string[] }
   | { kind: "replace-section"; pageId: string; section: PremiumSection }
   | { kind: "reorder"; pageId: string; sectionIds: string[] }
   | { kind: "token"; key: keyof PremiumLayout["tokens"]; value: string }
@@ -443,6 +445,29 @@ export function applyPremiumEdit(
       next.pages = next.pages.filter((p) => p.id !== edit.pageId);
       next.navigation = next.navigation.filter((n) => n.href !== removed.path);
     }
+  } else if (edit.kind === "page-details") {
+    if (mode !== "advanced" || !perms.advanced.includes("pages"))
+      throw new Error("Page settings edit denied");
+    const page = next.pages.find((entry) => entry.id === edit.pageId);
+    if (!page) throw new Error("Unknown page");
+    page.title = text(120).parse(edit.title);
+    page.description = text(160).parse(edit.description);
+    page.navigation = edit.navigation;
+    const existing = next.navigation.find((item) => item.href === page.path);
+    if (edit.navigation) {
+      if (existing) existing.label = page.title.slice(0, 50);
+      else next.navigation.push({ label: page.title.slice(0, 50), href: page.path });
+    } else {
+      next.navigation = next.navigation.filter((item) => item.href !== page.path);
+    }
+  } else if (edit.kind === "navigation-order") {
+    if (mode !== "advanced" || !perms.advanced.includes("pages"))
+      throw new Error("Navigation settings edit denied");
+    if (edit.hrefs.length !== next.navigation.length ||
+        new Set(edit.hrefs).size !== next.navigation.length ||
+        edit.hrefs.some((href) => !next.navigation.some((item) => item.href === href)))
+      throw new Error("Invalid navigation order");
+    next.navigation = edit.hrefs.map((href) => next.navigation.find((item) => item.href === href)!);
   } else if (edit.kind === "token") {
     if (
       mode !== "advanced" ||
@@ -631,6 +656,17 @@ export const premiumEditSchema = z.discriminatedUnion("kind", [
     .object({ kind: z.literal("insert-page"), page: premiumPageSchema })
     .strict(),
   z.object({ kind: z.literal("remove-page"), pageId: id }).strict(),
+  z.object({
+    kind: z.literal("page-details"),
+    pageId: id,
+    title: text(120),
+    description: text(160),
+    navigation: z.boolean(),
+  }).strict(),
+  z.object({
+    kind: z.literal("navigation-order"),
+    hrefs: z.array(path).max(12),
+  }).strict(),
   z
     .object({
       kind: z.literal("replace-section"),
