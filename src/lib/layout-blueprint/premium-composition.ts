@@ -2,6 +2,7 @@ import { visualExperienceSchema, supportedExpressions, type VisualExperience } f
 import { z } from "zod";
 import { mediaReferencePattern } from "@/lib/media/references";
 import { premiumAssets } from "./premium-assets";
+import { resolveExternalEmbed } from "@/lib/media/embed-providers";
 
 /**
  * Phase 13 additive contract. Legacy lucia.loom-blueprint v1 is deliberately
@@ -140,6 +141,33 @@ const contact = z
     email: z.string().email().max(254).optional(),
   })
   .strict();
+const mediaEmbed = z.object({
+  id,
+  type: z.literal("media-embed"),
+  variant: z.enum(["wide", "compact"]),
+  kind: z.enum(["video", "document", "embed"]),
+  title: text(120),
+  description: text(500).optional(),
+  mediaRef: z.string().max(160).optional(),
+  mime: z.enum(["video/mp4", "video/webm"]).optional(),
+  url: z.string().url().max(500).optional(),
+}).strict().superRefine((section, ctx) => {
+  if (section.kind === "embed") {
+    if (!section.url || !resolveExternalEmbed(section.url))
+      ctx.addIssue({ code: "custom", path: ["url"], message: "Choose a supported HTTPS embed URL." });
+    if (section.mediaRef || section.mime)
+      ctx.addIssue({ code: "custom", path: ["mediaRef"], message: "External embeds cannot reference uploaded media." });
+  } else {
+    if (!section.mediaRef || !mediaReferencePattern.test(section.mediaRef))
+      ctx.addIssue({ code: "custom", path: ["mediaRef"], message: "Choose a media asset from this website's library." });
+    if (section.url)
+      ctx.addIssue({ code: "custom", path: ["url"], message: "Uploaded media cannot use an external URL." });
+    if (section.kind === "video" && !section.mime)
+      ctx.addIssue({ code: "custom", path: ["mime"], message: "Video format is required." });
+    if (section.kind === "document" && section.mime)
+      ctx.addIssue({ code: "custom", path: ["mime"], message: "Documents do not use video formats." });
+  }
+});
 
 /** Closed section registry: no customer-provided components or module paths. */
 export const premiumSectionRegistry = {
@@ -150,6 +178,7 @@ export const premiumSectionRegistry = {
   "service-journey": services,
   experience: experience,
   "contact-panel": contact,
+  "media-embed": mediaEmbed,
 } as const;
 export const premiumSectionSchema = z.discriminatedUnion("type", [
   hero,
@@ -159,6 +188,7 @@ export const premiumSectionSchema = z.discriminatedUnion("type", [
   services,
   experience,
   contact,
+  mediaEmbed,
 ]);
 export type PremiumSection = z.infer<typeof premiumSectionSchema>;
 export type PremiumSectionType = PremiumSection["type"];
