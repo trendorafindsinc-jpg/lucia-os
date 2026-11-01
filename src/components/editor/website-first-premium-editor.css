@@ -97,4 +97,5 @@
 .website-first-editor-next-step ol li[aria-current=step]{font-weight:850;color:#244f9e}
 .website-first-editor-next-step>a{white-space:nowrap;text-decoration:none;border-radius:10px;padding:11px 13px;background:#2454ab;color:white;font-size:12px;font-weight:800}
 @media(max-width:850px){.website-first-editor-next-step{grid-template-columns:1fr}.website-first-editor-next-step>a{justify-self:start}}
+.website-first-layout-candidate-note{padding:10px 12px;border-left:3px solid #b58b42;background:#fff9ed;color:#6d552b!important;border-radius:7px}
 
