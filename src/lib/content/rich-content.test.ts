@@ -44,7 +44,7 @@ describe("safe article HTML source mode", () => {
 
   it("removes scripts, event handlers, styles, unsafe URLs and unapproved embeds", () => {
     const html = renderArticleHtml('<script>alert(1)</script><p onclick="alert(1)" style="color:red">Safe text <a href="javascript:alert(1)">bad link</a></p><iframe src="https://evil.example/embed/abc"></iframe>');
-    expect(html).not.toMatch(/<script|onclick|style=|javascript:|evil\\.example/i);
+    expect(html).not.toMatch(/<script|onclick|style=|javascript:|evil\.example/i);
     expect(html).toContain("Safe text");
   });
 });

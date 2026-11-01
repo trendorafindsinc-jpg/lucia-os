@@ -120,7 +120,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
     {kind==="blog"&&<button type="button" disabled={busy||loading||importBusy} onClick={()=>void importLegacy()}>{importBusy?"Importing legacy drafts…":"Import existing Blog drafts"}</button>}
     {loading?<p role="status">Loading your website articles…</p>:
      items.length ? items.map(article=><button className={article.id===selected?"story-selected":""} key={article.id} type="button" onClick={()=>choose(article.id)}>
-      <strong>{article.title}</strong><small>{article.status==="published"?"Published":"Private draft"} · revision {article.revision}</small>
+      <strong>{article.title}</strong><small>{article.status==="published"?"Published":article.status==="scheduled"?"Scheduled":"Private draft"} · revision {article.revision}</small>
      </button>):<p>No {kind} articles yet.</p>}
    </aside>
    <div className="story-studio-editor">
@@ -156,7 +156,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
      <div className="story-studio-actions">
       <button type="button" onClick={()=>setPreview(p=>!p)}>{preview?"Edit article":"Preview draft"}</button>
       <button type="button" disabled={busy||loading||!dirty} onClick={()=>void save("save")}>Save draft</button>
-      <button className="story-studio-live" type="button" disabled={busy||loading} onClick={()=>void save("publish")}>{busy?"Working…":"Publish now"}</button>
+      <button className="story-studio-live" type="button" disabled={busy||loading} onClick={()=>void save("publish")}>{busy?"Publishing…":"Publish"}</button>
       <button type="button" disabled={busy||loading||!draft.scheduledAt||draft.status==="published"} onClick={()=>void save("schedule")}>Schedule</button>
       {draft.status==="published"&&<button type="button" disabled={busy} onClick={()=>void save("unpublish")}>Unpublish</button>}
       {draft.status==="scheduled"&&<button type="button" disabled={busy} onClick={()=>void save("save")}>Keep as draft</button>}
