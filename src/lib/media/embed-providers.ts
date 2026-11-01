@@ -50,3 +50,15 @@ export function resolveExternalEmbed(input: string): ExternalEmbed | null {
     return null;
   }
 }
+
+/** Accept a normal HTTPS destination for an explicitly customer-authored link section. */
+export function resolveExternalHttpsLink(input: string): string | null {
+  try {
+    const url = new URL(input.trim());
+    if (url.protocol !== "https:" || url.username || url.password || url.port) return null;
+    if (!url.hostname.includes(".") || url.hostname.endsWith(".local") || url.hostname === "localhost") return null;
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
