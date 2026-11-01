@@ -4,12 +4,12 @@ import { useCallback, useEffect, useState } from "react";
 export type MediaLibraryItem = { id: string; ref: string; bytes: number; width: number; height: number; alt: string; status: string; kind:"image"|"video"|"document";mime:string;original_name?:string|null;caption?:string|null;created_at?:string };
 export function MediaLibrary({ websiteId, accountId, onChange, protectedIds, onSelect, onInsert, selectedRef }: { websiteId: string; accountId: string; onChange: (items: { ref: string; label: string }[]) => void; protectedIds: string[]; onSelect?: (item: MediaLibraryItem) => void; onInsert?: (item:MediaLibraryItem)=>void; selectedRef?: string | null }) {
   const [library, setLibrary] = useState<{ items: MediaLibraryItem[]; enabled: boolean; usedBytes: number; quotaBytes: number; imageUsedBytes:number;videoUsedBytes:number;videoQuotaBytes:number;documentUsedBytes:number;documentQuotaBytes:number } | null>(null);
-  const [notice, setNotice] = useState("Loading your image library…"), [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState("Loading your media library…"), [busy, setBusy] = useState(false);
   const endpoint = `/api/websites/${websiteId}/media`;
   const load = useCallback(async () => {
     const response = await fetch(endpoint, { cache: "no-store", headers: { "x-lucia-workspace-account": accountId } });
     const body = await response.json();
-    if (!response.ok) throw Error(body.error || "Image library unavailable.");
+    if (!response.ok) throw Error(body.error || "Media library unavailable.");
     setLibrary(body);
     onChange(body.items.filter((item: MediaLibraryItem) => item.status === "ready" && item.kind === "image").map((item: MediaLibraryItem) => ({ ref: item.ref, label: "Your image: " + item.alt })));
     return body;
@@ -46,7 +46,7 @@ export function MediaLibrary({ websiteId, accountId, onChange, protectedIds, onS
   }
   async function remove(id: string) {
     setBusy(true);
-    try { const response = await fetch(endpoint + "?id=" + id, { method: "DELETE", headers: { "x-lucia-workspace-account": accountId } }); const body = await response.json(); if (!response.ok) throw Error(body.error); await load(); setNotice("Unreferenced image removed."); }
+    try { const response = await fetch(endpoint + "?id=" + id, { method: "DELETE", headers: { "x-lucia-workspace-account": accountId } }); const body = await response.json(); if (!response.ok) throw Error(body.error); await load(); setNotice("Unreferenced media asset removed."); }
     catch (error) { setNotice(error instanceof Error ? error.message : "Removal failed."); }
     finally { setBusy(false); }
   }
