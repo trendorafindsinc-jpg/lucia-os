@@ -21,7 +21,7 @@ export function MediaLibrary({ websiteId, accountId, onChange, protectedIds, onS
     try {
       const response = await fetch(endpoint, { method: "POST", headers: { "x-lucia-workspace-account": accountId }, body: new FormData(form) });
       const body = await response.json(); if (!response.ok) throw Error(body.error);
-      await load(); form.reset(); setNotice("Image stored. Choose it from an image selector, then save your website or article.");
+      await load(); form.reset(); setNotice("Image stored in this website media library. You can replace an image, add it as a page section, or use it as article artwork.");
     } catch (error) { setNotice(error instanceof Error ? error.message : "Upload failed. Please try again."); }
     finally { setBusy(false); }
   }
