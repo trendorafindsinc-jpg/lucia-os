@@ -38,7 +38,7 @@ const sanitizerOptions={
  transformTags:{
   a:(_t:string,a:Record<string,string>)=>({tagName:"a",attribs:{...a,target:"_blank",rel:"noopener noreferrer nofollow"}}),
   img:(_t:string,a:Record<string,string>)=>({tagName:"img",attribs:{...a,loading:"lazy",decoding:"async"}}),
-  iframe:(_t:string,a:Record<string,string>)=>{const src=safeEmbedSource(a.src);return src?{tagName:"iframe",attribs:{src,title:(a.title||"Embedded media").slice(0,120),loading:"lazy",referrerpolicy:"strict-origin-when-cross-origin",allow:"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share",allowfullscreen:""}}:{tagName:"span",attribs:{}};}
+  iframe:(_t:string,a:Record<string,string>)=>{const src=safeEmbedSource(a.src);return src?{tagName:"iframe",attribs:{src,title:(a.title||"Embedded media").slice(0,120),loading:"lazy",referrerpolicy:"strict-origin-when-cross-origin",allow:"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share",allowfullscreen:""}}:{tagName:"span",attribs:{} as Record<string,string>};}
  },
  exclusiveFilter:(f:{tag:string;attribs:Record<string,string>})=>f.tag==="img"&&!localMediaPath.test(f.attribs.src||"")
 };
