@@ -18,24 +18,27 @@
     "test:settings:http": "node scripts/check-settings-http.mjs"
   },
   "dependencies": {
+    "drizzle-orm": "^0.44.5",
+    "marked": "^18.1.2",
     "next": "^15.5.6",
+    "postgres": "^3.4.7",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "zod": "^4.1.12",
-    "drizzle-orm": "^0.44.5",
-    "postgres": "^3.4.7",
-    "sharp": "^0.34.5"
+    "sanitize-html": "^2.18.1",
+    "sharp": "^0.34.5",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.1",
     "@types/node": "^22.18.10",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
+    "@types/sanitize-html": "^2.16.2",
+    "drizzle-kit": "^0.31.5",
     "eslint": "^9.38.0",
     "eslint-config-next": "^15.5.6",
     "typescript": "^5.9.3",
-    "vitest": "^3.2.4",
-    "@eslint/eslintrc": "^3.3.1",
-    "drizzle-kit": "^0.31.5"
+    "vitest": "^3.2.4"
   },
   "overrides": {
     "rollup": "4.65.1"
