@@ -8,9 +8,9 @@ export async function checkPhase15ArticleMediaAcceptance({
   api, admin, f, base, browserContext, siteId, siteSlug, bpass, publicSite,
 }) {
   const host = siteSlug + ".lucia.name.ng";
-  const mediaIds = [randomUUID(), randomUUID(), randomUUID(), randomUUID(), randomUUID()];
-  const [blogImage, draftImage, foreignImage, videoAsset, pdfAsset] = mediaIds;
-  const alts = ["Synthetic Blog featured image", "Synthetic replacement image", "Foreign tenant image", "Synthetic demo video", "Synthetic report PDF"];
+  const mediaIds = [randomUUID(), randomUUID(), randomUUID(), randomUUID(), randomUUID(), randomUUID()];
+  const [blogImage, draftImage, foreignImage, inlineImage, videoAsset, pdfAsset] = mediaIds;
+  const alts = ["Synthetic Blog featured image", "Synthetic replacement image", "Foreign tenant image", "Synthetic inline article image", "Synthetic demo video", "Synthetic report PDF"];
   const articleRoute = "/api/websites/" + siteId + "/articles";
   let articleId = null, newsId = null, correctedNewsId = null, scheduledNewsId = null, reservedBytes = 0;
   async function seedMedia(id, orgId, websiteId, userId, alt) {
@@ -41,8 +41,8 @@ export async function checkPhase15ArticleMediaAcceptance({
     await seedMedia(draftImage, f.orgA, siteId, f.a, alts[1]);
     await seedMedia(foreignImage, f.orgB, f.foreign, f.b, alts[2]);
     await seedMedia(inlineImage, f.orgA, siteId, f.a, alts[3]);
-    await seedTypedMedia(videoAsset,"video","video/mp4","mp4","demo.mp4",alts[3],"a".repeat(64));
-    await seedTypedMedia(pdfAsset,"document","application/pdf","pdf","report.pdf",alts[4],"b".repeat(64));
+    await seedTypedMedia(videoAsset,"video","video/mp4","mp4","demo.mp4",alts[4],"a".repeat(64));
+    await seedTypedMedia(pdfAsset,"document","application/pdf","pdf","report.pdf",alts[5],"b".repeat(64));
 
     const title = "Phase 15 blog " + randomBytes(5).toString("hex");
     const created = await api("a", articleRoute, "POST", { kind: "blog", title });
@@ -55,7 +55,7 @@ export async function checkPhase15ArticleMediaAcceptance({
     let article = {
       ...createdBody.article,
       excerpt: "A useful summary for our customers.",
-      body: "This is a synthetic article body with enough detail to be published safely.\n\n[Watch the demo](media:"+videoAsset+")\n\n[Download the report](media:"+pdfAsset+")",
+      body: "This is a synthetic article body with enough detail to be published safely.\n\n[Watch the demo](media:"+videoAsset+")\n\n[Download the report](media:"+pdfAsset+")\\n\\n![Inline media](/_media/"+inlineImage+")",
       category: "Acceptance",tags:["customer-story","media"],seoTitle:title+" | LUCIA",seoDescription:"A useful public summary for our customers.",
     };
     const initialized = await patchArticle(articleId, article, null, "save");
