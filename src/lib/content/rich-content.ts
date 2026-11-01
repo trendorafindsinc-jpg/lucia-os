@@ -32,15 +32,17 @@ export function createArticleEmbedHtml(input:string):string|null{
  }catch{return null;}
 }
 const sanitizerOptions={
- allowedTags:["p","h1","h2","h3","h4","h5","blockquote","ul","ol","li","strong","b","em","i","del","s","a","img","hr","br","code","pre","table","thead","tbody","tr","th","td","iframe","figure","figcaption","div","span","small","sup","sub","mark","dl","dt","dd","section","details","summary"],
- allowedAttributes:{a:["href","title","target","rel"],img:["src","alt","title","loading","decoding","width","height"],iframe:["src","title","allow","allowfullscreen","loading","referrerpolicy"],th:["colspan","rowspan"],td:["colspan","rowspan"],"*":["aria-label","class"]},
+ allowedTags:["p","h1","h2","h3","h4","h5","blockquote","ul","ol","li","strong","b","em","i","del","s","a","img","hr","br","code","pre","table","thead","tbody","tr","th","td","iframe","video","source","figure","figcaption","div","span","small","sup","sub","mark","dl","dt","dd","section","details","summary"],
+ allowedAttributes:{a:["href","title","target","rel"],img:["src","alt","title","loading","decoding","width","height"],iframe:["src","title","allow","allowfullscreen","loading","referrerpolicy"],video:["controls","preload","playsinline"],source:["src","type"],th:["colspan","rowspan"],td:["colspan","rowspan"],"*":["aria-label","class"]},
  allowedSchemes:["https","http","mailto","tel"],allowProtocolRelative:false,allowedIframeHostnames:[...embedHosts],
  transformTags:{
   a:(_t:string,a:Record<string,string>)=>({tagName:"a",attribs:{...a,target:"_blank",rel:"noopener noreferrer nofollow"}}),
   img:(_t:string,a:Record<string,string>)=>({tagName:"img",attribs:{...a,loading:"lazy",decoding:"async"}}),
   iframe:(_t:string,a:Record<string,string>)=>{const src=safeEmbedSource(a.src);return src?{tagName:"iframe",attribs:{src,title:(a.title||"Embedded media").slice(0,120),loading:"lazy",referrerpolicy:"strict-origin-when-cross-origin",allow:"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share",allowfullscreen:""}}:{tagName:"span",attribs:{} as Record<string,string>};}
+  ,video:()=>({tagName:"video",attribs:{controls:"",preload:"metadata",playsinline:""}})
+  ,source:(_t:string,a:Record<string,string>)=>localMediaPath.test(a.src||"")&&["video/mp4","video/webm"].includes(a.type||"")?{tagName:"source",attribs:{src:a.src,type:a.type}}:{tagName:"span",attribs:{} as Record<string,string>}
  },
- exclusiveFilter:(f:{tag:string;attribs:Record<string,string>})=>f.tag==="img"&&!localMediaPath.test(f.attribs.src||"")
+ exclusiveFilter:(f:{tag:string;attribs:Record<string,string>})=>(f.tag==="img"&&!localMediaPath.test(f.attribs.src||""))||(f.tag==="source"&&(!localMediaPath.test(f.attribs.src||"")||!["video/mp4","video/webm"].includes(f.attribs.type||""))))
 };
 export function renderArticleHtml(source:string):string{return sanitizeHtml(source,sanitizerOptions);}
 export function renderArticleMarkdown(source:string):string{
