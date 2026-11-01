@@ -32,7 +32,7 @@ describe("existing premium website design changes", () => {
   });
 
   it("rejects layout changes when design-token permissions are locked", () => {
-    const stored = structuredClone(premiumCandidate("lucia.layout.meridian", "Existing Company"));
+    const stored = structuredClone(parsePremiumLayout(premiumCandidate("lucia.layout.meridian", "Existing Company")));
     stored.permissions.advanced = stored.permissions.advanced.filter((permission) => permission !== "tokens");
     expect(() => mutateWebsite(stored, {
       kind: "assign-layout",
