@@ -1,180 +1,183 @@
+import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
+import "./welcome.css";
 
-const capabilityGroups = [
+export const metadata: Metadata = {
+  title: "Build the business. Own the future. | LUCIA OS",
+  description: "Start a free website, create your digital presence and explore a connected future in software entrepreneurship with LUCIA OS.",
+  openGraph: {
+    title: "Build the business. Own the future. | LUCIA OS",
+    description: "The operating environment for ambitious builders. Start with a free website. Grow toward a software-powered business.",
+    type: "website",
+  },
+};
+
+const buildingBlocks = [
   {
-    number: "01",
-    name: "CREATE",
-    title: "Start with a clear idea.",
-    description: "Find your starting point, shape your pages, and bring your organisation’s story to life.",
-    links: [
-      { label: "Guided website setup", href: "/create", detail: "A guided first step" },
-      { label: "Website templates", href: "/templates", detail: "Explore starting points" },
-      { label: "Visual editor", href: "/editor", detail: "Shape your experience" }
-    ]
+    n: "01", icon: "◈", label: "AVAILABLE · START HERE",
+    title: "Give your idea a home.",
+    description: "Create and publish a professional website for free. Your business deserves a real presence from day one.",
+    url: "/create", action: "Create a website",
   },
   {
-    number: "02",
-    name: "PUBLISH",
-    title: "Make your presence known.",
-    description: "Organise your content and prepare a considered, professional website for the world.",
-    links: [
-      { label: "Pages & navigation", href: "/pages", detail: "Structure your website" },
-      { label: "Blog & media", href: "/content", detail: "Tell your story" },
-      { label: "SEO & social sharing", href: "/seo", detail: "Help people find you" },
-      { label: "Publishing & domains", href: "/publish", detail: "Prepare your website" }
-    ]
+    n: "02", icon: "▤", label: "AVAILABLE · DESIGN",
+    title: "Stand out from the beginning.",
+    description: "Find your direction among 48 premium Layouts. Personalise, preview and publish with LUCIA Layout Studio.",
+    url: "/templates", action: "Explore Layouts",
   },
   {
-    number: "03",
-    name: "GROW",
-    title: "Turn attention into progress.",
-    description: "Give visitors useful ways to connect, then learn from the engagement you receive.",
-    links: [
-      { label: "Forms & enquiries", href: "/forms", detail: "Make room for conversations" },
-      { label: "Analytics", href: "/analytics", detail: "Understand engagement" }
-    ]
+    n: "03", icon: "⌘", label: "YOUR CONNECTED WORKSPACE",
+    title: "Build from one command centre.",
+    description: "Your websites, available apps, organisation and account controls have a place to work together.",
+    url: "/api/auth/login?returnTo=%2Fworkspace", action: "Open the workspace",
   },
-  {
-    number: "04",
-    name: "MANAGE",
-    title: "Move forward with confidence.",
-    description: "Keep your work organised with thoughtful workflows and visibility into what comes next.",
-    links: [
-      { label: "Drafts & version history", href: "/versions", detail: "Review and roll back" },
-      { label: "Plans & billing", href: "/billing", detail: "Explore plan information" }
-    ]
-  }
 ];
 
-const principles = [
-  {
-    number: "01",
-    title: "Your organisation. One home.",
-    description: "A dedicated workspace designed around your organisation, with membership and access controls built into the foundation."
-  },
-  {
-    number: "02",
-    title: "Your vision. Your website.",
-    description: "Start with a professional foundation, shape your pages, and prepare to publish when you are ready."
-  },
-  {
-    number: "03",
-    title: "Built for what comes next.",
-    description: "Grow into eligible specialist portals as your needs evolve, without a separate deployment for every customer."
-  }
+const opportunity = [
+  { n: "01", title: "Establish", copy: "Begin with a real digital presence. Let customers see what you can do." },
+  { n: "02", title: "Equip", copy: "Discover technology and specialist applications as the connected LUCIA ecosystem grows." },
+  { n: "03", title: "Commercialise", copy: "Our long-term vision is software you can use, brand and build customer-facing businesses around." },
 ];
 
-function LightGeometry() {
-  return (
-    <div className="light-art" aria-hidden="true">
-      <div className="light-art__halo" />
-      <div className="light-art__orbit light-art__orbit--one" />
-      <div className="light-art__orbit light-art__orbit--two" />
-      <div className="light-art__orbit light-art__orbit--three" />
-      <div className="light-art__diamond light-art__diamond--back" />
-      <div className="light-art__diamond light-art__diamond--front" />
-      <div className="light-art__core"><span /></div>
-      <div className="light-art__beam light-art__beam--one" />
-      <div className="light-art__beam light-art__beam--two" />
-      <div className="light-art__node light-art__node--one" />
-      <div className="light-art__node light-art__node--two" />
-      <div className="light-art__node light-art__node--three" />
-      <div className="light-art__caption"><span className="light-art__caption-dot" /> CLARITY IN MOTION</div>
+const previews = [
+  { title: "Meridian", type: "Ambitious businesses", src: "/layouts/premium/flagships/meridian.svg" },
+  { title: "Canvas", type: "Creative enterprises", src: "/layouts/premium/flagships/canvas.svg" },
+  { title: "Nexus", type: "Digital-first brands", src: "/layouts/premium/flagships/nexus.svg" },
+];
+
+function Brand() {
+  return <Link href="/" className="venture-brand" aria-label="LUCIA OS home">
+    <span className="venture-brand__glyph" aria-hidden="true"><span /></span>
+    <span className="venture-brand__word">LUCIA <span>OS</span></span>
+  </Link>;
+}
+
+/** Product vision illustration: no earnings/statistics or fake interactive controls. */
+function OpportunityEngine() {
+  return <div className="venture-engine" role="img" aria-label="Concept illustration: LUCIA OS connects digital presence, technology and business opportunity">
+    <div className="venture-engine__grid" aria-hidden="true" />
+    <div className="venture-engine__ring venture-engine__ring--one" aria-hidden="true" />
+    <div className="venture-engine__ring venture-engine__ring--two" aria-hidden="true" />
+    <div className="venture-engine__ring venture-engine__ring--three" aria-hidden="true" />
+    <div className="venture-engine__orb" aria-hidden="true"><span /></div>
+    <div className="venture-engine__node venture-engine__node--one" aria-hidden="true" />
+    <div className="venture-engine__node venture-engine__node--two" aria-hidden="true" />
+    <div className="venture-engine__node venture-engine__node--three" aria-hidden="true" />
+    <div className="venture-engine__panel venture-engine__panel--one" aria-hidden="true">
+      <small>01 / ESTABLISH</small><strong>Digital presence</strong><span className="venture-engine__chart"><i /></span>
     </div>
-  );
+    <div className="venture-engine__panel venture-engine__panel--two" aria-hidden="true">
+      <small>02 / TECHNOLOGY</small><strong>The software economy</strong><span className="venture-engine__pixels"><i /><i /><i /><i /></span>
+    </div>
+    <div className="venture-engine__panel venture-engine__panel--three" aria-hidden="true">
+      <small>03 / OPPORTUNITY</small><strong>Build something of your own</strong>
+    </div>
+    <span className="venture-engine__signature" aria-hidden="true"><i /> LUCIA IS LIGHT</span>
+  </div>;
 }
 
 export default function HomePage() {
-  return (
-    <main className="landing">
-      <div className="landing-noise" aria-hidden="true" />
-      <header className="landing-nav">
-        <Link className="landing-brand" href="/" aria-label="LUCIA OS home">
-          <span className="landing-brand__symbol" aria-hidden="true"><span /></span>
-          <span className="landing-brand__name">LUCIA <span>OS</span></span>
-        </Link>
-        <nav className="landing-nav__links" aria-label="Main navigation">
-          <a href="#platform">Platform</a>
-          <Link href="/templates">Templates</Link>
-          <a href="#principles">Our approach</a>
+  return <main className="venture">
+    <a href="#welcome-main" className="venture-skip">Skip to main content</a>
+    <header className="venture-header">
+      <div className="venture-wrap venture-header__inner">
+        <Brand />
+        <nav className="venture-header__links" aria-label="Welcome page navigation">
+          <a href="#platform">The platform</a><a href="#opportunity">The opportunity</a><a href="#layouts">Layouts</a>
         </nav>
-        <div className="landing-nav__actions">
-          <Link className="landing-signin" href="/api/auth/login">Sign in <span aria-hidden="true">↗</span></Link>
-          <Link className="landing-nav__cta" href="/create">Start exploring <span aria-hidden="true">↗</span></Link>
+        <div className="venture-header__actions">
+          <Link className="venture-header__signin" href="/api/auth/login?returnTo=%2Fworkspace">Sign in</Link>
+          <Link className="venture-header__start" href="/create">Start building <span aria-hidden="true">↗</span></Link>
         </div>
-      </header>
+      </div>
+    </header>
 
-      <section className="landing-hero" aria-labelledby="hero-title">
-        <div className="landing-hero__copy">
-          <p className="landing-eyebrow"><span className="landing-eyebrow__line" /> THE UNIVERSAL WEBSITE ENGINE</p>
-          <h1 id="hero-title">Your vision deserves <span>its own space.</span></h1>
-          <p className="landing-hero__lead">Bring your organisation’s digital presence into focus. Create a professional website, shape your story, and grow into the tools your work deserves — all through LUCIA OS.</p>
-          <div className="landing-hero__actions">
-            <a className="landing-button landing-button--primary" href="#platform">Explore LUCIA OS <span aria-hidden="true">↘</span></a>
-            <Link className="landing-button landing-button--glass" href="/templates">Explore templates <span aria-hidden="true">↗</span></Link>
+    <section className="venture-hero" id="welcome-main" aria-labelledby="venture-title">
+      <div className="venture-hero__glow" aria-hidden="true" />
+      <div className="venture-wrap venture-hero__layout">
+        <div className="venture-hero__content">
+          <p className="venture-kicker"><i /> THE OPERATING SYSTEM FOR AMBITIOUS BUILDERS</p>
+          <h1 id="venture-title">Build the business.<br /><span>Own the future.</span></h1>
+          <p className="venture-hero__lead">Tomorrow’s great business could begin with one idea and the right technology. LUCIA OS gives ambitious people a foundation to create, establish and grow a digital enterprise—from a free website today to a bigger software-powered vision.</p>
+          <div className="venture-actions">
+            <Link className="venture-button venture-button--primary" href="/create">Start your free website <span aria-hidden="true">↗</span></Link>
+            <a className="venture-button venture-button--secondary" href="#platform">Discover LUCIA OS <span aria-hidden="true">↓</span></a>
           </div>
-          <p className="landing-hero__signin">Already have a LUCIA ID? <Link href="/api/auth/login">Sign in securely <span aria-hidden="true">→</span></Link></p>
-          <div className="landing-proof"><span className="landing-proof__icon" aria-hidden="true">✳</span><span><strong>One thoughtful foundation.</strong><br />Designed to grow with your organisation.</span></div>
+          <p className="venture-hero__assurance">Standard website creation and publishing are free. No software purchase required.</p>
+          <div className="venture-hero__proof" aria-label="LUCIA OS foundation">
+            <div><strong>FREE</strong><span>Website creation</span></div>
+            <div><strong>48</strong><span>Premium Layouts</span></div>
+            <div><strong>ONE</strong><span>Connected workspace</span></div>
+          </div>
         </div>
-        <div className="landing-hero__visual"><LightGeometry /></div>
-        <div className="landing-hero__bottom" aria-hidden="true"><span>BUILT FOR YOUR NEXT CHAPTER</span><span className="landing-hero__bottom-rule" /><span>01 — THE BEGINNING</span></div>
-      </section>
+        <OpportunityEngine />
+      </div>
+      <div className="venture-wrap venture-hero__foot">
+        <span>FOR CREATORS. FOUNDERS. THE NEXT GENERATION OF ENTREPRENEURS.</span>
+        <a href="#platform">Explore the platform <span aria-hidden="true">↓</span></a>
+      </div>
+    </section>
 
-      <section className="landing-manifesto" aria-label="LUCIA philosophy">
-        <p className="landing-eyebrow"><span className="landing-eyebrow__line" /> A CLEARER WAY FORWARD</p>
-        <h2>Light on the work.<br /><span>Clarity in the journey.</span><br />Room to grow.</h2>
-        <p>We believe every organisation deserves the tools and space to make its work visible — and the freedom to build toward what comes next.</p>
-        <span className="manifesto-sun" aria-hidden="true"><span /></span>
-      </section>
+    <section className="venture-marquee" aria-label="For the next generation of founders">
+      <div className="venture-wrap"><span aria-hidden="true">✳</span><p>YOU DON’T HAVE TO OWN A TECH COMPANY TO <strong>START BUILDING ONE.</strong></p></div>
+    </section>
 
-      <section className="landing-platform" id="platform" aria-labelledby="platform-title">
-        <div className="landing-section-heading">
-          <div><p className="landing-eyebrow"><span className="landing-eyebrow__line" /> THE PLATFORM</p><h2 id="platform-title">Everything starts<br /><span>with your presence.</span></h2></div>
-          <p>From the first idea to the details that help a website grow, explore the building blocks of your digital home.</p>
+    <section className="venture-section venture-platform" id="platform" aria-labelledby="platform-title">
+      <div className="venture-wrap">
+        <div className="venture-heading">
+          <div><p className="venture-eyebrow">THE LUCIA FOUNDATION</p><h2 id="platform-title">Real tools for<br /><em>real ambition.</em></h2></div>
+          <p>Your first step should be possible today. Start with a professional digital presence and a workspace that makes room for bigger ideas.</p>
         </div>
-        <div className="capability-grid">
-          {capabilityGroups.map((group) => (
-            <article className={`capability-card capability-card--${group.number}`} key={group.number}>
-              <div className="capability-card__top"><span>{group.number} / 04</span><span className="capability-card__symbol" aria-hidden="true">{group.number === "01" ? "◇" : group.number === "02" ? "↗" : group.number === "03" ? "⌁" : "✳"}</span></div>
-              <p className="capability-card__eyebrow">{group.name}</p>
-              <h3>{group.title}</h3>
-              <p className="capability-card__description">{group.description}</p>
-              <div className="capability-card__links">
-                {group.links.map((item) => <a href={item.href} key={item.href}><span>{item.label}</span><span aria-hidden="true">↗</span></a>)}
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
+        <div className="venture-cards">{buildingBlocks.map((item) => <article className="venture-card" key={item.n}>
+          <div className="venture-card__top"><span>{item.n} / THE FOUNDATION</span><b aria-hidden="true">{item.icon}</b></div>
+          <p className="venture-card__label">{item.label}</p><h3>{item.title}</h3>
+          <p className="venture-card__copy">{item.description}</p>
+          <Link className="venture-card__link" href={item.url}>{item.action} <span aria-hidden="true">↗</span></Link>
+        </article>)}</div>
+      </div>
+    </section>
 
-      <section className="landing-principles" id="principles" aria-labelledby="principles-title">
-        <div className="landing-section-heading landing-section-heading--principles">
-          <div><p className="landing-eyebrow"><span className="landing-eyebrow__line" /> BUILT AROUND YOUR WORK</p><h2 id="principles-title">A foundation with<br /><span>purpose and perspective.</span></h2></div>
-          <p>Technology should bring clarity, not complexity. LUCIA OS starts with a focused foundation and makes room for a considered next step.</p>
+    <section className="venture-opportunity" id="opportunity" aria-labelledby="opportunity-title">
+      <div className="venture-wrap venture-opportunity__grid">
+        <div className="venture-opportunity__message">
+          <p className="venture-eyebrow">THE BIGGER PICTURE</p>
+          <h2 id="opportunity-title">Don't just use software.<br /><em>Build a future around it.</em></h2>
+          <p>Software can turn an idea into a repeatable service. A website can make your business discoverable. A connected platform can bring the pieces together. This is what LUCIA is building toward.</p>
+          <div className="venture-opportunity__notice"><span aria-hidden="true">◉</span><p><strong>A vision, not a shortcut.</strong> LUCIA Store commerce, Loom professional networking and broader software commercialisation are evolving platform directions, not promises of instant income or features that are all available today.</p></div>
         </div>
-        <div className="principle-list">
-          {principles.map((item) => <article className="principle-row" key={item.number}><span className="principle-row__number">{item.number}</span><h3>{item.title}</h3><p>{item.description}</p><span className="principle-row__arrow" aria-hidden="true">↗</span></article>)}
-        </div>
-      </section>
+        <div className="venture-steps">{opportunity.map((step) => <article className="venture-step" key={step.n}>
+          <span>{step.n}</span><div><h3>{step.title}</h3><p>{step.copy}</p></div><b aria-hidden="true">↗</b>
+        </article>)}</div>
+      </div>
+    </section>
 
-      <section className="landing-closing">
-        <div className="closing-glow" aria-hidden="true"><span /></div>
-        <p className="landing-eyebrow"><span className="landing-eyebrow__line" /> YOUR NEXT CHAPTER STARTS HERE</p>
-        <h2>Give your next idea<br /><span>a place to shine.</span></h2>
-        <p>Explore the LUCIA OS foundation and discover what your organisation can build.</p>
-        <div className="landing-hero__actions landing-hero__actions--center">
-          <Link className="landing-button landing-button--light" href="/create">Explore website setup <span aria-hidden="true">↗</span></Link>
-          <Link className="landing-button landing-button--dark-glass" href="/templates">Browse templates <span aria-hidden="true">→</span></Link>
+    <section className="venture-section venture-gallery" id="layouts" aria-labelledby="layouts-title">
+      <div className="venture-wrap">
+        <div className="venture-heading">
+          <div><p className="venture-eyebrow">YOUR FIRST BUSINESS ASSET</p><h2 id="layouts-title">Make your first move<br /><em>look extraordinary.</em></h2></div>
+          <div className="venture-gallery__aside"><p>Explore professionally considered Layouts. Personalise the content and publish your website through LUCIA OS.</p><Link href="/templates">Explore all Layouts <span aria-hidden="true">↗</span></Link></div>
         </div>
-      </section>
+        <div className="venture-layouts">{previews.map((item, index) => <Link className="venture-layout" href="/templates" key={item.title} aria-label={"Explore " + item.title + " and other Layouts"}>
+          <div className="venture-layout__image"><div className="venture-layout__browser" aria-hidden="true"><i /><i /><i /><span>lucia / layouts</span></div><Image alt={item.title + " website Layout preview"} src={item.src} width={700} height={525} unoptimized /></div>
+          <div className="venture-layout__caption"><div><small>0{index + 1} / LAYOUT</small><strong>{item.title}</strong><span>{item.type}</span></div><b aria-hidden="true">↗</b></div>
+        </Link>)}</div>
+      </div>
+    </section>
 
-      <footer className="landing-footer">
-        <Link className="landing-brand" href="/" aria-label="LUCIA OS home"><span className="landing-brand__symbol" aria-hidden="true"><span /></span><span className="landing-brand__name">LUCIA <span>OS</span></span></Link>
-        <p>Light that moves business forward.</p>
-        <nav aria-label="Footer navigation"><Link href="/templates">Templates</Link><Link href="/api/auth/login">LUCIA ID</Link><Link href="/billing">Plans</Link></nav>
-        <span className="landing-footer__status">Early foundation · Not yet open for customer use</span>
-        <span className="landing-footer__copyright">Built with care by LUCIA.</span>
-      </footer>
-    </main>
-  );
+    <section className="venture-close" aria-labelledby="close-title">
+      <div className="venture-wrap venture-close__inner">
+        <p className="venture-kicker"><i /> LUCIA IS LIGHT</p>
+        <h2 id="close-title">Fortunes aren't downloaded.<br /><span>They're built.</span></h2>
+        <p>Big ideas need action. Businesses need infrastructure. Your next chapter can start with a website, real customers and the courage to build.</p>
+        <div className="venture-actions"><Link className="venture-button venture-button--primary" href="/create">Build your free website <span aria-hidden="true">↗</span></Link><Link className="venture-button venture-button--secondary" href="/api/auth/login?returnTo=%2Fworkspace">Sign in with LUCIA ID <span aria-hidden="true">→</span></Link></div>
+        <small>Business outcomes depend on your execution, demand and the market. No earnings are guaranteed.</small>
+      </div>
+    </section>
+    <footer className="venture-footer"><div className="venture-wrap venture-footer__inner">
+      <div><Brand /><p>Technology for the people building what comes next.</p></div>
+      <nav aria-label="Footer links"><a href="#platform">Platform</a><Link href="/templates">Layouts</Link><Link href="/create">Create</Link><Link href="/api/auth/login?returnTo=%2Fworkspace">LUCIA ID</Link></nav>
+      <small>© LUCIA. Build with purpose.</small>
+    </div></footer>
+  </main>;
 }
