@@ -507,12 +507,13 @@ export function WebsiteFirstPremiumEditor({
       <header><div><h2>Change Website Design</h2><p>Preview a different visual system using your existing website content. Your pages, paths, navigation, text and media stay in place.</p></div>
         <button type="button" onClick={() => setShowLayouts(false)}>Close</button></header>
       <p className="website-first-layout-candidate-note">These are Phase 14 candidate design systems. Applying one updates your saved draft only; it does not publish the site or certify the candidate for public release.</p>
+      {!layout.permissions.advanced.includes("tokens") && <p role="status">This website's design permissions do not allow layout changes. You can still preview the candidate designs.</p>}
       <label>Choose a design<select value={layoutChoice} onChange={(event) => setLayoutChoice(event.target.value)}>
         {premiumCandidateIds.map((id) => <option key={id} value={id}>{id.replace("lucia.layout.", "").replace(/-/g, " ").replace(/\\b\\w/g, (letter) => letter.toUpperCase())}</option>)}
       </select></label>
       {layoutPreview ? <div className="website-first-layout-preview"><LayoutRenderer blueprint={layoutPreview} pagePath={page.path} preview idPrefix="layout-choice-"/></div> : <p role="alert">This design preview is unavailable.</p>}
       <div className="website-first-layout-actions"><button type="button" onClick={() => setLayoutChoice(layout.layoutId)}>Restore current design</button>
-        <button type="button" disabled={busy || edits.length > 0 || saveState !== "saved" || layoutChoice === layout.layoutId || !layoutPreview}
+        <button type="button" disabled={busy || edits.length > 0 || saveState !== "saved" || layoutChoice === layout.layoutId || !layoutPreview || !layout.permissions.advanced.includes("tokens")}
           onClick={() => void applyLayoutChoice()}>{busy ? "Applying design…" : "Apply to existing website"}</button></div>
       {(edits.length > 0 || saveState !== "saved") && <p>Save your current edits before changing the website design.</p>}
     </section>}
