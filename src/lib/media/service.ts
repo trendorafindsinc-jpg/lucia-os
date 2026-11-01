@@ -27,12 +27,16 @@ export async function withMediaWebsite<T>(userId: string, websiteId: string, per
   throw new MediaError("Website not found or access denied.", 404);
 }
 /** Called in the SAME locked transaction as draft changes and publication. */
-export async function validateMediaOwnership(tx: MediaTransaction, organizationId: string, websiteId: string, definition: unknown, publishing = false) {
+export async function validateMediaOwnership(tx: MediaTransaction, organizationId: string, websiteId: string, definition: unknown, publishing = false): Promise<Record<string,string>> {
+  const altById:Record<string,string> = {};
   for (const id of mediaIds(definition)) {
-    const rows = await tx.execute(sql`select id from website_media where id=${id} and organization_id=${organizationId} and website_id=${websiteId} and status='ready' for share`);
-    if (!rows.length) throw new MediaError("An image is unavailable or belongs to another website.");
+    const rows = await tx.execute(sql`select id,alt from website_media where id=${id} and organization_id=${organizationId} and website_id=${websiteId} and status='ready' for share`);
+    const media = rows[0] as {id:string;alt:string}|undefined;
+    if (!media) throw new MediaError("An image is unavailable or belongs to another website.");
+    altById[id]=media.alt;
     if (publishing) await tx.execute(sql`update website_media set last_published_at=now() where id=${id}`);
   }
+  return altById;
 }
 export async function listMedia(userId: string, websiteId: string) {
   return withMediaWebsite(userId, websiteId, "website.read", async (tx) => {
@@ -83,7 +87,7 @@ export async function removeMedia(userId: string, websiteId: string, id: string)
     const [image] = await tx.execute(sql`select * from website_media where id=${id} and website_id=${websiteId} and (status in ('ready','deleting') or (status='pending' and created_at < now()-interval '24 hours')) for update`);
     if (!image) throw new MediaError("Image not found.", 404);
     const pattern = '%"media:' + id + '"%';
-    const refs = await tx.execute(sql`select 1 from website_pages where website_id=${websiteId} and (content like ${pattern} or published_content like ${pattern}) union all select 1 from website_versions where website_id=${websiteId} and snapshot like ${pattern} limit 1`);
+    const refs = await tx.execute(sql`select 1 from website_pages where website_id=${websiteId} and (content like ${pattern} or published_content like ${pattern}) union all select 1 from website_versions where website_id=${websiteId} and snapshot like ${pattern} union all select 1 from website_posts where website_id=${websiteId} and (featured_media_id=${id} or published_snapshot->>$key$featuredMediaRef$key$=${"media:"+id}) limit 1`);
     if (refs.length || (image.last_published_at && new Date(String(image.last_published_at)).getTime() > Date.now() - 30 * 86400000)) throw new MediaError("This image is retained by a draft, publication, recovery version or the 30-day publication grace period.", 409);
     await tx.execute(sql`update website_media set status='deleting',updated_at=now() where id=${id}`);
     return image as MediaRow;
