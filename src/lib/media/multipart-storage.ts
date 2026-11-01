@@ -47,5 +47,6 @@ export const multipartStorage={
  },
  async abort(key:string,uploadId:string){const response=await signedRequest("DELETE",key,{uploadId});if(!response.ok&&response.status!==404)throw Error("Storage could not abort the multipart upload.");},
  async head(key:string):Promise<StoredObjectHead|null>{const response=await signedRequest("HEAD",key);if(response.status===404)return null;if(!response.ok)throw Error("Stored media metadata could not be verified.");return {bytes:Number(response.headers.get("content-length")??0),mime:response.headers.get("content-type")??"",etag:response.headers.get("etag"),checksum:response.headers.get("x-amz-meta-sha256")};},
- async stream(key:string,range?:string){const response=await signedRequest("GET",key,{},range?{range}:{});if(response.status===404)return null;if(!(response.ok||response.status===206))throw Error("Stored media could not be read.");return response;},
+ async remove(key:string){const response=await signedRequest("DELETE",key);if(!response.ok&&response.status!==404)throw Error("Stored media could not be removed.");},
+ async stream(key:string,range?:string){const response=await signedRequest("GET",key,{},range?{range}:{});if(response.status===404)return null;if(!(response.ok||response.status===206))throw Error("Stored media could not be read.");return response;}
 };
