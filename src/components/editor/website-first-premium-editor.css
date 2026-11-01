@@ -98,4 +98,9 @@
 .website-first-editor-next-step>a{white-space:nowrap;text-decoration:none;border-radius:10px;padding:11px 13px;background:#2454ab;color:white;font-size:12px;font-weight:800}
 @media(max-width:850px){.website-first-editor-next-step{grid-template-columns:1fr}.website-first-editor-next-step>a{justify-self:start}}
 .website-first-layout-candidate-note{padding:10px 12px;border-left:3px solid #b58b42;background:#fff9ed;color:#6d552b!important;border-radius:7px}
+.website-first-add-page{display:flex;align-items:end;gap:9px;flex-wrap:wrap;margin:12px 0}
+.website-first-add-page label{display:flex;flex-direction:column;gap:6px;min-width:min(280px,100%);font-size:12px;font-weight:750}
+.website-first-add-page input{box-sizing:border-box;border:1px solid #cbd8e9;border-radius:9px;padding:10px;font:inherit;font-size:13px}
+.website-first-add-page button{border:1px solid #2454ab;background:#2454ab;color:white;border-radius:10px;padding:10px 13px;min-height:40px;font:inherit;font-size:12px;font-weight:750}
+@media(max-width:580px){.website-first-add-page{display:grid;grid-template-columns:1fr}.website-first-add-page label{min-width:0}.website-first-add-page button{width:100%}}
 
