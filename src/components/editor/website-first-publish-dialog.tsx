@@ -103,11 +103,11 @@ export function WebsiteFirstPublishDialog({
       <div>
         {website && <div className="website-first-publish-summary">
           <strong>{website.name}</strong>
-          <span>{website.slug}.{(process.env.NEXT_PUBLIC_LUCIA_SITE_DOMAIN || "lucia.name.ng")}</span>
+          <span>{website.slug}.lucia.name.ng</span>
           <p>Publishing will update the public website. Your current saved draft remains available to edit.</p>
         </div>}
         {website && !website.draftValid && <p role="alert">This saved draft needs correction before publishing. Return to editing and save a valid website.</p>}
-        {website && !valid && <p role="alert">Your website's name, headline or description needs attention. Edit your website and save it before publishing.</p>}
+        {website && !valid && <p role="alert">Your website name, headline or description needs attention. Edit your website and save it before publishing.</p>}
         {notice && <p className={publishedUrl ? "website-first-publish-success" : "website-first-publish-error"} role="status">{notice}</p>}
         {publishedUrl && <p><a href={publishedUrl} target="_blank" rel="noopener noreferrer">View published website ↗</a></p>}
         <div className="website-first-publish-actions">
