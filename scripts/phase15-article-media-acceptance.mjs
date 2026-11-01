@@ -98,6 +98,41 @@ export async function checkPhase15ArticleMediaAcceptance({
     assert.deepEqual(removedBody.draft.pages, websiteBefore.draft.pages);
     bpass("Visual Editor media sections: owned image/video/PDF and safe embeds save; wrong-kind, cross-tenant and unsafe URLs reject; cleanup restores the exact draft");
 
+    const mediaEditor = await browserContext.newPage();
+    try {
+      await mediaEditor.goto(base + "/editor?websiteId=" + siteId, { waitUntil: "networkidle" });
+      await mediaEditor.locator(".website-first-editor").waitFor();
+      async function addMediaFromLibrary(label) {
+        await mediaEditor.getByRole("button", { name: "Manage Media", exact: true }).click();
+        const panel = mediaEditor.getByRole("region", { name: "Website image replacement" });
+        await panel.waitFor();
+        await panel.getByText("Your media library", { exact: true }).click();
+        const row = panel.locator(".studio-media-library li").filter({ hasText: label });
+        await row.getByRole("button", { name: "Add to website", exact: true }).click();
+        await mediaEditor.locator(".website-first-editor-status").filter({ hasText: "● Unsaved" }).waitFor();
+        await mediaEditor.locator(".website-first-editor-status").filter({ hasText: "✓ Saved" }).waitFor();
+      }
+      await addMediaFromLibrary(alts[3]);
+      await addMediaFromLibrary("demo.mp4");
+      await addMediaFromLibrary("report.pdf");
+    } finally {
+      await mediaEditor.close();
+    }
+    const uiMediaDraft = await (await api("a", websiteDraftRoute)).json();
+    const uiMediaHome = uiMediaDraft.draft.pages.find((page) => page.path === "/");
+    const insertedUiMedia = uiMediaHome.sections.filter((section) =>
+      section.type === "media-embed" && ["image", "video", "document"].includes(section.kind));
+    assert(insertedUiMedia.some((section) => section.kind === "image" && section.mediaRef === "media:" + inlineImage));
+    assert(insertedUiMedia.some((section) => section.kind === "video" && section.mediaRef === "media:" + videoAsset));
+    assert(insertedUiMedia.some((section) => section.kind === "document" && section.mediaRef === "media:" + pdfAsset));
+    const uiCleanup = await api("a", websiteDraftRoute, "PATCH", {
+      kind: "composition-edit", mode: "advanced",
+      edits: insertedUiMedia.map((section) => ({ kind: "remove-section", pageId: uiMediaHome.id, sectionId: section.id })),
+    }, { "if-match": uiMediaDraft.revision });
+    assert.equal(uiCleanup.status, 200, "Visual Editor media acceptance cleanup");
+    assert.deepEqual((await uiCleanup.json()).draft.pages, websiteBefore.draft.pages);
+    bpass("Visual Editor media library: customer image, video and PDF assets can be inserted into the existing page and saved, then cleanly removed");
+
     const title = "Phase 15 blog " + randomBytes(5).toString("hex");
     const created = await api("a", articleRoute, "POST", { kind: "blog", title });
     const createdBody = await created.json();
