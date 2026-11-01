@@ -1,4 +1,3 @@
-import "server-only";
 import { createHash, createHmac } from "node:crypto";
 export type CompletedPart={partNumber:number;etag:string};
 export type StoredObjectHead={bytes:number;mime:string;etag:string|null;checksum:string|null};
@@ -6,7 +5,7 @@ const safeKey=/^os\/[0-9a-f-]{36}\/[0-9a-f-]{36}\/[0-9a-f-]{36}\.(?:webp|mp4|web
 const digest=(value:string|Buffer)=>createHash("sha256").update(value).digest("hex");
 const hmac=(key:string|Buffer,value:string)=>createHmac("sha256",key).update(value).digest();
 const encode=(value:string)=>encodeURIComponent(value).replace(/[!'()*]/g,c=>"%"+c.charCodeAt(0).toString(16).toUpperCase());
-function canonicalQuery(values:Record<string,string>){return Object.entries(values).sort(([a],[b])=>a.localeCompare(b)).map(([k,v])=>encode(k)+"="+encode(v)).join("&");}
+function canonicalQuery(values:Record<string,string>){return Object.entries(values).sort(([a],[b])=>a<b?-1:a>b?1:0).map(([k,v])=>encode(k)+"="+encode(v)).join("&");}
 function config(){
  const endpoint=new URL(process.env.S3_ENDPOINT||"");const bucket=process.env.S3_BUCKET||"";
  if(!process.env.S3_ACCESS_KEY_ID||!process.env.S3_SECRET_ACCESS_KEY||endpoint.protocol!=="https:"||endpoint.username||endpoint.password||endpoint.pathname!=="/"||endpoint.search||!/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/.test(bucket)||!process.env.S3_REGION)throw Error("Customer media storage is not configured.");
