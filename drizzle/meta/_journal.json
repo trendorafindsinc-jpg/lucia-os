@@ -204,6 +204,13 @@
       "when": 1793554380000,
       "tag": "0028_public_article_subdomain_access",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1793557500000,
+      "tag": "0029_public_article_rls_host_binding",
+      "breakpoints": true
     }
   ]
 }
