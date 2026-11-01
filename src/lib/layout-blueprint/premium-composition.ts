@@ -2,7 +2,7 @@ import { visualExperienceSchema, supportedExpressions, type VisualExperience } f
 import { z } from "zod";
 import { mediaReferencePattern } from "@/lib/media/references";
 import { premiumAssets } from "./premium-assets";
-import { resolveExternalEmbed } from "@/lib/media/embed-providers";
+import { resolveExternalEmbed, resolveExternalHttpsLink } from "@/lib/media/embed-providers";
 
 /**
  * Phase 13 additive contract. Legacy lucia.loom-blueprint v1 is deliberately
@@ -145,7 +145,7 @@ const mediaEmbed = z.object({
   id,
   type: z.literal("media-embed"),
   variant: z.enum(["wide", "compact"]),
-  kind: z.enum(["image", "video", "document", "embed"]),
+  kind: z.enum(["image", "video", "document", "embed", "link"]),
   title: text(120),
   description: text(500).optional(),
   mediaRef: z.string().max(160).optional(),
@@ -157,6 +157,11 @@ const mediaEmbed = z.object({
       ctx.addIssue({ code: "custom", path: ["url"], message: "Choose a supported HTTPS embed URL." });
     if (section.mediaRef || section.mime)
       ctx.addIssue({ code: "custom", path: ["mediaRef"], message: "External embeds cannot reference uploaded media." });
+  } else if (section.kind === "link") {
+    if (!section.url || !resolveExternalHttpsLink(section.url))
+      ctx.addIssue({ code: "custom", path: ["url"], message: "Choose a secure external HTTPS destination." });
+    if (section.mediaRef || section.mime)
+      ctx.addIssue({ code: "custom", path: ["mediaRef"], message: "External links cannot reference uploaded media." });
   } else {
     if (!section.mediaRef || !mediaReferencePattern.test(section.mediaRef))
       ctx.addIssue({ code: "custom", path: ["mediaRef"], message: "Choose a media asset from this website's library." });
