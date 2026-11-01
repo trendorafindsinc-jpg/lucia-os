@@ -20,7 +20,7 @@ function notFound() {
 }
 
 function isPrivatePath(pathname: string): boolean {
-  return (pathname.startsWith("/api/") && pathname !== "/api/public/v1/content") ||
+  return pathname.startsWith("/api/") ||
     pathname.startsWith("/site/") ||
     pathname === "/tenant-site-internal" ||
     pathname.startsWith("/tenant-site-internal/");
@@ -37,6 +37,7 @@ export function middleware(request: NextRequest) {
     destination.pathname = "/api/media/" + media[1];
     return NextResponse.rewrite(destination);
   }
+  if (request.nextUrl.pathname === "/api/public/v1/content") return NextResponse.next();
   if (isPlatformHost(hostname)) return NextResponse.next();
 
   const pathname = request.nextUrl.pathname;
