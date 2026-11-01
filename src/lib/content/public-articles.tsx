@@ -44,14 +44,14 @@ const readPublished = cache(async (path: string) => {
   return [{...parsed.data,id:entry.id,publishedAt:entry.publishedAt}];
  });
  if(slug && !posts.length)notFound();
- return {site,kind:kind as "blog"|"news",posts,slug};
+ return {site,hostname,kind:kind as "blog"|"news",posts,slug};
 });
 export async function publicArticleMetadata(path:string):Promise<Metadata> {
  const data=await readPublished(path);
  const article=data.slug ? data.posts[0] : null;
  const title=article ? (article.seoTitle || article.title) : data.kind==="blog" ? "Blog" : "News";
  const description=article?.seoDescription || article?.excerpt || "Latest "+data.kind+" from "+data.site.name;
- const image=article?.featuredMediaRef ? "https://"+data.site.name+"/_media/"+article.featuredMediaRef.slice(6) : undefined;
+ const image=article?.featuredMediaRef ? "https://"+data.hostname+"/_media/"+article.featuredMediaRef.slice(6) : undefined;
  return {title:{absolute:title+" | "+data.site.name},description,
   openGraph:{type:"article",title,description,images:image?[image]:undefined},
   twitter:{card:image?"summary_large_image":"summary",title,description,images:image?[image]:undefined},

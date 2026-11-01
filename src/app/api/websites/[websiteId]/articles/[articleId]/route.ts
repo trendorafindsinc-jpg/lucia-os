@@ -41,19 +41,25 @@ export async function PATCH(request:Request,context:Context){
     )).limit(1).for("update");
     if(!current)continue;
     if(current.revision!==input.revision)return {conflict:true as const};
-    if(input.action==="publish" && site.status!=="published")return {validation:"Publish the website before publishing articles."};
+    if((input.action==="publish" || input.action==="schedule") && site.status!=="published")return {validation:"Publish the website before publishing articles."};
+    if(input.action==="schedule" && current.publishedSnapshot)return {validation:"Unpublish this article before scheduling a new publication. Existing live content is never replaced by a queued draft."};
+    if(input.action==="schedule"){
+     const scheduledAt=new Date(input.scheduledAt!);
+     if(!Number.isFinite(scheduledAt.getTime()) || scheduledAt.getTime()<Date.now()+2*60*1000 || scheduledAt.getTime()>Date.now()+365*24*60*60*1000)return {validation:"Choose a publication time at least two minutes from now and within the next year."};
+    }
     const mediaAltById=input.action==="unpublish" ? {} : await validateMediaOwnership(tx,org.id,site.id,{featuredMediaRef:input.featuredMediaRef},input.action==="publish");
     const featuredMediaId=input.featuredMediaRef ? input.featuredMediaRef.slice(6) : null;
     const featuredMediaAlt=featuredMediaId ? mediaAltById[featuredMediaId] ?? null : null;
     const draft:PublishedArticle={kind:current.kind as "blog"|"news",title:input.title,slug:input.slug,excerpt:input.excerpt,body:input.body,category:input.category,tags:input.tags,seoTitle:input.seoTitle,seoDescription:input.seoDescription,featuredMediaRef:input.featuredMediaRef,featuredMediaAlt};
     if(input.action==="publish" && !publicationReady(draft))return {validation:"Add a meaningful summary and article body before publishing."};
-    const live= input.action==="publish" ? draft : input.action==="unpublish" ? null : current.publishedSnapshot;
-    const status=live ? "published" : "draft";
+    const live= input.action==="publish" ? draft : input.action==="unpublish" || input.action==="schedule" ? null : current.publishedSnapshot;
+    const status= input.action==="schedule" ? "scheduled" : live ? "published" : "draft";
     const publishedSlug=live ? (input.action==="publish" ? draft.slug : current.publishedSlug) : null;
     const [saved]=await tx.update(websitePosts).set({
      title:input.title,slug:input.slug,excerpt:input.excerpt,body:input.body,category:input.category,tags:input.tags,seoTitle:input.seoTitle,seoDescription:input.seoDescription,featuredMediaId,
      revision:current.revision+1,status,publishedSnapshot:live,publishedSlug,
-     publishedAt:live ? (input.action==="publish" ? new Date() : current.publishedAt) : null,updatedAt:new Date(),
+     publishedAt:live ? (input.action==="publish" ? new Date() : current.publishedAt) : null,
+     scheduledAt:input.action==="schedule" ? new Date(input.scheduledAt!) : null,updatedAt:new Date(),
     }).where(and(eq(websitePosts.id,current.id),eq(websitePosts.organizationId,org.id))).returning();
     await tx.insert(websitePostRevisions).values({
      organizationId:org.id,websiteId:site.id,postId:saved.id,actorUserId:user.id,

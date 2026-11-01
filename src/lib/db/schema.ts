@@ -476,6 +476,7 @@ export const websitePosts = pgTable("website_posts", {
   publishedSnapshot: jsonb("published_snapshot").$type<import("@/lib/content/article-model").PublishedArticle | null>(),
   publishedSlug: text("published_slug"),
   publishedAt: timestamp("published_at", { withTimezone: true }),
+  scheduledAt: timestamp("scheduled_at", { withTimezone: true }),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 }, (table) => [

@@ -23,8 +23,11 @@ export const createArticleSchema = z.object({
 }).strict();
 export const updateArticleSchema = articleDraftSchema.omit({kind:true,featuredMediaAlt:true}).extend({
   revision: z.number().int().positive(),
-  action: z.enum(["save","publish","unpublish"]),
-}).strict();
+  action: z.enum(["save","publish","unpublish","schedule"]),
+  scheduledAt: z.string().datetime().nullable().default(null),
+}).strict().superRefine((value, context) => {
+  if (value.action === "schedule" && !value.scheduledAt) context.addIssue({ code: "custom", path: ["scheduledAt"], message: "Choose a publication date and time." });
+});
 export type PublishedArticle = z.infer<typeof articleDraftSchema>;
 export type ArticleKind = z.infer<typeof articleKind>;
 export function newArticleSlug(title: string) { return makeSlug(title); }

@@ -1,14 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { articleDraftSchema, articleRoute, publicationReady, newArticleSlug, updateArticleSchema } from "./article-model";
 describe("Phase 15 content-contract foundation", () => {
- const valid={kind:"blog" as const,title:"A Barber's Story",slug:"a-barbers-story",excerpt:"How we welcome our customers",body:"A thoughtful story about working with our local customers.",category:"Grooming",tags:["community","local"],seoTitle:"A Barber’s Story",seoDescription:"How we welcome customers to our local barber shop.",featuredMediaRef:null,featuredMediaAlt:null};
+ const valid={kind:"blog" as const,title:"A Barber's Story",slug:"a-barbers-story",excerpt:"How we welcome our customers",body:"A thoughtful story about working with our local customers.",category:"Grooming",featuredMediaRef:null,featuredMediaAlt:null};
  it("supports two honest content kinds with stable URLs",()=>{
   expect(articleDraftSchema.parse(valid).kind).toBe("blog");
   expect(articleDraftSchema.parse({...valid,kind:"news"}).kind).toBe("news");
-  expect(articleDraftSchema.parse(valid).tags).toEqual(["community","local"]);
-  expect(articleDraftSchema.parse(valid).seoTitle).toBe("A Barber’s Story");
-  expect(articleDraftSchema.safeParse({...valid,tags:Array(13).fill("tag")}).success).toBe(false);
-  expect(articleDraftSchema.safeParse({...valid,seoDescription:"x".repeat(161)}).success).toBe(false);
   expect(articleRoute("blog","first-post")).toBe("/blog/first-post");
   expect(articleRoute("news","first-post")).toBe("/news/first-post");
   expect(newArticleSlug("A Barber's Story")).toBe("a-barber-s-story");

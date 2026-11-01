@@ -9,7 +9,7 @@ import "./website-story-studio.css";
 type Story = {
  id:string;kind:ArticleKind;title:string;slug:string;excerpt:string;body:string;category:string;tags:string[];seoTitle:string|null;seoDescription:string|null;
  featuredMediaRef:string|null;featuredMediaAlt:string|null;publishedSnapshot:{featuredMediaRef?:string|null}|null;
- revision:number;status:"draft"|"published";publishedSlug:string|null;publishedAt:string|null;
+ revision:number;status:"draft"|"scheduled"|"published";publishedSlug:string|null;publishedAt:string|null;scheduledAt:string|null;
 };
 export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
  websiteId:string;accountId?:string|null;initialKind:ArticleKind;onClose:()=>void;
@@ -71,21 +71,21 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
   }catch(error){setMessage(error instanceof Error?error.message:"Creation failed.");}
   finally{setBusy(false);}
  }
- async function save(action:"save"|"publish"|"unpublish") {
+ async function save(action:"save"|"publish"|"unpublish"|"schedule") {
   if(!draft||busy)return;
   setBusy(true);setMessage("");
   try{
    const response=await fetch("/api/websites/"+websiteId+"/articles/"+draft.id,{
     method:"PATCH",headers:{"Content-Type":"application/json",...headers},
     body:JSON.stringify({title:draft.title,slug:draft.slug,excerpt:draft.excerpt,
-     body:draft.body,category:draft.category,tags:draft.tags,seoTitle:draft.seoTitle,seoDescription:draft.seoDescription,featuredMediaRef:draft.featuredMediaRef,revision:draft.revision,action}),
+     body:draft.body,category:draft.category,tags:draft.tags,seoTitle:draft.seoTitle,seoDescription:draft.seoDescription,featuredMediaRef:draft.featuredMediaRef,revision:draft.revision,action,scheduledAt:draft.scheduledAt}),
    });
    const payload=await response.json();
    if(!response.ok)throw Error(payload.error || "Article could not be saved.");
    const saved=payload.article as Story;
    setArticles(prev=>prev.map(a=>a.id===saved.id?saved:a));
    setDraft(saved);setDirty(false);
-   setMessage(action==="publish"?"Published to your live website.":action==="unpublish"?"Article unpublished.":"Draft saved. Live content was not changed.");
+   setMessage(action==="publish"?"Published to your live website.":action==="unpublish"?"Article unpublished.":action==="schedule"?"Scheduled. The website will publish this article at the selected time.":"Draft saved. Live content was not changed.");
   }catch(error){setMessage(error instanceof Error?error.message:"Save failed; previous live version was preserved.");}
   finally{setBusy(false);}
  }
@@ -109,7 +109,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
    </aside>
    <div className="story-studio-editor">
     {draft?<>
-     <div className="story-studio-info"><span>{draft.status==="published"?"Live version exists":"Private draft"}</span><span>{dirty?"Unsaved edits":"All edits saved"}</span></div>
+     <div className="story-studio-info"><span>{draft.status==="published"?"Live version exists":draft.status==="scheduled"?"Scheduled publication":"Private draft"}</span><span>{dirty?"Unsaved edits":"All edits saved"}</span></div>
      {preview?<article className="story-studio-preview"><small>Draft preview · Not a public URL</small><h3>{draft.title}</h3><p>{draft.excerpt}</p>{draft.featuredMediaRef&&<Image unoptimized className="story-studio-featured-preview" src={"/_media/"+draft.featuredMediaRef.slice(6)} alt={draft.featuredMediaAlt||""} width={1200} height={750}/>}<div dangerouslySetInnerHTML={{__html:renderArticleMarkdown(draft.body)}}/></article>:
       <div className="story-studio-fields">
        <label>Headline<input value={draft.title} maxLength={150} onChange={e=>change("title",e.target.value)}/></label>
@@ -128,13 +128,16 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
         <button type="button" onClick={()=>change("body",draft.body+"\n\n- List item")}>Bullet list</button>
         <button type="button" onClick={()=>change("body",draft.body+"\n\n> Quote")}>Quote</button>
        </div><textarea value={draft.body} maxLength={50000} rows={14} onChange={e=>change("body",e.target.value)} placeholder="Write your story. Use the formatting tools or Markdown for headings, links, lists and emphasis."/><small>Formatting is rendered safely. Raw scripts and unsafe links are removed; images must use this website’s approved media library.</small></label>
+       <label>Schedule publication (your device time)<input type="datetime-local" value={draft.scheduledAt?new Date(draft.scheduledAt).toISOString().slice(0,16):""} onChange={e=>{setDraft(previous=>previous?{...previous,scheduledAt:e.target.value?new Date(e.target.value).toISOString():null}:previous);setDirty(true);}}/><small>Scheduling is available for unpublished articles. Choose a time at least two minutes ahead.</small></label>
        <div className="story-studio-featured"><div><strong>Featured image</strong><p>Choose an image already stored for this website, or upload one to the same secure image library.</p>{availableMediaCount!==null&&<small>{availableMediaCount} ready image{availableMediaCount===1?"":"s"} in this website library.</small>}</div>{draft.featuredMediaRef&&<Image unoptimized className="story-studio-featured-preview" src={"/_media/"+draft.featuredMediaRef.slice(6)} alt={draft.featuredMediaAlt||""} width={900} height={560}/>}{draft.featuredMediaRef&&<button type="button" disabled={busy} onClick={()=>{setDraft(previous=>previous?{...previous,featuredMediaRef:null,featuredMediaAlt:null}:previous);setDirty(true);}}>Remove featured image</button>}<MediaLibrary websiteId={websiteId} accountId={accountId??""} onChange={onMediaChange} onSelect={(item:MediaLibraryItem)=>{setDraft(previous=>previous?{...previous,featuredMediaRef:item.ref,featuredMediaAlt:item.alt}:previous);setDirty(true);setMessage("");}} selectedRef={draft.featuredMediaRef} protectedIds={Array.from(new Set([...articles.flatMap(article=>[article.featuredMediaRef,article.publishedSnapshot?.featuredMediaRef]),draft.featuredMediaRef,draft.publishedSnapshot?.featuredMediaRef].filter((ref):ref is string=>Boolean(ref)).map(ref=>ref.slice(6))) )}/></div>
       </div>}
      <div className="story-studio-actions">
       <button type="button" onClick={()=>setPreview(p=>!p)}>{preview?"Edit article":"Preview draft"}</button>
       <button type="button" disabled={busy||loading||!dirty} onClick={()=>void save("save")}>Save draft</button>
-      <button className="story-studio-live" type="button" disabled={busy||loading} onClick={()=>void save("publish")}>{busy?"Working…":"Publish"}</button>
+      <button className="story-studio-live" type="button" disabled={busy||loading} onClick={()=>void save("publish")}>{busy?"Working…":"Publish now"}</button>
+      <button type="button" disabled={busy||loading||!draft.scheduledAt} onClick={()=>void save("schedule")}>Schedule</button>
       {draft.status==="published"&&<button type="button" disabled={busy} onClick={()=>void save("unpublish")}>Unpublish</button>}
+      {draft.status==="scheduled"&&<button type="button" disabled={busy} onClick={()=>void save("save")}>Keep as draft</button>}
      </div>
      {draft.status==="published"&&draft.publishedSlug&&siteSlug&&
        <p><a target="_blank" rel="noopener noreferrer" href={"https://"+siteSlug+".lucia.name.ng"+articleRoute(draft.kind,draft.publishedSlug)}>View live article ↗</a></p>}
