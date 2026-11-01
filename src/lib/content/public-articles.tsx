@@ -1,4 +1,5 @@
 import "server-only";
+import Link from "next/link";
 import { cache } from "react";
 import type { Metadata } from "next";
 import { and, desc, eq } from "drizzle-orm";
@@ -57,7 +58,7 @@ export async function PublicArticlePage({path}:{path:string}) {
  const item=slug?posts[0]:null;
  return <main className={styles.shell}>
   <nav className={styles.nav} aria-label="Site navigation">
-   <a href="/">{site.name}</a><div><a href="/blog">Blog</a><a href="/news">News</a></div>
+   <Link href="/">{site.name}</Link><div><a href="/blog">Blog</a><a href="/news">News</a></div>
   </nav>
   {item ? <article className={styles.article}>
    <p className={styles.eyebrow}>{label}{item.category?" · "+item.category:""}</p>
