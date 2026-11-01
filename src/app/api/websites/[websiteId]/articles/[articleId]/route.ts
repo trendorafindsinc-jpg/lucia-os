@@ -55,8 +55,10 @@ export async function PATCH(request:Request,context:Context){
     const mediaAltById=input.action==="unpublish" ? {} : await validateMediaOwnership(tx,org.id,site.id,{featuredMediaRef:input.featuredMediaRef,body:input.body},input.action==="publish");
     const featuredMediaId=input.featuredMediaRef ? input.featuredMediaRef.slice(6) : null;
     const featuredMediaAlt=featuredMediaId ? mediaAltById[featuredMediaId] ?? null : null;
-    const [author]=await tx.select({displayName:appUsers.displayName}).from(appUsers).where(eq(appUsers.id,user.id)).limit(1);
-    const draft:PublishedArticle={kind:current.kind as "blog"|"news",title:input.title,slug:input.slug,excerpt:input.excerpt,body:input.body,category:input.category,authorName:author?.displayName?.trim()||null,eventAt:input.eventAt,isFeatured:input.isFeatured,correctionNote:input.correctionNote,correctsSlug:input.correctsSlug,tags:input.tags,seoTitle:input.seoTitle,seoDescription:input.seoDescription,featuredMediaRef:input.featuredMediaRef,featuredMediaAlt};
+    // getCurrentUser resolves the authenticated profile through the session
+    // security-definer path. Re-querying app_users under tenant RLS can hide
+    // the same author row and silently publish a null attribution.
+    const draft:PublishedArticle={kind:current.kind as "blog"|"news",title:input.title,slug:input.slug,excerpt:input.excerpt,body:input.body,category:input.category,authorName:user.displayName?.trim()||null,eventAt:input.eventAt,isFeatured:input.isFeatured,correctionNote:input.correctionNote,correctsSlug:input.correctsSlug,tags:input.tags,seoTitle:input.seoTitle,seoDescription:input.seoDescription,featuredMediaRef:input.featuredMediaRef,featuredMediaAlt};
     if((input.action==="publish" || input.action==="schedule") && !publicationReady(draft))return {validation:"Add a meaningful summary and article body before publishing."};
     const live=input.action==="publish"?draft:input.action==="unpublish"||input.action==="schedule"?null:current.publishedSnapshot;
     const status=input.action==="schedule"?"scheduled":live?"published":"draft";
