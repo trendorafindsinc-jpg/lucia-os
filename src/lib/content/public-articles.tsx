@@ -7,7 +7,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getDb } from "@/lib/db/client";
 import { normalizeHostname } from "@/lib/domains/hostname";
-import { articleRoute, type PublishedArticle } from "@/lib/content/article-model";
+import { articleRoute } from "@/lib/content/article-model";
 import { websiteDomains, websitePosts, websites, organizations } from "@/lib/db/schema";
 import styles from "./public-articles.module.css";
 

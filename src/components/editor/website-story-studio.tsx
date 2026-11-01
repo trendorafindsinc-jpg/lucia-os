@@ -21,7 +21,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
  const [message,setMessage]=useState("");
  const [preview,setPreview]=useState(false);
  const [dirty,setDirty]=useState(false);
- const headers=accountId?{"x-lucia-workspace-account":accountId}:{};
+ const headers: Record<string,string>=accountId?{"x-lucia-workspace-account":accountId}:{};
  async function load() {
   setLoading(true);setMessage("");
   try {
