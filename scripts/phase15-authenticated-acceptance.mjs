@@ -126,6 +126,37 @@ export async function checkPhase15AuthenticatedAcceptance({
         const pagesPanel = view.getByRole("region", { name: "Pages and navigation" });
         await pagesPanel.waitFor();
         await pagesPanel.getByLabel("New page name").waitFor();
+        if (name === selected[0]) {
+          async function waitForEditorSave() {
+            await view.locator(".website-first-editor-status").filter({ hasText: "● Unsaved" }).waitFor();
+            await view.locator(".website-first-editor-status").filter({ hasText: "✓ Saved" }).waitFor();
+          }
+          await pagesPanel.getByLabel("New page name").fill("Phase 15 journey");
+          await pagesPanel.getByRole("button", { name: "+ Add page", exact: true }).click();
+          await waitForEditorSave();
+          const newPageCard = pagesPanel.locator(".website-first-page-list article").filter({ hasText: "Phase 15 journey" });
+          await newPageCard.waitFor();
+          await newPageCard.getByLabel("Page address").fill("/phase-15-customer-journey");
+          await newPageCard.getByLabel("Page address").blur();
+          await waitForEditorSave();
+          await newPageCard.getByLabel("Page title").fill("Phase 15 customer journey");
+          await newPageCard.getByLabel("Page title").blur();
+          await waitForEditorSave();
+          await newPageCard.getByLabel("Show in website navigation").uncheck();
+          await waitForEditorSave();
+          assert.equal(await pagesPanel.locator(".website-first-navigation-list li").filter({ hasText: "Phase 15 customer journey" }).count(), 0);
+          await newPageCard.getByLabel("Show in website navigation").check();
+          await waitForEditorSave();
+          const navEntry = pagesPanel.locator(".website-first-navigation-list li").filter({ hasText: "Phase 15 customer journey" });
+          await navEntry.waitFor();
+          assert((await navEntry.innerText()).includes("/phase-15-customer-journey"));
+          await navEntry.getByRole("button", { name: "↑" }).click();
+          await waitForEditorSave();
+          view.once("dialog", (dialog) => dialog.accept());
+          await newPageCard.getByRole("button", { name: "Remove page", exact: true }).click();
+          await waitForEditorSave();
+          assert.equal(await pagesPanel.locator(".website-first-page-list article").filter({ hasText: "Phase 15 customer journey" }).count(), 0);
+        }
         await pagesPanel.getByRole("button", { name: "Close", exact: true }).click();
         await view.getByRole("button", { name: "Manage Media", exact: true }).click();
         const mediaPanel = view.getByRole("region", { name: "Website image replacement" });
