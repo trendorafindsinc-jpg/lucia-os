@@ -99,3 +99,8 @@
 .editor-page .studio-media-library{box-sizing:border-box;min-width:0;max-width:100%}
 .editor-page .studio-task-nav button{box-sizing:border-box;min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere}
 .editor-page :is(input,select,textarea,button){box-sizing:border-box;max-width:100%}
+.studio-journey-progress{display:flex;flex-wrap:wrap;gap:8px;margin:0 auto 14px;max-width:1400px;padding:12px;border:1px solid #d8e3f1;border-radius:14px;background:#fbfdff}
+.studio-journey-progress a,.studio-journey-progress span{display:inline-flex;align-items:center;min-height:38px;padding:8px 11px;border-radius:9px;text-decoration:none;font-size:12px;font-weight:750;color:#526580}
+.studio-journey-progress [aria-current=step]{background:#eaf0fc;color:#1f4d9a;border:1px solid #c8d7f2}
+@media(max-width:600px){.studio-journey-progress{display:grid;grid-template-columns:1fr 1fr}.studio-journey-progress a,.studio-journey-progress span{font-size:11px;justify-content:center}}
+
