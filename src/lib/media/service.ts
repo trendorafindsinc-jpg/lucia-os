@@ -32,11 +32,27 @@ export async function validateMediaOwnership(tx: MediaTransaction, organizationI
   const altById:Record<string,string> = {};
   const featuredRef=definition&&typeof definition==="object"?(definition as {featuredMediaRef?:unknown}).featuredMediaRef:null;
   const featuredId=typeof featuredRef==="string"?mediaReferencePattern.exec(featuredRef)?.[1]??null:null;
+  const expectedKinds = new Map<string, string>();
+  function collectExpectedKinds(value: unknown) {
+    if (Array.isArray(value)) { value.forEach(collectExpectedKinds); return; }
+    if (!value || typeof value !== "object") return;
+    const record = value as Record<string, unknown>;
+    if (record.type === "media-embed" && typeof record.mediaRef === "string") {
+      const match = mediaReferencePattern.exec(record.mediaRef);
+      if (match && (record.kind === "video" || record.kind === "document"))
+        expectedKinds.set(match[1], record.kind);
+    }
+    Object.values(record).forEach(collectExpectedKinds);
+  }
+  collectExpectedKinds(definition);
   for (const id of mediaIds(definition)) {
     const rows = await tx.execute(sql`select id,alt,kind from website_media where id=${id} and organization_id=${organizationId} and website_id=${websiteId} and status='ready' for share`);
     const media = rows[0] as {id:string;alt:string;kind:string}|undefined;
     if (!media) throw new MediaError("A media asset is unavailable or belongs to another website.");
     if(featuredId===id&&media.kind!=="image")throw new MediaError("An article featured image must be an image asset.");
+    const expectedKind = expectedKinds.get(id);
+    if (expectedKind && media.kind !== expectedKind)
+      throw new MediaError("A media section must reference a matching " + expectedKind + " asset.");
     altById[id]=media.alt;
     if (publishing) await tx.execute(sql`update website_media set last_published_at=now() where id=${id}`);
   }
