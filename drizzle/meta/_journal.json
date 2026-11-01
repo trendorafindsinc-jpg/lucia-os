@@ -134,6 +134,13 @@
       "when": 1793548800000,
       "tag": "0018_article_featured_media",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1793551800000,
+      "tag": "0021_legacy_article_import",
+      "breakpoints": true
     }
   ]
 }

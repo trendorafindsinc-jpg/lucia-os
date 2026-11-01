@@ -479,6 +479,7 @@ export const websitePosts = pgTable("website_posts", {
   foreignKey({ name: "website_posts_website_org_fk", columns: [table.organizationId,table.websiteId], foreignColumns: [websites.organizationId,websites.id] }).onDelete("cascade"),
   foreignKey({ name: "website_posts_featured_media_fk", columns: [table.organizationId,table.websiteId,table.featuredMediaId], foreignColumns: [websiteMedia.organizationId,websiteMedia.websiteId,websiteMedia.id] }).onDelete("restrict"),
   uniqueIndex("website_posts_site_slug_uq").on(table.organizationId,table.websiteId,table.kind,table.slug),
+  uniqueIndex("website_posts_legacy_source_uq").on(table.organizationId,table.websiteId,table.legacySourceId).where(sql`legacy_source_id IS NOT NULL`),
   uniqueIndex("website_posts_public_slug_uq").on(table.organizationId,table.websiteId,table.kind,table.publishedSlug),
   index("website_posts_owner_idx").on(table.organizationId,table.websiteId,table.updatedAt),
 ]);
