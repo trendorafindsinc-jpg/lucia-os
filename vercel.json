@@ -1,1 +1,12 @@
-{"crons":[{"path":"/api/cron/publish-articles","schedule":"* * * * *"}]}
+{
+  "crons": [
+    {
+      "path": "/api/cron/publish-articles",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/reconcile-media",
+      "schedule": "*/15 * * * *"
+    }
+  ]
+}
