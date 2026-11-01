@@ -67,7 +67,7 @@ export async function DELETE(request: Request, context: Context) {
           updatedAt: new Date(),
         }).where(and(eq(websites.id, site.id), eq(websites.organizationId, org.id)));
         await tx.insert(platformAuditEvents).values({
-          actorUserId: user.id, actorKind: "user", organizationId: org.id,
+          actorUserId: user.id, actorKind: "tenant", organizationId: org.id,
           action: "website.removed", targetType: "website", targetId: site.id,
           purpose: "website.lifecycle", result: "success",
           metadata: JSON.stringify({
