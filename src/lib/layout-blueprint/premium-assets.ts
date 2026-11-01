@@ -372,6 +372,7 @@ export function resolvePremiumAsset(reference: string): string {
 }
 
 export function premiumAssetDimensions(reference: string): {width: number; height: number} {
+  if (reference.startsWith("builtin:premium/cinematic-")) return { width: 1600, height: 1000 };
   if (reference.startsWith("builtin:premium/canvas-art-")) return { width: 1500, height: 1000 };
   if (["builtin:premium/photograph-haven", "builtin:premium/photograph-maison", "builtin:premium/photograph-estate"].includes(reference)) return { width: 1500, height: 1000 };
   if (reference === "builtin:meridian/portrait") return { width: 900, height: 1125 };
