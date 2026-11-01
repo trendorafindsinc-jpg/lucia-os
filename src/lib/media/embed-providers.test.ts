@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveExternalEmbed } from "./embed-providers";
+import { resolveExternalEmbed, resolveExternalHttpsLink } from "./embed-providers";
 
 describe("website embed providers", () => {
   it.each([
@@ -24,5 +24,26 @@ describe("website embed providers", () => {
     "https://example.com/embed",
   ])("rejects unsafe or unsupported URL %s", (input) => {
     expect(resolveExternalEmbed(input)).toBeNull();
+  });
+});
+
+describe("website external resource links", () => {
+  it.each([
+    ["https://example.com/resources/brochure.pdf", "https://example.com/resources/brochure.pdf"],
+    ["https://downloads.example.org/files/guide", "https://downloads.example.org/files/guide"],
+  ])("accepts secure HTTPS destinations: %s", (input, expected) => {
+    expect(resolveExternalHttpsLink(input)).toBe(expected);
+  });
+
+  it.each([
+    "http://example.com/file.pdf",
+    "javascript:alert(1)",
+    "https://user:pass@example.com/file",
+    "https://example.com:8443/file",
+    "https://localhost/file",
+    "https://intranet.local/file",
+    "not a URL",
+  ])("rejects unsafe external destinations: %s", (input) => {
+    expect(resolveExternalHttpsLink(input)).toBeNull();
   });
 });
