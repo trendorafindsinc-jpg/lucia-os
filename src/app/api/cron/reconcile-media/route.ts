@@ -13,8 +13,8 @@ export async function GET(request:Request){
   for(const row of rows as unknown as {id:string;object_key:string;upload_id:string|null;bytes:number;mime:string;checksum:string|null;kind:string;width:number;height:number}[]){
    try{
     if(row.kind==="image"){
-     const data=await mediaStorage().get(row.object_key);
-     if(data.length===row.bytes){await db.execute(sql`select lucia_finalize_media_upload(${row.id}::uuid,'ready',null)`);recovered++;}
+     let data:Buffer|null=null;try{data=await mediaStorage().get(row.object_key);}catch{data=null;}
+     if(data&&data.length===row.bytes){await db.execute(sql`select lucia_finalize_media_upload(${row.id}::uuid,'ready',null)`);recovered++;}
      else{await mediaStorage().remove(row.object_key);await db.execute(sql`select lucia_finalize_media_upload(${row.id}::uuid,'deleted',null)`);removed++;}
     }else{
      const head=await multipartStorage.head(row.object_key);
