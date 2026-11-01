@@ -199,6 +199,12 @@ describe("Phase 13 premium layout contract", () => {
       mime: "video/mp4",
     };
     expect(() => parsePremiumLayout(fixture("media", [hero, video], [story]))).not.toThrow();
+    const image = {
+      id: "home-image", type: "media-embed", variant: "wide", kind: "image",
+      title: "Our team", mediaRef: "media:550e8400-e29b-41d4-a716-446655440001",
+      description: "Our team at work",
+    };
+    expect(() => parsePremiumLayout(fixture("media", [hero, image], [story]))).not.toThrow();
     const spotify = {
       id: "home-audio", type: "media-embed", variant: "wide", kind: "embed",
       title: "Our playlist", url: "https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M",
