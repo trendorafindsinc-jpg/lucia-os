@@ -45,7 +45,7 @@ describe("Phase 14 cinematic editions: forty distinct, safe starting definitions
   it("leaves the eight flagships on their previous stored-compatible design revision", () => {
     for (const id of premiumFlagshipIds) {
       const original = premiumCandidate(id);
-      expect(original.layoutVersion).toBe(1);
+      expect(original.pages[0].sections.some(s => s.type === "premium-hero" && s.image?.src.startsWith("builtin:premium/cinematic-"))).toBe(false);
       expect(renderToStaticMarkup(<LayoutRenderer blueprint={original} />)).not.toContain("premium-cinema");
     }
   });

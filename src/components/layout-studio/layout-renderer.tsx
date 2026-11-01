@@ -201,6 +201,12 @@ function PremiumLayoutPage({
     }
   };
   const visual = definition.visualExperience;
+  // Scope the new visual edition to an actual built-in cinematic hero asset.
+  // Historic r2 sites and flagships can share layoutVersion without opting in.
+  const cinematic = Boolean(visual && definition.pages[0]?.sections.some(
+    (section) => section.type === "premium-hero" &&
+      section.image?.src.startsWith("builtin:premium/cinematic-"),
+  ));
   const t = definition.tokens;
   const widths = { reading: "760px", standard: "1120px", wide: "1440px" };
   const fonts = {
@@ -218,7 +224,7 @@ function PremiumLayoutPage({
   const Root = preview ? "div" : "main";
   return (
     <Root
-      className={`layout-site premium-layout ${visual ? "premium-visual" : ""} ${definition.layoutVersion === 2 && visual ? "premium-cinema" : ""} premium-design-${definition.layoutId.slice("lucia.layout.".length)}-r${definition.layoutVersion} premium-scale-${t.scale} premium-rhythm-${t.rhythm} premium-radius-${t.radius} premium-responsive-${page.responsive}`}
+      className={`layout-site premium-layout ${visual ? "premium-visual" : ""} ${cinematic ? "premium-cinema" : ""} premium-design-${definition.layoutId.slice("lucia.layout.".length)}-r${definition.layoutVersion} premium-scale-${t.scale} premium-rhythm-${t.rhythm} premium-radius-${t.radius} premium-responsive-${page.responsive}`}
       style={style}
       data-layout-version="2"
       data-layout-revision={definition.layoutVersion}
