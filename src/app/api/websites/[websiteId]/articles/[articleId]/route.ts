@@ -42,7 +42,7 @@ export async function PATCH(request:Request,context:Context){
     if(!current)continue;
     if(current.revision!==input.revision)return {conflict:true as const};
     if(input.action==="publish" && site.status!=="published")return {validation:"Publish the website before publishing articles."};
-    const mediaAltById=await validateMediaOwnership(tx,org.id,site.id,{featuredMediaRef:input.featuredMediaRef},input.action==="publish");
+    const mediaAltById=input.action==="unpublish" ? {} : await validateMediaOwnership(tx,org.id,site.id,{featuredMediaRef:input.featuredMediaRef},input.action==="publish");
     const featuredMediaId=input.featuredMediaRef ? input.featuredMediaRef.slice(6) : null;
     const featuredMediaAlt=featuredMediaId ? mediaAltById[featuredMediaId] ?? null : null;
     const draft:PublishedArticle={kind:current.kind as "blog"|"news",title:input.title,slug:input.slug,excerpt:input.excerpt,body:input.body,category:input.category,featuredMediaRef:input.featuredMediaRef,featuredMediaAlt};
