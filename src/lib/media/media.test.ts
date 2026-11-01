@@ -3,6 +3,7 @@ import sharp from "sharp";
 import { compressImage } from "./image";
 import { mediaIds, mediaReferencePattern } from "./references";
 import { mediaStorage } from "./storage";
+import { isSafeMediaObjectKey, multipartStorage } from "./multipart-storage";
 import { premiumCandidate } from "@/lib/layout-blueprint/premium-layouts/catalogue-candidates";
 import { applyPremiumEdit } from "@/lib/layout-blueprint/premium-composition";
 const id = "b8e95a60-fbde-4c37-93e6-a2916c7b13d4";
@@ -33,6 +34,7 @@ describe("customer media boundary", () => {
     let nested: unknown = {}; for (let i = 0; i < 30; i++) nested = { nested };
     expect(() => mediaIds(nested)).toThrow("too deep");
     expect(mediaIds({ items: ["media:" + id, "media:" + id, "javascript:alert(1)"] })).toEqual([id]);
+    expect(mediaIds({body:"[Watch](media:"+id+")"})).toEqual([id]);
   });
   it("signs provider requests on the server and rejects caller-controlled keys", async () => {
     vi.stubEnv("S3_ENDPOINT", "https://s3.eu-west-3.idrivee2.com"); vi.stubEnv("S3_REGION", "eu-west-3"); vi.stubEnv("S3_BUCKET", "lucia-os-customer-media-2026");
