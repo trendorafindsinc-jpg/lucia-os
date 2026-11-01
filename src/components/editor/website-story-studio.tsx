@@ -21,7 +21,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
  const [message,setMessage]=useState("");
  const [preview,setPreview]=useState(false);
  const [dirty,setDirty]=useState(false);
- const headers = useMemo<Record<string,string>>(()=>accountId?{"x-lucia-workspace-account":accountId}:{},[accountId]);
+ const headers = useMemo<Record<string,string>>(()=>{ const value:Record<string,string>={}; if(accountId)value["x-lucia-workspace-account"]=accountId; return value; },[accountId]);
  const load = useCallback(async () => {
   setLoading(true);setMessage("");
   try {
