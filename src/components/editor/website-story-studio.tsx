@@ -22,6 +22,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
  const [draft,setDraft]=useState<Story|null>(null);
  const [newTitle,setNewTitle]=useState("");
  const [busy,setBusy]=useState(false);
+ const [importBusy,setImportBusy]=useState(false);
  const [loading,setLoading]=useState(true);
  const [message,setMessage]=useState("");
  const [preview,setPreview]=useState(false);
@@ -54,6 +55,19 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
  function choose(id:string) {
   if(dirty && !window.confirm("Discard unsaved changes to this article?"))return;
   setDirty(false);setSelected(id);setPreview(false);
+ }
+ async function importLegacy(){
+  if(importBusy||busy)return;
+  setImportBusy(true);setMessage("");
+  try{
+   const response=await fetch("/api/websites/"+encodeURIComponent(websiteId)+"/articles/import-legacy",{method:"POST",headers});
+   const payload=await response.json();
+   if(!response.ok)throw Error(payload.error||"Legacy drafts could not be imported.");
+   await load();
+   setMessage(payload.sourceAvailable?`Imported ${payload.imported} drafts; ${payload.unchanged} were already imported and ${payload.skipped} were skipped. Original library retained.`:"No legacy content library was found.");
+   if(payload.issues?.length)setMessage(previous=>previous+" "+payload.issues.slice(0,2).join("; "));
+  }catch(error){setMessage(error instanceof Error?error.message:"Legacy import failed; original content remains unchanged.");}
+  finally{setImportBusy(false);}
  }
  async function create(event:React.FormEvent){
   event.preventDefault();
@@ -103,6 +117,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
   <div className="story-studio-columns">
    <aside className="story-studio-list">
     <form onSubmit={create}><label>New {kind} title<input required maxLength={150} value={newTitle} onChange={e=>setNewTitle(e.target.value)} placeholder={kind==="blog"?"Our first story":"A company announcement"}/></label><button disabled={busy||loading} type="submit">+ Create draft</button></form>
+    {kind==="blog"&&<button type="button" disabled={busy||loading||importBusy} onClick={()=>void importLegacy()}>{importBusy?"Importing legacy drafts…":"Import existing Blog drafts"}</button>}
     {loading?<p role="status">Loading your website articles…</p>:
      items.length ? items.map(article=><button className={article.id===selected?"story-selected":""} key={article.id} type="button" onClick={()=>choose(article.id)}>
       <strong>{article.title}</strong><small>{article.status==="published"?"Published":"Private draft"} · revision {article.revision}</small>
