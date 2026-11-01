@@ -134,7 +134,7 @@ export async function checkPhase15AuthenticatedAcceptance({
           await pagesPanel.getByLabel("New page name").fill("Phase 15 journey");
           await pagesPanel.getByRole("button", { name: "+ Add page", exact: true }).click();
           await waitForEditorSave();
-          const newPageCard = pagesPanel.locator(".website-first-page-list article").filter({ hasText: "Phase 15 journey" });
+          const newPageCard = pagesPanel.locator(".website-first-page-list article").filter({ hasText: "Phase 15" });
           await newPageCard.waitFor();
           await newPageCard.getByLabel("Page address").fill("/phase-15-customer-journey");
           await newPageCard.getByLabel("Page address").blur();
