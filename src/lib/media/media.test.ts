@@ -49,4 +49,22 @@ describe("customer media boundary", () => {
     await expect(store.put("../other-bucket/file", Buffer.from("bad"))).rejects.toThrow();
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
+  it("signs multipart video storage, checks object metadata and streams byte ranges",async()=>{
+    vi.stubEnv("S3_ENDPOINT","https://s3.eu-west-3.idrivee2.com");vi.stubEnv("S3_REGION","eu-west-3");vi.stubEnv("S3_BUCKET","lucia-os-customer-media-2026");vi.stubEnv("S3_ACCESS_KEY_ID","isolated-test-id");vi.stubEnv("S3_SECRET_ACCESS_KEY","isolated-test-not-a-real-key");
+    const key=`os/${id}/${id}/${id}.mp4`,checksum="a".repeat(64);
+    expect(isSafeMediaObjectKey(key)).toBe(true);expect(isSafeMediaObjectKey("../foreign/file.mp4")).toBe(false);
+    const fetcher=vi.fn()
+      .mockResolvedValueOnce(new Response("<InitiateMultipartUploadResult><UploadId>test-upload-id-123456</UploadId></InitiateMultipartUploadResult>",{status:200}))
+      .mockResolvedValueOnce(new Response("<CompleteMultipartUploadResult><ETag>0123456789abcdef0123456789abcdef-1</ETag></CompleteMultipartUploadResult>",{status:200}))
+      .mockResolvedValueOnce(new Response(null,{status:200,headers:{"content-length":"12","content-type":"video/mp4","etag":'"0123456789abcdef0123456789abcdef-1"',"x-amz-meta-sha256":checksum}}))
+      .mockResolvedValueOnce(new Response("video bytes",{status:206,headers:{"content-range":"bytes 0-4/12"}}))
+      .mockResolvedValueOnce(new Response(null,{status:204}));
+    vi.stubGlobal("fetch",fetcher);
+    const uploadId=await multipartStorage.create(key,"video/mp4","video",checksum);expect(uploadId).toBe("test-upload-id-123456");
+    expect(new URL(multipartStorage.signPart(key,uploadId,1)).searchParams.get("partNumber")).toBe("1");
+    await multipartStorage.complete(key,uploadId,[{partNumber:1,etag:'"0123456789abcdef0123456789abcdef"'}]);
+    const head=await multipartStorage.head(key);expect(head?.bytes).toBe(12);expect(head?.checksum).toBe(checksum);
+    expect((await multipartStorage.stream(key,"bytes=0-4"))?.status).toBe(206);
+    await multipartStorage.remove(key);expect(fetcher).toHaveBeenCalledTimes(5);
+  });
 });
