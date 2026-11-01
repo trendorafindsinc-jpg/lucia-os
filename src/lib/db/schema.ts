@@ -433,6 +433,14 @@ export const websiteMedia = pgTable("website_media", {
   websiteId: uuid("website_id").notNull(),
   createdByUserId: uuid("created_by_user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
   objectKey: text("object_key").notNull(),
+  kind: text("kind").notNull().default("image"),
+  mime: text("mime").notNull().default("image/webp"),
+  originalName: text("original_name"),
+  checksum: text("checksum"),
+  etag: text("etag"),
+  uploadId: text("upload_id"),
+  caption: text("caption"),
+  durationMs: integer("duration_ms"),
   lastPublishedAt: timestamp("last_published_at", { withTimezone: true }),
   bytes: integer("bytes").notNull(),
   width: integer("width").notNull(), height: integer("height").notNull(),
@@ -452,6 +460,8 @@ export const mediaStorageBudget = pgTable("media_storage_budget", {
 export const websiteMediaLimits = pgTable("website_media_limits", {
   websiteId: uuid("website_id").primaryKey().references(() => websites.id, { onDelete: "restrict" }),
   quotaBytes: integer("quota_bytes").notNull(),
+  videoQuotaBytes: bigint("video_quota_bytes", { mode: "number" }).notNull().default(500_000_000),
+  documentQuotaBytes: bigint("document_quota_bytes", { mode: "number" }).notNull().default(50_000_000),
 });
 
 
