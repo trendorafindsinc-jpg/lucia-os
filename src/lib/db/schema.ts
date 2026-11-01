@@ -452,3 +452,43 @@ export const websiteMediaLimits = pgTable("website_media_limits", {
   websiteId: uuid("website_id").primaryKey().references(() => websites.id, { onDelete: "restrict" }),
   quotaBytes: integer("quota_bytes").notNull(),
 });
+
+
+/** Phase 15: normalized Blog/News records. Public delivery only consumes publishedSnapshot. */
+export const websitePosts = pgTable("website_posts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
+  websiteId: uuid("website_id").notNull(),
+  authorUserId: uuid("author_user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
+  kind: text("kind").notNull(),
+  slug: text("slug").notNull(),
+  title: text("title").notNull(),
+  excerpt: text("excerpt").notNull().default(""),
+  body: text("body").notNull().default(""),
+  category: text("category").notNull().default(""),
+  status: text("status").notNull().default("draft"),
+  revision: integer("revision").notNull().default(1),
+  publishedSnapshot: jsonb("published_snapshot").$type<import("@/lib/content/article-model").PublishedArticle | null>(),
+  publishedAt: timestamp("published_at", { withTimezone: true }),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+}, (table) => [
+  foreignKey({ name: "website_posts_website_org_fk", columns: [table.organizationId,table.websiteId], foreignColumns: [websites.organizationId,websites.id] }).onDelete("cascade"),
+  uniqueIndex("website_posts_site_slug_uq").on(table.organizationId,table.websiteId,table.kind,table.slug),
+  index("website_posts_owner_idx").on(table.organizationId,table.websiteId,table.updatedAt),
+]);
+
+export const websitePostRevisions = pgTable("website_post_revisions", {
+ id: uuid("id").primaryKey().defaultRandom(),
+ organizationId: uuid("organization_id").notNull(),
+ websiteId: uuid("website_id").notNull(),
+ postId: uuid("post_id").notNull().references(() => websitePosts.id, { onDelete: "cascade" }),
+ actorUserId: uuid("actor_user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
+ revision: integer("revision").notNull(),
+ event: text("event").notNull(),
+ snapshot: jsonb("snapshot").notNull(),
+ createdAt: createdAt(),
+}, (table) => [
+ foreignKey({ name: "website_post_revisions_website_org_fk", columns: [table.organizationId,table.websiteId], foreignColumns: [websites.organizationId,websites.id] }).onDelete("cascade"),
+ uniqueIndex("website_post_revisions_unique").on(table.postId,table.revision),
+]);
