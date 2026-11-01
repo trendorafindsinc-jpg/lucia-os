@@ -183,7 +183,7 @@ describe("Phase 13 premium layout contract", () => {
     expect(renamed.pages[1]).toMatchObject({ title: "Our story", description: "Learn more about the team." });
     expect(renamed.navigation[1]).toEqual({ label: "Our story", href: "/about" });
     const hidden = applyPremiumEdit(renamed, "advanced", {
-      kind: "page-details", pageId: "about", title: "Our story",
+      kind: "page-details", pageId: "about", path: "/about", title: "Our story",
       description: "Learn more about the team.", navigation: false,
     });
     expect(hidden.navigation).toEqual([{ label: "Home", href: "/" }]);
@@ -195,13 +195,13 @@ describe("Phase 13 premium layout contract", () => {
     const homeHero = withInternalLink.pages[0].sections.find((section) => section.type === "premium-hero");
     if (!homeHero || homeHero.type !== "premium-hero") throw new Error("Missing hero");
     homeHero.action = { label: "Read our story", href: "/about" };
-    const renamed = applyPremiumEdit(withInternalLink, "advanced", {
+    const pathChanged = applyPremiumEdit(withInternalLink, "advanced", {
       kind: "page-details", pageId: "about", path: "/our-story", title: "Our story",
       description: "Learn more about the team.", navigation: true,
     });
-    expect(renamed.pages[1].path).toBe("/our-story");
-    expect(renamed.navigation[1].href).toBe("/our-story");
-    const updatedHero = renamed.pages[0].sections.find((section) => section.type === "premium-hero");
+    expect(pathChanged.pages[1].path).toBe("/our-story");
+    expect(pathChanged.navigation[1].href).toBe("/our-story");
+    const updatedHero = pathChanged.pages[0].sections.find((section) => section.type === "premium-hero");
     expect(updatedHero?.type === "premium-hero" ? updatedHero.action?.href : null).toBe("/our-story");
   });
   it("accepts only typed customer media and allowlisted external embeds", () => {
