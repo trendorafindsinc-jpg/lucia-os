@@ -25,16 +25,22 @@ const readPublished = cache(async (path: string, websiteSlug?: string) => {
  let hostname:string;
  try{hostname=normalizeHostname(new URL("http://"+host).hostname);}catch{notFound();}
  const db=getDb();
- let [site]=await db.select({id:websites.id,organizationId:websites.organizationId,name:websites.name})
-  .from(websiteDomains).innerJoin(websites,and(eq(websiteDomains.websiteId,websites.id),eq(websiteDomains.organizationId,websites.organizationId)))
-  .innerJoin(organizations,eq(organizations.id,websites.organizationId))
-  .where(and(eq(websiteDomains.hostname,hostname),eq(websiteDomains.status,"active"),
-   eq(websites.status,"published"),eq(organizations.status,"active"))).limit(1);
- if(!site&&websiteSlug){
+ let site: {id:string;organizationId:string;name:string}|undefined;
+ // A platform subdomain carries the canonical website slug in the route. Resolve
+ // that exact site first; hostname bindings remain the authority for custom domains.
+ if(websiteSlug){
   const [platformSite]=await db.select({id:websites.id,organizationId:websites.organizationId,name:websites.name})
    .from(websites).innerJoin(organizations,eq(organizations.id,websites.organizationId))
    .where(and(eq(websites.slug,websiteSlug),eq(websites.status,"published"),eq(organizations.status,"active"))).limit(1);
   site=platformSite;
+ }
+ if(!site){
+  const [domainSite]=await db.select({id:websites.id,organizationId:websites.organizationId,name:websites.name})
+   .from(websiteDomains).innerJoin(websites,and(eq(websiteDomains.websiteId,websites.id),eq(websiteDomains.organizationId,websites.organizationId)))
+   .innerJoin(organizations,eq(organizations.id,websites.organizationId))
+   .where(and(eq(websiteDomains.hostname,hostname),eq(websiteDomains.status,"active"),
+    eq(websites.status,"published"),eq(organizations.status,"active"))).limit(1);
+  site=domainSite;
  }
  if(!site)notFound();
  const base=and(eq(websitePosts.websiteId,site.id),eq(websitePosts.organizationId,site.organizationId),
