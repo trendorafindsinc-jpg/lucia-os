@@ -17,6 +17,17 @@ type SaveState = "saved" | "unsaved" | "saving" | "offline" | "conflict" | "fail
 type HistoryItem = { forward: PremiumEdit; reverse: PremiumEdit };
 type Field = "heading" | "body" | "eyebrow" | "email";
 
+function withSectionImage(section: PremiumSection, image: { src: string; alt: string }): PremiumSection {
+  switch (section.type) {
+    case "premium-hero":
+    case "editorial-story":
+    case "experience":
+      return { ...section, image };
+    default:
+      return section;
+  }
+}
+
 function reverseEdit(layout: PremiumLayout, edit: PremiumEdit): PremiumEdit | null {
   const page = "pageId" in edit ? layout.pages.find((entry) => entry.id === edit.pageId) : null;
   if (edit.kind === "replace-section") {
@@ -96,6 +107,10 @@ export function WebsiteFirstPremiumEditor({
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
   }, [edits.length]);
+
+  useEffect(() => {
+    if (window.location.hash === "#media-library") setShowMedia(true);
+  }, []);
 
   useEffect(() => {
     function online() { if (saveState === "offline") setSaveState("unsaved"); }
@@ -185,7 +200,7 @@ export function WebsiteFirstPremiumEditor({
   }, [websiteId, base, accountId, edits, busy, saveState, setActiveTabDirty, clearSnapshot, key]);
 
   useEffect(() => {
-    if (!edits.length || busy || saveState === "conflict" || !navigator.onLine) return;
+    if (!edits.length || busy || saveState !== "unsaved" || !navigator.onLine) return;
     const timer = window.setTimeout(() => { void save(); }, 1100);
     return () => window.clearTimeout(timer);
   }, [edits, busy, save, saveState]);
@@ -321,11 +336,11 @@ export function WebsiteFirstPremiumEditor({
       {selectedImage && section && <div className="website-first-editor-media-picker">
         <p>Choose an approved image for the selected section.</p>
         <label>Image<select value={selectedImage.src} onChange={(e) => perform({ kind: "replace-section", pageId: page.id,
-          section: { ...section, image: { ...selectedImage, src: e.target.value } } })}>
+          section: withSectionImage(section, { ...selectedImage, src: e.target.value }) })}>
           {options.map((option) => <option key={option.ref} value={option.ref}>{option.label}</option>)}</select></label>
         <label>Image description <input key={selectedImage.alt} defaultValue={selectedImage.alt} maxLength={200}
           onBlur={(e) => { const alt = e.target.value.trim(); if (alt && alt !== selectedImage.alt) perform({
-            kind: "replace-section", pageId: page.id, section: { ...section, image: { ...selectedImage, alt } },
+            kind: "replace-section", pageId: page.id, section: withSectionImage(section, { ...selectedImage, alt }),
           }); }} /></label>
       </div>}
       {accountId ? <MediaLibrary websiteId={websiteId} accountId={accountId} onChange={setOwnedArtwork}
