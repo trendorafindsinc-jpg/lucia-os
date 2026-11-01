@@ -20,7 +20,7 @@ function notFound() {
 }
 
 function isPrivatePath(pathname: string): boolean {
-  return pathname.startsWith("/api/") ||
+  return (pathname.startsWith("/api/") && pathname !== "/api/public/v1/content") ||
     pathname.startsWith("/site/") ||
     pathname === "/tenant-site-internal" ||
     pathname.startsWith("/tenant-site-internal/");
