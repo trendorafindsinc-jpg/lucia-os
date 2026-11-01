@@ -3,9 +3,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { cache } from "react";
 import type { Metadata, Route } from "next";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { headers } from "next/headers";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { getDb } from "@/lib/db/client";
 import { normalizeHostname } from "@/lib/domains/hostname";
 import { articleDraftSchema, articleRoute } from "@/lib/content/article-model";
@@ -44,7 +44,15 @@ const readPublished = cache(async (path: string) => {
   return [{...parsed.data,id:entry.id,publishedAt:entry.publishedAt}];
  });
  if(!slug)posts.sort((a,b)=>Number(b.isFeatured)-Number(a.isFeatured)||new Date(b.publishedAt??0).getTime()-new Date(a.publishedAt??0).getTime());
- if(slug && !posts.length)notFound();
+ if(slug && !posts.length){
+  const redirects=await db.execute(sql`select p.published_slug from website_post_slug_redirects r
+   join website_posts p on p.id=r.post_id and p.website_id=r.website_id and p.organization_id=r.organization_id
+   where r.organization_id=${site.organizationId}::uuid and r.website_id=${site.id}::uuid
+   and r.kind=${kind} and r.old_slug=${slug} and p.status='published' and p.published_slug is not null limit 1`);
+  const target=(redirects[0] as {published_slug?:string}|undefined)?.published_slug;
+  if(target)permanentRedirect("/"+kind+"/"+target);
+  notFound();
+ }
  return {site,hostname,kind:kind as "blog"|"news",posts,slug};
 });
 export async function publicArticleMetadata(path:string):Promise<Metadata> {
