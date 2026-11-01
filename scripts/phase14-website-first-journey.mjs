@@ -40,7 +40,7 @@ export async function checkWebsiteFirstJourney({
       await page.getByRole("link", { name: /Create New Website/ }).first().click();
       await page.locator(".website-first-form").waitFor();
       assert.equal(await page.locator(".website-first-form input[required]").count(), 2);
-      assert.equal(await page.locator(".website-first-form select").count(), 1);
+      assert.equal(await page.locator(".website-first-form > label select").count(), 1);
       await page.getByPlaceholder("e.g. Riverside Barbers").fill("Continuity organization A");
       await page.getByPlaceholder("e.g. Haircuts and grooming for local customers").fill("Barbershop haircuts grooming services");
       assert.equal(await page.locator(".website-first-layout").count(), 3);
