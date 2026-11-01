@@ -142,7 +142,7 @@ export default function HomePage() {
       <div className="venture-wrap venture-opportunity__grid">
         <div className="venture-opportunity__message">
           <p className="venture-eyebrow">THE BIGGER PICTURE</p>
-          <h2 id="opportunity-title">Don't just use software.<br /><em>Build a future around it.</em></h2>
+          <h2 id="opportunity-title">Don&apos;t just use software.<br /><em>Build a future around it.</em></h2>
           <p>Software can turn an idea into a repeatable service. A website can make your business discoverable. A connected platform can bring the pieces together. This is what LUCIA is building toward.</p>
           <div className="venture-opportunity__notice"><span aria-hidden="true">◉</span><p><strong>A vision, not a shortcut.</strong> LUCIA Store commerce, Loom professional networking and broader software commercialisation are evolving platform directions, not promises of instant income or features that are all available today.</p></div>
         </div>
@@ -168,7 +168,7 @@ export default function HomePage() {
     <section className="venture-close" aria-labelledby="close-title">
       <div className="venture-wrap venture-close__inner">
         <p className="venture-kicker"><i /> LUCIA IS LIGHT</p>
-        <h2 id="close-title">Fortunes aren't downloaded.<br /><span>They're built.</span></h2>
+        <h2 id="close-title">Fortunes aren&apos;t downloaded.<br /><span>They&apos;re built.</span></h2>
         <p>Big ideas need action. Businesses need infrastructure. Your next chapter can start with a website, real customers and the courage to build.</p>
         <div className="venture-actions"><Link className="venture-button venture-button--primary" href="/create">Build your free website <span aria-hidden="true">↗</span></Link><Link className="venture-button venture-button--secondary" href="/api/auth/login?returnTo=%2Fworkspace">Sign in with LUCIA ID <span aria-hidden="true">→</span></Link></div>
         <small>Business outcomes depend on your execution, demand and the market. No earnings are guaranteed.</small>
