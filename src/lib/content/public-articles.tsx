@@ -2,7 +2,7 @@ import "server-only";
 import Link from "next/link";
 import Image from "next/image";
 import { cache } from "react";
-import type { Metadata } from "next";
+import type { Metadata, Route } from "next";
 import { and, desc, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
@@ -59,7 +59,7 @@ export async function PublicArticlePage({path}:{path:string}) {
  const item=slug?posts[0]:null;
  return <main className={styles.shell}>
   <nav className={styles.nav} aria-label="Site navigation">
-   <Link href="/">{site.name}</Link><div><Link href="/blog">Blog</Link><Link href="/news">News</Link></div>
+   <Link href="/">{site.name}</Link><div><Link href={"/blog" as Route}>Blog</Link><Link href={"/news" as Route}>News</Link></div>
   </nav>
   {item ? <article className={styles.article}>
    <p className={styles.eyebrow}>{label}{item.category?" · "+item.category:""}</p>
