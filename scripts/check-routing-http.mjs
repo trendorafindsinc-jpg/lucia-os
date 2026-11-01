@@ -33,7 +33,10 @@ try {
   }
   assert(platform,"Production server did not start");
   assert.equal(platform.status,200);
-  assert.match(platform.body,/Your vision deserves/);
+  assert.match(platform.body,/Build the business\./);
+  assert.match(platform.body,/Start your free website/);
+  assert.match(platform.body,/Own the future\./);
+  assert.match(platform.body,/LUCIA OS/);
   const settings=await request("os.lucia.name.ng","/workspace/settings");
   assert.equal(settings.status,200);
   assert.match(settings.body,/Sign in to open Settings/);
@@ -65,7 +68,7 @@ try {
   ]) {
     const response=await request(host,path);
     assert.equal(response.status,404,`${host}${path} must fail closed without a published site`);
-    assert.doesNotMatch(response.body,/Your vision deserves/,`${host}${path} must never render the platform landing page`);
+    assert.doesNotMatch(response.body,/Build the business\./,`${host}${path} must never render the platform landing page`);
     assert.equal(response.headers.location,undefined,"Customer routing must not redirect to the platform");
   }
   const caseId="b8e95a60-fbde-4c37-93e6-a2916c7b13d4";
