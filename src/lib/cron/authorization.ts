@@ -61,7 +61,8 @@ async function verifyGitHubActionsToken(token: string): Promise<boolean> {
 
     const jwk = (await getGitHubKeys()).find((key) => key.kid === header.kid);
     if (!jwk) return false;
-    const publicKey = createPublicKey({ key: jwk, format: "jwk" });
+    // GitHub JWKS is runtime-validated above; Node expects its own indexed JWK input type.
+    const publicKey = createPublicKey({ key: jwk as never, format: "jwk" });
     return verify("RSA-SHA256", Buffer.from(parts[0] + "." + parts[1]),
       publicKey, Buffer.from(parts[2], "base64url"));
   } catch {
