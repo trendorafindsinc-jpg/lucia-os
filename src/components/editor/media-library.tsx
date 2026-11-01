@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
-export type MediaLibraryItem = { id: string; ref: string; bytes: number; width: number; height: number; alt: string; status: string; kind:"image"|"video"|"document";mime:string;original_name?:string|null;caption?:string|null };
+export type MediaLibraryItem = { id: string; ref: string; bytes: number; width: number; height: number; alt: string; status: string; kind:"image"|"video"|"document";mime:string;original_name?:string|null;caption?:string|null;created_at?:string };
 export function MediaLibrary({ websiteId, accountId, onChange, protectedIds, onSelect, onInsert, selectedRef }: { websiteId: string; accountId: string; onChange: (items: { ref: string; label: string }[]) => void; protectedIds: string[]; onSelect?: (item: MediaLibraryItem) => void; onInsert?: (item:MediaLibraryItem)=>void; selectedRef?: string | null }) {
   const [library, setLibrary] = useState<{ items: MediaLibraryItem[]; enabled: boolean; usedBytes: number; quotaBytes: number; imageUsedBytes:number;videoUsedBytes:number;videoQuotaBytes:number;documentUsedBytes:number;documentQuotaBytes:number } | null>(null);
   const [notice, setNotice] = useState("Loading your image library…"), [busy, setBusy] = useState(false);
@@ -69,7 +69,7 @@ export function MediaLibrary({ websiteId, accountId, onChange, protectedIds, onS
       {onInsert && item.status === "ready" && item.kind!=="image" && <button type="button" disabled={busy} onClick={()=>onInsert(item)}>Insert link in article</button>}
       {item.status==="ready"&&item.kind!=="image"&&<a href={"/_media/"+item.id} target="_blank" rel="noopener noreferrer">{item.kind==="video"?"Open video":"Download PDF"}</a>}
       <span>{item.original_name||item.alt}{item.caption?" · "+item.caption:""} · {Math.ceil(item.bytes / 1000)} KB · {item.status}</span>
-      {item.status === "ready" || item.status === "deleting" || item.status === "pending" ? <button type="button" disabled={busy || protectedIds.includes(item.id)} onClick={() => remove(item.id)}>Remove unused asset</button> : <span>Awaiting storage reconciliation; reserved space remains counted.</span>}
+      {(item.status==="ready"||item.status==="deleting"||(item.status==="pending"&&Date.now()-new Date(item.created_at||0).getTime()>24*60*60*1000))?<button type="button" disabled={busy||protectedIds.includes(item.id)} onClick={()=>remove(item.id)}>Remove unused asset</button>:item.status==="pending"?<span>Upload pending. Abandoned uploads are reconciled automatically.</span>:<span>Awaiting storage reconciliation; reserved space remains counted.</span>}
     </li>)}</ul>
   </details>;
 }
