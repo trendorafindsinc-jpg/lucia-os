@@ -28,42 +28,46 @@ export function SiteStructureEditor() {
   useEffect(() => {
     const requestedWebsiteId = new URLSearchParams(window.location.search).get("websiteId");
     if (!requestedWebsiteId) return;
+    let cancelled = false;
     setWebsiteId(requestedWebsiteId);
     setIsLoading(true);
-    let redirectingToPremiumEditor = false;
-    fetch(`/api/websites/${encodeURIComponent(requestedWebsiteId)}/draft`, { cache: "no-store" })
-      .then(async (response) => {
-        const payload = await response.json();
-        if (!response.ok) throw new Error(payload.error || "Couldn't load the website's visual draft.");
-        if (payload.draft?.version === 2 && payload.draft?.schema === "lucia.layout-composition") {
-          redirectingToPremiumEditor = true;
+    async function loadWebsiteStructure() {
+      try {
+        const draftResponse = await fetch(`/api/websites/${encodeURIComponent(requestedWebsiteId)}/draft`, { cache: "no-store" });
+        const draftPayload = await draftResponse.json();
+        if (!draftResponse.ok) throw new Error(draftPayload.error || "Couldn't load the website's visual draft.");
+        if (draftPayload.draft?.version === 2 && draftPayload.draft?.schema === "lucia.layout-composition") {
           router.replace(`/editor?websiteId=${encodeURIComponent(requestedWebsiteId)}#pages-navigation`);
           return;
         }
-        const base = makeInitialDraft(payload.draft?.templateId || "northstar-consulting");
-        setPreviewDraft({ ...base, ...(payload.draft ?? {}), siteName: payload.draft?.siteName || payload.website?.name || base.siteName });
-        setPreviewError("");
-      })
-      .catch((error: unknown) => { if (!redirectingToPremiumEditor) setPreviewError(error instanceof Error ? error.message : "The visual draft could not be loaded; preview uses a template placeholder."); });
-    fetch(`/api/websites/${encodeURIComponent(requestedWebsiteId)}/structure`, { cache: "no-store" })
-      .then(async (response) => {
-        if (redirectingToPremiumEditor) return;
-        const payload = await response.json();
-        if (redirectingToPremiumEditor) return;
-        if (!response.ok) throw new Error(payload.error || "Couldn't load the saved page structure.");
-        const checked = siteStructureSchema.safeParse(payload.structure);
+        const base = makeInitialDraft(draftPayload.draft?.templateId || "northstar-consulting");
+        if (!cancelled) {
+          setPreviewDraft({ ...base, ...(draftPayload.draft ?? {}), siteName: draftPayload.draft?.siteName || draftPayload.website?.name || base.siteName });
+          setPreviewError("");
+        }
+
+        const structureResponse = await fetch(`/api/websites/${encodeURIComponent(requestedWebsiteId)}/structure`, { cache: "no-store" });
+        const structurePayload = await structureResponse.json();
+        if (!structureResponse.ok) throw new Error(structurePayload.error || "Couldn't load the saved page structure.");
+        const checked = siteStructureSchema.safeParse(structurePayload.structure);
         if (!checked.success) throw new Error("The saved page structure is invalid. It has not been changed.");
-        setStructure(checked.data);
-        setSelectedPageId(checked.data.homePageId);
-        setIsDirty(false);
-        setLoadFailed(false);
-      })
-      .catch((error: unknown) => {
-        if (redirectingToPremiumEditor) return;
-        setLoadFailed(true);
-        setNotice(error instanceof Error ? `${error.message} Saving is disabled to protect existing data.` : "Couldn't load the saved structure. Saving is disabled to protect existing data.");
-      })
-      .finally(() => setIsLoading(false));
+        if (!cancelled) {
+          setStructure(checked.data);
+          setSelectedPageId(checked.data.homePageId);
+          setIsDirty(false);
+          setLoadFailed(false);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setLoadFailed(true);
+          setNotice(error instanceof Error ? `${error.message} Saving is disabled to protect existing data.` : "Couldn't load the saved structure. Saving is disabled to protect existing data.");
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    }
+    void loadWebsiteStructure();
+    return () => { cancelled = true; };
   }, [router]);
 
   async function saveStructure() {
