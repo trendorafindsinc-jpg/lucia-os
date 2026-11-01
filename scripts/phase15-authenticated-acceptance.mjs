@@ -364,6 +364,31 @@ export async function checkPhase15AuthenticatedAcceptance({
         await liveBrowser.close();
       }
       const lastGood = await (await publicSite("/", host)).text();
+      if (phase15) {
+        const beforeLayoutChange = await (await api("a", draftRoute(id))).json();
+        const targetLayoutId = beforeLayoutChange.draft.layoutId === "lucia.layout.canvas"
+          ? "lucia.layout.meridian" : "lucia.layout.canvas";
+        const switched = await api("a", draftRoute(id), "PATCH", {
+          kind: "assign-layout", layoutId: targetLayoutId,
+        }, { "if-match": beforeLayoutChange.revision });
+        assert.equal(switched.status, 200, name + " existing website layout change");
+        const switchedBody = await switched.json();
+        assert.equal(switchedBody.draft.layoutId, targetLayoutId);
+        assert.deepEqual(switchedBody.draft.identity, beforeLayoutChange.draft.identity);
+        assert.deepEqual(switchedBody.draft.pages, beforeLayoutChange.draft.pages);
+        assert.deepEqual(switchedBody.draft.navigation, beforeLayoutChange.draft.navigation);
+        assert.deepEqual(switchedBody.draft.permissions, beforeLayoutChange.draft.permissions);
+        const stillLive = await (await publicSite("/", host)).text();
+        assert(stillLive.includes('data-layout-id="lucia.layout.' + name + '"'),
+          name + " draft layout switch changed the live website before publishing");
+        const restoredLayout = await api("a", draftRoute(id), "PATCH", {
+          kind: "assign-layout", layoutId: beforeLayoutChange.draft.layoutId,
+        }, { "if-match": switchedBody.revision });
+        assert.equal(restoredLayout.status, 200, name + " restore original design");
+        const restoredBody = await restoredLayout.json();
+        assert.deepEqual(restoredBody.draft.pages, beforeLayoutChange.draft.pages);
+        assert.deepEqual(restoredBody.draft.navigation, beforeLayoutChange.draft.navigation);
+      }
       assert.equal((await api("a", publishRoute, "POST", publishing(current),
         { "if-match": initialRevision })).status, 409, name + " stale publication accepted");
       assert.equal(await (await publicSite("/", host)).text(), lastGood);
