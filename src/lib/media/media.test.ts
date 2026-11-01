@@ -58,13 +58,15 @@ describe("customer media boundary", () => {
       .mockResolvedValueOnce(new Response("<CompleteMultipartUploadResult><ETag>0123456789abcdef0123456789abcdef-1</ETag></CompleteMultipartUploadResult>",{status:200}))
       .mockResolvedValueOnce(new Response(null,{status:200,headers:{"content-length":"12","content-type":"video/mp4","etag":'"0123456789abcdef0123456789abcdef-1"',"x-amz-meta-sha256":checksum}}))
       .mockResolvedValueOnce(new Response("video bytes",{status:206,headers:{"content-range":"bytes 0-4/12"}}))
-      .mockResolvedValueOnce(new Response(null,{status:204}));
+      .mockResolvedValueOnce(new Response(null,{status:204}))
+      .mockResolvedValueOnce(new Response(`<ListMultipartUploadsResult><Upload><Key>${key}</Key><UploadId>orphan-upload-123456</UploadId><Initiated>2026-10-31T00:00:00.000Z</Initiated></Upload></ListMultipartUploadsResult>`,{status:200}));
     vi.stubGlobal("fetch",fetcher);
     const uploadId=await multipartStorage.create(key,"video/mp4","video",checksum);expect(uploadId).toBe("test-upload-id-123456");
+    expect(fetcher.mock.calls[0][1].headers["x-amz-server-side-encryption"]).toBe("AES256");expect(fetcher.mock.calls[0][1].headers["x-amz-meta-sha256"]).toBe(checksum);
     expect(new URL(multipartStorage.signPart(key,uploadId,1)).searchParams.get("partNumber")).toBe("1");
     await multipartStorage.complete(key,uploadId,[{partNumber:1,etag:'"0123456789abcdef0123456789abcdef"'}]);
     const head=await multipartStorage.head(key);expect(head?.bytes).toBe(12);expect(head?.checksum).toBe(checksum);
     expect((await multipartStorage.stream(key,"bytes=0-4"))?.status).toBe(206);
-    await multipartStorage.remove(key);expect(fetcher).toHaveBeenCalledTimes(5);
+    await multipartStorage.remove(key);const incomplete=await multipartStorage.listIncomplete();expect(incomplete).toHaveLength(1);expect(incomplete[0].uploadId).toBe("orphan-upload-123456");expect(fetcher).toHaveBeenCalledTimes(6);
   });
 });
