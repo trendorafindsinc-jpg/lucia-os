@@ -57,7 +57,7 @@ jobs:
       WEBSITE_TEST_PHASE16: "1"
       WEBSITE_TEST_MEDIA: "1"
       WEBSITE_TEST_WEBSITE_REMOVAL: "1"
-      WEBSITE_TEST_PHASE14_LAYOUTS: ${{ inputs.layouts || (github.event.pull_request.number == 138 && 'flagships' || '') }}
+      WEBSITE_TEST_PHASE14_LAYOUTS: ${{ inputs.layouts || ((github.event.pull_request.number == 138 || github.event.pull_request.number == 140) && 'flagships' || '') }}
       WEBSITE_TEST_PREMIUM_FAST: "1"
       WEBSITE_TEST_PREMIUM_ONLY: "1"
       WEBSITE_TEST_PLAYWRIGHT_MODULE: playwright
