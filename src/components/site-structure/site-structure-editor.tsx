@@ -64,7 +64,7 @@ export function SiteStructureEditor() {
         setNotice(error instanceof Error ? `${error.message} Saving is disabled to protect existing data.` : "Couldn't load the saved structure. Saving is disabled to protect existing data.");
       })
       .finally(() => setIsLoading(false));
-  }, []);
+  }, [router]);
 
   async function saveStructure() {
     if (!websiteId || isLoading || loadFailed || !validation.success) return;
