@@ -12,6 +12,8 @@ import {
 } from "@/lib/layout-blueprint/premium-composition";
 import { useWorkspaceAdapter, useWorkspaceTab } from "@/components/workspace/workspace-tab-shell";
 import { WebsiteFirstPublishDialog } from "./website-first-publish-dialog";
+import { WebsiteStoryStudio } from "./website-story-studio";
+import type { ArticleKind } from "@/lib/content/article-model";
 import {
   editableText, editableTextMax, replaceEditableText, targetFromRenderedElement,
   type TextSelection,
@@ -71,7 +73,11 @@ export function WebsiteFirstPremiumEditor({
   const [field, setField] = useState<TextSelection | null>(null);
   const [fieldDraft, setFieldDraft] = useState("");
   const [showPublish, setShowPublish] = useState(false);
+  const [storyKind, setStoryKind] = useState<ArticleKind|null>(null);
   const [showMedia, setShowMedia] = useState(false);
+  useEffect(() => { const requested = new URLSearchParams(window.location.search).get("content");
+    if (requested === "blog" || requested === "news") setStoryKind(requested);
+  }, []);
   const [showSectionTools, setShowSectionTools] = useState(false);
   const [previewOnly, setPreviewOnly] = useState(false);
   const [ownedArtwork, setOwnedArtwork] = useState<{ ref: string; label: string }[]>([]);
@@ -317,6 +323,8 @@ export function WebsiteFirstPremiumEditor({
       <span className={"website-first-editor-status state-" + saveState} role="status" aria-live="polite">{saveState === "saved" ? "✓ Saved" : saveState === "unsaved" ? "● Unsaved" : saveState === "saving" ? "Saving…" : saveState === "offline" ? "Offline · unsaved" : saveState === "conflict" ? "Conflict" : "Save failed"}</span>
       <button type="button" onClick={() => { void save(); }} disabled={!edits.length || busy || saveState === "conflict"}>Save now</button>
       <button type="button" onClick={() => { setPreviewOnly(!previewOnly); setField(null); }}>{previewOnly ? "Return to Edit" : "Preview"}</button>
+      <button type="button" onClick={() => { setStoryKind("blog"); setPreviewOnly(false); }}>Write Blog</button>
+      <button type="button" onClick={() => { setStoryKind("news"); setPreviewOnly(false); }}>Publish News</button>
       <button type="button" className="website-first-editor-publish" onClick={() => setShowPublish(true)}
         disabled={busy || edits.length > 0 || saveState !== "saved"}>Publish</button>
       {(edits.length > 0 || saveState !== "saved") && <span className="website-first-editor-not-ready">Save before publishing</span>}
@@ -327,7 +335,8 @@ export function WebsiteFirstPremiumEditor({
     {saveState === "conflict" && <button type="button" onClick={() => {
       if (window.confirm("Discard local edits and load the latest saved website?")) { discard(); reload(); }
     }}>Load latest saved website</button>}
-    {!previewOnly && <div className="website-first-editor-tools">
+    {storyKind && <WebsiteStoryStudio websiteId={websiteId} accountId={accountId} initialKind={storyKind} onClose={() => setStoryKind(null)} />}
+    {!previewOnly && !storyKind && <div className="website-first-editor-tools">
       <button type="button" onClick={() => setShowSectionTools((value) => !value)}>Sections {showSectionTools ? "▴" : "▾"}</button>
       <button type="button" onClick={addSection} disabled={busy || saveState === "conflict"}>+ Add Section</button>
       <button type="button" onClick={() => setShowMedia((value) => !value)}>Manage Media</button>
@@ -336,7 +345,7 @@ export function WebsiteFirstPremiumEditor({
         <option value="768px">Tablet</option><option value="1180px">Desktop</option>
       </select></label>
     </div>}
-    {!previewOnly && showSectionTools && <div className="website-first-editor-sections" aria-label="Rearrange website sections">
+    {!previewOnly && !storyKind && showSectionTools && <div className="website-first-editor-sections" aria-label="Rearrange website sections">
       {page.sections.map((item, index) => {
         const locked = layout.permissions.lockedSections.includes(item.id);
         return <div key={item.id} draggable={!locked} onDragStart={() => { dragged.current = item.id; }}
@@ -357,7 +366,7 @@ export function WebsiteFirstPremiumEditor({
         </div>;
       })}
     </div>}
-    {!previewOnly && field && section && fieldValue !== null && <div className="website-first-inline-control" role="group" aria-label="Edit selected website text">
+    {!previewOnly && !storyKind && field && section && fieldValue !== null && <div className="website-first-inline-control" role="group" aria-label="Edit selected website text">
       <label>Edit ${field.field.replaceAll("-", " ")} on this website
         <textarea key={page.id + section.id + field.field + (field.index ?? "")}
           value={fieldDraft} onChange={(event) => setFieldDraft(event.target.value)}
@@ -366,7 +375,7 @@ export function WebsiteFirstPremiumEditor({
       <button type="button" onClick={() => updateField(fieldDraft)} disabled={busy || saveState === "conflict" || fieldDraft === fieldValue}>Apply change</button>
       <button type="button" onClick={() => setField(null)}>Cancel</button>
     </div>}
-    {!previewOnly && showMedia && <section id="media-library" className="website-first-editor-media" aria-label="Website image replacement">
+    {!previewOnly && !storyKind && showMedia && <section id="media-library" className="website-first-editor-media" aria-label="Website image replacement">
       <div className="website-first-editor-media-header"><h2>Media & artwork</h2><button type="button" onClick={() => setShowMedia(false)}>Close</button></div>
       {selectedImage && section && <div className="website-first-editor-media-picker">
         <p>Choose an approved image for the selected section.</p>
@@ -378,7 +387,7 @@ export function WebsiteFirstPremiumEditor({
       {accountId ? <MediaLibrary websiteId={websiteId} accountId={accountId} onChange={setOwnedArtwork}
         protectedIds={mediaIds(layout)} /> : <p>Image uploads require an authenticated website session.</p>}
     </section>}
-    <div className="website-first-editor-canvas" style={{ width: previewWidth, maxWidth: "100%" }}
+    <div hidden={Boolean(storyKind)} className="website-first-editor-canvas" style={{ width: previewWidth, maxWidth: "100%" }}
       onClickCapture={clickWebsite} aria-label={previewOnly ? "Website preview" : "Click any heading or paragraph in your actual website to edit"}>
       <LayoutRenderer blueprint={layout} pagePath={page.path} preview idPrefix="studio-"
         onNavigate={(path) => { const target = layout.pages.find((item) => item.path === path);

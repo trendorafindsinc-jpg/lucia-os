@@ -26,16 +26,17 @@ export async function GET(request: Request, context: Context) {
   for(const org of orgs){
    if(!hasOrganizationPermission({role:org.role,status:org.status},"website.read"))continue;
    await tx.execute(sql`select set_config('app.current_organization_id', ${org.id}, true)`);
-   const [site]=await tx.select({id:websites.id}).from(websites)
+   const [site]=await tx.select({id:websites.id,slug:websites.slug}).from(websites)
     .where(and(eq(websites.id,websiteId),eq(websites.organizationId,org.id),ne(websites.status,"deleted"))).limit(1);
    if(!site)continue;
-   return tx.select().from(websitePosts)
+   const articles=await tx.select().from(websitePosts)
     .where(and(eq(websitePosts.websiteId,site.id),eq(websitePosts.organizationId,org.id)))
     .orderBy(desc(websitePosts.updatedAt)).limit(200);
+   return {articles,siteSlug:site.slug};
   }
   return null;
  });
- return data ? json({websiteId,articles:data}) : json({error:"Website unavailable or access denied."},404);
+ return data ? json({websiteId,...data}) : json({error:"Website unavailable or access denied."},404);
 }
 export async function POST(request: Request, context: Context) {
  const user=await getCurrentUser();
