@@ -136,6 +136,20 @@
       "breakpoints": true
     },
     {
+      "idx": 19,
+      "version": "7",
+      "when": 1793550600000,
+      "tag": "0019_article_taxonomy_seo",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1793551200000,
+      "tag": "0020_scheduled_article_publication",
+      "breakpoints": true
+    },
+    {
       "idx": 21,
       "version": "7",
       "when": 1793551800000,
