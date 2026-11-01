@@ -18,7 +18,8 @@ export async function GET(request:Request){
      else{await mediaStorage().remove(row.object_key);await db.execute(sql`select lucia_finalize_media_upload(${row.id}::uuid,'deleted',null)`);removed++;}
     }else{
      const head=await multipartStorage.head(row.object_key);
-     if(head&&head.bytes===row.bytes&&head.mime===row.mime&&head.checksum===row.checksum&&head.etag){await db.execute(sql`select lucia_finalize_media_upload(${row.id}::uuid,'ready',${head.etag})`);recovered++;}
+     const verified=head&&head.bytes===row.bytes&&head.mime===row.mime&&head.checksum===row.checksum?await multipartStorage.verify(row.object_key,row.bytes):null;
+     if(head&&verified&&verified.bytes===row.bytes&&verified.checksum===row.checksum&&head.etag){await db.execute(sql`select lucia_finalize_media_upload(${row.id}::uuid,'ready',${head.etag})`);recovered++;}
      else{if(row.upload_id)await multipartStorage.abort(row.object_key,row.upload_id);if(head)await multipartStorage.remove(row.object_key);await db.execute(sql`select lucia_finalize_media_upload(${row.id}::uuid,'deleted',null)`);removed++;}
     }
    }catch{failed++;}
