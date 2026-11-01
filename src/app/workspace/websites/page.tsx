@@ -63,7 +63,7 @@ export default async function WorkspaceWebsitesPage() {
                   <Link href={{ pathname: "/editor", query: { websiteId: site.id, content: "news" } }}>Publish News</Link>
                   <Link href={{ pathname: "/editor", query: { websiteId: site.id }, hash: "media-library" }}>Manage Media</Link>
                 </div>
-                <p className="studio-picker-coming">Blog and News drafts are managed within this website. Video and document uploads are not yet enabled.</p>
+                <p className="studio-picker-coming">Open Edit Website to change its design, manage pages and navigation, and work with images, videos, documents and supported embeds.</p>
               </div>
             </article>;
           })}
