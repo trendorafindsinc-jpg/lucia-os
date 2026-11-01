@@ -4,7 +4,6 @@ import { isAuthorizedCronRequest } from "./authorization";
 
 const pair = generateKeyPairSync("rsa", { modulusLength: 2048 });
 const publicJwk = { ...pair.publicKey.export({ format: "jwk" }), kid: "phase15-test-key" };
-const now = Math.floor(Date.now() / 1000);
 const expectedClaims = {
   iss: "https://token.actions.githubusercontent.com",
   aud: "lucia-os-phase15-workers",
@@ -14,15 +13,13 @@ const expectedClaims = {
   ref: "refs/heads/main",
   workflow_ref: "trendorafindsinc-jpg/lucia-os/.github/workflows/phase15-scheduled-workers.yml@refs/heads/main",
   event_name: "schedule",
-  iat: now - 10,
-  nbf: now - 10,
-  exp: now + 240,
 };
 
 function makeToken(claimOverrides: Record<string, unknown> = {}, privateKey = pair.privateKey) {
   const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString("base64url");
   const head = encode({ alg: "RS256", typ: "JWT", kid: "phase15-test-key" });
-  const body = encode({ ...expectedClaims, ...claimOverrides });
+  const now = Math.floor(Date.now() / 1000);
+  const body = encode({ ...expectedClaims, iat: now - 10, nbf: now - 10, exp: now + 240, ...claimOverrides });
   const input = head + "." + body;
   return input + "." + sign("RSA-SHA256", Buffer.from(input), privateKey).toString("base64url");
 }
@@ -52,10 +49,15 @@ describe("Phase 15 scheduled-worker authorization", () => {
     { workflow_ref: "trendorafindsinc-jpg/lucia-os/.github/workflows/other.yml@refs/heads/main" },
     { ref: "refs/heads/feature/untrusted" },
     { event_name: "pull_request" },
-    { exp: now - 1 },
   ])("rejects untrusted or expired GitHub claims", async (claims) => {
     vi.stubEnv("CRON_SECRET", "");
     expect(await isAuthorizedCronRequest(request(makeToken(claims)))).toBe(false);
+  });
+
+  it("rejects an expired GitHub token", async () => {
+    vi.stubEnv("CRON_SECRET", "");
+    const expiredAt = Math.floor(Date.now() / 1000) - 1;
+    expect(await isAuthorizedCronRequest(request(makeToken({ exp: expiredAt })))).toBe(false);
   });
 
   it("rejects a token whose signature does not match GitHub's published key", async () => {
