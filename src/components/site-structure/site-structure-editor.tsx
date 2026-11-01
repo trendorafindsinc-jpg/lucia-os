@@ -28,18 +28,26 @@ export function SiteStructureEditor() {
     if (!requestedWebsiteId) return;
     setWebsiteId(requestedWebsiteId);
     setIsLoading(true);
+    let redirectingToPremiumEditor = false;
     fetch(`/api/websites/${encodeURIComponent(requestedWebsiteId)}/draft`, { cache: "no-store" })
       .then(async (response) => {
         const payload = await response.json();
         if (!response.ok) throw new Error(payload.error || "Couldn't load the website's visual draft.");
+        if (payload.draft?.version === 2 && payload.draft?.schema === "lucia.layout-composition") {
+          redirectingToPremiumEditor = true;
+          window.location.replace(`/editor?websiteId=${encodeURIComponent(requestedWebsiteId)}#pages-navigation`);
+          return;
+        }
         const base = makeInitialDraft(payload.draft?.templateId || "northstar-consulting");
         setPreviewDraft({ ...base, ...(payload.draft ?? {}), siteName: payload.draft?.siteName || payload.website?.name || base.siteName });
         setPreviewError("");
       })
-      .catch((error: unknown) => setPreviewError(error instanceof Error ? error.message : "The visual draft could not be loaded; preview uses a template placeholder."));
+      .catch((error: unknown) => { if (!redirectingToPremiumEditor) setPreviewError(error instanceof Error ? error.message : "The visual draft could not be loaded; preview uses a template placeholder."); });
     fetch(`/api/websites/${encodeURIComponent(requestedWebsiteId)}/structure`, { cache: "no-store" })
       .then(async (response) => {
+        if (redirectingToPremiumEditor) return;
         const payload = await response.json();
+        if (redirectingToPremiumEditor) return;
         if (!response.ok) throw new Error(payload.error || "Couldn't load the saved page structure.");
         const checked = siteStructureSchema.safeParse(payload.structure);
         if (!checked.success) throw new Error("The saved page structure is invalid. It has not been changed.");
@@ -49,6 +57,7 @@ export function SiteStructureEditor() {
         setLoadFailed(false);
       })
       .catch((error: unknown) => {
+        if (redirectingToPremiumEditor) return;
         setLoadFailed(true);
         setNotice(error instanceof Error ? `${error.message} Saving is disabled to protect existing data.` : "Couldn't load the saved structure. Saving is disabled to protect existing data.");
       })
@@ -119,7 +128,7 @@ export function SiteStructureEditor() {
     <main className="structure-page">
       <header className="structure-topbar">
         <Link className="wordmark" href="/" aria-label="LUCIA OS home"><span className="brand-mark" aria-hidden="true">L</span><span>LUCIA <span className="muted-word">OS</span></span></Link>
-        <div className="structure-top-actions"><span className="structure-local-pill">{isLoading ? "Loading saved structure…" : loadFailed ? "Saved structure unavailable" : websiteId ? (isDirty ? "Unsaved changes" : "Saved to workspace") : "Local draft · Not saved"}</span>{websiteId && <button type="button" className="structure-back-link" onClick={saveStructure} disabled={isLoading || loadFailed || isSaving || !isDirty || !validation.success}>{isSaving ? "Saving…" : "Save structure"}</button>}<Link href={websiteId ? `/editor?websiteId=${encodeURIComponent(websiteId)}` : "/editor"} className="structure-back-link">Back to visual editor</Link></div>
+        <div className="structure-top-actions"><span className="structure-local-pill">{isLoading ? "Loading saved structure…" : loadFailed ? "Saved structure unavailable" : websiteId ? (isDirty ? "Unsaved changes" : "Saved to workspace") : "Local draft · Not saved"}</span>{websiteId && <button type="button" className="structure-back-link" onClick={saveStructure} disabled={isLoading || loadFailed || isSaving || !isDirty || !validation.success}>{isSaving ? "Saving…" : "Save structure"}</button>}<Link href={websiteId ? `/editor?websiteId=${encodeURIComponent(websiteId)}#pages-navigation` : "/editor"} className="structure-back-link">Back to visual editor</Link></div>
       </header>
       <section className="structure-intro">
         <p className="eyebrow">PHASE 10 · SITE STRUCTURE</p>
