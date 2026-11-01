@@ -1,7 +1,7 @@
 import { and, desc, eq, ne, sql } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
-import { memberships, organizations, websitePosts, websitePostRevisions, websites } from "@/lib/db/schema";
+import { memberships, organizations, websiteMedia, websitePosts, websitePostRevisions, websites } from "@/lib/db/schema";
 import { hasOrganizationPermission } from "@/lib/access/policy";
 import { createArticleSchema, newArticleSlug } from "@/lib/content/article-model";
 import { isUniqueWebsiteWrite, websiteMutationAllowed } from "@/lib/websites/draft-revision";
@@ -29,10 +29,11 @@ export async function GET(request: Request, context: Context) {
    const [site]=await tx.select({id:websites.id,slug:websites.slug}).from(websites)
     .where(and(eq(websites.id,websiteId),eq(websites.organizationId,org.id),ne(websites.status,"deleted"))).limit(1);
    if(!site)continue;
-   const articles=await tx.select().from(websitePosts)
+   const articles=await tx.select({post:websitePosts,mediaAlt:websiteMedia.alt}).from(websitePosts)
+    .leftJoin(websiteMedia,and(eq(websiteMedia.id,websitePosts.featuredMediaId),eq(websiteMedia.websiteId,site.id),eq(websiteMedia.organizationId,org.id),eq(websiteMedia.status,"ready")))
     .where(and(eq(websitePosts.websiteId,site.id),eq(websitePosts.organizationId,org.id)))
     .orderBy(desc(websitePosts.updatedAt)).limit(200);
-   return {articles,siteSlug:site.slug};
+   return {articles:articles.map(({post,mediaAlt})=>({...post,featuredMediaRef:post.featuredMediaId ? "media:"+post.featuredMediaId : null,featuredMediaAlt:mediaAlt ?? null})),siteSlug:site.slug};
   }
   return null;
  });
@@ -75,7 +76,7 @@ export async function POST(request: Request, context: Context) {
    }
    return null;
   });
-  return post ? json({article:post},201) : json({error:"Website unavailable or editing denied."},404);
+  return post ? json({article:{...post,featuredMediaRef:null,featuredMediaAlt:null}},201) : json({error:"Website unavailable or editing denied."},404);
  }catch(error){
   if(isUniqueWebsiteWrite(error))return json({error:"An article with this title already exists. Choose a different title."},409);
   return json({error:"Article could not be created. No changes were published."},503);
