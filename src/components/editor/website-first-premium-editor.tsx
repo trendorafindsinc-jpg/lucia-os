@@ -277,6 +277,7 @@ export function WebsiteFirstPremiumEditor({
     const rawPath = (patch.path ?? target.path).trim();
     const nextPath = rawPath === "/" ? "/" : rawPath.startsWith("/") ? rawPath : "/" + rawPath;
     const navigation = patch.navigation ?? target.navigation;
+    if (navigation && !target.navigation && layout.navigation.length >= 12) { setNotice("Website navigation can contain up to 12 links. Remove one before adding another."); return; }
     if (!title || !description) { setNotice("Page title and description cannot be empty."); return; }
     if (!premiumPathSchema.safeParse(nextPath).success || /^\/(?:api|workspace|staff|admin|auth|login|logout|site|tenant-site-internal|_next)(?:\/|$)/.test(nextPath)) {
       setNotice("Use a safe page address such as /about or /our-story.");
@@ -301,7 +302,7 @@ export function WebsiteFirstPremiumEditor({
     const id = "page-" + crypto.randomUUID().replaceAll("-", "");
     const sectionId = id + "-intro";
     perform({ kind: "insert-page", page: { id, path, title: title.slice(0, 120),
-      description: "A new page on " + layout.identity.name + ".", navigation: true,
+      description: "A new page on " + layout.identity.name + ".", navigation: layout.navigation.length < 12,
       responsive: "stack", sections: [{ id: sectionId, type: "editorial-story", variant: "narrow",
         heading: title.slice(0, 150), body: "Add the information visitors need on this page." }] } });
     setNewPageTitle(""); setPageId(id); setSelected(sectionId); setField(null);
@@ -453,7 +454,7 @@ export function WebsiteFirstPremiumEditor({
           title: resolved.title, url: embedUrl.trim() } });
     setSelected(section?.type === "media-embed" && section.kind === "embed" ? section.id : id);
     setShowSectionTools(true); setEmbedUrl(""); setShowMedia(false);
-    setNotice("Responsive " + resolved.provider + " embed added to this page. Save your website to keep it.");
+    setNotice(section?.type === "media-embed" && section.kind === "embed" ? "Embed updated on this page. Save your website to keep it." : "Responsive " + resolved.provider + " embed added to this page. Save your website to keep it.");
   }
   const options = [...premiumArtworkChoices, ...ownedArtwork];
   return <main className="website-first-editor">
