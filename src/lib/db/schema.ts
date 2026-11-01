@@ -466,6 +466,7 @@ export const websitePosts = pgTable("website_posts", {
   excerpt: text("excerpt").notNull().default(""),
   body: text("body").notNull().default(""),
   category: text("category").notNull().default(""),
+  featuredMediaId: uuid("featured_media_id").references(() => websiteMedia.id, { onDelete: "restrict" }),
   status: text("status").notNull().default("draft"),
   revision: integer("revision").notNull().default(1),
   publishedSnapshot: jsonb("published_snapshot").$type<import("@/lib/content/article-model").PublishedArticle | null>(),
