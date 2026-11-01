@@ -5,6 +5,7 @@ import { memberships, organizations, websitePosts, websitePostRevisions, website
 import { hasOrganizationPermission } from "@/lib/access/policy";
 import { updateArticleSchema, publicationReady, type PublishedArticle } from "@/lib/content/article-model";
 import { isUniqueWebsiteWrite, websiteMutationAllowed } from "@/lib/websites/draft-revision";
+import { MediaError, validateMediaOwnership } from "@/lib/media/service";
 import { z } from "zod";
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
@@ -41,13 +42,16 @@ export async function PATCH(request:Request,context:Context){
     if(!current)continue;
     if(current.revision!==input.revision)return {conflict:true as const};
     if(input.action==="publish" && site.status!=="published")return {validation:"Publish the website before publishing articles."};
-    const draft:PublishedArticle={kind:current.kind as "blog"|"news",title:input.title,slug:input.slug,excerpt:input.excerpt,body:input.body,category:input.category};
+    const mediaAltById=await validateMediaOwnership(tx,org.id,site.id,{featuredMediaRef:input.featuredMediaRef},input.action==="publish");
+    const featuredMediaId=input.featuredMediaRef ? input.featuredMediaRef.slice(6) : null;
+    const featuredMediaAlt=featuredMediaId ? mediaAltById[featuredMediaId] ?? null : null;
+    const draft:PublishedArticle={kind:current.kind as "blog"|"news",title:input.title,slug:input.slug,excerpt:input.excerpt,body:input.body,category:input.category,featuredMediaRef:input.featuredMediaRef,featuredMediaAlt};
     if(input.action==="publish" && !publicationReady(draft))return {validation:"Add a meaningful summary and article body before publishing."};
     const live= input.action==="publish" ? draft : input.action==="unpublish" ? null : current.publishedSnapshot;
     const status=live ? "published" : "draft";
     const publishedSlug=live ? (input.action==="publish" ? draft.slug : current.publishedSlug) : null;
     const [saved]=await tx.update(websitePosts).set({
-     title:input.title,slug:input.slug,excerpt:input.excerpt,body:input.body,category:input.category,
+     title:input.title,slug:input.slug,excerpt:input.excerpt,body:input.body,category:input.category,featuredMediaId,
      revision:current.revision+1,status,publishedSnapshot:live,publishedSlug,
      publishedAt:live ? (input.action==="publish" ? new Date() : current.publishedAt) : null,updatedAt:new Date(),
     }).where(and(eq(websitePosts.id,current.id),eq(websitePosts.organizationId,org.id))).returning();
@@ -56,7 +60,7 @@ export async function PATCH(request:Request,context:Context){
      revision:saved.revision,event:input.action,
      snapshot:{draft,live,status,publishedSlug,at:new Date().toISOString()},
     });
-    return {article:saved};
+    return {article:{...saved,featuredMediaRef:input.featuredMediaRef,featuredMediaAlt}};
    }
    return null;
   });
@@ -65,6 +69,7 @@ export async function PATCH(request:Request,context:Context){
   if("validation" in outcome)return json({error:outcome.validation},422);
   return json(outcome);
  }catch(error){
+  if(error instanceof MediaError)return json({error:error.message},error.status);
   if(isUniqueWebsiteWrite(error))return json({error:"This article address is already in use on this website."},409);
   return json({error:"Article save or publication failed. The previous live version was preserved."},503);
  }
