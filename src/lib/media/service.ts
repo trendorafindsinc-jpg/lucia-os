@@ -4,7 +4,7 @@ import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { getOrganizationMembershipsForUser } from "@/lib/access/guards";
 import { hasOrganizationPermission } from "@/lib/access/policy";
-import { mediaIds } from "./references";
+import { mediaIds, mediaReferencePattern } from "./references";
 import { compressImage } from "./image";
 import { mediaStorage, storageConfigured } from "./storage";
 import { multipartStorage } from "./multipart-storage";
@@ -30,10 +30,13 @@ export async function withMediaWebsite<T>(userId: string, websiteId: string, per
 /** Called in the SAME locked transaction as draft changes and publication. */
 export async function validateMediaOwnership(tx: MediaTransaction, organizationId: string, websiteId: string, definition: unknown, publishing = false): Promise<Record<string,string>> {
   const altById:Record<string,string> = {};
+  const featuredRef=definition&&typeof definition==="object"?(definition as {featuredMediaRef?:unknown}).featuredMediaRef:null;
+  const featuredId=typeof featuredRef==="string"?mediaReferencePattern.exec(featuredRef)?.[1]??null:null;
   for (const id of mediaIds(definition)) {
-    const rows = await tx.execute(sql`select id,alt from website_media where id=${id} and organization_id=${organizationId} and website_id=${websiteId} and status='ready' for share`);
-    const media = rows[0] as {id:string;alt:string}|undefined;
-    if (!media) throw new MediaError("An image is unavailable or belongs to another website.");
+    const rows = await tx.execute(sql`select id,alt,kind from website_media where id=${id} and organization_id=${organizationId} and website_id=${websiteId} and status='ready' for share`);
+    const media = rows[0] as {id:string;alt:string;kind:string}|undefined;
+    if (!media) throw new MediaError("A media asset is unavailable or belongs to another website.");
+    if(featuredId===id&&media.kind!=="image")throw new MediaError("An article featured image must be an image asset.");
     altById[id]=media.alt;
     if (publishing) await tx.execute(sql`update website_media set last_published_at=now() where id=${id}`);
   }
