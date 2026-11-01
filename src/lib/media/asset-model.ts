@@ -8,7 +8,7 @@ export const mediaAssetCreateSchema=z.object({action:z.literal("create"),kind:z.
 export const mediaAssetCompleteSchema=z.object({action:z.literal("complete"),mediaId:z.uuid(),uploadId:z.string().min(8).max(512),parts:z.array(z.object({partNumber:z.number().int().min(1).max(10000),etag:z.string().min(16).max(128)}).strict()).min(1).max(10000)}).strict();
 export const mediaAssetAbortSchema=z.object({action:z.literal("abort"),mediaId:z.uuid(),uploadId:z.string().min(8).max(512)}).strict();
 export function mediaExtension(mime:string){return mime==="video/mp4"?"mp4":mime==="video/webm"?"webm":mime==="application/pdf"?"pdf":null;}
-export function safeOriginalFilename(value:string){return value.normalize("NFKC").replace(/[\\u0000-\\u001f\\u007f/\\\\]/g,"_").replace(/\\s+/g," ").trim().slice(0,255)||"customer-upload";}
+export function safeOriginalFilename(value:string){return value.normalize("NFKC").replace(/[\x00-\x1f\x7f/\\]/g,"_").replace(/\s+/g," ").trim().slice(0,255)||"customer-upload";}
 export function validMediaMagic(kind:"video"|"document",mime:string,header:Buffer){
  if(kind==="document")return mime==="application/pdf"&&header.subarray(0,5).toString("ascii")==="%PDF-";
  if(mime==="video/mp4")return header.length>=12&&header.subarray(4,8).toString("ascii")==="ftyp";
