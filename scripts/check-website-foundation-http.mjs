@@ -1027,6 +1027,10 @@ try {
         api, admin, f, base, browserContext, created, bpass, publicSite,
       });
     }
+    if (process.env.WEBSITE_TEST_PHASE14_WEBSITE_FIRST === "1") {
+      const { checkWebsiteFirstJourney } = await import("./phase14-website-first-journey.mjs");
+      await checkWebsiteFirstJourney({ api, f, base, browserContext, created, bpass, publicSite });
+    }
     if (process.env.WEBSITE_TEST_MEDIA === "1") {
       const { checkMediaSecurity } = await import("./media-security-acceptance.mjs");
       await checkMediaSecurity({ admin, api, f });
