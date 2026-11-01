@@ -23,7 +23,7 @@ describe("signed-out LUCIA OS entrepreneurship welcome", () => {
     expect(html).toContain('href="#opportunity"');
     expect(html).toContain('href="#layouts"');
     expect(html).toContain("Skip to main content");
-    expect(html).toContain('id="venture-main"');
+    expect(html).toContain('id="welcome-main"');
     expect(html).toContain('aria-label="Welcome page navigation"');
   });
 
