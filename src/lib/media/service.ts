@@ -42,9 +42,9 @@ export async function validateMediaOwnership(tx: MediaTransaction, organizationI
 export async function listMedia(userId: string, websiteId: string) {
   return withMediaWebsite(userId, websiteId, "website.read", async (tx) => {
     const rows = await tx.execute(sql`select id,bytes,width,height,alt,status,kind,mime,original_name,checksum,etag,caption,duration_ms,created_at from website_media where website_id=${websiteId} and status <> 'deleted' order by created_at desc limit 200`);
-    const [usage] = await tx.execute(sql`select coalesce(sum(bytes),0)::bigint as used,count(*)::int as count from website_media where website_id=${websiteId} and status <> 'deleted'`);
-    const [limit] = await tx.execute(sql`select quota_bytes from website_media_limits where website_id=${websiteId}`);
-    return { enabled: uploadsEnabled(), items: rows.map((row) => ({ ...row, ref: "media:" + row.id })), usedBytes: Number(usage?.used ?? 0), quotaBytes: Number(limit?.quota_bytes ?? boundedQuota(process.env.MEDIA_WEBSITE_QUOTA_BYTES, 5_000_000)) };
+    const [usage] = await tx.execute(sql`select coalesce(sum(bytes),0)::bigint as used,count(*)::int as count,coalesce(sum(bytes) filter(where kind='image'),0)::bigint as image_used,coalesce(sum(bytes) filter(where kind='video'),0)::bigint as video_used,coalesce(sum(bytes) filter(where kind='document'),0)::bigint as document_used from website_media where website_id=${websiteId} and status <> 'deleted'`);
+    const [limit] = await tx.execute(sql`select quota_bytes,video_quota_bytes,document_quota_bytes from website_media_limits where website_id=${websiteId}`);
+    return { enabled: uploadsEnabled(), items: rows.map((row) => ({ ...row, ref: "media:" + row.id })), usedBytes: Number(usage?.used ?? 0), quotaBytes: Number(limit?.quota_bytes ?? boundedQuota(process.env.MEDIA_WEBSITE_QUOTA_BYTES, 5_000_000)),imageUsedBytes:Number(usage?.image_used??0),videoUsedBytes:Number(usage?.video_used??0),documentUsedBytes:Number(usage?.document_used??0),videoQuotaBytes:Number(limit?.video_quota_bytes??boundedQuota(process.env.MEDIA_VIDEO_WEBSITE_QUOTA_BYTES,500_000_000)),documentQuotaBytes:Number(limit?.document_quota_bytes??boundedQuota(process.env.MEDIA_DOCUMENT_WEBSITE_QUOTA_BYTES,50_000_000)) };
   });
 }
 export async function uploadMedia(userId: string, websiteId: string, input: Buffer, mime: string, alt: string) {
@@ -88,7 +88,8 @@ export async function removeMedia(userId: string, websiteId: string, id: string)
     const [image] = await tx.execute(sql`select * from website_media where id=${id} and website_id=${websiteId} and (status in ('ready','deleting') or (status='pending' and created_at < now()-interval '24 hours')) for update`);
     if (!image) throw new MediaError("Image not found.", 404);
     const pattern = '%"media:' + id + '"%';
-    const refs = await tx.execute(sql`select 1 from website_pages where website_id=${websiteId} and (content like ${pattern} or published_content like ${pattern}) union all select 1 from website_versions where website_id=${websiteId} and snapshot like ${pattern} union all select 1 from website_posts where website_id=${websiteId} and (featured_media_id=${id} or published_snapshot->>$key$featuredMediaRef$key$=${"media:"+id}) union all select 1 from website_post_revisions where website_id=${websiteId} and snapshot::text like ${pattern} limit 1`);
+    const bodyPattern = '%media:' + id + '%';
+    const refs = await tx.execute(sql`select 1 from website_pages where website_id=${websiteId} and (content like ${pattern} or published_content like ${pattern}) union all select 1 from website_versions where website_id=${websiteId} and snapshot like ${pattern} union all select 1 from website_posts where website_id=${websiteId} and (featured_media_id=${id} or published_snapshot->>$key$featuredMediaRef$key$=${"media:"+id} or body like ${bodyPattern} or published_snapshot->>$key$body$key$ like ${bodyPattern}) union all select 1 from website_post_revisions where website_id=${websiteId} and snapshot::text like ${pattern} limit 1`);
     if (refs.length || (image.last_published_at && new Date(String(image.last_published_at)).getTime() > Date.now() - 30 * 86400000)) throw new MediaError("This image is retained by a draft, publication, recovery version or the 30-day publication grace period.", 409);
     await tx.execute(sql`update website_media set status='deleting',updated_at=now() where id=${id}`);
     return image as MediaRow;
