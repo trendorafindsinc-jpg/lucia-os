@@ -32,7 +32,7 @@ An existing website must be editable as one connected project. Pages, navigation
 
 - The Visual Editor media panel uses the existing tenant-owned website media library and approved storage provider.
 - Support image replacement, image upload, video upload and PDF/document upload.
-- Uploaded video and document assets can be inserted into a page as validated media sections.
+- Uploaded image, video and document assets can be inserted into a page as validated media sections.
 - Video/document sections must reference ready media owned by the same website and of the matching asset kind.
 - Support secure provider-based embeds for YouTube, Vimeo, Spotify, SoundCloud, Apple Podcasts, TikTok and Instagram.
 - Never accept arbitrary iframe URLs, scripts or executable markup. Convert public share links to fixed allowlisted HTTPS embed URLs.
