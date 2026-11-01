@@ -149,6 +149,15 @@ export async function checkPhase15AuthenticatedAcceptance({
         await view.goto(base + "/pages?websiteId=" + id, { waitUntil: "networkidle" });
         await view.waitForURL((url) => url.pathname === "/editor" && url.hash === "#pages-navigation");
         await view.getByRole("region", { name: "Pages and navigation" }).waitFor();
+        await view.goto(base + "/editor?websiteId=" + id, { waitUntil: "networkidle" });
+        await view.locator(".website-first-editor-next-step").waitFor();
+        await view.getByRole("link", { name: "Continue to Detailed Settings →" }).click();
+        await view.locator(".studio-settings-destinations").waitFor();
+        await view.getByRole("link", { name: "Open SEO & social settings →" }).waitFor();
+        await view.getByRole("link", { name: "Manage website domains →" }).waitFor();
+        assert(await view.locator(".studio-settings-unavailable").innerText().then((value) => value.includes("Not connected")));
+        await view.goto(base + "/editor?websiteId=" + id, { waitUntil: "networkidle" });
+        await view.locator(".website-first-editor").waitFor();
         saved = await (await api("a", draftRoute(id))).json();
         initialRevision = saved.revision;
         assert.equal(saved.draft.layoutId, "lucia.layout." + name);
