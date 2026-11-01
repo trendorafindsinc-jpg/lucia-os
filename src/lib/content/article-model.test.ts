@@ -24,7 +24,7 @@ describe("Phase 15 content-contract foundation", () => {
   expect(articleDraftSchema.safeParse({...valid,slug:"../../admin"}).success).toBe(false);
   expect(updateArticleSchema.safeParse({...valid,revision:-1,action:"publish"}).success).toBe(false);
   expect(updateArticleSchema.safeParse({...valid,revision:2,action:"schedule"}).success).toBe(false);
-  const {kind,featuredMediaAlt,...editable}=valid;
+  const {kind,featuredMediaAlt,authorName,...editable}=valid;
   expect(updateArticleSchema.safeParse({...editable,revision:2,action:"schedule",scheduledAt:"2026-11-02T10:00:00.000Z"}).success).toBe(true);
   expect(updateArticleSchema.safeParse({...valid,revision:2,action:"publish",injected:"unexpected"}).success).toBe(false);
   expect(articleDraftSchema.parse({...valid,featuredMediaRef:"media:b8e95a60-fbde-4c37-93e6-a2916c7b13d4"}).featuredMediaRef).toMatch(/^media:/);
