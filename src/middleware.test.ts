@@ -34,12 +34,13 @@ describe("root host routing middleware", () => {
     const response = middleware(new NextRequest("https://customer-example.com/about"));
     expect(response.headers.get("x-middleware-rewrite")).toBe("https://customer-example.com/tenant-site-internal/about");
   });
-  it("allows only the read-only public content contract on customer hosts", () => {
+  it("routes only the read-only public content contract directly on customer hosts", () => {
     vi.stubEnv("LUCIA_SITE_DOMAIN", "lucia.name.ng");
-    const platformSite=middleware(new NextRequest("https://northstar.lucia.name.ng/api/public/v1/content"));
-    expect(platformSite.headers.get("x-middleware-rewrite")).toBe("https://northstar.lucia.name.ng/site/northstar/api/public/v1/content");
-    const custom=middleware(new NextRequest("https://customer-example.com/api/public/v1/content"));
-    expect(custom.headers.get("x-middleware-rewrite")).toBe("https://customer-example.com/tenant-site-internal/api/public/v1/content");
+    for (const url of ["https://northstar.lucia.name.ng/api/public/v1/content","https://customer-example.com/api/public/v1/content"]) {
+      const response=middleware(new NextRequest(url));
+      expect(response.headers.get("x-middleware-next")).toBe("1");
+      expect(response.headers.get("x-middleware-rewrite")).toBeNull();
+    }
     expect(middleware(new NextRequest("https://customer-example.com/api/websites")).status).toBe(404);
   });
   it("blocks private API paths on customer custom domains", () => {
