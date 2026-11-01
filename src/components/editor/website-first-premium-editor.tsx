@@ -3,10 +3,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { LayoutRenderer } from "@/components/layout-studio/layout-renderer";
-import { MediaLibrary } from "@/components/editor/media-library";
+import { MediaLibrary, type MediaLibraryItem } from "@/components/editor/media-library";
 import { mediaIds } from "@/lib/media/references";
 import { premiumArtworkChoices } from "@/lib/layout-blueprint/premium-layouts/asset-choices";
 import { premiumCandidate, premiumCandidateIds } from "@/lib/layout-blueprint/premium-layouts/catalogue-candidates";
+import { resolveExternalEmbed } from "@/lib/media/embed-providers";
 import {
   applyPremiumEdit, compositionRecoverySchema,
   type PremiumEdit, type PremiumLayout, type PremiumSection,
@@ -90,6 +91,7 @@ export function WebsiteFirstPremiumEditor({
   const [showMedia, setShowMedia] = useState(false);
   const [showPages, setShowPages] = useState(false);
   const [showLayouts, setShowLayouts] = useState(false);
+  const [embedUrl, setEmbedUrl] = useState("");
   const [layoutChoice, setLayoutChoice] = useState(initial.layoutId);
   useEffect(() => { const requested = new URLSearchParams(window.location.search).get("content");
     if (requested === "blog" || requested === "news") setStoryKind(requested);
@@ -405,6 +407,30 @@ export function WebsiteFirstPremiumEditor({
       : withSectionImage(section, image);
     perform({ kind: "replace-section", pageId: page.id, section: replacement });
   }
+
+  function insertUploadedMedia(item: MediaLibraryItem) {
+    if (item.kind === "image") return;
+    const id = "media-" + crypto.randomUUID().replaceAll("-", "");
+    const isVideo = item.kind === "video";
+    perform({ kind: "insert-section", pageId: page.id, index: page.sections.length,
+      section: { id, type: "media-embed", variant: "wide", kind: isVideo ? "video" : "document",
+        title: (item.original_name || item.alt).slice(0, 120),
+        ...(item.caption ? { description: item.caption.slice(0, 500) } : {}),
+        mediaRef: item.ref, ...(isVideo ? { mime: item.mime === "video/webm" ? "video/webm" : "video/mp4" } : {}) } });
+    setSelected(id); setShowSectionTools(true); setShowMedia(false);
+    setNotice(isVideo ? "Video section added to this page. Save your website to keep it." : "Download section added to this page. Save your website to keep it.");
+  }
+
+  function insertExternalEmbed() {
+    const resolved = resolveExternalEmbed(embedUrl);
+    if (!resolved) { setNotice("That URL is not a supported secure embed. Try YouTube, Vimeo, Spotify, SoundCloud, Apple Podcasts, TikTok or Instagram."); return; }
+    const id = "embed-" + crypto.randomUUID().replaceAll("-", "");
+    perform({ kind: "insert-section", pageId: page.id, index: page.sections.length,
+      section: { id, type: "media-embed", variant: "wide", kind: "embed",
+        title: resolved.title, url: embedUrl.trim() } });
+    setSelected(id); setShowSectionTools(true); setEmbedUrl(""); setShowMedia(false);
+    setNotice("Responsive " + resolved.provider + " embed added to this page. Save your website to keep it.");
+  }
   const options = [...premiumArtworkChoices, ...ownedArtwork];
   return <main className="website-first-editor">
     <header className="website-first-editor-toolbar">
@@ -518,8 +544,14 @@ export function WebsiteFirstPremiumEditor({
         <label>Image description <input key={selectedImage.alt} defaultValue={selectedImage.alt} maxLength={200}
           onBlur={(e) => { const alt = e.target.value.trim(); if (alt && alt !== selectedImage.alt) replaceImage({ ...selectedImage, alt }); }} /></label>
       </div>}
+      <div className="website-first-editor-embed-tools">
+        <label>Embed external content<input type="url" value={embedUrl} onChange={(event) => setEmbedUrl(event.target.value)}
+          placeholder="Paste a YouTube, Spotify, Vimeo or other supported link" /></label>
+        <button type="button" onClick={insertExternalEmbed} disabled={!embedUrl.trim() || busy || saveState === "conflict"}>Add embed to page</button>
+        <p>Supported providers: YouTube, Vimeo, Spotify, SoundCloud, Apple Podcasts, TikTok and Instagram.</p>
+      </div>
       {accountId ? <MediaLibrary websiteId={websiteId} accountId={accountId} onChange={setOwnedArtwork}
-        protectedIds={mediaIds(layout)} /> : <p>Image uploads require an authenticated website session.</p>}
+        protectedIds={mediaIds(layout)} onInsert={insertUploadedMedia} /> : <p>Media uploads require an authenticated website session.</p>}
     </section>}
     <div hidden={Boolean(storyKind)} className="website-first-editor-canvas" style={{ width: previewWidth, maxWidth: "100%" }}
       onClickCapture={clickWebsite} aria-label={previewOnly ? "Website preview" : "Click any heading or paragraph in your actual website to edit"}>
