@@ -156,6 +156,19 @@ export async function checkPhase15AuthenticatedAcceptance({
         await view.getByRole("link", { name: "Open SEO & social settings →" }).waitFor();
         await view.getByRole("link", { name: "Manage website domains →" }).waitFor();
         assert(await view.locator(".studio-settings-unavailable").innerText().then((value) => value.includes("Not connected")));
+        if (phase15 && name === selected[0]) {
+          const seoRoute = "/api/websites/" + id + "/seo";
+          const originalSeo = await (await api("a", seoRoute)).json();
+          await view.goto(base + "/seo?websiteId=" + id, { waitUntil: "networkidle" });
+          await view.locator(".seo-workspace").waitFor();
+          await view.getByLabel("Search title").fill("Phase 15 persisted SEO acceptance");
+          await view.getByRole("button", { name: "Save SEO", exact: true }).click();
+          await view.getByText(/SEO settings saved to the website workspace/).waitFor();
+          const persistedSeo = await (await api("a", seoRoute)).json();
+          assert.equal(persistedSeo.settings.title, "Phase 15 persisted SEO acceptance");
+          const restoredSeo = await api("a", seoRoute, "PATCH", originalSeo.settings);
+          assert.equal(restoredSeo.status, 200, "SEO acceptance must restore its original saved settings");
+        }
         await view.goto(base + "/editor?websiteId=" + id, { waitUntil: "networkidle" });
         await view.locator(".website-first-editor").waitFor();
         saved = await (await api("a", draftRoute(id))).json();
