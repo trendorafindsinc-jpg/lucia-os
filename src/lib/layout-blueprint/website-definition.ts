@@ -79,8 +79,23 @@ export function mutateWebsite(
     return mutation;
   }
   if (mutation.kind === "assign-layout") {
-    if (isPremium(stored))
-      throw new Error("Replacing an existing composition is not supported");
+    if (isPremium(stored)) {
+      if (!premiumCandidateIds.includes(mutation.layoutId))
+        throw new Error("This design is not available for an existing composition");
+      const candidate = premiumCandidate(mutation.layoutId, stored.identity.name);
+      // Change only the presentation system. Keep the customer's identity,
+      // pages, paths, navigation, sections, media references and permissions.
+      // The normal authenticated, tenant-scoped and revision-checked draft
+      // transaction still validates media ownership before persistence.
+      return premiumLayoutSchema.parse({
+        ...stored,
+        layoutId: candidate.layoutId,
+        layoutVersion: candidate.layoutVersion,
+        category: candidate.category,
+        tokens: candidate.tokens,
+        visualExperience: candidate.visualExperience,
+      });
+    }
     // A full canonical ID is deliberately distinct from the old structural
     // demo aliases. Assignment still runs inside existing authenticated,
     // organization-scoped, revision-checked server draft transactions.
