@@ -14,11 +14,11 @@ export async function GET(_request:Request,context:Context){
  const user=await getCurrentUser();if(!user)return json({error:"Sign in with LUCIA ID."},401);
  const parsed=await ids(context);if(!parsed.success)return json({error:"Invalid website or article."},400);
  const {websiteId,articleId}=parsed.data;
- try{const revisions=await withMediaWebsite(user.id,websiteId,"website.read",async tx=>{
-  const [post]=await tx.select({id:websitePosts.id}).from(websitePosts).where(and(eq(websitePosts.id,articleId),eq(websitePosts.websiteId,websiteId))).limit(1);
+ try{const revisions=await withMediaWebsite(user.id,websiteId,"website.read",async (tx,organizationId)=>{
+  const [post]=await tx.select({id:websitePosts.id}).from(websitePosts).where(and(eq(websitePosts.id,articleId),eq(websitePosts.organizationId,organizationId),eq(websitePosts.websiteId,websiteId))).limit(1);
   if(!post)throw new MediaError("Article not found.",404);
   return tx.select({revision:websitePostRevisions.revision,event:websitePostRevisions.event,createdAt:websitePostRevisions.createdAt})
-   .from(websitePostRevisions).where(eq(websitePostRevisions.postId,articleId)).orderBy(desc(websitePostRevisions.revision)).limit(50);
+   .from(websitePostRevisions).where(and(eq(websitePostRevisions.postId,articleId),eq(websitePostRevisions.organizationId,organizationId))).orderBy(desc(websitePostRevisions.revision)).limit(50);
  });return json({revisions});}
  catch(error){return json({error:error instanceof MediaError?error.message:"Revision history is temporarily unavailable."},error instanceof MediaError?error.status:503);}
 }
