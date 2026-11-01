@@ -148,6 +148,7 @@ export function WebsiteFirstPremiumEditor({
 
   useEffect(() => {
     if (window.location.hash === "#media-library") setShowMedia(true);
+    if (window.location.hash === "#pages-navigation") setShowPages(true);
   }, []);
 
   useEffect(() => {
