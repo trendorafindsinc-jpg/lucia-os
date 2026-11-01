@@ -6,6 +6,7 @@ import { hasOrganizationPermission } from "@/lib/access/policy";
 import { getDb } from "@/lib/db/client";
 import { websites } from "@/lib/db/schema";
 import "./website-picker.css";
+import { SavedWebsiteThumbnail } from "./saved-website-thumbnail";
 
 export const metadata = { title: "Your websites | Layout Studio" };
 export const dynamic = "force-dynamic";
@@ -51,10 +52,7 @@ export default async function WorkspaceWebsitesPage() {
           {group.items.map((site) => {
             const address = site.slug + "." + host;
             return <article key={site.id} className="studio-picker-card">
-              <div className="studio-picker-preview" aria-label="Website preview unavailable; open editor to view actual pages">
-                <div className="studio-picker-preview-browser" aria-hidden="true"><i /><i /><i /></div>
-                <span>{site.name}</span><small>Open to view and edit the actual website</small>
-              </div>
+              <SavedWebsiteThumbnail websiteId={site.id} name={site.name} />
               <div className="studio-picker-card-body"><div className="studio-picker-card-title">
                 <h3>{site.name}</h3><span className={site.status === "published" ? "studio-picker-live" : "studio-picker-draft"}>
                   {site.status === "published" ? "Published" : "Draft"}</span></div>
