@@ -158,7 +158,7 @@ describe("versioned production website boundary", () => {
           image: { src: "builtin:hospitality/stay", alt: "Room" },
         },
       }),
-    ).toThrow(/Image/);
+    ).toThrow(/Media edit denied/);
     expect(() =>
       applyPremiumEdit(layout, "guided", {
         kind: "replace-section",
@@ -352,7 +352,11 @@ describe("versioned production website boundary", () => {
         section.type === "premium-hero" && section.heading === "Customer authored landing page"
       )).toBe(false);
       expect(() => mutateWebsite(validated, initial)).toThrow();
-      expect(() => mutateWebsite(validated, canonical)).toThrow();
+      const reassigned = premiumLayoutSchema.parse(mutateWebsite(validated, canonical));
+      expect(reassigned.layoutId).toBe(id);
+      expect(reassigned.identity).toEqual(validated.identity);
+      expect(reassigned.pages).toEqual(validated.pages);
+      expect(reassigned.navigation).toEqual(validated.navigation);
     },
   );
 
