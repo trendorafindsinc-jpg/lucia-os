@@ -8,7 +8,7 @@ import { headers } from "next/headers";
 import { notFound, permanentRedirect } from "next/navigation";
 import { getDb } from "@/lib/db/client";
 import { normalizeHostname } from "@/lib/domains/hostname";
-import { isPlatformHostname } from "@/lib/publishing/platform-hosts";
+import { resolveLuciaSubdomain } from "@/lib/publishing/host";
 import { articleDraftSchema, articleRoute } from "@/lib/content/article-model";
 import { websiteDomains, websitePosts, websites, organizations } from "@/lib/db/schema";
 import styles from "./public-articles.module.css";
@@ -31,7 +31,7 @@ const readPublished = cache(async (path: string, websiteSlug?: string) => {
   .innerJoin(organizations,eq(organizations.id,websites.organizationId))
   .where(and(eq(websiteDomains.hostname,hostname),eq(websiteDomains.status,"active"),
    eq(websites.status,"published"),eq(organizations.status,"active"))).limit(1);
- if(!site&&websiteSlug&&isPlatformHostname(hostname)){
+ if(!site&&websiteSlug&&resolveLuciaSubdomain(host,process.env.LUCIA_SITE_DOMAIN||"lucia.name.ng")===websiteSlug){
   const [platformSite]=await db.select({id:websites.id,organizationId:websites.organizationId,name:websites.name})
    .from(websites).innerJoin(organizations,eq(organizations.id,websites.organizationId))
    .where(and(eq(websites.slug,websiteSlug),eq(websites.status,"published"),eq(organizations.status,"active"))).limit(1);
