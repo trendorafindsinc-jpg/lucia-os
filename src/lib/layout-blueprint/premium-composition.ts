@@ -384,7 +384,7 @@ export type PremiumEdit =
   | { kind: "remove-section"; pageId: string; sectionId: string }
   | { kind: "insert-page"; page: z.infer<typeof premiumPageSchema> }
   | { kind: "remove-page"; pageId: string }
-  | { kind: "page-details"; pageId: string; title: string; description: string; navigation: boolean }
+  | { kind: "page-details"; pageId: string; path: string; title: string; description: string; navigation: boolean }
   | { kind: "navigation-order"; hrefs: string[] }
   | { kind: "replace-section"; pageId: string; section: PremiumSection }
   | { kind: "reorder"; pageId: string; sectionIds: string[] }
@@ -480,9 +480,29 @@ export function applyPremiumEdit(
       throw new Error("Page settings edit denied");
     const page = next.pages.find((entry) => entry.id === edit.pageId);
     if (!page) throw new Error("Unknown page");
+    if ((page.path === "/") !== (edit.path === "/"))
+      throw new Error("Only the homepage can use the root address");
+    const nextPath = path.parse(edit.path);
+    if (nextPath !== page.path && next.pages.some((entry) => entry.id !== page.id && entry.path === nextPath))
+      throw new Error("That page address is already in use");
+    const previousPath = page.path;
+    page.path = nextPath;
     page.title = text(120).parse(edit.title);
     page.description = text(160).parse(edit.description);
     page.navigation = edit.navigation;
+    if (previousPath !== nextPath) {
+      next.navigation = next.navigation.map((item) => item.href === previousPath ? { ...item, href: nextPath } : item);
+      const updateLinks = (value: unknown): void => {
+        if (Array.isArray(value)) { value.forEach(updateLinks); return; }
+        if (!value || typeof value !== "object") return;
+        for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
+          if (key === "href" && child === previousPath)
+            (value as Record<string, unknown>)[key] = nextPath;
+          else updateLinks(child);
+        }
+      };
+      for (const entry of next.pages) updateLinks(entry.sections);
+    }
     const existing = next.navigation.find((item) => item.href === page.path);
     if (edit.navigation) {
       if (existing) existing.label = page.title.slice(0, 50);
@@ -689,6 +709,7 @@ export const premiumEditSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("page-details"),
     pageId: id,
+    path,
     title: text(120),
     description: text(160),
     navigation: z.boolean(),
