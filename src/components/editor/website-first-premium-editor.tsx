@@ -339,6 +339,8 @@ export function WebsiteFirstPremiumEditor({
     {!previewOnly && !storyKind && <div className="website-first-editor-tools">
       <button type="button" onClick={() => setShowSectionTools((value) => !value)}>Sections {showSectionTools ? "▴" : "▾"}</button>
       <button type="button" onClick={addSection} disabled={busy || saveState === "conflict"}>+ Add Section</button>
+      <button type="button" onClick={() => setStoryKind("blog")}>Write Blog</button>
+      <button type="button" onClick={() => setStoryKind("news")}>Publish News</button>
       <button type="button" onClick={() => setShowMedia((value) => !value)}>Manage Media</button>
       <label>Device preview <select value={previewWidth} onChange={(e) => setPreviewWidth(e.target.value)}>
         <option value="100%">Auto</option><option value="390px">Phone</option>
