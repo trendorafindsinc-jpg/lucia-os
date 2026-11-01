@@ -2,12 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { LoomRenderer } from "@/components/loom/loom-renderer";
 import { makeInitialDraft } from "@/lib/editor/site-draft";
 import { siteStructurePageToBlueprint } from "@/lib/site-structure/loom-adapter";
 import { addPage, addReusableSection, makeInitialStructure, moveReusableSection, removePage, reusableSectionLibrary, setHomepage, siteStructureSchema, toggleNavigationPage, type ReusableSectionType, type SitePage, type SiteStructure } from "@/lib/site-structure/structure";
 
 export function SiteStructureEditor() {
+  const router = useRouter();
   const [structure, setStructure] = useState<SiteStructure>(() => makeInitialStructure());
   const [previewDraft, setPreviewDraft] = useState(() => makeInitialDraft("northstar-consulting"));
   const [previewError, setPreviewError] = useState("");
@@ -35,7 +37,7 @@ export function SiteStructureEditor() {
         if (!response.ok) throw new Error(payload.error || "Couldn't load the website's visual draft.");
         if (payload.draft?.version === 2 && payload.draft?.schema === "lucia.layout-composition") {
           redirectingToPremiumEditor = true;
-          window.location.replace(`/editor?websiteId=${encodeURIComponent(requestedWebsiteId)}#pages-navigation`);
+          router.replace(`/editor?websiteId=${encodeURIComponent(requestedWebsiteId)}#pages-navigation`);
           return;
         }
         const base = makeInitialDraft(payload.draft?.templateId || "northstar-consulting");
