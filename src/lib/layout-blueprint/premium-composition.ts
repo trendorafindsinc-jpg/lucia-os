@@ -606,9 +606,9 @@ export function applyPremiumEdit(
           a.forEach((value, i) => check(value, b[i], key));
           return;
         }
-        if (key === "image") {
+        if (key === "image" || key === "mediaRef" || key === "mime") {
           if (!perms.guided.includes("image"))
-            throw new Error("Image edit denied");
+            throw new Error("Media edit denied");
           return;
         }
         if (a && b && typeof a === "object" && typeof b === "object") {
