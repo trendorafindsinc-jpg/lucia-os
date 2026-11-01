@@ -145,7 +145,28 @@ export async function checkPhase15AuthenticatedAcceptance({
         await designPanel.waitFor();
         await designPanel.getByLabel("Choose a design").waitFor();
         await designPanel.locator(".website-first-layout-preview [data-layout-id]").waitFor();
-        await designPanel.getByRole("button", { name: "Close", exact: true }).click();
+        if (name === selected[0]) {
+          const originalDesign = await (await api("a", draftRoute(id))).json();
+          const nextDesign = originalDesign.draft.layoutId === "lucia.layout.canvas"
+            ? "lucia.layout.meridian" : "lucia.layout.canvas";
+          await designPanel.getByLabel("Choose a design").selectOption(nextDesign);
+          view.once("dialog", (dialog) => dialog.accept());
+          await designPanel.getByRole("button", { name: "Apply to existing website", exact: true }).click();
+          await view.locator(".website-first-editor-status").filter({ hasText: "✓ Saved" }).waitFor();
+          const switchedDesign = await (await api("a", draftRoute(id))).json();
+          assert.equal(switchedDesign.draft.layoutId, nextDesign);
+          assert.deepEqual(switchedDesign.draft.identity, originalDesign.draft.identity);
+          assert.deepEqual(switchedDesign.draft.pages, originalDesign.draft.pages);
+          assert.deepEqual(switchedDesign.draft.navigation, originalDesign.draft.navigation);
+          const restoredDesign = await api("a", draftRoute(id), "PATCH", {
+            kind: "assign-layout", layoutId: originalDesign.draft.layoutId,
+          }, { "if-match": switchedDesign.revision });
+          assert.equal(restoredDesign.status, 200, "Visual Editor should restore the original design");
+          await view.goto(base + "/editor?websiteId=" + id, { waitUntil: "networkidle" });
+          await view.locator(".website-first-editor").waitFor();
+        } else {
+          await designPanel.getByRole("button", { name: "Close", exact: true }).click();
+        }
         await view.goto(base + "/pages?websiteId=" + id, { waitUntil: "networkidle" });
         await view.waitForURL((url) => url.pathname === "/editor" && url.hash === "#pages-navigation");
         await view.getByRole("region", { name: "Pages and navigation" }).waitFor();
