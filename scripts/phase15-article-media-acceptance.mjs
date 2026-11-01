@@ -154,8 +154,10 @@ export async function checkPhase15ArticleMediaAcceptance({
     const newsBody = await newsCreated.json();
     assert.equal(newsCreated.status, 201, newsBody.error);
     newsId = newsBody.article.id;
-    const newsDraft = { ...newsBody.article, excerpt: "A short official update.", body: "This is a synthetic news update for the isolated Phase 15 acceptance suite.", category: "Company" };
-    const newsPublished = await patchArticle(newsId, newsDraft, null, "publish");
+    const newsDraft = { ...newsBody.article, excerpt: "A short official update.", body: "This is a synthetic news update for the isolated Phase 15 acceptance suite.", category: "Company",eventAt:null,isFeatured:false,correctionNote:null,correctsSlug:null,tags:["company","update"],seoTitle:newsTitle+" | LUCIA",seoDescription:"A short official update for the customer website." };
+    const newsSaved = await patchArticle(newsId, newsDraft, null, "save");
+    assert.equal(newsSaved.status, 200, (await newsSaved.clone().json()).error);
+    const newsPublished = await patchArticle(newsId, (await newsSaved.json()).article, null, "publish");
     assert.equal(newsPublished.status, 200, (await newsPublished.clone().json()).error);
     const newsRecord = (await (await api("a", articleRoute)).json()).articles.find((entry) => entry.id === newsId);
     assert.equal((await publicSite("/news", host)).status, 200);
@@ -163,14 +165,48 @@ export async function checkPhase15ArticleMediaAcceptance({
     const newsPage = await publicSite("/news/" + newsRecord.publishedSlug, host);
     assert.equal(newsPage.status, 200);
     assert((await newsPage.text()).includes(newsTitle));
+    const authorRows=await admin`SELECT published_snapshot->>'authorName' AS author,published_snapshot->>'seoTitle' AS seo_title,published_snapshot->'tags' AS tags FROM website_posts WHERE id=${newsId}`;
+    const authorProfile=await admin`SELECT display_name FROM app_users WHERE id=${f.a}`;
+    assert.equal(authorRows[0].author,authorProfile[0]?.display_name??null,"Published author attribution must match the signed-in author's public profile");
+    assert.equal(authorRows[0].seo_title,newsDraft.seoTitle);assert.deepEqual(authorRows[0].tags,newsDraft.tags);
+
+    const correctedTitle="Phase 15 correction "+randomBytes(5).toString("hex");
+    const correctedCreated=await api("a",articleRoute,"POST",{kind:"news",title:correctedTitle});
+    const correctedBody=await correctedCreated.json();assert.equal(correctedCreated.status,201,correctedBody.error);correctedNewsId=correctedBody.article.id;
+    const correctedDraft={...correctedBody.article,excerpt:"The verified event details have been corrected.",body:"This corrected report contains the verified venue and event details for the community.",category:"Events",eventAt:"2026-11-02T10:00:00.000Z",isFeatured:true,correctionNote:"Correction: the event venue has changed. This report contains the verified venue.",correctsSlug:newsRecord.publishedSlug,tags:["events","correction"],seoTitle:correctedTitle+" | LUCIA",seoDescription:"The corrected event details and verified update.",featuredMediaRef:null,scheduledAt:null};
+    const correctedSave=await patchArticle(correctedNewsId,correctedDraft,null,"save");assert.equal(correctedSave.status,200,(await correctedSave.clone().json()).error);
+    const correctedPublish=await patchArticle(correctedNewsId,(await correctedSave.json()).article,null,"publish");assert.equal(correctedPublish.status,200,(await correctedPublish.clone().json()).error);
+    const correctedRecord=(await (await api("a",articleRoute)).json()).articles.find(entry=>entry.id===correctedNewsId);
+    const correctedPage=await publicSite("/news/"+correctedRecord.publishedSlug,host);assert.equal(correctedPage.status,200);
+    const correctedHtml=await correctedPage.text();assert(correctedHtml.includes(correctedDraft.correctionNote));assert(correctedHtml.includes(newsRecord.publishedSlug));assert(correctedHtml.includes("Events"));
+    const publicContract=JSON.parse(await (await publicSite("/api/public/v1/content",host)).text());
+    assert.equal(publicContract.contract,"lucia.published-content.v1");assert(publicContract.content.news.some(item=>item.slug===correctedRecord.publishedSlug&&item.isFeatured&&item.correctsSlug===newsRecord.publishedSlug));
+    assert(publicContract.content.blog.some(item=>item.slug===article.slug&&item.tags.includes("customer-story")));
+    const home=await publicSite("/",host);const homeHtml=await home.text();assert(homeHtml.includes(correctedTitle));assert(homeHtml.includes('href="/blog"'));assert(homeHtml.includes('href="/news"'));
     const newsUnpublish = await patchArticle(newsId, newsRecord, null, "unpublish");
     assert.equal(newsUnpublish.status, 200, (await newsUnpublish.clone().json()).error);
+    const correctedUnpublish=await patchArticle(correctedNewsId,correctedRecord,null,"unpublish");assert.equal(correctedUnpublish.status,200,(await correctedUnpublish.clone().json()).error);
     assert.equal((await publicSite("/news/" + newsRecord.publishedSlug, host)).status, 404);
-    assert(!(await (await publicSite("/news", host)).text()).includes(newsTitle));
-    bpass("News customer journey: create → save/publish → public listing/detail → unpublish; Blog draft/live image versions remain isolated");
+    assert.equal((await publicSite("/news/" + correctedRecord.publishedSlug, host)).status, 404);
+
+    const scheduledTitle="Phase 15 scheduled "+randomBytes(5).toString("hex");
+    const scheduledCreated=await api("a",articleRoute,"POST",{kind:"news",title:scheduledTitle});
+    const scheduledBody=await scheduledCreated.json();assert.equal(scheduledCreated.status,201,scheduledBody.error);scheduledNewsId=scheduledBody.article.id;
+    const scheduledDraft={...scheduledBody.article,excerpt:"A verified story scheduled for release.",body:"This scheduled article remains private until the database-backed publication worker claims it.",category:"Updates",eventAt:null,isFeatured:false,correctionNote:null,correctsSlug:null,tags:["scheduled"],seoTitle:scheduledTitle+" | LUCIA",seoDescription:"A verified story scheduled for release.",featuredMediaRef:null,scheduledAt:new Date(Date.now()+10*60*1000).toISOString()};
+    const scheduledResponse=await patchArticle(scheduledNewsId,scheduledDraft,null,"schedule");assert.equal(scheduledResponse.status,200,(await scheduledResponse.clone().json()).error);
+    const scheduledRecord=(await scheduledResponse.json()).article;assert.equal(scheduledRecord.status,"scheduled");
+    assert.equal((await publicSite("/news/"+scheduledRecord.slug,host)).status,404);
+    await admin`UPDATE website_posts SET scheduled_at=now()-interval '1 minute' WHERE id=${scheduledNewsId} AND website_id=${siteId} AND status='scheduled'`;
+    const cron=await api(null,"/api/cron/publish-articles","GET",undefined,{authorization:"Bearer "+process.env.CRON_SECRET});
+    assert.equal(cron.status,200,"The scheduled publisher must accept the isolated cron secret");
+    const cronResult=await cron.json();assert(cronResult.published>=1,"The due scheduled News article must be published by the worker");
+    const publishedScheduled=await publicSite("/news/"+scheduledRecord.slug,host);assert.equal(publishedScheduled.status,200);assert((await publishedScheduled.text()).includes(scheduledTitle));
+    bpass("News customer journey: author/SEO/tags, event metadata, featured correction notices, public content contract and scheduled worker; Blog media references and revision restore are tenant-isolated");
   } finally {
     if (articleId) await admin`DELETE FROM website_posts WHERE id=${articleId} AND website_id=${siteId}`;
     if (newsId) await admin`DELETE FROM website_posts WHERE id=${newsId} AND website_id=${siteId}`;
+    if (correctedNewsId) await admin`DELETE FROM website_posts WHERE id=${correctedNewsId} AND website_id=${siteId}`;
+    if (scheduledNewsId) await admin`DELETE FROM website_posts WHERE id=${scheduledNewsId} AND website_id=${siteId}`;
     await admin`DELETE FROM website_media WHERE id = ANY(${mediaIds}::uuid[])`;
     if (reservedBytes) await admin`UPDATE media_storage_budget SET reserved_bytes=GREATEST(0,reserved_bytes-${reservedBytes}) WHERE product='lucia-os'`;
   }
