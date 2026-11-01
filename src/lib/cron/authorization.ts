@@ -71,8 +71,8 @@ async function verifyGitHubActionsToken(token: string): Promise<boolean> {
 
 /** Accept Vercel's configured secret or a short-lived OIDC token from the one trusted GitHub worker. */
 export async function isAuthorizedCronRequest(request: Request): Promise<boolean> {
-  const supplied = request.headers.get("authorization")?.replace(/^Bearer\\s+/i, "") ?? "";
-  if (!supplied) return false;
+  const supplied = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
+  if (!supplied || supplied.length > 8192) return false;
   const expected = process.env.CRON_SECRET;
   if (expected) {
     const a = Buffer.from(expected);
