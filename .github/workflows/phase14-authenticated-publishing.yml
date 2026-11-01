@@ -60,6 +60,7 @@ jobs:
       WEBSITE_TEST_PHASE14: ${{ github.event.pull_request.number == 140 && '0' || '1' }}
       WEBSITE_TEST_PHASE15: ${{ github.event.pull_request.number == 140 && '0' || '1' }}
       WEBSITE_TEST_PHASE16: "1"
+      CRON_SECRET: "phase15-isolated-cron-secret-for-disposable-ci-only"
       WEBSITE_TEST_MEDIA: "1"
       WEBSITE_TEST_WEBSITE_REMOVAL: "1"
       WEBSITE_TEST_PHASE14_LAYOUTS: ${{ inputs.layouts || ((github.event.pull_request.number == 138 || github.event.pull_request.number == 140) && 'flagships' || '') }}
