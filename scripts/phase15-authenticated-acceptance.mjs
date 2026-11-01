@@ -170,6 +170,9 @@ export async function checkPhase15AuthenticatedAcceptance({
         assert.equal(await videoUpload.getAttribute("accept"), "video/mp4,video/webm,application/pdf");
         await mediaPanel.getByLabel("Embed external content").waitFor();
         await mediaPanel.getByRole("button", { name: "Add embed to page", exact: true }).waitFor();
+        await mediaPanel.getByLabel("Download or external link label").waitFor();
+        await mediaPanel.getByLabel("Secure external destination").waitFor();
+        await mediaPanel.getByRole("button", { name: "Add external link to page", exact: true }).waitFor();
         await mediaPanel.getByRole("button", { name: "Close", exact: true }).click();
         await view.getByRole("button", { name: "Change Website Design", exact: true }).click();
         const designPanel = view.getByRole("region", { name: "Change website design" });
