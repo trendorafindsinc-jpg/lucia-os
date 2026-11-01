@@ -40,7 +40,7 @@ function reverseEdit(layout: PremiumLayout, edit: PremiumEdit): PremiumEdit | nu
   const page = "pageId" in edit ? layout.pages.find((entry) => entry.id === edit.pageId) : null;
   if (edit.kind === "page-details") {
     const before = layout.pages.find((entry) => entry.id === edit.pageId);
-    return before ? { kind: "page-details", pageId: edit.pageId, title: before.title, description: before.description, navigation: before.navigation } : null;
+    return before ? { kind: "page-details", pageId: edit.pageId, path: before.path, title: before.title, description: before.description, navigation: before.navigation } : null;
   }
   if (edit.kind === "navigation-order")
     return { kind: "navigation-order", hrefs: layout.navigation.map((item) => item.href) };
@@ -269,15 +269,19 @@ export function WebsiteFirstPremiumEditor({
     } finally { setBusy(false); }
   }
 
-  function updatePageDetails(pageId: string, patch: { title?: string; description?: string; navigation?: boolean }) {
+  function updatePageDetails(pageId: string, patch: { path?: string; title?: string; description?: string; navigation?: boolean }) {
     const target = layout.pages.find((entry) => entry.id === pageId);
     if (!target) return;
     const title = (patch.title ?? target.title).trim();
     const description = (patch.description ?? target.description).trim();
+    const rawPath = (patch.path ?? target.path).trim();
+    const nextPath = rawPath === "/" ? "/" : rawPath.startsWith("/") ? rawPath : "/" + rawPath;
     const navigation = patch.navigation ?? target.navigation;
     if (!title || !description) { setNotice("Page title and description cannot be empty."); return; }
-    if (title === target.title && description === target.description && navigation === target.navigation) return;
-    perform({ kind: "page-details", pageId, title, description, navigation });
+    if ((target.path === "/") !== (nextPath === "/")) { setNotice("Only the homepage can use the root address (/)."); return; }
+    if (layout.pages.some((entry) => entry.id !== pageId && entry.path === nextPath)) { setNotice("That page address is already in use."); return; }
+    if (title === target.title && description === target.description && navigation === target.navigation && nextPath === target.path) return;
+    perform({ kind: "page-details", pageId, path: nextPath, title, description, navigation });
   }
 
   function addPage() {
@@ -488,6 +492,9 @@ export function WebsiteFirstPremiumEditor({
         <div className="website-first-page-heading"><button type="button" aria-pressed={page.id === item.id}
           onClick={() => { setPageId(item.id); setSelected(""); setField(null); }}>{item.title}</button>
           <span>{item.path}</span></div>
+        <label>Page address<input key={item.id + item.path} defaultValue={item.path} maxLength={180}
+          disabled={!layout.permissions.advanced.includes("pages") || item.path === "/"}
+          onBlur={(event) => updatePageDetails(item.id, { path: event.target.value })}/></label>
         <label>Page title<input key={item.id + item.title} defaultValue={item.title} maxLength={120} disabled={!layout.permissions.advanced.includes("pages")}
           onBlur={(event) => updatePageDetails(item.id, { title: event.target.value })}/></label>
         <label>Search description<input key={item.id + item.description} defaultValue={item.description} maxLength={160} disabled={!layout.permissions.advanced.includes("pages")}
