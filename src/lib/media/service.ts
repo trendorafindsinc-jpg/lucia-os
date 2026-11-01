@@ -17,7 +17,7 @@ export async function withMediaWebsite<T>(userId: string, websiteId: string, per
     if (!hasOrganizationPermission({ role: org.role, status: org.membershipStatus }, permission)) continue;
     const result = await getDb().transaction(async (tx) => {
       await tx.execute(sql`select set_config('app.current_user_id', ${userId}, true), set_config('app.current_organization_id', ${org.id}, true)`);
-      const authorized = await tx.execute(sql`select m.role,m.status from organization_memberships m join organizations o on o.id=m.organization_id join websites w on w.organization_id=o.id where m.user_id=${userId} and m.organization_id=${org.id} and m.status='active' and o.status='active' and w.id=${websiteId} limit 1`);
+      const authorized = await tx.execute(sql`select m.role,m.status from organization_memberships m join organizations o on o.id=m.organization_id join websites w on w.organization_id=o.id where m.user_id=${userId} and m.organization_id=${org.id} and m.status='active' and o.status='active' and w.id=${websiteId} and w.status <> 'deleted' limit 1`);
       const member = authorized[0] as { role: string; status: string } | undefined;
       if (!member || !hasOrganizationPermission(member, permission)) return { found: false as const };
       return { found: true as const, value: await operation(tx, org.id) };
@@ -100,7 +100,7 @@ export async function findReadableMedia(id: string, userId: string | null) {
       if (!hasOrganizationPermission({ role: org.role, status: org.membershipStatus }, "website.read")) continue;
       const result = await getDb().transaction(async (tx) => {
         await tx.execute(sql`select set_config('app.current_user_id', ${userId}, true),set_config('app.current_organization_id', ${org.id}, true)`);
-        const [row] = await tx.execute(sql`select * from website_media where id=${id} and organization_id=${org.id} and status='ready'`);
+        const [row] = await tx.execute(sql`select m.* from website_media m join websites w on w.id=m.website_id and w.organization_id=m.organization_id where m.id=${id} and m.organization_id=${org.id} and m.status='ready' and w.status <> 'deleted'`);
         return row as MediaRow | undefined;
       });
       if (result) return { ...result, public: false };

@@ -1,5 +1,5 @@
 import { validateMediaOwnership } from "@/lib/media/service";
-import { and, eq, sql } from "drizzle-orm";
+import { ne, and, eq, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getOrganizationMembershipsForUser } from "@/lib/access/guards";
@@ -166,9 +166,10 @@ export async function POST(request: Request) {
             and(
               eq(websites.organizationId, org.id),
               eq(websites.id, settings.websiteId),
+              ne(websites.status, "deleted"),
             ),
           )
-          .limit(1);
+          .limit(1).for("update");
         if (!website) return null;
         if (website.slug !== settings.siteSlug)
           throw new Error("WEBSITE_ADDRESS_MISMATCH");

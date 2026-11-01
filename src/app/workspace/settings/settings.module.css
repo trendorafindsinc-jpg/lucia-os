@@ -374,3 +374,20 @@
   align-items: center;
   color: #b9daff;
 }
+
+.websiteRemoval { border-top: 1px solid #ffffff35; margin-top: 28px; padding-top: 24px; }
+.websiteRemoval h3 { font-size: 20px; margin: 0 0 12px; }
+.websiteRemoveList { list-style: none; padding: 0; display: grid; gap: 12px; }
+.websiteRemoveRow { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; padding: 16px; background: #21466b87; border: 1px solid #ffffff21; border-radius: 14px; }
+.websiteRemoveRow > div { display: grid; gap: 6px; min-width: 0; }
+.websiteRemoveRow strong { overflow-wrap: anywhere; }
+.websiteRemoveRow small { color: #bfd3ec; overflow-wrap: anywhere; }
+.panel .dangerButton { background: #782b34; border-color: #ef9ca8; color: #fff; }
+.confirmRemoval { display: grid; gap: 12px; margin-top: 16px; padding: 20px; background: #421f2ccc; border: 1px solid #f0a2af; border-radius: 16px; }
+.confirmRemoval h4 { margin: 0; font-size: 18px; }
+.confirmRemoval label { font-weight: 600; }
+.confirmRemoval input { min-width: 0; width: 100%; background: #fff; color: #19283d; border: 2px solid #dd9cac; padding: 12px; border-radius: 10px; font: inherit; }
+.removalActions { display: flex; flex-wrap: wrap; gap: 12px; }
+:global([data-workspace-preferences][data-appearance="light"]) .websiteRemoveRow { background: #e4edfa; }
+:global([data-workspace-preferences][data-appearance="light"]) .websiteRemoveRow small { color: #3d5069; }
+:global([data-workspace-preferences][data-appearance="light"]) .panel .dangerButton { background: #9b2f3b; color: #fff; }

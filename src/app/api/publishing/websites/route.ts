@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm";
+import { ne, and, eq, sql } from "drizzle-orm";
 import { getOrganizationMembershipsForUser } from "@/lib/access/guards";
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -66,7 +66,7 @@ export async function GET() {
             status: websites.status,
           })
           .from(websites)
-          .where(eq(websites.organizationId, org.id));
+          .where(and(eq(websites.organizationId, org.id), ne(websites.status, "deleted")));
         const results = [];
         for (const website of rows) {
           const [home] = await tx
