@@ -283,8 +283,11 @@ function PremiumLayoutPage({
                     key={item.href}
                     href={item.href}
                     onClick={preview ? (event) => {
+                      const menu = event.currentTarget.closest("details");
                       navigate(event, item.href);
-                      event.currentTarget.closest("details")?.removeAttribute("open");
+                      // Let the App Router begin its page transition before closing
+                      // the native disclosure menu; immediate removal can race navigation.
+                      if (event.defaultPrevented) requestAnimationFrame(() => menu?.removeAttribute("open"));
                     } : undefined}
                     aria-current={item.href === page.path ? "page" : undefined}
                   >
