@@ -44,6 +44,60 @@ export async function checkPhase15ArticleMediaAcceptance({
     await seedTypedMedia(videoAsset,"video","video/mp4","mp4","demo.mp4",alts[4],"a".repeat(64));
     await seedTypedMedia(pdfAsset,"document","application/pdf","pdf","report.pdf",alts[5],"b".repeat(64));
 
+    // Exercise the website Visual Editor's real composition save path with
+    // tenant-owned image/video/PDF references and a provider-normalized embed.
+    const websiteDraftRoute = "/api/websites/" + siteId + "/draft";
+    const websiteBefore = await (await api("a", websiteDraftRoute)).json();
+    assert.equal(websiteBefore.draft.schema, "lucia.layout-composition");
+    const homePage = websiteBefore.draft.pages.find((page) => page.path === "/");
+    assert(homePage, "The existing website needs a homepage composition");
+    const mediaSections = [
+      { id: "accept-image-" + randomBytes(3).toString("hex"), type: "media-embed", variant: "wide", kind: "image", title: "Customer image", description: alts[3], mediaRef: "media:" + inlineImage },
+      { id: "accept-video-" + randomBytes(3).toString("hex"), type: "media-embed", variant: "wide", kind: "video", title: "Customer video", mediaRef: "media:" + videoAsset, mime: "video/mp4" },
+      { id: "accept-pdf-" + randomBytes(3).toString("hex"), type: "media-embed", variant: "compact", kind: "document", title: "Download the report", mediaRef: "media:" + pdfAsset },
+      { id: "accept-embed-" + randomBytes(3).toString("hex"), type: "media-embed", variant: "wide", kind: "embed", title: "YouTube introduction", url: "https://youtu.be/abcdefghijk" },
+    ];
+    const inserted = await api("a", websiteDraftRoute, "PATCH", {
+      kind: "composition-edit", mode: "advanced",
+      edits: mediaSections.map((section, index) => ({
+        kind: "insert-section", pageId: homePage.id,
+        index: homePage.sections.length + index, section,
+      })),
+    }, { "if-match": websiteBefore.revision });
+    const insertedBody = await inserted.json();
+    assert.equal(inserted.status, 200, insertedBody.error || "Website media sections must save");
+    const insertedHome = insertedBody.draft.pages.find((page) => page.id === homePage.id);
+    assert(mediaSections.every((section) => insertedHome.sections.some((savedSection) => savedSection.id === section.id)));
+    const wrongKind = await api("a", websiteDraftRoute, "PATCH", {
+      kind: "composition-edit", mode: "advanced",
+      edits: [{ kind: "insert-section", pageId: homePage.id, index: insertedHome.sections.length,
+        section: { id: "accept-wrong-kind", type: "media-embed", variant: "wide", kind: "image",
+          title: "Wrong asset type", mediaRef: "media:" + videoAsset } }],
+    }, { "if-match": insertedBody.revision });
+    assert.equal(wrongKind.status, 422, "An image section must not reference a video asset");
+    const foreignMedia = await api("a", websiteDraftRoute, "PATCH", {
+      kind: "composition-edit", mode: "advanced",
+      edits: [{ kind: "insert-section", pageId: homePage.id, index: insertedHome.sections.length,
+        section: { id: "accept-foreign-media", type: "media-embed", variant: "wide", kind: "image",
+          title: "Foreign tenant media", mediaRef: "media:" + foreignImage } }],
+    }, { "if-match": insertedBody.revision });
+    assert.equal(foreignMedia.status, 422, "A website must reject another tenant's media");
+    const unsafeEmbed = await api("a", websiteDraftRoute, "PATCH", {
+      kind: "composition-edit", mode: "advanced",
+      edits: [{ kind: "insert-section", pageId: homePage.id, index: insertedHome.sections.length,
+        section: { id: "accept-unsafe-embed", type: "media-embed", variant: "wide", kind: "embed",
+          title: "Unsafe embed", url: "https://evil.example/embed/unsafe" } }],
+    }, { "if-match": insertedBody.revision });
+    assert.equal(unsafeEmbed.status, 422, "Unsupported external iframe providers must be rejected");
+    const removed = await api("a", websiteDraftRoute, "PATCH", {
+      kind: "composition-edit", mode: "advanced",
+      edits: mediaSections.map((section) => ({ kind: "remove-section", pageId: homePage.id, sectionId: section.id })),
+    }, { "if-match": insertedBody.revision });
+    const removedBody = await removed.json();
+    assert.equal(removed.status, 200, removedBody.error || "Temporary media sections must be removable");
+    assert.deepEqual(removedBody.draft.pages, websiteBefore.draft.pages);
+    bpass("Visual Editor media sections: owned image/video/PDF and safe embeds save; wrong-kind, cross-tenant and unsafe URLs reject; cleanup restores the exact draft");
+
     const title = "Phase 15 blog " + randomBytes(5).toString("hex");
     const created = await api("a", articleRoute, "POST", { kind: "blog", title });
     const createdBody = await created.json();
