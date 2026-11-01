@@ -14,6 +14,7 @@ vi.mock("@/lib/db/client", () => ({ getDb: mocks.getDb }));
 vi.mock("drizzle-orm", () => ({
   and: (...values: unknown[]) => values,
   eq: (...values: unknown[]) => values,
+  ne: (...values: unknown[]) => values,
   sql: (strings: TemplateStringsArray, ...values: unknown[]) => ({ strings: [...strings], values }),
 }));
 

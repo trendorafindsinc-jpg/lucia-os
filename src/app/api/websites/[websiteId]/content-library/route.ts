@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm";
+import { ne, and, eq, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -27,7 +27,7 @@ export async function GET(_request: Request, context: RouteContext) {
       if (!hasOrganizationPermission({ role: org.role, status: org.status }, "website.read")) continue;
       await tx.execute(sql`select set_config('app.current_organization_id', ${org.id}, true)`);
       const [website] = await tx.select({ id: websites.id, organizationId: websites.organizationId })
-        .from(websites).where(and(eq(websites.id, websiteId), eq(websites.organizationId, org.id))).limit(1);
+        .from(websites).where(and(eq(websites.id, websiteId), eq(websites.organizationId, org.id), ne(websites.status, "deleted"))).limit(1);
       if (!website) continue;
       const [row] = await tx.select({ library: websiteContentLibraries.library })
         .from(websiteContentLibraries)
@@ -77,7 +77,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       if (!hasOrganizationPermission({ role: org.role, status: org.status }, "website.edit")) continue;
       await tx.execute(sql`select set_config('app.current_organization_id', ${org.id}, true)`);
       const [website] = await tx.select({ id: websites.id })
-        .from(websites).where(and(eq(websites.id, websiteId), eq(websites.organizationId, org.id))).limit(1);
+        .from(websites).where(and(eq(websites.id, websiteId), eq(websites.organizationId, org.id), ne(websites.status, "deleted"))).limit(1);
       if (!website) continue;
       await tx.insert(websiteContentLibraries).values({
         organizationId: org.id, websiteId: website.id, createdByUserId: user.id,

@@ -18,6 +18,7 @@ import {
   type WorkspacePreferences,
 } from "@/lib/workspace/preferences";
 import styles from "./settings.module.css";
+import WebsiteRemovalSettings from "./website-removal-settings";
 const categories = [
   { id: "appearance", name: "Appearance & display", icon: "layouts" },
   { id: "home", name: "Home & applications", icon: "overview" },
@@ -691,6 +692,7 @@ export default function ControlCenter({
                 <Link href="/workspace/domains">Manage website domains →</Link>
                 <Link href="/support">Help & support →</Link>
               </div>
+              <WebsiteRemovalSettings />
               <p>
                 Purchased software, licensing, business branding, customer
                 subscriptions and deployment management will arrive in their

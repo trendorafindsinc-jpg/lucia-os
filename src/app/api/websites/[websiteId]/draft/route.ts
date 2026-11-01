@@ -1,5 +1,5 @@
 import { validateMediaOwnership } from "@/lib/media/service";
-import { and, eq, sql } from "drizzle-orm";
+import { ne, and, eq, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getOrganizationMembershipsForUser } from "@/lib/access/guards";
@@ -87,7 +87,7 @@ async function locateWebsite(
         })
         .from(websites)
         .where(
-          and(eq(websites.id, websiteId), eq(websites.organizationId, org.id)),
+          and(eq(websites.id, websiteId), eq(websites.organizationId, org.id), ne(websites.status, "deleted")),
         )
         .limit(1);
       if (!website) return null;
@@ -263,9 +263,10 @@ export async function PATCH(request: Request, context: RouteContext) {
         and(
           eq(websites.id, found.website.id),
           eq(websites.organizationId, found.website.organizationId),
+          ne(websites.status, "deleted"),
         ),
       )
-      .limit(1);
+      .limit(1).for("update");
     if (!website) return false;
     // Lock and read the current home row in the same transaction as the write.
     // Both editor saves and publishing acquire this lock before comparing revisions.

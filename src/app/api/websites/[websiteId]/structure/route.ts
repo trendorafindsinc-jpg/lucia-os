@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm";
+import { ne, and, eq, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -33,7 +33,7 @@ export async function GET(_request: Request, context: RouteContext) {
       await tx.execute(sql`select set_config('app.current_organization_id', ${organization.id}, true)`);
       const [website] = await tx.select({ id: websites.id, organizationId: websites.organizationId })
         .from(websites)
-        .where(and(eq(websites.id, websiteId), eq(websites.organizationId, organization.id)))
+        .where(and(eq(websites.id, websiteId), eq(websites.organizationId, organization.id), ne(websites.status, "deleted")))
         .limit(1);
       if (!website) continue;
       const [saved] = await tx.select({ structure: websiteStructures.structure })
@@ -85,7 +85,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       await tx.execute(sql`select set_config('app.current_organization_id', ${organization.id}, true)`);
       const [website] = await tx.select({ id: websites.id, organizationId: websites.organizationId })
         .from(websites)
-        .where(and(eq(websites.id, websiteId), eq(websites.organizationId, organization.id)))
+        .where(and(eq(websites.id, websiteId), eq(websites.organizationId, organization.id), ne(websites.status, "deleted")))
         .limit(1);
       if (!website) continue;
       await tx.insert(websiteStructures).values({

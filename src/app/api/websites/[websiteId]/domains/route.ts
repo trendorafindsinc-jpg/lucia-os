@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm";
+import { ne, and, eq, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getCurrentOrganizationAccess } from "@/lib/access/guards";
 import { getDb } from "@/lib/db/client";
@@ -41,6 +41,7 @@ export async function GET(request: Request, context: RouteContext) {
         and(
           eq(websites.id, websiteId),
           eq(websites.organizationId, access.membership.organizationId),
+          ne(websites.status, "deleted"),
         ),
       )
       .limit(1);
@@ -129,6 +130,7 @@ export async function POST(request: Request, context: RouteContext) {
           and(
             eq(websites.id, websiteId),
             eq(websites.organizationId, access.membership.organizationId),
+          ne(websites.status, "deleted"),
           ),
         )
         .limit(1);

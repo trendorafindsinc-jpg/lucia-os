@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
-import { and, eq, sql } from "drizzle-orm";
+import { ne, and, eq, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getOrganizationMembershipsForUser } from "@/lib/access/guards";
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       const result = await db.transaction(async (tx) => {
         await tx.execute(sql`select set_config('app.current_organization_id', ${org.id}, true)`);
         const [website] = await tx.select({ id: websites.id, name: websites.name, slug: websites.slug, status: websites.status })
-          .from(websites).where(and(eq(websites.id, input.websiteId as string), eq(websites.organizationId, org.id))).limit(1);
+          .from(websites).where(and(eq(websites.id, input.websiteId as string), eq(websites.organizationId, org.id), ne(websites.status, "deleted"))).limit(1);
         if (!website) return null;
         const [existing] = await tx.select({ id: websiteDomains.id }).from(websiteDomains).where(eq(websiteDomains.hostname, hostname)).limit(1);
         if (existing) throw new Error("DOMAIN_ALREADY_REGISTERED");
