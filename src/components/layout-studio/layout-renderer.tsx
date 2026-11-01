@@ -1,5 +1,6 @@
 import { resolvePremiumAsset, premiumAssetDimensions } from "@/lib/layout-blueprint/premium-assets";
 import Image from "next/image";
+import { resolveExternalEmbed } from "@/lib/media/embed-providers";
 import React, { type CSSProperties } from "react";
 import type {
   LayoutBlueprint,
@@ -554,6 +555,39 @@ function PremiumSectionView({
           )}
         </section>
       );
+    case "media-embed": {
+      const mediaId = section.mediaRef?.slice(6);
+      const embed = section.kind === "embed" && section.url ? resolveExternalEmbed(section.url) : null;
+      return (
+        <section
+          id={id}
+          data-section-type={section.type}
+          data-variant={section.variant}
+          className={`premium-section premium-media premium-media-${section.variant}`}
+        >
+          {heading(section.title)}
+          {section.description && <p>{section.description}</p>}
+          {section.kind === "embed" && embed ? (
+            <div className="premium-media-frame">
+              <iframe src={embed.src} title={section.title || embed.title} loading="lazy"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen referrerPolicy="strict-origin-when-cross-origin" />
+            </div>
+          ) : section.kind === "video" && mediaId ? (
+            <video controls playsInline preload="metadata" className="premium-media-video">
+              <source src={`/_media/${mediaId}`} type={section.mime} />
+              Your browser does not support embedded video.
+            </video>
+          ) : section.kind === "document" && mediaId ? (
+            <a className="premium-media-download" href={`/_media/${mediaId}`} download>
+              Download {section.title}
+            </a>
+          ) : (
+            <p role="status">This media item is not available for preview.</p>
+          )}
+        </section>
+      );
+    }
   }
 }
 /* An unresolved built-in asset is visibly unavailable, never a broken network image
