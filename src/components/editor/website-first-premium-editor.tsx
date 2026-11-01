@@ -11,11 +11,15 @@ import {
   type PremiumEdit, type PremiumLayout, type PremiumSection,
 } from "@/lib/layout-blueprint/premium-composition";
 import { useWorkspaceAdapter, useWorkspaceTab } from "@/components/workspace/workspace-tab-shell";
+import { WebsiteFirstPublishDialog } from "./website-first-publish-dialog";
+import {
+  editableText, editableTextMax, replaceEditableText, targetFromRenderedElement,
+  type TextSelection,
+} from "@/lib/website-first/editable-content";
 import "./website-first-premium-editor.css";
 
 type SaveState = "saved" | "unsaved" | "saving" | "offline" | "conflict" | "failed";
 type HistoryItem = { forward: PremiumEdit; reverse: PremiumEdit };
-type Field = "heading" | "body" | "eyebrow" | "email";
 
 function withSectionImage(section: PremiumSection, image: { src: string; alt: string }): PremiumSection {
   switch (section.type) {
@@ -64,7 +68,9 @@ export function WebsiteFirstPremiumEditor({
   const [pageId, setPageId] = useState(initial.pages[0].id);
   const [selected, setSelected] = useState(initial.pages[0].sections[0]?.id ?? "");
   const [projectIndex, setProjectIndex] = useState<number | null>(null);
-  const [field, setField] = useState<Field | null>(null);
+  const [field, setField] = useState<TextSelection | null>(null);
+  const [fieldDraft, setFieldDraft] = useState("");
+  const [showPublish, setShowPublish] = useState(false);
   const [showMedia, setShowMedia] = useState(false);
   const [showSectionTools, setShowSectionTools] = useState(false);
   const [previewOnly, setPreviewOnly] = useState(false);
@@ -232,17 +238,19 @@ export function WebsiteFirstPremiumEditor({
 
   function updateField(value: string) {
     if (!section || !field) return;
-    const next = structuredClone(section) as PremiumSection;
-    if (field === "email" && next.type === "contact-panel") next.email = value || undefined;
-    else if (field === "heading" && "heading" in next) next.heading = value;
-    else if (field === "body" && "body" in next) next.body = value;
-    else if (field === "eyebrow" && next.type === "premium-hero") next.eyebrow = value;
-    perform({ kind: "replace-section", pageId: page.id, section: next });
-    setField(null);
+    try {
+      const updated = replaceEditableText(section, field, value);
+      // Validate on the existing schema; a rejected edit remains in the input.
+      applyPremiumEdit(layout, "advanced", { kind: "replace-section", pageId: page.id, section: updated });
+      perform({ kind: "replace-section", pageId: page.id, section: updated });
+      setField(null);
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "This text cannot be used in this Layout.");
+    }
   }
 
   function clickWebsite(event: React.MouseEvent<HTMLDivElement>) {
-    if (previewOnly || busy) return;
+    if (previewOnly || busy || saveState === "conflict") return;
     const target = event.target;
     if (!(target instanceof HTMLElement)) return;
     const container = target.closest<HTMLElement>("[data-section-type]");
@@ -259,15 +267,20 @@ export function WebsiteFirstPremiumEditor({
       }
       setShowMedia(true); return;
     }
-    if (target.closest("a,button,summary")) return;
-    const actual = target.textContent?.trim();
-    if (!actual) return;
-    for (const candidate of ["heading", "body", "eyebrow", "email"] as const) {
-      if (candidate in item && item[candidate as keyof PremiumSection] === actual) {
-        setField(candidate);
+    const selection = targetFromRenderedElement(item, target, container);
+    if (selection) {
+      if (target.closest("a")) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      const value = editableText(item, selection);
+      if (value !== null) {
+        setField(selection);
+        setFieldDraft(value);
         return;
       }
     }
+    if (target.closest("a,button,summary")) return;
     setShowSectionTools(true);
   }
 
@@ -280,7 +293,7 @@ export function WebsiteFirstPremiumEditor({
     setShowSectionTools(true);
   }
 
-  const fieldValue = field && section && field in section ? String(section[field as keyof PremiumSection] ?? "") : "";
+  const fieldValue = field && section ? editableText(section, field) : null;
   const selectedImage = section?.type === "project-gallery" && projectIndex !== null
     ? section.projects[projectIndex]?.image
     : section && "image" in section ? section.image : undefined;
@@ -304,8 +317,9 @@ export function WebsiteFirstPremiumEditor({
       <span className={"website-first-editor-status state-" + saveState} role="status" aria-live="polite">{saveState === "saved" ? "✓ Saved" : saveState === "unsaved" ? "● Unsaved" : saveState === "saving" ? "Saving…" : saveState === "offline" ? "Offline · unsaved" : saveState === "conflict" ? "Conflict" : "Save failed"}</span>
       <button type="button" onClick={() => { void save(); }} disabled={!edits.length || busy || saveState === "conflict"}>Save now</button>
       <button type="button" onClick={() => { setPreviewOnly(!previewOnly); setField(null); }}>{previewOnly ? "Return to Edit" : "Preview"}</button>
-      {edits.length || saveState !== "saved" ? <span className="website-first-editor-not-ready">Save before publishing</span> :
-        <Link className="website-first-editor-publish" href={{ pathname: "/publish", query: { websiteId } }}>Publish</Link>}
+      <button type="button" className="website-first-editor-publish" onClick={() => setShowPublish(true)}
+        disabled={busy || edits.length > 0 || saveState !== "saved"}>Publish</button>
+      {(edits.length > 0 || saveState !== "saved") && <span className="website-first-editor-not-ready">Save before publishing</span>}
       <Link href={{ pathname: "/editor", query: { websiteId, studio: "classic" } }}>Detailed settings</Link>
       <span title="Full source editing will arrive in Phase 16">Advanced Mode · Phase 16</span>
     </header>
@@ -343,13 +357,14 @@ export function WebsiteFirstPremiumEditor({
         </div>;
       })}
     </div>}
-    {!previewOnly && field && section && <div className="website-first-inline-control" role="group" aria-label="Edit selected website text">
-      <label>Edit {field} in this section
-        <textarea key={page.id + section.id + field + fieldValue} defaultValue={fieldValue}
-          autoFocus maxLength={field === "heading" ? 150 : field === "eyebrow" ? 100 : field === "email" ? 254 : 3000}
-          onKeyDown={(event) => { if (event.key === "Escape") setField(null); }}
-          onBlur={(event) => { if (fieldValue !== event.target.value) updateField(event.target.value); }} /></label>
-      <button type="button" onClick={() => setField(null)}>Close</button>
+    {!previewOnly && field && section && fieldValue !== null && <div className="website-first-inline-control" role="group" aria-label="Edit selected website text">
+      <label>Edit ${field.field.replaceAll("-", " ")} on this website
+        <textarea key={page.id + section.id + field.field + (field.index ?? "")}
+          value={fieldDraft} onChange={(event) => setFieldDraft(event.target.value)}
+          autoFocus maxLength={editableTextMax(section, field.field)}
+          onKeyDown={(event) => { if (event.key === "Escape") setField(null); if ((event.ctrlKey || event.metaKey) && event.key === "Enter") updateField(fieldDraft); }} /></label>
+      <button type="button" onClick={() => updateField(fieldDraft)} disabled={busy || saveState === "conflict" || fieldDraft === fieldValue}>Apply change</button>
+      <button type="button" onClick={() => setField(null)}>Cancel</button>
     </div>}
     {!previewOnly && showMedia && <section id="media-library" className="website-first-editor-media" aria-label="Website image replacement">
       <div className="website-first-editor-media-header"><h2>Media & artwork</h2><button type="button" onClick={() => setShowMedia(false)}>Close</button></div>
@@ -369,6 +384,7 @@ export function WebsiteFirstPremiumEditor({
         onNavigate={(path) => { const target = layout.pages.find((item) => item.path === path);
           if (target) { setPageId(target.id); setSelected(""); setField(null); } }} />
     </div>
-    {!previewOnly && <p className="website-first-editor-hint">Tap a heading or paragraph on your website to edit it. Select a section to move it, or choose an image to replace it.</p>}
+    {!previewOnly && <p className="website-first-editor-hint">Tap any heading, service description, project title or paragraph to edit it. Choose an image to replace it, or rearrange sections.</p>}
+    {showPublish && <WebsiteFirstPublishDialog websiteId={websiteId} accountId={accountId} onClose={() => setShowPublish(false)} />}
   </main>;
 }
