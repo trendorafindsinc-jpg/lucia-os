@@ -42,7 +42,7 @@ const sanitizerOptions={
   ,video:()=>({tagName:"video",attribs:{controls:"",preload:"metadata",playsinline:""}})
   ,source:(_t:string,a:Record<string,string>)=>localMediaPath.test(a.src||"")&&["video/mp4","video/webm"].includes(a.type||"")?{tagName:"source",attribs:{src:a.src,type:a.type}}:{tagName:"span",attribs:{} as Record<string,string>}
  },
- exclusiveFilter:(f:{tag:string;attribs:Record<string,string>})=>(f.tag==="img"&&!localMediaPath.test(f.attribs.src||""))||(f.tag==="source"&&(!localMediaPath.test(f.attribs.src||"")||!["video/mp4","video/webm"].includes(f.attribs.type||""))))
+ exclusiveFilter:(f:{tag:string;attribs:Record<string,string>})=>{if(f.tag==="img")return !localMediaPath.test(f.attribs.src||"");if(f.tag==="source")return !localMediaPath.test(f.attribs.src||"")||!["video/mp4","video/webm"].includes(f.attribs.type||"");return false;}
 };
 export function renderArticleHtml(source:string):string{return sanitizeHtml(source,sanitizerOptions);}
 export function renderArticleMarkdown(source:string):string{
