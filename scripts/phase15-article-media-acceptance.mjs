@@ -218,7 +218,22 @@ export async function checkPhase15ArticleMediaAcceptance({
     assert(detailHtml.includes(alts[0]));
     assert(detailHtml.includes("HTML source mode acceptance"), "Published HTML source must render semantic content");
     assert(detailHtml.includes("youtube-nocookie.com/embed/abcdefghijk"), "Published article must retain an approved responsive YouTube embed");
-    assert(!detailHtml.includes("evil.example") && !detailHtml.includes("<script") && !detailHtml.includes("onclick"), "Published HTML must remain sanitized");
+    // Next.js Flight data legitimately serializes the original article source
+    // as JSON. Inspect the parsed, user-visible article body rather than
+    // rejecting safe serialized source text outside the rendered DOM.
+    const sanitizerProbe = await browserContext.newPage();
+    let renderedArticleBody = "";
+    try {
+      renderedArticleBody = await sanitizerProbe.evaluate((html) => {
+        const parsed = new DOMParser().parseFromString(html, "text/html");
+        return parsed.querySelector('article div[class*="body"]')?.innerHTML ?? "";
+      }, detailHtml);
+    } finally {
+      await sanitizerProbe.close();
+    }
+    assert(renderedArticleBody, "Published article body must be present in the rendered document");
+    assert(!renderedArticleBody.includes("evil.example") && !/<script\\b/i.test(renderedArticleBody)
+      && !/\\sonclick\\s*=/i.test(renderedArticleBody), "Published article DOM must remain sanitized");
     assert(detailHtml.includes("<video controls") && detailHtml.includes('href="/_media/'+pdfAsset+'"'), "Published HTML must support inline video and secure PDF downloads");
     assert(detailHtml.includes("/_media/"+videoAsset),"Published video link must resolve to the tenant media route");
     assert(detailHtml.includes("/_media/"+pdfAsset),"Published PDF link must resolve to the tenant media route");
