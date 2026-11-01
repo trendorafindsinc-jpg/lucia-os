@@ -1,7 +1,6 @@
 import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getDb } from "@/lib/db/client";
 import { websiteMedia, websiteMediaLimits } from "@/lib/db/schema";
 import { MediaError, boundedQuota, uploadsEnabled, withMediaWebsite } from "@/lib/media/service";
 import { mediaAssetAbortSchema, mediaAssetCompleteSchema, mediaAssetCreateSchema, mediaExtension, safeOriginalFilename, validMediaMagic, validateMediaParts } from "@/lib/media/asset-model";
