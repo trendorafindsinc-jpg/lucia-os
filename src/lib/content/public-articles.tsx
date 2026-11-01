@@ -63,8 +63,13 @@ export async function publicArticleMetadata(path:string):Promise<Metadata> {
  const image=article?.featuredMediaRef ? "https://"+data.hostname+"/_media/"+article.featuredMediaRef.slice(6) : undefined;
  return {title:{absolute:title+" | "+data.site.name},description,openGraph:{type:"article",title,description,images:image?[image]:undefined},twitter:{card:image?"summary_large_image":"summary",title,description,images:image?[image]:undefined},robots:{index:true,follow:true}};
 }
-export async function PublicArticlePage({path}:{path:string}) {
+export async function PublicArticlePage({path,searchParams}:{path:string;searchParams?:Record<string,string|string[]|undefined>}) {
  const {site,kind,posts,slug}=await readPublished(path);
+ const categoryValue=typeof searchParams?.category==="string"?searchParams.category:"";
+ const tagValue=typeof searchParams?.tag==="string"?searchParams.tag:"";
+ const filteredPosts=slug?posts:posts.filter(post=>(!categoryValue||post.category===categoryValue)&&(!tagValue||post.tags.includes(tagValue)));
+ const categories=[...new Set(posts.map(post=>post.category).filter((value):value is string=>Boolean(value)))].sort();
+ const tags=[...new Set(posts.flatMap(post=>post.tags))].sort();
  const label=kind==="blog"?"Blog":"News";
  const item=slug?posts[0]:null;
  return <main className={styles.shell}>
@@ -85,7 +90,8 @@ export async function PublicArticlePage({path}:{path:string}) {
   </article> : <section className={styles.index}>
    <p className={styles.eyebrow}>{site.name} / {label}</p><h1>{label}</h1>
    <p className={styles.excerpt}>{kind==="blog"?"Ideas, stories and perspectives.":"Updates and announcements."}</p>
-   {posts.length? <div className={styles.grid}>{posts.map(post=><article key={post.id}>
+   {(categories.length>0||tags.length>0)&&<nav aria-label={label+" filters"} className={styles.taxonomy}><Link href={"/"+kind as Route}>All</Link>{categories.map(value=><Link key={"category:"+value} href={"/"+kind+"?category="+encodeURIComponent(value) as Route} aria-current={categoryValue===value?"page":undefined}>{value}</Link>)}{tags.map(value=><Link key={"tag:"+value} href={"/"+kind+"?tag="+encodeURIComponent(value) as Route} aria-current={tagValue===value?"page":undefined}>#{value}</Link>)}</nav>}
+   {filteredPosts.length? <div className={styles.grid}>{filteredPosts.map(post=><article key={post.id}>
     {post.featuredMediaRef && <Image unoptimized className={styles.cardImage} src={"/_media/"+post.featuredMediaRef.slice(6)} alt={post.featuredMediaAlt||""} width={800} height={500}/>}
     <p className={styles.eyebrow}>{post.isFeatured?"Featured · ":""}{post.category||label}</p>
     {post.authorName&&<p className={styles.eyebrow}>By {post.authorName}</p>}
@@ -93,7 +99,7 @@ export async function PublicArticlePage({path}:{path:string}) {
     {post.correctionNote&&<p className={styles.eyebrow}>Updated / corrected</p>}
     <h2><a href={articleRoute(kind,post.slug)}>{post.title}</a></h2><p>{post.excerpt}</p>
     {post.publishedAt&&<time dateTime={post.publishedAt.toISOString()}>{post.publishedAt.toLocaleDateString("en-GB")}</time>}
-   </article>)}</div>:<p>No {label.toLowerCase()} articles have been published yet.</p>}
+   </article>)}</div>:<p>{posts.length?"No "+label.toLowerCase()+" articles match this filter.":"No "+label.toLowerCase()+" articles have been published yet."}</p>}
   </section>}
  </main>;
 }
