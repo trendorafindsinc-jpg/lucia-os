@@ -519,7 +519,7 @@ export function WebsiteFirstPremiumEditor({
       <header><div><h2>Change Website Design</h2><p>Preview a different visual system using your existing website content. Your pages, paths, navigation, text and media stay in place.</p></div>
         <button type="button" onClick={() => setShowLayouts(false)}>Close</button></header>
       <p className="website-first-layout-candidate-note">These are Phase 14 candidate design systems. Applying one updates your saved draft only; it does not publish the site or certify the candidate for public release.</p>
-      {!layout.permissions.advanced.includes("tokens") && <p role="status">This website's design permissions do not allow layout changes. You can still preview the candidate designs.</p>}
+      {!layout.permissions.advanced.includes("tokens") && <p role="status">This website&apos;s design permissions do not allow layout changes. You can still preview the candidate designs.</p>}
       <label>Choose a design<select value={layoutChoice} onChange={(event) => setLayoutChoice(event.target.value)}>
         {premiumCandidateIds.map((id) => <option key={id} value={id}>{id.replace("lucia.layout.", "").replace(/-/g, " ").replace(/\\b\\w/g, (letter) => letter.toUpperCase())}</option>)}
       </select></label>
