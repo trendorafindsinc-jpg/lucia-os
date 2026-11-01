@@ -127,6 +127,13 @@
       "when": 1793547000000,
       "tag": "0017_website_articles",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1793548800000,
+      "tag": "0018_article_featured_media",
+      "breakpoints": true
     }
   ]
 }
