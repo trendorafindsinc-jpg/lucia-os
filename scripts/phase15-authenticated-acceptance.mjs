@@ -361,6 +361,10 @@ export async function checkPhase15AuthenticatedAcceptance({
           [f.a, f.orgA]);
       }
       bpass(name + ": real synthetic-session create/assign/edit/reload/publish/public routes, tenant denial and rollback");
+      if (phase15 && name === selected[0]) {
+        const { checkPhase15ArticleMediaAcceptance } = await import("./phase15-article-media-acceptance.mjs");
+        await checkPhase15ArticleMediaAcceptance({ api, admin, f, base, browserContext, siteId: id, siteSlug, bpass, publicSite });
+      }
       if (process.env.WEBSITE_TEST_PHASE16 === "1") {
         // Continue on the exact same persisted, already-published test project.
         // This is a real browser and database test, never a mock editor state.
