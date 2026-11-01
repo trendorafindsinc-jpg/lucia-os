@@ -92,8 +92,8 @@ export async function publicWebsiteMetadata(path: string): Promise<Metadata> {
   const page = await readPublicWebsitePage(path);
   return { title: { absolute: page.title }, description: page.description };
 }
-export async function PublicWebsite({ path }: { path: string }) {
-  if (isArticlePath(path)) return <PublicArticlePage path={path} />;
+export async function PublicWebsite({ path, searchParams }: { path: string; searchParams?: Record<string,string|string[]|undefined> }) {
+  if (isArticlePath(path)) return <PublicArticlePage path={path} searchParams={searchParams} />;
   const page = await readPublicWebsitePage(path);
   return <LayoutRenderer blueprint={page.blueprint} pagePath={page.pagePath} />;
 }
