@@ -12,3 +12,5 @@
 .body :global(th),.body :global(td){padding:10px 14px;border:1px solid #d8dfe3;text-align:left}
 
 .highlights{max-width:1250px;margin:0 auto clamp(70px,10vw,140px);padding:clamp(28px,5vw,64px);background:#fff;border:1px solid #dce4e8;border-radius:24px}.highlights header h2{font-size:clamp(32px,5vw,58px);letter-spacing:-.06em;margin:8px 0}.highlights header>p:last-child{color:#587087}.highlightGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:18px;margin:28px 0}.highlightGrid article{min-width:0}.highlightGrid h3{font-size:clamp(20px,2.4vw,28px);line-height:1.15;letter-spacing:-.04em}.highlightGrid h3 a{color:inherit;text-decoration:none}.highlightGrid h3 a:focus-visible,.highlights nav a:focus-visible{outline:3px solid #466eaf;outline-offset:4px}.highlightGrid article>p:not(.eyebrow){color:#587087;line-height:1.6}.highlights nav{display:flex;flex-wrap:wrap;gap:18px}.highlights nav a{font-weight:750;color:#245b91}
+
+.body :global(video){display:block;width:100%;max-width:100%;height:auto;aspect-ratio:16/9;object-fit:contain;background:#101827;border-radius:14px;margin:2em 0}
