@@ -1,9 +1,9 @@
 "use client";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
-type Item = { id: string; ref: string; bytes: number; width: number; height: number; alt: string; status: string };
-export function MediaLibrary({ websiteId, accountId, onChange, protectedIds }: { websiteId: string; accountId: string; onChange: (items: { ref: string; label: string }[]) => void; protectedIds: string[] }) {
-  const [library, setLibrary] = useState<{ items: Item[]; enabled: boolean; usedBytes: number; quotaBytes: number } | null>(null);
+export type MediaLibraryItem = { id: string; ref: string; bytes: number; width: number; height: number; alt: string; status: string };
+export function MediaLibrary({ websiteId, accountId, onChange, protectedIds, onSelect, selectedRef }: { websiteId: string; accountId: string; onChange: (items: { ref: string; label: string }[]) => void; protectedIds: string[]; onSelect?: (item: MediaLibraryItem) => void; selectedRef?: string | null }) {
+  const [library, setLibrary] = useState<{ items: MediaLibraryItem[]; enabled: boolean; usedBytes: number; quotaBytes: number } | null>(null);
   const [notice, setNotice] = useState("Loading your image library…"), [busy, setBusy] = useState(false);
   const endpoint = `/api/websites/${websiteId}/media`;
   const load = useCallback(async () => {
@@ -11,7 +11,7 @@ export function MediaLibrary({ websiteId, accountId, onChange, protectedIds }: {
     const body = await response.json();
     if (!response.ok) throw Error(body.error || "Image library unavailable.");
     setLibrary(body);
-    onChange(body.items.filter((item: Item) => item.status === "ready").map((item: Item) => ({ ref: item.ref, label: "Your image: " + item.alt })));
+    onChange(body.items.filter((item: MediaLibraryItem) => item.status === "ready").map((item: Item) => ({ ref: item.ref, label: "Your image: " + item.alt })));
     return body;
   }, [endpoint, accountId, onChange]);
   useEffect(() => { let active = true; load().then(() => { if (active) setNotice(""); }).catch((error) => { if (active) setNotice(error.message); }); return () => { active = false; }; }, [load]);
@@ -44,6 +44,7 @@ export function MediaLibrary({ websiteId, accountId, onChange, protectedIds }: {
     <ul>{library?.items.map((item) => <li key={item.id}>
       {item.status === "ready" && <Image unoptimized src={"/_media/" + item.id} alt={item.alt} width={120} height={80} style={{ objectFit: "contain" }} />}
       {protectedIds.includes(item.id) && <span>In use in this editor. Save a replacement before removing this image.</span>}
+      {onSelect && item.status === "ready" && <button type="button" aria-pressed={selectedRef === item.ref} disabled={busy} onClick={() => onSelect(item)}>{selectedRef === item.ref ? "Selected for article" : "Use as featured image"}</button>}
       <span>{item.alt} · {Math.ceil(item.bytes / 1000)} KB · {item.status}</span>
       {item.status === "ready" || item.status === "deleting" || item.status === "pending" ? <button type="button" disabled={busy || protectedIds.includes(item.id)} onClick={() => remove(item.id)}>Remove unused image</button> : <span>Awaiting storage reconciliation; reserved space remains counted.</span>}
     </li>)}</ul>
