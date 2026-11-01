@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { makeSlug } from "@/lib/content/content-library";
+import { mediaReferencePattern } from "@/lib/media/references";
 
 // Initial production-safe plain-text format: JSX escapes output; HTML paste is not executed.
 // Rich blocks and media links follow only after dedicated sanitization and reference verification.
@@ -11,12 +12,14 @@ export const articleDraftSchema = z.object({
   excerpt: z.string().max(320),
   body: z.string().max(50000),
   category: z.string().trim().max(80),
+  featuredMediaRef: z.string().regex(mediaReferencePattern).nullable().default(null),
+  featuredMediaAlt: z.string().max(200).nullable().default(null),
 }).strict();
 export const createArticleSchema = z.object({
   kind: articleKind,
   title: z.string().trim().min(1).max(150),
 }).strict();
-export const updateArticleSchema = articleDraftSchema.omit({kind:true}).extend({
+export const updateArticleSchema = articleDraftSchema.omit({kind:true,featuredMediaAlt:true}.extend({
   revision: z.number().int().positive(),
   action: z.enum(["save","publish","unpublish"]),
 }).strict();
