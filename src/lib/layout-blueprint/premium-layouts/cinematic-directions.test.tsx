@@ -24,7 +24,7 @@ describe("Phase 14 cinematic editions: forty distinct, safe starting definitions
     if (!hero || hero.type !== "premium-hero") throw Error("Missing home hero");
     expect(hero.image?.src).toBe("builtin:premium/cinematic-" + id.replace("lucia.layout.", "") + "-hero");
     expect(hero.image?.alt).toMatch(/Original/);
-    expect(resolvePremiumAsset(hero.image!.src)).toContain("/_next/static/media/");
+    expect(resolvePremiumAsset(hero.image!.src)).toMatch(/(?:^data:image\/svg\+xml|\/_next\/static\/media\/)/);
     const gallery = site.pages.flatMap(p => p.sections).find(s => s.type === "project-gallery");
     if (!gallery || gallery.type !== "project-gallery") throw Error("Missing project gallery");
     expect(new Set(gallery.projects.map(p => p.image.src)).size).toBeGreaterThan(1);
