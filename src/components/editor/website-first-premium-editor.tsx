@@ -454,6 +454,12 @@ export function WebsiteFirstPremiumEditor({
       <span title="Full source editing will arrive in Phase 16">Advanced Mode · Phase 16</span>
     </header>
     <p className="website-first-editor-notice" role="status">{notice}</p>
+    {!previewOnly && !storyKind && <section className="website-first-editor-next-step" aria-label="Website creation steps">
+      <div><span>STEP 1 OF 4 · DESIGN</span><h2>Build your website</h2>
+        <p>Finish your visual design and page structure here. Detailed Settings is the next stage before final preview and publishing.</p></div>
+      <ol><li aria-current="step">Design & content</li><li>Pages & navigation</li><li>Detailed Settings</li><li>Preview & publish</li></ol>
+      <Link href={{ pathname: "/editor", query: { websiteId, studio: "classic" } }}>Continue to Detailed Settings →</Link>
+    </section>}
     {!previewOnly && showPages && <section className="website-first-editor-panel" aria-label="Pages and navigation">
       <header><div><h2>Pages & Navigation</h2><p>Manage the pages on this website. Selecting a page opens it in the same live editor.</p></div>
         <button type="button" onClick={() => setShowPages(false)}>Close</button></header>
