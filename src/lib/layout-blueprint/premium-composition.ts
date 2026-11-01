@@ -145,7 +145,7 @@ const mediaEmbed = z.object({
   id,
   type: z.literal("media-embed"),
   variant: z.enum(["wide", "compact"]),
-  kind: z.enum(["video", "document", "embed"]),
+  kind: z.enum(["image", "video", "document", "embed"]),
   title: text(120),
   description: text(500).optional(),
   mediaRef: z.string().max(160).optional(),
@@ -164,8 +164,8 @@ const mediaEmbed = z.object({
       ctx.addIssue({ code: "custom", path: ["url"], message: "Uploaded media cannot use an external URL." });
     if (section.kind === "video" && !section.mime)
       ctx.addIssue({ code: "custom", path: ["mime"], message: "Video format is required." });
-    if (section.kind === "document" && section.mime)
-      ctx.addIssue({ code: "custom", path: ["mime"], message: "Documents do not use video formats." });
+    if (section.kind !== "video" && section.mime)
+      ctx.addIssue({ code: "custom", path: ["mime"], message: "Only video assets use video formats." });
   }
 });
 
