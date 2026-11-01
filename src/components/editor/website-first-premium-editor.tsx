@@ -7,7 +7,7 @@ import { MediaLibrary, type MediaLibraryItem } from "@/components/editor/media-l
 import { mediaIds } from "@/lib/media/references";
 import { premiumArtworkChoices } from "@/lib/layout-blueprint/premium-layouts/asset-choices";
 import { premiumCandidate, premiumCandidateIds } from "@/lib/layout-blueprint/premium-layouts/catalogue-candidates";
-import { resolveExternalEmbed } from "@/lib/media/embed-providers";
+import { resolveExternalEmbed, resolveExternalHttpsLink } from "@/lib/media/embed-providers";
 import {
   applyPremiumEdit, compositionRecoverySchema, premiumPathSchema,
   type PremiumEdit, type PremiumLayout, type PremiumSection,
@@ -93,6 +93,8 @@ export function WebsiteFirstPremiumEditor({
   const [showLayouts, setShowLayouts] = useState(false);
   const [newPageTitle, setNewPageTitle] = useState("");
   const [embedUrl, setEmbedUrl] = useState("");
+  const [downloadUrl, setDownloadUrl] = useState("");
+  const [downloadLabel, setDownloadLabel] = useState("Open resource");
   const [layoutChoice, setLayoutChoice] = useState(initial.layoutId);
   useEffect(() => { const requested = new URLSearchParams(window.location.search).get("content");
     if (requested === "blog" || requested === "news") setStoryKind(requested);
@@ -442,6 +444,21 @@ export function WebsiteFirstPremiumEditor({
       : "Download section added to this page. Save your website to keep it.");
   }
 
+  function insertExternalLink() {
+    const resolved = resolveExternalHttpsLink(downloadUrl);
+    const title = downloadLabel.trim().slice(0, 120);
+    if (!resolved || !title) { setNotice("Enter a valid HTTPS destination and a clear link label."); return; }
+    const id = "link-" + crypto.randomUUID().replaceAll("-", "");
+    const replacement: PremiumSection = { id, type: "media-embed", variant: "compact",
+      kind: "link", title, url: resolved };
+    if (section?.type === "media-embed" && section.kind === "link")
+      perform({ kind: "replace-section", pageId: page.id, section: { ...replacement, id: section.id, variant: section.variant } });
+    else
+      perform({ kind: "insert-section", pageId: page.id, index: page.sections.length, section: replacement });
+    setSelected(section?.type === "media-embed" && section.kind === "link" ? section.id : id);
+    setShowSectionTools(true); setDownloadUrl(""); setShowMedia(false);
+    setNotice("Secure external link added to this page. Save your website to keep it.");
+  }
   function insertExternalEmbed() {
     const resolved = resolveExternalEmbed(embedUrl);
     if (!resolved) { setNotice("That URL is not a supported secure embed. Try YouTube, Vimeo, Spotify, SoundCloud, Apple Podcasts, TikTok or Instagram."); return; }
@@ -589,6 +606,14 @@ export function WebsiteFirstPremiumEditor({
           placeholder="Paste a YouTube, Spotify, Vimeo or other supported link" /></label>
         <button type="button" onClick={insertExternalEmbed} disabled={!embedUrl.trim() || busy || saveState === "conflict"}>Add embed to page</button>
         <p>Supported providers: YouTube, Vimeo, Spotify, SoundCloud, Apple Podcasts, TikTok and Instagram.</p>
+      </div>
+      <div className="website-first-editor-embed-tools">
+        <label>Download or external link label<input value={downloadLabel} onChange={(event) => setDownloadLabel(event.target.value)}
+          maxLength={120} placeholder="e.g. Download our brochure" /></label>
+        <label>Secure external destination<input type="url" value={downloadUrl} onChange={(event) => setDownloadUrl(event.target.value)}
+          placeholder="https://example.com/resource" /></label>
+        <button type="button" onClick={insertExternalLink} disabled={!downloadUrl.trim() || !downloadLabel.trim() || busy || saveState === "conflict"}>Add external link to page</button>
+        <p>External links require HTTPS and open in a new tab. For customer files, upload a PDF or video to your website media library above.</p>
       </div>
       {accountId ? <MediaLibrary websiteId={websiteId} accountId={accountId} onChange={setOwnedArtwork}
         protectedIds={mediaIds(layout)} onInsert={insertUploadedMedia} insertLabel="Add to website" /> : <p>Media uploads require an authenticated website session.</p>}
