@@ -361,6 +361,7 @@ export function WebsiteFirstPremiumEditor({
     if (!item) return;
     setSelected(item.id);
     setProjectIndex(null);
+    if (target.closest("video")) { setShowMedia(true); return; }
     if (target.closest("img")) {
       if (item.type === "project-gallery") {
         const article = target.closest("article");
@@ -412,12 +413,17 @@ export function WebsiteFirstPremiumEditor({
     if (item.kind === "image") return;
     const id = "media-" + crypto.randomUUID().replaceAll("-", "");
     const isVideo = item.kind === "video";
-    perform({ kind: "insert-section", pageId: page.id, index: page.sections.length,
-      section: { id, type: "media-embed", variant: "wide", kind: isVideo ? "video" : "document",
-        title: (item.original_name || item.alt).slice(0, 120),
-        ...(item.caption ? { description: item.caption.slice(0, 500) } : {}),
-        mediaRef: item.ref, ...(isVideo ? { mime: item.mime === "video/webm" ? "video/webm" : "video/mp4" } : {}) } });
-    setSelected(id); setShowSectionTools(true); setShowMedia(false);
+    const replacement = { id, type: "media-embed" as const, variant: "wide" as const,
+      kind: isVideo ? "video" as const : "document" as const,
+      title: (item.original_name || item.alt).slice(0, 120),
+      ...(item.caption ? { description: item.caption.slice(0, 500) } : {}),
+      mediaRef: item.ref, ...(isVideo ? { mime: item.mime === "video/webm" ? "video/webm" as const : "video/mp4" as const } : {}) };
+    if (section?.type === "media-embed" && section.kind === replacement.kind)
+      perform({ kind: "replace-section", pageId: page.id, section: { ...replacement, id: section.id, variant: section.variant } });
+    else
+      perform({ kind: "insert-section", pageId: page.id, index: page.sections.length, section: replacement });
+    setSelected(section?.type === "media-embed" && section.kind === replacement.kind ? section.id : id);
+    setShowSectionTools(true); setShowMedia(false);
     setNotice(isVideo ? "Video section added to this page. Save your website to keep it." : "Download section added to this page. Save your website to keep it.");
   }
 
@@ -425,10 +431,14 @@ export function WebsiteFirstPremiumEditor({
     const resolved = resolveExternalEmbed(embedUrl);
     if (!resolved) { setNotice("That URL is not a supported secure embed. Try YouTube, Vimeo, Spotify, SoundCloud, Apple Podcasts, TikTok or Instagram."); return; }
     const id = "embed-" + crypto.randomUUID().replaceAll("-", "");
-    perform({ kind: "insert-section", pageId: page.id, index: page.sections.length,
-      section: { id, type: "media-embed", variant: "wide", kind: "embed",
-        title: resolved.title, url: embedUrl.trim() } });
-    setSelected(id); setShowSectionTools(true); setEmbedUrl(""); setShowMedia(false);
+    if (section?.type === "media-embed" && section.kind === "embed")
+      perform({ kind: "replace-section", pageId: page.id, section: { ...section, title: resolved.title, url: embedUrl.trim() } });
+    else
+      perform({ kind: "insert-section", pageId: page.id, index: page.sections.length,
+        section: { id, type: "media-embed", variant: "wide", kind: "embed",
+          title: resolved.title, url: embedUrl.trim() } });
+    setSelected(section?.type === "media-embed" && section.kind === "embed" ? section.id : id);
+    setShowSectionTools(true); setEmbedUrl(""); setShowMedia(false);
     setNotice("Responsive " + resolved.provider + " embed added to this page. Save your website to keep it.");
   }
   const options = [...premiumArtworkChoices, ...ownedArtwork];
