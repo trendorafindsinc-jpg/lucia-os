@@ -21,3 +21,12 @@
 .studio-picker a:focus-visible{outline:3px solid #4567d6;outline-offset:4px}
 @media(max-width:950px){.studio-picker-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.studio-picker-grid{grid-template-columns:1fr}.studio-picker-heading{align-items:stretch;flex-direction:column}.studio-picker-nav{flex-wrap:wrap}.studio-picker-empty{margin:24px auto}}
+
+
+/* Authentic saved-site compositions, not generic thumbnails or arbitrary remote captures. */
+.studio-picker-real-preview{display:block;overflow:hidden;padding:0;background:#eef2f9;isolation:isolate}
+.studio-picker-render-window{width:1080px;position:absolute;top:0;left:0;transform-origin:top left;pointer-events:none;user-select:none}
+.studio-picker-render-window .layout-site{width:1080px!important;max-width:none!important;min-height:650px}
+.studio-picker-preview-fallback{width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:#687c9d}
+.studio-picker-preview-fallback span{font-size:38px;line-height:1}
+.studio-picker-preview-fallback small{font-size:12px}
