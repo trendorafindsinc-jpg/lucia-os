@@ -407,6 +407,17 @@ function CompositionEditor({
           </button>
         )}
       </header>
+      <section className="studio-settings-destinations" aria-label="Additional website settings">
+        <div><span className="studio-settings-eyebrow">SEARCH & SOCIAL</span><strong>SEO metadata and sharing previews</strong>
+          <p>Set page titles, descriptions, canonical URLs, indexing and social cards. These settings save to this website.</p>
+          <WorkspaceAppLink href={`/seo?websiteId=${encodeURIComponent(websiteId)}`}>Open SEO & social settings →</WorkspaceAppLink></div>
+        <div><span className="studio-settings-eyebrow">DOMAIN & ADDRESS</span><strong>Custom domain management</strong>
+          <p>Register a hostname, verify ownership and review activation status separately from publishing.</p>
+          <WorkspaceAppLink href={`/workspace/domains?websiteId=${encodeURIComponent(websiteId)}`}>Manage website domains →</WorkspaceAppLink></div>
+        <div><span className="studio-settings-eyebrow">ANALYTICS</span><strong>Traffic and conversion reporting</strong>
+          <p>Live analytics is not connected yet. The current analytics screen is a session-only prototype and does not report customer traffic.</p>
+          <span className="studio-settings-unavailable">Not connected · No live data</span></div>
+      </section>
       <nav className="studio-task-nav" aria-label="Personalization tasks">
         {(["business", "content", "design", "visual"] as const).map((tab) => (
           <button
