@@ -44,6 +44,14 @@ export async function PATCH(request:Request,context:Context){
     if((input.action==="publish" || input.action==="schedule") && site.status!=="published")return {validation:"Publish the website before publishing articles."};
     if(input.action==="schedule" && current.publishedSnapshot)return {validation:"Unpublish this article before scheduling a new publication. Existing live content is never replaced by a queued draft."};
     if(input.action==="schedule"){const at=new Date(input.scheduledAt!);if(!Number.isFinite(at.getTime())||at.getTime()<Date.now()+120000||at.getTime()>Date.now()+365*86400000)return {validation:"Choose a publication time at least two minutes from now and within the next year."};}
+    if(input.action==="publish"){
+     const reserved=await tx.execute(sql`select post_id from website_post_slug_redirects where organization_id=${org.id} and website_id=${site.id} and kind=${current.kind} and old_slug=${input.slug} limit 1 for update`);
+     const existingRedirect=reserved[0] as {post_id:string}|undefined;
+     if(existingRedirect&&existingRedirect.post_id!==current.id)return {validation:"This article address is reserved by a permanent redirect. Choose another URL."};
+     if(current.publishedSlug&&current.publishedSlug!==input.slug){
+      await tx.execute(sql`insert into website_post_slug_redirects(organization_id,website_id,post_id,kind,old_slug) values(${org.id},${site.id},${current.id},${current.kind},${current.publishedSlug}) on conflict(organization_id,website_id,kind,old_slug) do update set post_id=excluded.post_id,created_at=now()`);
+     }
+    }
     const mediaAltById=input.action==="unpublish" ? {} : await validateMediaOwnership(tx,org.id,site.id,{featuredMediaRef:input.featuredMediaRef,body:input.body},input.action==="publish");
     const featuredMediaId=input.featuredMediaRef ? input.featuredMediaRef.slice(6) : null;
     const featuredMediaAlt=featuredMediaId ? mediaAltById[featuredMediaId] ?? null : null;
