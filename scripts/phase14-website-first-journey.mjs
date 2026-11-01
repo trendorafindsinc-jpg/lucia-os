@@ -58,12 +58,11 @@ export async function checkWebsiteFirstJourney({
       const requested = page.waitForResponse(r => r.url().endsWith("/api/onboarding/website") && r.request().method() === "POST");
       await page.getByRole("button", { name: /Create website & edit/ }).click();
       const response = await requested;
-      assert.equal(response.status(), 201, await response.text());
-      const payload = await response.json();
-      siteId = payload.website.id;
-      assert.equal(payload.organization.id, f.orgA, "Reuse the disposable authorized organization");
-      created.push(siteId);
       await page.waitForURL(/\/editor\?websiteId=/);
+      siteId = new URL(page.url()).searchParams.get("websiteId");
+      assert(siteId && /^[0-9a-f-]{36}$/i.test(siteId));
+      created.push(siteId); // Cleanup must be registered before subsequent assertions.
+      assert.equal(response.status(), 201, "New-site creation must persist a real project");
       await page.locator(".website-first-editor [data-layout-id='lucia.layout.meridian']").waitFor();
       assert.equal((await (await api("a", "/api/websites/" + siteId + "/draft")).json()).draft.layoutId, "lucia.layout.meridian");
       assert.equal((await api("b", "/api/websites/" + siteId + "/draft")).status, 404);

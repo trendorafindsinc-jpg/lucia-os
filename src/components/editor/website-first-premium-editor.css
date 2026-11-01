@@ -40,3 +40,13 @@
 .website-first-publish-success{color:#176045;background:#e6f6ed}.website-first-publish-error{color:#90451c;background:#fff0e2}
 .website-first-publish-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:20px}
 @media(max-width:580px){.website-first-publish-dialog{padding:17px}.website-first-publish-actions button{flex:1}.website-first-inline-control button{width:100%}}
+
+
+/* 320px acceptance: section controls must not widen the page. */
+@media(max-width:580px){
+.website-first-editor-sections{flex-direction:column;max-width:100%;min-width:0;box-sizing:border-box;padding:8px}
+.website-first-editor-sections>div{display:flex;box-sizing:border-box;width:100%;min-width:0;max-width:100%}
+.website-first-editor-sections>div>button:first-child{flex:1 1 0;min-width:0;max-width:none;text-align:left}
+.website-first-editor-sections>div>button:not(:first-child){flex:0 0 36px;min-width:0;padding:8px}
+.website-first-editor-toolbar,.website-first-editor-tools{min-width:0;max-width:100%;box-sizing:border-box}
+}
