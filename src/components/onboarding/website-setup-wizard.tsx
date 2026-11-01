@@ -78,8 +78,9 @@ export function WebsiteSetupWizard({ userId }: { userId: string }) {
       </div>
       <div className="website-first-grid">
         {candidates.map((layout) => <article key={layout.id} className={"website-first-layout" + (chosenId === layout.id ? " selected" : "")}>
-          <div className="website-first-layout-art" style={{ background: layout.colors[2] }} aria-hidden="true">
-            <div style={{ background: layout.colors[0] }} /><strong style={{ color: layout.colors[0] }}>{layout.name}</strong><i style={{ background: layout.colors[1] }}/><small style={{ color: layout.colors[0] }}>{layout.category}</small>
+          <div className="website-first-layout-art">
+            <iframe title={layout.name + " actual website preview"} src={"/templates/thumbnail/" + layout.id}
+              loading="lazy" sandbox="" tabIndex={-1} />
           </div>
           <div className="website-first-layout-description"><h3>{layout.name}</h3><p>{("reason" in layout && typeof layout.reason === "string") ? layout.reason : layout.description}</p>
             <div className="website-first-layout-actions">

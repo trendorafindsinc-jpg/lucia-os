@@ -15,3 +15,7 @@
 .website-first-action{position:sticky;bottom:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:20px;background:rgba(250,252,255,.96);border:1px solid #dde5f3;border-radius:18px;padding:15px 20px;margin-top:26px;backdrop-filter:blur(16px)}.website-first-action strong{font-size:14px}.website-first-action p{font-size:12px;color:#627089;margin:6px 0}.website-first-action button{background:#254a99;color:white;border-color:#254a99}.website-first button:disabled{opacity:.55;cursor:not-allowed}.website-first-error{color:#a51b3b!important}
 @media(max-width:840px){.website-first-form,.website-first-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.website-first-form>label:nth-of-type(3){grid-column:1/-1}}@media(max-width:580px){.website-first-form,.website-first-grid,.website-first-optional-fields{grid-template-columns:1fr}.website-first-form>label:nth-of-type(3){grid-column:auto}.website-first-heading-row,.website-first-action{align-items:stretch;flex-direction:column}.website-first-top{flex-wrap:wrap}.website-first-action{bottom:0}}
 @media(prefers-reduced-motion:reduce){.website-first *{scroll-behavior:auto!important}}
+
+/* Read-only server-rendered thumbnail uses the same validated production LayoutRenderer. */
+.website-first-layout-art{display:block;position:relative;min-height:0;height:215px;padding:0;background:#fff}
+.website-first-layout-art iframe{border:0;pointer-events:none;width:250%;height:538px;transform:scale(.4);transform-origin:top left;display:block}
