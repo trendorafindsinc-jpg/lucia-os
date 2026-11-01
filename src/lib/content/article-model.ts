@@ -19,7 +19,7 @@ export const createArticleSchema = z.object({
   kind: articleKind,
   title: z.string().trim().min(1).max(150),
 }).strict();
-export const updateArticleSchema = articleDraftSchema.omit({kind:true,featuredMediaAlt:true}.extend({
+export const updateArticleSchema = articleDraftSchema.omit({kind:true,featuredMediaAlt:true}).extend({
   revision: z.number().int().positive(),
   action: z.enum(["save","publish","unpublish"]),
 }).strict();
