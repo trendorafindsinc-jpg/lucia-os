@@ -1,6 +1,6 @@
 import { resolvePremiumAsset, premiumAssetDimensions } from "@/lib/layout-blueprint/premium-assets";
 import Image from "next/image";
-import { resolveExternalEmbed } from "@/lib/media/embed-providers";
+import { resolveExternalEmbed, resolveExternalHttpsLink } from "@/lib/media/embed-providers";
 import React, { type CSSProperties } from "react";
 import type {
   LayoutBlueprint,
@@ -558,6 +558,7 @@ function PremiumSectionView({
     case "media-embed": {
       const mediaId = section.mediaRef?.slice(6);
       const embed = section.kind === "embed" && section.url ? resolveExternalEmbed(section.url) : null;
+      const externalLink = section.kind === "link" && section.url ? resolveExternalHttpsLink(section.url) : null;
       return (
         <section
           id={id}
@@ -586,6 +587,10 @@ function PremiumSectionView({
           ) : section.kind === "document" && mediaId ? (
             <a className="premium-media-download" href={`/_media/${mediaId}`} download>
               Download {section.title}
+            </a>
+          ) : section.kind === "link" && externalLink ? (
+            <a className="premium-media-download" href={externalLink} target="_blank" rel="noopener noreferrer">
+              {section.title}
             </a>
           ) : (
             <p role="status">This media item is not available for preview.</p>
