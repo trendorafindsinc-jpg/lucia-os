@@ -481,8 +481,8 @@ export function WebsiteFirstPremiumEditor({
         <button type="button" onClick={() => setShowPages(false)}>Close</button></header>
       <form className="website-first-add-page" onSubmit={(event) => { event.preventDefault(); addPage(); }}>
         <label>New page name<input value={newPageTitle} onChange={(event) => setNewPageTitle(event.target.value)}
-          maxLength={120} placeholder="About us" required /></label>
-        <button type="submit" disabled={busy || saveState === "conflict" || !newPageTitle.trim()}>+ Add page</button>
+          maxLength={120} placeholder="About us" required disabled={!layout.permissions.advanced.includes("pages")} /></label>
+        <button type="submit" disabled={busy || saveState === "conflict" || !newPageTitle.trim() || !layout.permissions.advanced.includes("pages")}>+ Add page</button>
       </form>
       <div className="website-first-page-list">{layout.pages.map((item) => <article key={item.id}>
         <div className="website-first-page-heading"><button type="button" aria-pressed={page.id === item.id}
@@ -494,13 +494,13 @@ export function WebsiteFirstPremiumEditor({
           onBlur={(event) => updatePageDetails(item.id, { description: event.target.value })}/></label>
         <label className="website-first-page-nav-toggle"><input type="checkbox" checked={item.navigation}
           onChange={(event) => updatePageDetails(item.id, { navigation: event.target.checked })}/> Show in website navigation</label>
-        {item.path !== "/" && <button type="button" onClick={() => removePage(item.id)} disabled={busy || saveState === "conflict"}>Remove page</button>}
+        {item.path !== "/" && <button type="button" onClick={() => removePage(item.id)} disabled={busy || saveState === "conflict" || !layout.permissions.advanced.includes("pages")}>Remove page</button>}
       </article>)}</div>
       <h3>Navigation order</h3>
       <ol className="website-first-navigation-list">{layout.navigation.map((item, index) => <li key={item.href}>
         <span>{item.label}</span><small>{item.href}</small>
-        <button type="button" disabled={busy || index === 0} onClick={() => { const hrefs = layout.navigation.map((entry) => entry.href); [hrefs[index-1], hrefs[index]] = [hrefs[index], hrefs[index-1]]; perform({ kind: "navigation-order", hrefs }); }}>↑</button>
-        <button type="button" disabled={busy || index === layout.navigation.length-1} onClick={() => { const hrefs = layout.navigation.map((entry) => entry.href); [hrefs[index+1], hrefs[index]] = [hrefs[index], hrefs[index+1]]; perform({ kind: "navigation-order", hrefs }); }}>↓</button>
+        <button type="button" disabled={busy || index === 0 || !layout.permissions.advanced.includes("pages")} onClick={() => { const hrefs = layout.navigation.map((entry) => entry.href); [hrefs[index-1], hrefs[index]] = [hrefs[index], hrefs[index-1]]; perform({ kind: "navigation-order", hrefs }); }}>↑</button>
+        <button type="button" disabled={busy || index === layout.navigation.length-1 || !layout.permissions.advanced.includes("pages")} onClick={() => { const hrefs = layout.navigation.map((entry) => entry.href); [hrefs[index+1], hrefs[index]] = [hrefs[index], hrefs[index+1]]; perform({ kind: "navigation-order", hrefs }); }}>↓</button>
       </li>)}</ol>
     </section>}
     {!previewOnly && showLayouts && <section className="website-first-editor-panel" aria-label="Change website design">
