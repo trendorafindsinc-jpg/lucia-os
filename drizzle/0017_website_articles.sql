@@ -13,18 +13,20 @@ CREATE TABLE website_posts (
  status text NOT NULL DEFAULT 'draft' CHECK(status IN ('draft','published')),
  revision integer NOT NULL DEFAULT 1 CHECK(revision > 0),
  published_snapshot jsonb,
+ published_slug text,
  published_at timestamptz,
  created_at timestamptz NOT NULL DEFAULT now(),
  updated_at timestamptz NOT NULL DEFAULT now(),
  CONSTRAINT website_posts_website_org_fk FOREIGN KEY(organization_id,website_id)
    REFERENCES websites(organization_id,id) ON DELETE CASCADE,
  CONSTRAINT website_posts_public_snapshot_integrity CHECK(
-  (status='draft' AND published_snapshot IS NULL AND published_at IS NULL) OR
-  (status='published' AND published_snapshot IS NOT NULL AND published_at IS NOT NULL)
+  (status='draft' AND published_snapshot IS NULL AND published_slug IS NULL AND published_at IS NULL) OR
+  (status='published' AND published_snapshot IS NOT NULL AND published_slug IS NOT NULL AND published_at IS NOT NULL)
  )
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX website_posts_site_slug_uq ON website_posts(organization_id,website_id,kind,slug);
+CREATE UNIQUE INDEX website_posts_public_slug_uq ON website_posts(organization_id,website_id,kind,published_slug);
 CREATE INDEX website_posts_public_feed_idx ON website_posts(website_id,kind,published_at DESC) WHERE status='published';
 CREATE INDEX website_posts_owner_idx ON website_posts(organization_id,website_id,updated_at DESC);
 --> statement-breakpoint
