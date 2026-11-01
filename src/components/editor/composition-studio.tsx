@@ -366,6 +366,12 @@ function CompositionEditor({
   });
   return (
     <main className="editor-page">
+      <nav className="studio-journey-progress" aria-label="Website creation progress">
+        <WorkspaceAppLink href={`/editor?websiteId=${encodeURIComponent(websiteId)}`}>1. Design & content</WorkspaceAppLink>
+        <WorkspaceAppLink href={`/editor?websiteId=${encodeURIComponent(websiteId)}#pages-navigation`}>2. Pages & navigation</WorkspaceAppLink>
+        <span aria-current="step">3. Detailed Settings</span>
+        <WorkspaceAppLink href={`/publish?websiteId=${encodeURIComponent(websiteId)}`}>4. Preview & publish</WorkspaceAppLink>
+      </nav>
       {accountId && <MediaLibrary websiteId={websiteId} accountId={accountId} onChange={setOwnedArtwork} protectedIds={mediaIds(layout)} />}
       <header className="composition-controls">
         <h1>Layout Studio · Detailed settings</h1>
