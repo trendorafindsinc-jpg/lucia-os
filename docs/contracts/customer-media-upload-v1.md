@@ -15,7 +15,7 @@ All mutations require an authenticated LUCIA ID session, an allowed workspace or
 - Markdown references use `media:<uuid>`; the safe renderer resolves these to `/_media/<uuid>`. Publication validates that each referenced asset belongs to the same website and is ready. Referenced assets cannot be deleted; published assets retain the existing 30-day grace period.
 - Image, video and PDF quotas are reported separately. Global storage reservations are released only after provider cleanup is confirmed.
 - The private London-2 IDrive bucket has AES-256 default encryption and CORS restricted to the LUCIA OS production origin. No public bucket policy is installed.
-- `/api/cron/reconcile-media` runs every 15 minutes. It recovers or removes stale pending rows after two hours and aborts unreferenced incomplete multipart sessions older than seven days. Failed cleanup remains reserved and is retried.
+- `/api/cron/reconcile-media` is invoked by the Phase 15 GitHub Actions worker every five minutes using a repository/workflow-scoped OIDC token. It recovers or removes stale pending rows after two hours and aborts unreferenced incomplete multipart sessions older than seven days. Failed cleanup remains reserved and is retried; the database queue is safe to process again on the next worker run.
 
 ## Release gate
 
