@@ -91,6 +91,7 @@ export function WebsiteFirstPremiumEditor({
   const [showMedia, setShowMedia] = useState(false);
   const [showPages, setShowPages] = useState(false);
   const [showLayouts, setShowLayouts] = useState(false);
+  const [newPageTitle, setNewPageTitle] = useState("");
   const [embedUrl, setEmbedUrl] = useState("");
   const [layoutChoice, setLayoutChoice] = useState(initial.layoutId);
   useEffect(() => { const requested = new URLSearchParams(window.location.search).get("content");
@@ -281,8 +282,8 @@ export function WebsiteFirstPremiumEditor({
 
   function addPage() {
     if (layout.pages.length >= 30) { setNotice("This website has reached its 30-page limit."); return; }
-    const title = window.prompt("Name your new page", "About us")?.trim();
-    if (!title) return;
+    const title = newPageTitle.trim();
+    if (!title) { setNotice("Enter a name for the new page."); return; }
     const slug = title.toLowerCase().normalize("NFKD").replace(/[\\u0300-\\u036f]/g, "")
       .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
     if (!slug) { setNotice("Choose a page name containing letters or numbers."); return; }
@@ -294,7 +295,7 @@ export function WebsiteFirstPremiumEditor({
       description: "A new page on " + layout.identity.name + ".", navigation: true,
       responsive: "stack", sections: [{ id: sectionId, type: "editorial-story", variant: "narrow",
         heading: title.slice(0, 150), body: "Add the information visitors need on this page." }] } });
-    setPageId(id); setSelected(sectionId); setField(null);
+    setNewPageTitle(""); setPageId(id); setSelected(sectionId); setField(null);
   }
 
   function removePage(targetId: string) {
@@ -477,7 +478,11 @@ export function WebsiteFirstPremiumEditor({
     {!previewOnly && showPages && <section className="website-first-editor-panel" aria-label="Pages and navigation">
       <header><div><h2>Pages & Navigation</h2><p>Manage the pages on this website. Selecting a page opens it in the same live editor.</p></div>
         <button type="button" onClick={() => setShowPages(false)}>Close</button></header>
-      <button type="button" onClick={addPage} disabled={busy || saveState === "conflict"}>+ Add page</button>
+      <form className="website-first-add-page" onSubmit={(event) => { event.preventDefault(); addPage(); }}>
+        <label>New page name<input value={newPageTitle} onChange={(event) => setNewPageTitle(event.target.value)}
+          maxLength={120} placeholder="About us" required /></label>
+        <button type="submit" disabled={busy || saveState === "conflict" || !newPageTitle.trim()}>+ Add page</button>
+      </form>
       <div className="website-first-page-list">{layout.pages.map((item) => <article key={item.id}>
         <div className="website-first-page-heading"><button type="button" aria-pressed={page.id === item.id}
           onClick={() => { setPageId(item.id); setSelected(""); setField(null); }}>{item.title}</button>
