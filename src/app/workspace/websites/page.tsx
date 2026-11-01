@@ -50,7 +50,6 @@ export default async function WorkspaceWebsitesPage() {
         <h2>{group.name}</h2><div className="studio-picker-grid">
           {group.items.map((site) => {
             const address = site.slug + "." + host;
-            const edit = "/editor?websiteId=" + encodeURIComponent(site.id);
             return <article key={site.id} className="studio-picker-card">
               <div className="studio-picker-preview" aria-label="Website preview unavailable; open editor to view actual pages">
                 <div className="studio-picker-preview-browser" aria-hidden="true"><i /><i /><i /></div>
@@ -60,9 +59,9 @@ export default async function WorkspaceWebsitesPage() {
                 <h3>{site.name}</h3><span className={site.status === "published" ? "studio-picker-live" : "studio-picker-draft"}>
                   {site.status === "published" ? "Published" : "Draft"}</span></div>
                 <p className="studio-picker-address">{address}</p><p className="studio-picker-updated">Updated {site.updatedAt.toLocaleDateString()}</p>
-                <div className="studio-picker-actions"><Link className="studio-picker-primary" href={edit}>Edit Website</Link>
+                <div className="studio-picker-actions"><Link className="studio-picker-primary" href={{ pathname: "/editor", query: { websiteId: site.id } }}>Edit Website</Link>
                   {site.status === "published" ? <a href={"https://" + address} target="_blank" rel="noopener noreferrer">View live website</a> : null}
-                  <Link href={edit + "#media-library"}>Manage Media in editor</Link>
+                  <Link href={{ pathname: "/editor", query: { websiteId: site.id }, hash: "media-library" }}>Manage Media in editor</Link>
                 </div>
                 <p className="studio-picker-coming">Blog and News publishing arrive with Phase 15, in this same website.</p>
               </div>

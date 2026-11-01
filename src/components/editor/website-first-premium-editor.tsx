@@ -286,7 +286,8 @@ export function WebsiteFirstPremiumEditor({
       <button type="button" onClick={() => { void save(); }} disabled={!edits.length || busy || saveState === "conflict"}>Save now</button>
       <button type="button" onClick={() => { setPreviewOnly(!previewOnly); setField(null); }}>{previewOnly ? "Return to Edit" : "Preview"}</button>
       {edits.length || saveState !== "saved" ? <span className="website-first-editor-not-ready">Save before publishing</span> :
-        <Link className="website-first-editor-publish" href={"/publish?websiteId=" + encodeURIComponent(websiteId)}>Publish</Link>}
+        <Link className="website-first-editor-publish" href={{ pathname: "/publish", query: { websiteId } }}>Publish</Link>}
+      <Link href={{ pathname: "/editor", query: { websiteId, studio: "classic" } }}>Detailed settings</Link>
       <span title="Full source editing will arrive in Phase 16">Advanced Mode · Phase 16</span>
     </header>
     <p className="website-first-editor-notice" role="status">{notice}</p>
