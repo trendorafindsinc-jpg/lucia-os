@@ -575,6 +575,7 @@ function PremiumSectionView({
             <div className="premium-media-frame">
               <iframe src={embed.src} title={section.title || embed.title} loading="lazy"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-forms"
                 allowFullScreen referrerPolicy="strict-origin-when-cross-origin" />
             </div>
           ) : section.kind === "video" && mediaId ? (
