@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { createHash } from "node:crypto";
 import sharp from "sharp";
 import { compressImage } from "./image";
 import { mediaIds, mediaReferencePattern } from "./references";
@@ -54,13 +55,14 @@ describe("customer media boundary", () => {
   });
   it("signs multipart video storage, checks object metadata and streams byte ranges",async()=>{
     vi.stubEnv("S3_ENDPOINT","https://s3.eu-west-3.idrivee2.com");vi.stubEnv("S3_REGION","eu-west-3");vi.stubEnv("S3_BUCKET","lucia-os-customer-media-2026");vi.stubEnv("S3_ACCESS_KEY_ID","isolated-test-id");vi.stubEnv("S3_SECRET_ACCESS_KEY","isolated-test-not-a-real-key");
-    const key=`os/${id}/${id}/${id}.mp4`,checksum="a".repeat(64);
+    const key=`os/${id}/${id}/${id}.mp4`,checksum=createHash("sha256").update("video bytes!").digest("hex");
     expect(isSafeMediaObjectKey(key)).toBe(true);expect(isSafeMediaObjectKey("../foreign/file.mp4")).toBe(false);
     const fetcher=vi.fn()
       .mockResolvedValueOnce(new Response("<InitiateMultipartUploadResult><UploadId>test-upload-id-123456</UploadId></InitiateMultipartUploadResult>",{status:200}))
       .mockResolvedValueOnce(new Response("<CompleteMultipartUploadResult><ETag>0123456789abcdef0123456789abcdef-1</ETag></CompleteMultipartUploadResult>",{status:200}))
       .mockResolvedValueOnce(new Response(null,{status:200,headers:{"content-length":"12","content-type":"video/mp4","etag":'"0123456789abcdef0123456789abcdef-1"',"x-amz-meta-sha256":checksum}}))
-      .mockResolvedValueOnce(new Response("video bytes",{status:206,headers:{"content-range":"bytes 0-4/12"}}))
+      .mockResolvedValueOnce(new Response("video bytes!",{status:200}))
+      .mockResolvedValueOnce(new Response("video",{status:206,headers:{"content-range":"bytes 0-4/12"}}))
       .mockResolvedValueOnce(new Response(null,{status:204}))
       .mockResolvedValueOnce(new Response(`<ListMultipartUploadsResult><Upload><Key>${key}</Key><UploadId>orphan-upload-123456</UploadId><Initiated>2026-10-31T00:00:00.000Z</Initiated></Upload></ListMultipartUploadsResult>`,{status:200}));
     vi.stubGlobal("fetch",fetcher);
@@ -69,7 +71,8 @@ describe("customer media boundary", () => {
     expect(new URL(multipartStorage.signPart(key,uploadId,1)).searchParams.get("partNumber")).toBe("1");
     await multipartStorage.complete(key,uploadId,[{partNumber:1,etag:'"0123456789abcdef0123456789abcdef"'}]);
     const head=await multipartStorage.head(key);expect(head?.bytes).toBe(12);expect(head?.checksum).toBe(checksum);
+    const verified=await multipartStorage.verify(key,12);expect(verified.bytes).toBe(12);expect(verified.checksum).toBe(checksum);
     expect((await multipartStorage.stream(key,"bytes=0-4"))?.status).toBe(206);
-    await multipartStorage.remove(key);const incomplete=await multipartStorage.listIncomplete();expect(incomplete).toHaveLength(1);expect(incomplete[0].uploadId).toBe("orphan-upload-123456");expect(fetcher).toHaveBeenCalledTimes(6);
+    await multipartStorage.remove(key);const incomplete=await multipartStorage.listIncomplete();expect(incomplete).toHaveLength(1);expect(incomplete[0].uploadId).toBe("orphan-upload-123456");expect(fetcher).toHaveBeenCalledTimes(7);
   });
 });
