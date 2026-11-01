@@ -78,4 +78,9 @@
 .website-first-layout-actions{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap}
 .website-first-layout-actions button:last-child{background:#2454ab;color:white;border-color:#2454ab}
 @media(max-width:580px){.website-first-editor-panel{padding:12px}.website-first-navigation-list li{grid-template-columns:minmax(0,1fr) 34px 34px}.website-first-navigation-list small{grid-column:1/-1;grid-row:2}.website-first-layout-actions button{flex:1}}
+.website-first-editor .premium-media{padding:clamp(20px,4vw,56px);display:flex;flex-direction:column;gap:14px}
+.website-first-editor .premium-media-frame{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:16px;background:#101827}
+.website-first-editor .premium-media-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.website-first-editor .premium-media-video{display:block;width:100%;max-height:720px;border-radius:14px;background:#101827}
+.website-first-editor .premium-media-download{align-self:flex-start;display:inline-flex;padding:12px 17px;border-radius:11px;background:var(--layout-accent,#2454ab);color:white;text-decoration:none;font-weight:750}
 
