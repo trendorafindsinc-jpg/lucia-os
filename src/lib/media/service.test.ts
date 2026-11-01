@@ -75,7 +75,7 @@ describe("media authorization and capacity invariants", () => {
     await expect(validateMediaOwnership({execute:mocks.execute} as never,org,website,{body:'<video><source src="/_media/'+user+'" type="video/mp4"></video>'})).rejects.toThrow("another website");
   });
   it("returns canonical alt text for a valid article featured image", async () => {
-    mocks.execute.mockResolvedValueOnce([{id:user,alt:"The shop interior"}]).mockResolvedValueOnce([]);
+    mocks.execute.mockResolvedValueOnce([{id:user,alt:"The shop interior",kind:"image"}]).mockResolvedValueOnce([]);
     const result=await validateMediaOwnership({execute:mocks.execute} as never,org,website,{featuredMediaRef:"media:"+user},true);
     expect(result[user]).toBe("The shop interior");
     expect(mocks.execute).toHaveBeenCalledTimes(2);
