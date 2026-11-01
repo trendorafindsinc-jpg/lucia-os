@@ -4,7 +4,6 @@ import type { Metadata } from "next";
 import { and, desc, eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { getDb } from "@/lib/db/client";
 import { normalizeHostname } from "@/lib/domains/hostname";
 import { articleRoute } from "@/lib/content/article-model";
@@ -58,20 +57,20 @@ export async function PublicArticlePage({path}:{path:string}) {
  const item=slug?posts[0]:null;
  return <main className={styles.shell}>
   <nav className={styles.nav} aria-label="Site navigation">
-   <Link href="/">{site.name}</Link><div><Link href="/blog">Blog</Link><Link href="/news">News</Link></div>
+   <a href="/">{site.name}</a><div><a href="/blog">Blog</a><a href="/news">News</a></div>
   </nav>
   {item ? <article className={styles.article}>
    <p className={styles.eyebrow}>{label}{item.category?" · "+item.category:""}</p>
    <h1>{item.title}</h1><p className={styles.excerpt}>{item.excerpt}</p>
    {item.publishedAt && <time dateTime={item.publishedAt.toISOString()}>{item.publishedAt.toLocaleDateString("en-GB",{dateStyle:"long"})}</time>}
    <div className={styles.body}>{item.body.split(/\n{2,}/).filter(Boolean).map((line,i)=><p key={i}>{line}</p>)}</div>
-   <Link className={styles.return} href={"/"+kind}>← All {label.toLowerCase()}</Link>
+   <a className={styles.return} href={"/"+kind}>← All {label.toLowerCase()}</a>
   </article> : <section className={styles.index}>
    <p className={styles.eyebrow}>{site.name} / {label}</p><h1>{label}</h1>
    <p className={styles.excerpt}>{kind==="blog"?"Ideas, stories and perspectives.":"Updates and announcements."}</p>
    {posts.length? <div className={styles.grid}>{posts.map(post=><article key={post.id}>
     <p className={styles.eyebrow}>{post.category||label}</p>
-    <h2><Link href={articleRoute(kind,post.slug)}>{post.title}</Link></h2><p>{post.excerpt}</p>
+    <h2><a href={articleRoute(kind,post.slug)}>{post.title}</a></h2><p>{post.excerpt}</p>
     {post.publishedAt&&<time dateTime={post.publishedAt.toISOString()}>{post.publishedAt.toLocaleDateString("en-GB")}</time>}
    </article>)}</div>:<p>No {label.toLowerCase()} articles have been published yet.</p>}
   </section>}

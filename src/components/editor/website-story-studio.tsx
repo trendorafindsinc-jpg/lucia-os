@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ArticleKind } from "@/lib/content/article-model";
 import { articleRoute, newArticleSlug } from "@/lib/content/article-model";
 import "./website-story-studio.css";
@@ -21,8 +21,8 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
  const [message,setMessage]=useState("");
  const [preview,setPreview]=useState(false);
  const [dirty,setDirty]=useState(false);
- const headers: Record<string,string>=accountId?{"x-lucia-workspace-account":accountId}:{};
- async function load() {
+ const headers = useMemo<Record<string,string>>(()=>accountId?{"x-lucia-workspace-account":accountId}:{},[accountId]);
+ const load = useCallback(async () => {
   setLoading(true);setMessage("");
   try {
    const response=await fetch("/api/websites/"+encodeURIComponent(websiteId)+"/articles",{cache:"no-store",headers});
@@ -34,8 +34,8 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
    setDirty(false);
   } catch(error){setMessage(error instanceof Error?error.message:"Could not load articles.");}
   finally{setLoading(false);}
- }
- useEffect(()=>{void load();},[websiteId,accountId]);
+ },[websiteId,headers]);
+ useEffect(()=>{void load();},[load]);
  useEffect(()=>{
   if(dirty)return;
   setDraft(articles.find(a=>a.id===selected)??null);
