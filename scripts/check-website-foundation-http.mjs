@@ -1086,6 +1086,12 @@ try {
     assert.equal((await admin`select id from website_pages where website_id=${site}`).length, 1,
       "Safe removal retains the website page for recovery");
     assert.equal((await api("a", route, "DELETE", { confirmation: before.name })).status, 404);
+    const audit = await admin`select actor_kind,result from platform_audit_events where organization_id=${f.orgA} and actor_user_id=${f.a} and action='website.removed' and target_type='website' and target_id=${site}`;
+    assert.equal(audit.length, 1, "Removal must have an audit record");
+    assert.equal(audit[0].actor_kind, "tenant");
+    assert.equal(audit[0].result, "success");
+    // Remove ONLY the synthetic audit record in this disposable DB before fixture teardown.
+    await admin`delete from platform_audit_events where organization_id=${f.orgA} and actor_user_id=${f.a} and action='website.removed' and target_type='website' and target_id=${site}`;
     pass("Owner-confirmed website removal: no cross-tenant deletion, public host offline, hostname released, private routes denied and original data retained");
   }
 
