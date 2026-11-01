@@ -1,5 +1,6 @@
 "use client";
 import { mediaIds } from "@/lib/media/references";
+import { WebsiteFirstPremiumEditor } from "./website-first-premium-editor";
 import { VisualExperienceControls } from "./visual-experience-controls";
 import { MediaLibrary } from "./media-library";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -132,9 +133,19 @@ export function CompositionStudio({
         <p>Opening saved website…</p>
       </main>
     );
-  if (isPremium(loaded.draft))
+  if (isPremium(loaded.draft) && new URLSearchParams(search).get("studio") === "classic")
     return (
       <CompositionEditor
+        key={identity}
+        websiteId={websiteId}
+        initial={loaded.draft}
+        revision={loaded.revision}
+        reload={() => setRefresh((n) => n + 1)}
+      />
+    );
+  if (isPremium(loaded.draft))
+    return (
+      <WebsiteFirstPremiumEditor
         key={identity}
         websiteId={websiteId}
         initial={loaded.draft}
@@ -357,7 +368,8 @@ function CompositionEditor({
     <main className="editor-page">
       {accountId && <MediaLibrary websiteId={websiteId} accountId={accountId} onChange={setOwnedArtwork} protectedIds={mediaIds(layout)} />}
       <header className="composition-controls">
-        <h1>Layout Studio</h1>
+        <h1>Layout Studio · Detailed settings</h1>
+        <WorkspaceAppLink href={{ pathname: "/editor", query: { websiteId } }}>← Return to website-first editor</WorkspaceAppLink>
         <p>
           Personalize your business, pages and design. Only saved drafts can be published.
         </p>

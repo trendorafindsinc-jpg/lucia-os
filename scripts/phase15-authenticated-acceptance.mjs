@@ -104,22 +104,24 @@ export async function checkPhase15AuthenticatedAcceptance({
         await view.locator('[data-layout-id="lucia.layout.' + name + '"][data-page-path="/contact"]').waitFor();
         await view.getByRole("link", { name: "Back to Layout Library" }).click();
         await view.locator('a[href="' + previewHref + '"]').first().click();
+        // The new one-screen creation UI is verified by the separate
+        // phase14-website-first-journey harness, including a real form POST.
+        // This catalogue-wide suite retains unique site slugs and the
+        // authorized synthetic organization through the backward-compatible
+        // creation API, so every Layout has an independently published host.
         await view.getByRole("link", { name: "Create this website" }).click();
-        await view.getByLabel("Organisation name", { exact: true }).fill("Continuity organization A");
-        await view.getByRole("button", { name: /Continue/ }).click();
-        await view.getByLabel("Website name", { exact: true }).fill(originalName);
-        await view.getByLabel("Choose a starting design").selectOption("lucia.layout." + name);
-        await view.getByLabel(/Suggested website address/).fill(siteSlug);
-        await view.getByRole("button", { name: /Continue/ }).click();
-        const createResponse = view.waitForResponse(r => r.url().endsWith("/api/onboarding/website") && r.request().method() === "POST");
-        await view.getByRole("button", { name: /Create workspace/ }).click();
-        const result = await createResponse;
-        assert.equal(result.status(), 201, name + " UI website creation");
-        await view.waitForURL(/\/editor\?websiteId=/);
-        id = new URL(view.url()).searchParams.get("websiteId");
-        assert(id && /^[0-9a-f-]{36}$/i.test(id), "Direct editor handoff must include saved UUID");
-        createdBody = { website: { id }, organization: { id: f.orgA } };
-        await view.getByRole("button", { name: "1. Business identity" }).waitFor();
+        await view.locator(".website-first-form").waitFor();
+        assert.equal(new URL(view.url()).searchParams.get("template"), "lucia.layout." + name);
+        const creation = await api("a", "/api/onboarding/website", "POST", {
+          organisationName: "Continuity organization A", websiteName: originalName,
+          organisationType: "Business or service", goal: "Introduce my organisation",
+          templateId: "lucia.layout." + name, country: "Nigeria", siteSlug,
+        });
+        createdBody = await creation.json();
+        assert.equal(creation.status, 201, name + " persisted creation: " + createdBody.error);
+        id = createdBody.website.id;
+        await view.goto(base + "/editor?websiteId=" + id, { waitUntil: "networkidle" });
+        await view.locator(".website-first-editor").waitFor();
         saved = await (await api("a", draftRoute(id))).json();
         initialRevision = saved.revision;
         assert.equal(saved.draft.layoutId, "lucia.layout." + name);
@@ -231,7 +233,7 @@ export async function checkPhase15AuthenticatedAcceptance({
       const editorResponse = await view.goto(base + "/editor?websiteId=" + id,
         { waitUntil: "networkidle" });
       assert.equal(editorResponse?.status(), 200, name + " editor HTTP");
-      const controls = view.getByRole("button", { name: "1. Business identity" });
+      const controls = view.locator(".website-first-editor");
       try {
         await controls.waitFor({ timeout: 12000 });
       } catch {
@@ -362,7 +364,9 @@ export async function checkPhase15AuthenticatedAcceptance({
       if (process.env.WEBSITE_TEST_PHASE16 === "1") {
         // Continue on the exact same persisted, already-published test project.
         // This is a real browser and database test, never a mock editor state.
-        await view.goto(base + "/editor?websiteId=" + id, { waitUntil: "networkidle" });
+        // Phase 16 detailed personalization intentionally remains in the
+        // compatible classic controls, not the default website-first editor.
+        await view.goto(base + "/editor?websiteId=" + id + "&studio=classic", { waitUntil: "networkidle" });
         await view.getByRole("button", { name: "1. Business identity" }).waitFor();
         const identityDescription = "Personalized hospitality and services by " + name;
         const enquiry = "phase16-" + name + "@testing.example.ng";

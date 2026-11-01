@@ -5,6 +5,7 @@ import {
   type PremiumSection,
 } from "../premium-composition";
 import { meridianCandidate } from "./meridian";
+import { elevateCinematicCandidate } from "./cinematic-directions";
 import { refineFlagship } from "./flagship-directions";
 import {
   premiumCandidateBriefs,
@@ -70,7 +71,9 @@ export function premiumCandidate(id: string, siteName?: string): PremiumLayout {
     (item) => "lucia.layout." + item.id === id,
   );
   if (!brief) throw new Error("Unknown premium candidate");
-  return enrichVisualFlagship(refineFlagship(buildCandidate(brief, siteName ?? brief.name + " · Demo")));
+  const authored = refineFlagship(buildCandidate(brief, siteName ?? brief.name + " · Demo"));
+  return enrichVisualFlagship(["canvas","haven","academia","maison","nexus","impact","estate"].includes(brief.id)
+    ? authored : elevateCinematicCandidate(authored, brief));
 }
 
 function buildCandidate(brief: PremiumCandidateBrief, siteName: string): PremiumLayout {
