@@ -49,6 +49,7 @@ export async function checkPhase15ArticleMediaAcceptance({
     };
     const foreignRef = await patchArticle(articleId, article, "media:" + foreignImage, "save");
     assert.equal(foreignRef.status, 422, "A different tenant's media must not be attachable");
+    await assert.rejects(admin`UPDATE website_posts SET featured_media_id=${foreignImage} WHERE id=${articleId}`, /website_posts_featured_media_fk/);
     const privateBefore = await admin`SELECT * FROM lucia_public_media(${blogImage}::uuid)`;
     assert.equal(privateBefore.length, 0, "A ready image without a published article must remain private");
 
@@ -76,6 +77,7 @@ export async function checkPhase15ArticleMediaAcceptance({
     const publicIndex = await publicSite("/blog", host);
     const publicDetail = await publicSite("/blog/" + saved.publishedSlug, host);
     assert.equal(publicIndex.status, 200);
+    assert((await publicIndex.text()).includes(title));
     assert.equal(publicDetail.status, 200);
     const detailHtml = await publicDetail.text();
     assert(detailHtml.includes(title));
@@ -110,6 +112,7 @@ export async function checkPhase15ArticleMediaAcceptance({
     const unpublish = await patchArticle(articleId, saved, "media:" + draftImage, "unpublish");
     assert.equal(unpublish.status, 200, (await unpublish.clone().json()).error);
     assert.equal((await publicSite("/blog/" + saved.publishedSlug, host)).status, 404);
+    assert(!(await (await publicSite("/blog", host)).text()).includes(title));
     assert.equal((await admin`SELECT * FROM lucia_public_media(${blogImage}::uuid)`).length, 0);
 
     const newsTitle = "Phase 15 news " + randomBytes(5).toString("hex");
@@ -122,12 +125,14 @@ export async function checkPhase15ArticleMediaAcceptance({
     assert.equal(newsPublished.status, 200, (await newsPublished.clone().json()).error);
     const newsRecord = (await (await api("a", articleRoute)).json()).articles.find((entry) => entry.id === newsId);
     assert.equal((await publicSite("/news", host)).status, 200);
+    assert((await (await publicSite("/news", host)).text()).includes(newsTitle));
     const newsPage = await publicSite("/news/" + newsRecord.publishedSlug, host);
     assert.equal(newsPage.status, 200);
     assert((await newsPage.text()).includes(newsTitle));
     const newsUnpublish = await patchArticle(newsId, newsRecord, null, "unpublish");
     assert.equal(newsUnpublish.status, 200, (await newsUnpublish.clone().json()).error);
     assert.equal((await publicSite("/news/" + newsRecord.publishedSlug, host)).status, 404);
+    assert(!(await (await publicSite("/news", host)).text()).includes(newsTitle));
     bpass("News customer journey: create → save/publish → public listing/detail → unpublish; Blog draft/live image versions remain isolated");
   } finally {
     if (articleId) await admin`DELETE FROM website_posts WHERE id=${articleId} AND website_id=${siteId}`;
