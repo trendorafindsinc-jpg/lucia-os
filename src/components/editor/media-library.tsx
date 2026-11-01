@@ -11,7 +11,7 @@ export function MediaLibrary({ websiteId, accountId, onChange, protectedIds, onS
     const body = await response.json();
     if (!response.ok) throw Error(body.error || "Image library unavailable.");
     setLibrary(body);
-    onChange(body.items.filter((item: MediaLibraryItem) => item.status === "ready").map((item: Item) => ({ ref: item.ref, label: "Your image: " + item.alt })));
+    onChange(body.items.filter((item: MediaLibraryItem) => item.status === "ready").map((item: MediaLibraryItem) => ({ ref: item.ref, label: "Your image: " + item.alt })));
     return body;
   }, [endpoint, accountId, onChange]);
   useEffect(() => { let active = true; load().then(() => { if (active) setNotice(""); }).catch((error) => { if (active) setNotice(error.message); }); return () => { active = false; }; }, [load]);
@@ -21,7 +21,7 @@ export function MediaLibrary({ websiteId, accountId, onChange, protectedIds, onS
     try {
       const response = await fetch(endpoint, { method: "POST", headers: { "x-lucia-workspace-account": accountId }, body: new FormData(form) });
       const body = await response.json(); if (!response.ok) throw Error(body.error);
-      await load(); form.reset(); setNotice("Image stored. Choose it from a logo or section image selector, then save the website draft.");
+      await load(); form.reset(); setNotice("Image stored. Choose it from an image selector, then save your website or article.");
     } catch (error) { setNotice(error instanceof Error ? error.message : "Upload failed. Please try again."); }
     finally { setBusy(false); }
   }
