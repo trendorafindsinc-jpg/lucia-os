@@ -60,6 +60,14 @@ export const multipartStorage={
  },
  async abort(key:string,uploadId:string){const response=await signedRequest("DELETE",key,{uploadId});if(!response.ok&&response.status!==404)throw Error("Storage could not abort the multipart upload.");},
  async head(key:string):Promise<StoredObjectHead|null>{const response=await signedRequest("HEAD",key);if(response.status===404)return null;if(!response.ok)throw Error("Stored media metadata could not be verified.");return {bytes:Number(response.headers.get("content-length")??0),mime:response.headers.get("content-type")??"",etag:response.headers.get("etag"),checksum:response.headers.get("x-amz-meta-sha256")};},
+ async verify(key:string,expectedBytes:number):Promise<{bytes:number;checksum:string}>{
+  if(!Number.isSafeInteger(expectedBytes)||expectedBytes<1||expectedBytes>100_000_000)throw Error("Invalid media verification size.");
+  const response=await signedRequest("GET",key);if(!response.ok)throw Error("Stored media could not be read for checksum verification.");
+  const reader=response.body?.getReader();if(!reader)throw Error("Stored media body is unavailable.");
+  const hash=createHash("sha256");let bytes=0;
+  while(true){const next=await reader.read();if(next.done)break;bytes+=next.value.byteLength;if(bytes>expectedBytes){await reader.cancel();throw Error("Stored media exceeded its reserved size.");}hash.update(next.value);}
+  return {bytes,checksum:hash.digest("hex")};
+ },
  async remove(key:string){const response=await signedRequest("DELETE",key);if(!response.ok&&response.status!==404)throw Error("Stored media could not be removed.");},
  async stream(key:string,range?:string){const response=await signedRequest("GET",key,{},range?{range}:{});if(response.status===404)return null;if(!(response.ok||response.status===206||response.status===416))throw Error("Stored media could not be read.");return response;}
 };
