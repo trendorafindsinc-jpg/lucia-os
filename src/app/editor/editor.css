@@ -103,4 +103,13 @@
 .studio-journey-progress a,.studio-journey-progress span{display:inline-flex;align-items:center;min-height:38px;padding:8px 11px;border-radius:9px;text-decoration:none;font-size:12px;font-weight:750;color:#526580}
 .studio-journey-progress [aria-current=step]{background:#eaf0fc;color:#1f4d9a;border:1px solid #c8d7f2}
 @media(max-width:600px){.studio-journey-progress{display:grid;grid-template-columns:1fr 1fr}.studio-journey-progress a,.studio-journey-progress span{font-size:11px;justify-content:center}}
+.studio-settings-destinations{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;max-width:1400px;margin:0 auto 14px}
+.studio-settings-destinations>div{display:flex;flex-direction:column;align-items:flex-start;gap:7px;min-width:0;padding:15px;border:1px solid #dce5f0;border-radius:13px;background:#fff}
+.studio-settings-eyebrow{font-size:9px;letter-spacing:.13em;font-weight:850;color:#536d9c}
+.studio-settings-destinations strong{font-size:13px;color:#1d3150}
+.studio-settings-destinations p{font-size:11px;line-height:1.55;color:#687991;margin:0;flex:1}
+.studio-settings-destinations a{font-size:11px;font-weight:800;color:#2454ab;text-decoration:none}
+.studio-settings-unavailable{font-size:10px;font-weight:750;color:#7a6541;padding:6px 8px;border-radius:7px;background:#fff8eb}
+@media(max-width:900px){.studio-settings-destinations{grid-template-columns:1fr 1fr}}
+@media(max-width:580px){.studio-settings-destinations{grid-template-columns:1fr}}
 
