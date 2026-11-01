@@ -50,3 +50,32 @@
 .website-first-editor-sections>div>button:not(:first-child){flex:0 0 36px;min-width:0;padding:8px}
 .website-first-editor-toolbar,.website-first-editor-tools{min-width:0;max-width:100%;box-sizing:border-box}
 }
+
+/* Connected page management and in-place design migration. */
+.website-first-editor-panel{margin:14px 0;padding:18px;border:1px solid #d3dfef;border-radius:18px;background:#fbfdff;box-shadow:0 12px 34px #10294a0c}
+.website-first-editor-panel>header{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:14px}
+.website-first-editor-panel h2{font-size:20px;letter-spacing:-.025em;margin:0 0 5px;color:#182b4a}
+.website-first-editor-panel h3{font-size:14px;margin:18px 0 8px}
+.website-first-editor-panel p{font-size:12px;color:#5a6b85;line-height:1.5;margin:0 0 10px}
+.website-first-editor-panel button{border:1px solid #cbd8e9;background:#fff;color:#1b3152;border-radius:10px;padding:9px 12px;min-height:38px;font:inherit;font-size:12px;font-weight:750;cursor:pointer}
+.website-first-editor-panel button:disabled{opacity:.45;cursor:not-allowed}
+.website-first-editor-panel>label{display:flex;flex-direction:column;gap:6px;max-width:360px;font-size:12px;font-weight:750;margin:12px 0}
+.website-first-editor-panel select,.website-first-editor-panel input:not([type=checkbox]){width:100%;box-sizing:border-box;border:1px solid #cbd8e9;border-radius:9px;background:white;padding:10px;font:inherit;font-size:13px}
+.website-first-page-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:10px;margin:14px 0}
+.website-first-page-list article{min-width:0;padding:13px;border:1px solid #dce5f0;border-radius:13px;background:white;display:flex;flex-direction:column;gap:9px}
+.website-first-page-heading{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.website-first-page-heading button{font-size:14px}
+.website-first-page-heading button[aria-pressed=true]{border-color:#476fc4;background:#eef3ff}
+.website-first-page-heading span,.website-first-navigation-list small{font-size:11px;color:#697b95;overflow-wrap:anywhere}
+.website-first-page-list label{display:flex;flex-direction:column;gap:5px;font-size:11px;font-weight:700;color:#425674}
+.website-first-page-list .website-first-page-nav-toggle{flex-direction:row;align-items:center}
+.website-first-navigation-list{display:flex;flex-direction:column;gap:7px;padding-left:24px}
+.website-first-navigation-list li{display:grid;grid-template-columns:minmax(80px,1fr) minmax(80px,1fr) 38px 38px;align-items:center;gap:8px;padding:7px;border:1px solid #e0e7f1;border-radius:10px;background:white}
+.website-first-navigation-list li span{font-size:12px;font-weight:750}
+.website-first-navigation-list li button{min-height:32px;padding:5px}
+.website-first-layout-preview{margin:14px 0;border:1px solid #d9e3f0;border-radius:13px;overflow:hidden;max-height:620px;overflow-y:auto;background:white}
+.website-first-layout-preview .layout-site{min-height:480px}
+.website-first-layout-actions{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap}
+.website-first-layout-actions button:last-child{background:#2454ab;color:white;border-color:#2454ab}
+@media(max-width:580px){.website-first-editor-panel{padding:12px}.website-first-navigation-list li{grid-template-columns:minmax(0,1fr) 34px 34px}.website-first-navigation-list small{grid-column:1/-1;grid-row:2}.website-first-layout-actions button{flex:1}}
+
