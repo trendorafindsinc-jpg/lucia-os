@@ -501,4 +501,5 @@
 .premium-media-video{display:block;width:100%;max-height:720px;border-radius:14px;background:#101827}
 .premium-media-download{align-self:flex-start;display:inline-flex;padding:12px 17px;border-radius:11px;background:var(--layout-accent,#2454ab);color:white;text-decoration:none;font-weight:750}
 .premium-media-compact .premium-media-frame{max-width:760px}
+.premium-media-image{display:block;width:100%;height:auto;max-height:850px;object-fit:contain;border-radius:14px}
 
