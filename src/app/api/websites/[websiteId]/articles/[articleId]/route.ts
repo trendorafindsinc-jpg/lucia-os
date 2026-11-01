@@ -1,7 +1,7 @@
 import { and, eq, ne, sql } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
-import { appUsers, memberships, organizations, websitePosts, websitePostRevisions, websites } from "@/lib/db/schema";
+import { memberships, organizations, websitePosts, websitePostRevisions, websites } from "@/lib/db/schema";
 import { hasOrganizationPermission } from "@/lib/access/policy";
 import { updateArticleSchema, publicationReady, type PublishedArticle } from "@/lib/content/article-model";
 import { isUniqueWebsiteWrite, websiteMutationAllowed } from "@/lib/websites/draft-revision";
