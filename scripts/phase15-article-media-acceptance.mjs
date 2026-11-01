@@ -54,7 +54,7 @@ export async function checkPhase15ArticleMediaAcceptance({
     let article = {
       ...createdBody.article,
       excerpt: "A useful summary for our customers.",
-      body: "This is a synthetic article body with enough detail to be published safely.\\n\\n[Watch the demo](media:"+videoAsset+")\\n\\n[Download the report](media:"+pdfAsset+")",
+      body: "This is a synthetic article body with enough detail to be published safely.\n\n[Watch the demo](media:"+videoAsset+")\n\n[Download the report](media:"+pdfAsset+")",
       category: "Acceptance",tags:["customer-story","media"],seoTitle:title+" | LUCIA",seoDescription:"A useful public summary for our customers.",
     };
     const initialized = await patchArticle(articleId, article, null, "save");
@@ -63,7 +63,7 @@ export async function checkPhase15ArticleMediaAcceptance({
     article = initializedBody.article;
     const foreignRef = await patchArticle(articleId, article, "media:" + foreignImage, "save");
     assert.equal(foreignRef.status, 422, "A different tenant's media must not be attachable");
-    const foreignBody=await patchArticle(articleId,{...article,body:article.body+"\\n\\n[Foreign](media:"+foreignImage+")"},null,"save");
+    const foreignBody=await patchArticle(articleId,{...article,body:article.body+"\n\n[Foreign](media:"+foreignImage+")"},null,"save");
     assert.equal(foreignBody.status,422,"Markdown body references from another tenant must be rejected");
     const videoFeatured=await patchArticle(articleId,article,"media:"+videoAsset,"save");
     assert.equal(videoFeatured.status,422,"Video assets cannot be used as article featured images");
@@ -109,6 +109,10 @@ export async function checkPhase15ArticleMediaAcceptance({
     assert(detailHtml.includes(title));
     assert(detailHtml.includes("/_media/" + blogImage));
     assert(detailHtml.includes(alts[0]));
+    assert(detailHtml.includes("/_media/"+videoAsset),"Published video link must resolve to the tenant media route");
+    assert(detailHtml.includes("/_media/"+pdfAsset),"Published PDF link must resolve to the tenant media route");
+    const publicVideo=await admin`SELECT * FROM lucia_public_media(${videoAsset}::uuid)`;assert.equal(publicVideo.length,1,"Published article body must authorize its video asset");
+    const publicPdf=await admin`SELECT * FROM lucia_public_media(${pdfAsset}::uuid)`;assert.equal(publicPdf.length,1,"Published article body must authorize its PDF asset");
     const publicImage = await admin`SELECT * FROM lucia_public_media(${blogImage}::uuid)`;
     assert.equal(publicImage.length, 1, "Published article snapshot must authorize its featured image");
     const privateReplacement = await admin`SELECT * FROM lucia_public_media(${draftImage}::uuid)`;
@@ -132,6 +136,8 @@ export async function checkPhase15ArticleMediaAcceptance({
       "A published article image must be retained");
     assert.equal((await api("a", "/api/websites/" + siteId + "/media?id=" + draftImage, "DELETE")).status, 409,
       "A saved article draft/revision image must be retained");
+    assert.equal((await api("a","/api/websites/"+siteId+"/media?id="+videoAsset,"DELETE")).status,409,"A published inline video must be retained");
+    assert.equal((await api("a","/api/websites/"+siteId+"/media?id="+pdfAsset,"DELETE")).status,409,"A published inline PDF must be retained");
 
     // Even an unavailable selected image must not trap a customer in a published article.
     await admin`UPDATE website_media SET status='deleted' WHERE id=${draftImage}`;
@@ -140,6 +146,8 @@ export async function checkPhase15ArticleMediaAcceptance({
     assert.equal((await publicSite("/blog/" + saved.publishedSlug, host)).status, 404);
     assert(!(await (await publicSite("/blog", host)).text()).includes(title));
     assert.equal((await admin`SELECT * FROM lucia_public_media(${blogImage}::uuid)`).length, 0);
+    assert.equal((await admin`SELECT * FROM lucia_public_media(${videoAsset}::uuid)`).length,0);
+    assert.equal((await admin`SELECT * FROM lucia_public_media(${pdfAsset}::uuid)`).length,0);
 
     const newsTitle = "Phase 15 news " + randomBytes(5).toString("hex");
     const newsCreated = await api("a", articleRoute, "POST", { kind: "news", title: newsTitle });
