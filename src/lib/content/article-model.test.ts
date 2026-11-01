@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { articleDraftSchema, articleRoute, publicationReady, newArticleSlug, updateArticleSchema } from "./article-model";
 describe("Phase 15 content-contract foundation", () => {
- const valid={kind:"blog" as const,title:"A Barber's Story",slug:"a-barbers-story",excerpt:"How we welcome our customers",body:"A thoughtful story about working with our local customers.",category:"Grooming",tags:["community","local"],seoTitle:"A Barber’s Story",seoDescription:"How we welcome customers to our local barber shop.",featuredMediaRef:null,featuredMediaAlt:null};
+ const valid={kind:"blog" as const,title:"A Barber's Story",slug:"a-barbers-story",excerpt:"How we welcome our customers",body:"A thoughtful story about working with our local customers.",category:"Grooming",authorName:null,eventAt:null,isFeatured:false,correctionNote:null,correctsSlug:null,tags:["community","local"],seoTitle:"A Barber’s Story",seoDescription:"How we welcome customers to our local barber shop.",featuredMediaRef:null,featuredMediaAlt:null};
  it("supports two honest content kinds with stable URLs",()=>{
   expect(articleDraftSchema.parse(valid).kind).toBe("blog");
   expect(articleDraftSchema.parse({...valid,kind:"news"}).kind).toBe("news");
   expect(articleDraftSchema.parse(valid).tags).toEqual(["community","local"]);
+  expect(articleDraftSchema.parse({...valid,kind:"news",eventAt:"2026-11-02T10:00:00.000Z",isFeatured:true,correctionNote:"Corrected event venue.",correctsSlug:"previous-update"}).isFeatured).toBe(true);
+  expect(articleDraftSchema.safeParse({...valid,correctsSlug:"../../private"}).success).toBe(false);
   expect(articleDraftSchema.parse(valid).seoTitle).toBe("A Barber’s Story");
   expect(articleDraftSchema.safeParse({...valid,tags:Array(13).fill("tag")}).success).toBe(false);
   expect(articleDraftSchema.safeParse({...valid,seoDescription:"x".repeat(161)}).success).toBe(false);

@@ -7,7 +7,7 @@ import { articleRoute, newArticleSlug } from "@/lib/content/article-model";
 import { renderArticleMarkdown } from "@/lib/content/rich-content";
 import "./website-story-studio.css";
 type Story = {
- id:string;kind:ArticleKind;title:string;slug:string;excerpt:string;body:string;category:string;tags:string[];seoTitle:string|null;seoDescription:string|null;
+ id:string;kind:ArticleKind;title:string;slug:string;excerpt:string;body:string;category:string;authorName?:string|null;eventAt:string|null;isFeatured:boolean;correctionNote:string|null;correctsSlug:string|null;tags:string[];seoTitle:string|null;seoDescription:string|null;
  featuredMediaRef:string|null;featuredMediaAlt:string|null;publishedSnapshot:{featuredMediaRef?:string|null}|null;
  revision:number;status:"draft"|"scheduled"|"published";publishedSlug:string|null;publishedAt:string|null;scheduledAt:string|null;
 };
@@ -48,7 +48,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
   if(dirty)return;
   setDraft(articles.find(a=>a.id===selected)??null);
  },[articles,selected,dirty]);
- function change(field:"title"|"slug"|"excerpt"|"body"|"category"|"seoTitle"|"seoDescription",value:string) {
+ function change(field:"title"|"slug"|"excerpt"|"body"|"category"|"seoTitle"|"seoDescription"|"correctionNote"|"correctsSlug",value:string) {
   setDraft(previous=>previous?{...previous,[field]:value}:previous);
   setDirty(true);setMessage("");
  }
@@ -93,7 +93,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
    const response=await fetch("/api/websites/"+websiteId+"/articles/"+draft.id,{
     method:"PATCH",headers:{"Content-Type":"application/json",...headers},
     body:JSON.stringify({title:draft.title,slug:draft.slug,excerpt:draft.excerpt,
-     body:draft.body,category:draft.category,tags:draft.tags,seoTitle:draft.seoTitle,seoDescription:draft.seoDescription,featuredMediaRef:draft.featuredMediaRef,revision:draft.revision,action,scheduledAt:draft.scheduledAt}),
+     body:draft.body,category:draft.category,eventAt:draft.eventAt,isFeatured:draft.isFeatured,correctionNote:draft.correctionNote,correctsSlug:draft.correctsSlug,tags:draft.tags,seoTitle:draft.seoTitle,seoDescription:draft.seoDescription,featuredMediaRef:draft.featuredMediaRef,revision:draft.revision,action,scheduledAt:draft.scheduledAt}),
    });
    const payload=await response.json();
    if(!response.ok)throw Error(payload.error || "Article could not be saved.");
@@ -130,7 +130,13 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
       <div className="story-studio-fields">
        <label>Headline<input value={draft.title} maxLength={150} onChange={e=>change("title",e.target.value)}/></label>
        <label>Article URL<input value={draft.slug} maxLength={120} onChange={e=>change("slug",newArticleSlug(e.target.value))}/></label>
-       <label>Category (optional)<input value={draft.category} maxLength={80} onChange={e=>change("category",e.target.value)}/></label>
+       <label>{draft.kind==="news"?"News category":"Category"} (optional)<input value={draft.category} maxLength={80} onChange={e=>change("category",e.target.value)}/></label>
+       {draft.kind==="news"&&<>
+        <label>Event date and time (optional)<input type="datetime-local" value={draft.eventAt?toLocalDateTime(draft.eventAt):""} onChange={e=>{setDraft(previous=>previous?{...previous,eventAt:e.target.value?new Date(e.target.value).toISOString():null}:previous);setDirty(true);}}/></label>
+        <label><input type="checkbox" checked={draft.isFeatured} onChange={e=>{setDraft(previous=>previous?{...previous,isFeatured:e.target.checked}:previous);setDirty(true);}}/> Feature this news story</label>
+        <label>Correction notice (optional)<textarea value={draft.correctionNote??""} maxLength={500} rows={2} onChange={e=>change("correctionNote",e.target.value||"")}/></label>
+        <label>Corrects earlier News slug (optional)<input value={draft.correctsSlug??""} maxLength={120} onChange={e=>change("correctsSlug",e.target.value||"")}/></label>
+       </>}
        <label>Tags (comma separated)<input value={draft.tags.join(", ")} maxLength={400} onChange={e=>{setDraft(previous=>previous?{...previous,tags:Array.from(new Set(e.target.value.split(",").map(tag=>tag.trim()).filter(Boolean))).slice(0,12)}:previous);setDirty(true);}} placeholder="updates, community, events"/></label>
        <details className="story-seo-fields"><summary>Search and social preview (SEO)</summary>
         <label>SEO title (70 characters maximum)<input value={draft.seoTitle??""} maxLength={70} onChange={e=>change("seoTitle",e.target.value||"")}/></label>

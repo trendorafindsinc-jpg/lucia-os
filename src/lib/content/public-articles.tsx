@@ -43,6 +43,7 @@ const readPublished = cache(async (path: string) => {
   if(!parsed.success || parsed.data.kind!==kind || parsed.data.slug!==entry.slug)return [];
   return [{...parsed.data,id:entry.id,publishedAt:entry.publishedAt}];
  });
+ if(!slug)posts.sort((a,b)=>Number(b.isFeatured)-Number(a.isFeatured)||new Date(b.publishedAt??0).getTime()-new Date(a.publishedAt??0).getTime());
  if(slug && !posts.length)notFound();
  return {site,hostname,kind:kind as "blog"|"news",posts,slug};
 });
@@ -66,6 +67,9 @@ export async function PublicArticlePage({path}:{path:string}) {
    <p className={styles.eyebrow}>{label}{item.category?" · "+item.category:""}</p>
    {item.tags.length>0&&<p className={styles.eyebrow}>{item.tags.join(" · ")}</p>}
    <h1>{item.title}</h1><p className={styles.excerpt}>{item.excerpt}</p>
+   {item.authorName&&<p className={styles.eyebrow}>By {item.authorName}</p>}
+   {item.eventAt&&<p className={styles.eyebrow}>Event: <time dateTime={item.eventAt}>{new Date(item.eventAt).toLocaleString("en-GB",{dateStyle:"long",timeStyle:"short"})}</time></p>}
+   {item.correctionNote&&<aside className={styles.correction}><strong>Correction / update</strong><p>{item.correctionNote}</p>{item.correctsSlug&&<Link href={"/news/"+item.correctsSlug as Route}>View the earlier report</Link>}</aside>}
    {item.featuredMediaRef && <Image unoptimized className={styles.featuredImage} src={"/_media/"+item.featuredMediaRef.slice(6)} alt={item.featuredMediaAlt||""} width={1600} height={1000}/>}
    {item.publishedAt && <time dateTime={item.publishedAt.toISOString()}>{item.publishedAt.toLocaleDateString("en-GB",{dateStyle:"long"})}</time>}
    <div className={styles.body} dangerouslySetInnerHTML={{ __html: renderArticleMarkdown(item.body) }} />
@@ -75,7 +79,10 @@ export async function PublicArticlePage({path}:{path:string}) {
    <p className={styles.excerpt}>{kind==="blog"?"Ideas, stories and perspectives.":"Updates and announcements."}</p>
    {posts.length? <div className={styles.grid}>{posts.map(post=><article key={post.id}>
     {post.featuredMediaRef && <Image unoptimized className={styles.cardImage} src={"/_media/"+post.featuredMediaRef.slice(6)} alt={post.featuredMediaAlt||""} width={800} height={500}/>}
-    <p className={styles.eyebrow}>{post.category||label}</p>
+    <p className={styles.eyebrow}>{post.isFeatured?"Featured · ":""}{post.category||label}</p>
+    {post.authorName&&<p className={styles.eyebrow}>By {post.authorName}</p>}
+    {post.eventAt&&<time dateTime={post.eventAt}>Event: {new Date(post.eventAt).toLocaleDateString("en-GB",{dateStyle:"long"})}</time>}
+    {post.correctionNote&&<p className={styles.eyebrow}>Updated / corrected</p>}
     <h2><a href={articleRoute(kind,post.slug)}>{post.title}</a></h2><p>{post.excerpt}</p>
     {post.publishedAt&&<time dateTime={post.publishedAt.toISOString()}>{post.publishedAt.toLocaleDateString("en-GB")}</time>}
    </article>)}</div>:<p>No {label.toLowerCase()} articles have been published yet.</p>}

@@ -12,6 +12,11 @@ export const articleDraftSchema = z.object({
   excerpt: z.string().max(320),
   body: z.string().max(50000),
   category: z.string().trim().max(80),
+  authorName: z.string().trim().max(80).nullable().default(null),
+  eventAt: z.string().datetime().nullable().default(null),
+  isFeatured: z.boolean().default(false),
+  correctionNote: z.string().trim().max(500).nullable().default(null),
+  correctsSlug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(120).nullable().default(null),
   tags: z.array(z.string().trim().min(1).max(32)).max(12).default([]),
   seoTitle: z.string().trim().max(70).nullable().default(null),
   seoDescription: z.string().trim().max(160).nullable().default(null),
@@ -22,7 +27,7 @@ export const createArticleSchema = z.object({
   kind: articleKind,
   title: z.string().trim().min(1).max(150),
 }).strict();
-export const updateArticleSchema = articleDraftSchema.omit({kind:true,featuredMediaAlt:true}).extend({
+export const updateArticleSchema = articleDraftSchema.omit({kind:true,featuredMediaAlt:true,authorName:true}).extend({
   revision: z.number().int().positive(),
   action: z.enum(["save","publish","unpublish","schedule"]),
   scheduledAt: z.string().datetime().nullable().default(null),

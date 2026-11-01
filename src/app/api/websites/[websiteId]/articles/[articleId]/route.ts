@@ -1,7 +1,7 @@
 import { and, eq, ne, sql } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
-import { memberships, organizations, websitePosts, websitePostRevisions, websites } from "@/lib/db/schema";
+import { appUsers, memberships, organizations, websitePosts, websitePostRevisions, websites } from "@/lib/db/schema";
 import { hasOrganizationPermission } from "@/lib/access/policy";
 import { updateArticleSchema, publicationReady, type PublishedArticle } from "@/lib/content/article-model";
 import { isUniqueWebsiteWrite, websiteMutationAllowed } from "@/lib/websites/draft-revision";
@@ -47,13 +47,14 @@ export async function PATCH(request:Request,context:Context){
     const mediaAltById=input.action==="unpublish" ? {} : await validateMediaOwnership(tx,org.id,site.id,{featuredMediaRef:input.featuredMediaRef},input.action==="publish");
     const featuredMediaId=input.featuredMediaRef ? input.featuredMediaRef.slice(6) : null;
     const featuredMediaAlt=featuredMediaId ? mediaAltById[featuredMediaId] ?? null : null;
-    const draft:PublishedArticle={kind:current.kind as "blog"|"news",title:input.title,slug:input.slug,excerpt:input.excerpt,body:input.body,category:input.category,tags:input.tags,seoTitle:input.seoTitle,seoDescription:input.seoDescription,featuredMediaRef:input.featuredMediaRef,featuredMediaAlt};
+    const [author]=await tx.select({displayName:appUsers.displayName}).from(appUsers).where(eq(appUsers.id,user.id)).limit(1);
+    const draft:PublishedArticle={kind:current.kind as "blog"|"news",title:input.title,slug:input.slug,excerpt:input.excerpt,body:input.body,category:input.category,authorName:author?.displayName?.trim()||null,eventAt:input.eventAt,isFeatured:input.isFeatured,correctionNote:input.correctionNote,correctsSlug:input.correctsSlug,tags:input.tags,seoTitle:input.seoTitle,seoDescription:input.seoDescription,featuredMediaRef:input.featuredMediaRef,featuredMediaAlt};
     if((input.action==="publish" || input.action==="schedule") && !publicationReady(draft))return {validation:"Add a meaningful summary and article body before publishing."};
     const live=input.action==="publish"?draft:input.action==="unpublish"||input.action==="schedule"?null:current.publishedSnapshot;
     const status=input.action==="schedule"?"scheduled":live?"published":"draft";
     const publishedSlug=live ? (input.action==="publish" ? draft.slug : current.publishedSlug) : null;
     const [saved]=await tx.update(websitePosts).set({
-     title:input.title,slug:input.slug,excerpt:input.excerpt,body:input.body,category:input.category,tags:input.tags,seoTitle:input.seoTitle,seoDescription:input.seoDescription,featuredMediaId,
+     title:input.title,slug:input.slug,excerpt:input.excerpt,body:input.body,category:input.category,eventAt:input.eventAt?new Date(input.eventAt):null,isFeatured:input.isFeatured,correctionNote:input.correctionNote,correctsSlug:input.correctsSlug,tags:input.tags,seoTitle:input.seoTitle,seoDescription:input.seoDescription,featuredMediaId,
      revision:current.revision+1,status,publishedSnapshot:live,publishedSlug,
      publishedAt:live ? (input.action==="publish" ? new Date() : current.publishedAt) : null,
      scheduledAt:input.action==="schedule"?new Date(input.scheduledAt!):null,updatedAt:new Date(),
