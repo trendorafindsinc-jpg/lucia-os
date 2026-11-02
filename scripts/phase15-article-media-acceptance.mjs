@@ -202,6 +202,7 @@ export async function checkPhase15ArticleMediaAcceptance({
       const previewHtml = await draftPreview.innerHTML();
       assert(previewHtml.includes("<h2>HTML source mode acceptance</h2>"));
       assert(previewHtml.includes("youtube-nocookie.com/embed/abcdefghijk"));
+      assert(previewHtml.includes('sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"'), "Published embeds must use the restricted sandbox");
       assert(!previewHtml.includes("<script") && !previewHtml.includes("onclick") && !previewHtml.includes("evil.example"), "HTML source preview must sanitize unsafe markup and unapproved embeds");
       await page.getByRole("button", { name: "Edit article" }).click();
       await page.locator(".story-studio-actions").getByRole("button", { name: "Save draft", exact: true }).click();
