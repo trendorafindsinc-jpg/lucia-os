@@ -519,3 +519,25 @@
   .layout-page-content{padding-inline:1rem}
   .layout-content-section>header{min-width:0}
 }
+
+/* Premium composition typography has its own desktop scale; override it on
+   compact phones rather than relying on the generic renderer heading rule. */
+@media(max-width:420px){
+  .premium-layout .premium-hero h1,
+  .premium-layout .premium-hero-typographic h1,
+  .premium-layout .premium-section h1{
+    max-width:100%;
+    min-width:0;
+    font-size:clamp(2rem,10vw,2.8rem);
+    line-height:1.02;
+    letter-spacing:-.055em;
+    overflow-wrap:anywhere;
+    text-wrap:pretty;
+  }
+  .premium-layout .premium-site-header,
+  .premium-layout .premium-site-header>*,
+  .premium-layout .premium-mobile-menu,
+  .premium-layout .premium-mobile-menu nav{min-width:0;max-width:100%}
+  .premium-layout .premium-mobile-menu[open] nav{right:0;left:auto}
+  .premium-layout .premium-mobile-menu nav a{white-space:normal;overflow-wrap:anywhere}
+}
