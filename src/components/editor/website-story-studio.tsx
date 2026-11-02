@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ArticleKind } from "@/lib/content/article-model";
 import Image from "next/image";
 import { MediaLibrary, type MediaLibraryItem } from "./media-library";
@@ -31,6 +31,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
  const [preview,setPreview]=useState(false);
  const [embedUrl,setEmbedUrl]=useState("");
  const [contentMode,setContentMode]=useState<"rich"|"markdown"|"html">("rich");
+ const richEditorRef=useRef<HTMLDivElement|null>(null);
  const [dirty,setDirty]=useState(false);
  const [availableMediaCount,setAvailableMediaCount]=useState<number|null>(null);
  const onMediaChange=useCallback((items:{ref:string;label:string}[])=>setAvailableMediaCount(items.length),[]);
@@ -49,6 +50,18 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
   finally{setLoading(false);}
  },[websiteId,headers]);
  useEffect(()=>{void load();},[load]);
+ useEffect(()=>{
+  if(contentMode!=="rich"||!richEditorRef.current)return;
+  const html=renderArticleMarkdown(draft?.body??"");
+  if(richEditorRef.current.innerHTML!==html)richEditorRef.current.innerHTML=html;
+ },[contentMode,selected,draft?.revision]);
+ function richCommand(command:string,value?:string){
+  const editor=richEditorRef.current;if(!editor)return;
+  editor.focus();document.execCommand(command,false,value);
+  const body=editor.innerHTML;
+  if(body.length>50000){setMessage("Article content is limited to 50,000 characters. Remove some content to continue.");return;}
+  setDraft(previous=>previous?{...previous,body}:previous);setDirty(true);setMessage("");
+ }
  useEffect(()=>{
   if(dirty)return;
   setDraft(articles.find(a=>a.id===selected)??null);
@@ -167,15 +180,15 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
         {contentMode!=="html"&&<div className="story-embed-tools" aria-label="External media embeds"><label htmlFor="story-embed-url">Embed from a supported app<input id="story-embed-url" type="url" inputMode="url" placeholder="Paste YouTube, Spotify, Vimeo, SoundCloud, TikTok, Instagram or Apple Podcasts URL" value={embedUrl} onChange={e=>setEmbedUrl(e.target.value)}/></label><button type="button" disabled={!embedUrl.trim()} onClick={()=>{const block=createArticleEmbedHtml(embedUrl);if(!block){setMessage("Unsupported embed URL. You can still add it as a normal external link.");return;}change("body",draft.body+"\\n\\n"+block);setEmbedUrl("");setMessage("Responsive embed inserted. Preview it before publishing.");}}>Insert embed</button><small>Only approved provider URLs are embedded. Other links remain available as ordinary links.</small></div>}
         {contentMode==="rich"?<>
          <div className="story-markdown-toolbar" role="toolbar" aria-label="Rich text formatting">
-          <button type="button" onMouseDown={e=>e.preventDefault()} onClick={()=>document.execCommand("formatBlock",false,"h2")}>Heading</button>
-          <button type="button" onMouseDown={e=>e.preventDefault()} onClick={()=>document.execCommand("bold")}>Bold</button>
-          <button type="button" onMouseDown={e=>e.preventDefault()} onClick={()=>document.execCommand("italic")}>Italic</button>
-          <button type="button" onMouseDown={e=>e.preventDefault()} onClick={()=>document.execCommand("insertUnorderedList")}>Bullet list</button>
-          <button type="button" onMouseDown={e=>e.preventDefault()} onClick={()=>document.execCommand("insertOrderedList")}>Numbered list</button>
-          <button type="button" onMouseDown={e=>e.preventDefault()} onClick={()=>{const url=window.prompt("Enter an HTTPS link");if(url)document.execCommand("createLink",false,url);}}>Link</button>
-          <button type="button" onMouseDown={e=>e.preventDefault()} onClick={()=>document.execCommand("formatBlock",false,"blockquote")}>Quote</button>
+          <button type="button" onMouseDown={e=>e.preventDefault()} onClick={()=>richCommand("formatBlock","h2")}>Heading</button>
+          <button type="button" onMouseDown={e=>e.preventDefault()} onClick={()=>richCommand("bold")}>Bold</button>
+          <button type="button" onMouseDown={e=>e.preventDefault()} onClick={()=>richCommand("italic")}>Italic</button>
+          <button type="button" onMouseDown={e=>e.preventDefault()} onClick={()=>richCommand("insertUnorderedList")}>Bullet list</button>
+          <button type="button" onMouseDown={e=>e.preventDefault()} onClick={()=>richCommand("insertOrderedList")}>Numbered list</button>
+          <button type="button" onMouseDown={e=>e.preventDefault()} onClick={()=>{const url=window.prompt("Enter an HTTPS link");if(url)richCommand("createLink",url);}}>Link</button>
+          <button type="button" onMouseDown={e=>e.preventDefault()} onClick={()=>richCommand("formatBlock","blockquote")}>Quote</button>
          </div>
-         <div className="story-rich-editor" role="textbox" aria-label="Rich text article content" aria-multiline="true" contentEditable suppressContentEditableWarning dangerouslySetInnerHTML={{__html:renderArticleMarkdown(draft.body)}} onInput={e=>{const value=e.currentTarget.innerHTML;if(value.length>50000){setMessage("Article content is limited to 50,000 characters. Remove some content to continue.");return;}change("body",value);}}/>
+         <div className="story-rich-editor" role="textbox" aria-label="Rich text article content" aria-multiline="true" contentEditable suppressContentEditableWarning ref={richEditorRef} onInput={e=>{const value=e.currentTarget.innerHTML;if(value.length>50000){setMessage("Article content is limited to 50,000 characters. Remove some content to continue.");return;}change("body",value);}}/>
          <small>Format text directly. Switching to either source mode preserves the same underlying content; unsafe markup is removed in preview and before publication.</small>
         </>:contentMode==="markdown"?<>
          <div className="story-markdown-toolbar" role="toolbar" aria-label="Markdown formatting">
