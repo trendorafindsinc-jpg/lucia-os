@@ -40,9 +40,9 @@ export function WebsiteSetupWizard({ userId }: { userId: string }) {
           purpose, contact: contact.trim(), style, layoutId: chosenId,
         }),
       });
-      const data = (await response.json()) as { website?: { id: string }; error?: string };
+      const data = (await response.json()) as { website?: { id: string }; error?: string; requestId?: string };
       if (!response.ok || !data.website?.id) {
-        setError(data.error || "Website could not be created. Your answers are still here.");
+        setError(data.requestId ? `${data.error || "Website could not be created. Your answers are still here."} Reference: ${data.requestId}` : data.error || "Website could not be created. Your answers are still here.");
         return;
       }
       window.location.assign("/editor?websiteId=" + encodeURIComponent(data.website.id));
