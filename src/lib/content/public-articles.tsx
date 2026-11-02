@@ -78,7 +78,7 @@ export async function publicArticleMetadata(path:string,websiteSlug?:string):Pro
  const title=article ? (article.seoTitle || article.title) : data.kind==="blog" ? "Blog" : "News";
  const description=article?.seoDescription || article?.excerpt || "Latest "+data.kind+" from "+data.site.name;
  const image=article?.featuredMediaRef ? "https://"+data.hostname+"/_media/"+article.featuredMediaRef.slice(6) : undefined;
- return {title:{absolute:title+" | "+data.site.name},description,openGraph:{type:"article",title,description,images:image?[image]:undefined},twitter:{card:image?"summary_large_image":"summary",title,description,images:image?[image]:undefined},robots:{index:true,follow:true}};
+ return {alternates:{canonical:"https://"+data.hostname+(data.slug?"/"+data.kind+"/"+data.slug:"/"+data.kind)},title:{absolute:title+" | "+data.site.name},description,openGraph:{type:"article",title,description,images:image?[image]:undefined},twitter:{card:image?"summary_large_image":"summary",title,description,images:image?[image]:undefined},robots:{index:true,follow:true}};
 }
 export async function PublicArticlePage({path,searchParams,websiteSlug,layoutId,layoutVersion}:{path:string;searchParams?:Record<string,string|string[]|undefined>;websiteSlug?:string;layoutId?:string;layoutVersion?:number}) {
  const {site,kind,posts,slug}=await readPublished(path,websiteSlug);
