@@ -180,7 +180,7 @@ export async function checkPhase15ArticleMediaAcceptance({
       await imageRow.getByRole("button", { name: "Use as featured image" }).click();
       const richEditor = page.getByRole("textbox", { name: "Rich text article content" });
       await richEditor.fill("Rich text editor acceptance");
-      await richEditor.press("Control+A");
+      await richEditor.selectText();
       await page.getByRole("button", { name: "Bold", exact: true }).click();
       const richHtml = await richEditor.evaluate(element => element.innerHTML);
       assert(/<(b|strong)>Rich text editor acceptance<\/(b|strong)>/i.test(richHtml), "The visual editor must apply rich-text formatting");
