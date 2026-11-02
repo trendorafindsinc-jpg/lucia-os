@@ -253,7 +253,7 @@ function PremiumLayoutPage({
         <a
           className="layout-brand"
           href="/"
-          onClick={preview ? (event) => navigate(event, "/") : undefined}
+          onClick={preview && onNavigate ? (event) => navigate(event, "/") : undefined}
         >
           {definition.identity.profile?.logo && (
             <span className="premium-brand-logo">
@@ -269,7 +269,7 @@ function PremiumLayoutPage({
                 <a
                   key={item.href}
                   href={item.href}
-                  onClick={preview ? (event) => navigate(event, item.href) : undefined}
+                  onClick={preview && onNavigate ? (event) => navigate(event, item.href) : undefined}
                   aria-current={item.href === page.path ? "page" : undefined}
                 >
                   {item.label}
@@ -283,7 +283,7 @@ function PremiumLayoutPage({
                   <a
                     key={item.href}
                     href={item.href}
-                    onClick={preview ? (event) => {
+                    onClick={preview && onNavigate ? (event) => {
                       const menu = event.currentTarget.closest("details");
                       navigate(event, item.href);
                       // Let the App Router begin its page transition before closing
@@ -335,7 +335,7 @@ function PremiumLayoutPage({
             <a
               href={item.href}
               key={item.href}
-              onClick={preview ? (event) => navigate(event, item.href) : undefined}
+              onClick={preview && onNavigate ? (event) => navigate(event, item.href) : undefined}
               aria-current={item.href === page.path ? "page" : undefined}
             >
               {item.label}
@@ -349,7 +349,7 @@ function PremiumLayoutPage({
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a
             href="/"
-            onClick={preview ? (event) => navigate(event, "/") : undefined}
+            onClick={preview && onNavigate ? (event) => navigate(event, "/") : undefined}
             aria-label={`Return to ${definition.identity.name} homepage`}
           >
             Back to home
