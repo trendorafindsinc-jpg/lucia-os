@@ -180,6 +180,7 @@ export async function checkPhase15ArticleMediaAcceptance({
       await imageRow.getByRole("button", { name: "Use as featured image" }).click();
       const richEditor = page.getByRole("textbox", { name: "Rich text article content" });
       await richEditor.fill("Rich text editor acceptance");
+      assert.equal(await richEditor.evaluate(element => getComputedStyle(element).fontWeight), "400", "Rich editor must not inherit the surrounding field label weight");
       await richEditor.selectText();
       await page.getByRole("button", { name: "Bold", exact: true }).click();
       const richHtml = await richEditor.evaluate(element => element.innerHTML);
