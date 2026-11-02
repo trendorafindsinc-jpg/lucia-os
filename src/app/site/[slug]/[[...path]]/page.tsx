@@ -115,7 +115,7 @@ export async function generateMetadata({
 export default async function PublishedWebsitePage({ params, searchParams }: PageProps) {
   const [{ slug, path = [] }, query] = await Promise.all([params, searchParams]);
   const routePath=path.join("/");
-  if(isArticlePath(routePath))return <PublicArticlePage path={routePath} searchParams={query} websiteSlug={slug} />;
+  if(isArticlePath(routePath)){const home=await readSitePage(slug,"/");return <PublicArticlePage path={routePath} searchParams={query} websiteSlug={slug} layoutId={home.blueprint.layoutId} layoutVersion={home.blueprint.layoutVersion}/>;}
   const page = await readSitePage(slug, path.length ? routePath : "/");
-  return <><LayoutRenderer blueprint={page.blueprint} pagePath={page.pagePath} />{page.pagePath === "/" ? <PublicContentHighlights websiteSlug={slug} /> : null}</>;
+  return <><LayoutRenderer blueprint={page.blueprint} pagePath={page.pagePath} />{page.pagePath === "/" ? <PublicContentHighlights websiteSlug={slug} layoutId={page.blueprint.layoutId} layoutVersion={page.blueprint.layoutVersion}/> : null}</>;
 }
