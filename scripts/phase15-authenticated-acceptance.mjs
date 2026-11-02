@@ -23,6 +23,13 @@ export async function checkPhase15AuthenticatedAcceptance({
   assert(selected.length && selected.every((name) => canonical.includes(name)), "Unregistered Phase 14 candidate requested");
   assert.equal(new Set(selected).size, selected.length, "Duplicate acceptance targets");
   const evidence = [];
+  const acceptanceViewports = [
+    { width: 320, height: 844 }, { width: 360, height: 800 },
+    { width: 375, height: 812 }, { width: 390, height: 844 },
+    { width: 430, height: 932 }, { width: 768, height: 1024 },
+    { width: 1024, height: 768 }, { width: 1280, height: 800 },
+    { width: 1440, height: 900 },
+  ];
   // 'all' exercises the real assignment API; unavailable candidates fail closed.
   // This must never enable unfinished Layouts or bypass the server allow-list.
   const phase15 = process.env.WEBSITE_TEST_PHASE15 === "1";
@@ -34,7 +41,7 @@ export async function checkPhase15AuthenticatedAcceptance({
       assert.equal(await accessiblePage.locator('section[aria-labelledby="complete-layouts-title"] article.template-card').count(), 48);
       assert.equal(await accessiblePage.locator('section.template-results').nth(1).locator('article.template-card').count(), 37);
       assert(await accessiblePage.getByRole("searchbox", { name: "Search layouts" }).count() || await accessiblePage.getByLabel("Search layouts").count());
-      for (const viewport of [{ width: 320, height: 844 }, { width: 390, height: 844 }, { width: 768, height: 1024 }, { width: 1180, height: 820 }, { width: 1440, height: 900 }]) {
+      for (const viewport of acceptanceViewports) {
         await accessiblePage.setViewportSize(viewport);
         const dims = await accessiblePage.evaluate(() => ({ width: innerWidth, scroll: document.documentElement.scrollWidth }));
         assert(dims.scroll <= dims.width + 1, "Catalogue overflow at " + viewport.width);
@@ -47,7 +54,7 @@ export async function checkPhase15AuthenticatedAcceptance({
       await accessiblePage.goto(base + "/templates/preview/lucia.layout.haven", { waitUntil: "networkidle" });
       await accessiblePage.emulateMedia({ reducedMotion: "reduce" });
       assert(await accessiblePage.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches));
-      for (const viewport of [{ width: 320, height: 844 }, { width: 390, height: 844 }, { width: 768, height: 1024 }, { width: 1180, height: 820 }, { width: 1440, height: 900 }]) {
+      for (const viewport of acceptanceViewports) {
         await accessiblePage.setViewportSize(viewport);
         const dims = await accessiblePage.evaluate(() => ({ width: innerWidth, scroll: document.documentElement.scrollWidth }));
         assert(dims.scroll <= dims.width + 1, "Preview overflow at " + viewport.width);
@@ -559,7 +566,7 @@ export async function checkPhase15AuthenticatedAcceptance({
         const publicHome = await (await publicSite("/", host)).text();
         assert(publicHome.includes(identityDescription), name + " public identity is missing");
         if (name === "meridian") {
-          for (const width of [320, 390, 768, 1180, 1440]) {
+          for (const width of acceptanceViewports.map((viewport) => viewport.width)) {
             await view.setViewportSize({ width, height: width < 500 ? 844 : 900 });
             const dimensions = await view.evaluate(() => ({
               viewport: innerWidth, document: document.documentElement.scrollWidth,
