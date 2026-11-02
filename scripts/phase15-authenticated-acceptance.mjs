@@ -385,6 +385,64 @@ export async function checkPhase15AuthenticatedAcceptance({
         assert(!html.includes("hello@example.com"), name + " unedited demo contact");
         if (route === portfolioPage.path) assert(html.includes(alt));
       }
+
+      if (phase15) {
+        const articlesRoute = "/api/websites/" + id + "/articles";
+        const emptyBlog = await publicSite("/blog", host);
+        const emptyNews = await publicSite("/news", host);
+        assert.equal(emptyBlog.status, 200, name + " empty Blog route");
+        assert.equal(emptyNews.status, 200, name + " empty News route");
+        const hiddenTitle = "Phase 15 private draft " + name + " " + randomBytes(3).toString("hex");
+        const hiddenDraftResponse = await api("a", articlesRoute, "POST", { kind: "blog", title: hiddenTitle });
+        const hiddenDraftBody = await hiddenDraftResponse.json();
+        assert.equal(hiddenDraftResponse.status, 201, name + " create private Blog draft");
+        assert(!(await emptyBlog.text()).includes(hiddenTitle), name + " private draft leaked into public Blog");
+
+        async function publishLayoutStory(kind) {
+          const title = "Phase 15 " + kind + " " + name + " " + randomBytes(3).toString("hex");
+          const createdArticle = await api("a", articlesRoute, "POST", { kind, title });
+          const createdArticleBody = await createdArticle.json();
+          assert.equal(createdArticle.status, 201, name + " create " + kind + " draft: " + createdArticleBody.error);
+          const article = createdArticleBody.article;
+          const publishedResponse = await api("a", articlesRoute + "/" + article.id, "PATCH", {
+            title, slug: article.slug, excerpt: "A published " + kind + " acceptance summary for " + name + ".",
+            body: "Published " + kind + " content for the " + name + " layout acceptance matrix.",
+            category: "Phase 15 Acceptance", eventAt: null, isFeatured: false,
+            correctionNote: null, correctsSlug: null, tags: ["phase15", "layout-acceptance"],
+            seoTitle: title + " | LUCIA", seoDescription: "Verified published " + kind + " content for " + name + ".",
+            featuredMediaRef: null, scheduledAt: null, revision: article.revision, action: "publish",
+          });
+          const publishedBody = await publishedResponse.json();
+          assert.equal(publishedResponse.status, 200, name + " publish " + kind + ": " + publishedBody.error);
+          assert.equal(publishedBody.article.status, "published");
+          return publishedBody.article;
+        }
+
+        const blogStory = await publishLayoutStory("blog");
+        const newsStory = await publishLayoutStory("news");
+        for (const [kind, story] of [["blog", blogStory], ["news", newsStory]]) {
+          const index = await publicSite("/" + kind, host);
+          const detail = await publicSite("/" + kind + "/" + story.publishedSlug, host);
+          assert.equal(index.status, 200, name + " " + kind + " listing");
+          assert.equal(detail.status, 200, name + " " + kind + " article");
+          const indexHtml = await index.text();
+          const detailHtml = await detail.text();
+          const expectedLayoutClass = new RegExp("premium-design-" + name + "-r[0-9]+");
+          assert(indexHtml.includes(story.title), name + " " + kind + " listing omitted published story");
+          assert(detailHtml.includes(story.title), name + " " + kind + " detail omitted published story");
+          assert(indexHtml.includes('data-layout-id="lucia.layout.' + name + '"'), name + " " + kind + " listing lost registered layout identity");
+          assert(detailHtml.includes('data-layout-id="lucia.layout.' + name + '"'), name + " " + kind + " detail lost registered layout identity");
+          assert(expectedLayoutClass.test(indexHtml), name + " " + kind + " listing did not inherit its layout design class");
+          assert(expectedLayoutClass.test(detailHtml), name + " " + kind + " detail did not inherit its layout design class");
+          assert(detailHtml.includes("Published " + kind + " content"), name + " " + kind + " body missing");
+          assert(detailHtml.includes("layout-acceptance"), name + " " + kind + " tags missing");
+          assert(detailHtml.includes("canonical"), name + " " + kind + " canonical metadata missing");
+          assert(indexHtml.includes('href="/' + kind + '"'), name + " " + kind + " navigation link missing");
+        }
+        assert(!(await (await publicSite("/blog", host)).text()).includes(hiddenTitle),
+          name + " private draft became public after publishing other content");
+        bpass(name + ": Blog/News empty, draft privacy, listing/detail, metadata, tags, navigation and registered layout styling");
+      }
       const liveBrowser = await browserContext.newPage();
       const responsive = [];
       const cdp = await browserContext.newCDPSession(liveBrowser);
