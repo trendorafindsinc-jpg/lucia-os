@@ -93,7 +93,7 @@ export async function publicWebsiteMetadata(path: string): Promise<Metadata> {
   return { title: { absolute: page.title }, description: page.description };
 }
 export async function PublicWebsite({ path, searchParams }: { path: string; searchParams?: Record<string,string|string[]|undefined> }) {
-  if (isArticlePath(path)) { const home=await readPublicWebsitePage("/"); return <PublicArticlePage path={path} searchParams={searchParams} layoutId={home.blueprint.layoutId} layoutVersion={home.blueprint.layoutVersion}/>; }
+  if (isArticlePath(path)) { const home=await readPublicWebsitePage("/"); return <PublicArticlePage path={path} searchParams={searchParams} layoutId={"layoutId" in home.blueprint ? home.blueprint.layoutId : undefined} layoutVersion={"layoutVersion" in home.blueprint ? home.blueprint.layoutVersion : undefined}/>; }
   const page = await readPublicWebsitePage(path);
-  return <><LayoutRenderer blueprint={page.blueprint} pagePath={page.pagePath} />{page.pagePath === "/" ? <PublicContentHighlights layoutId={page.blueprint.layoutId} layoutVersion={page.blueprint.layoutVersion}/> : null}</>;
+  return <><LayoutRenderer blueprint={page.blueprint} pagePath={page.pagePath} />{page.pagePath === "/" ? <PublicContentHighlights layoutId={"layoutId" in page.blueprint ? page.blueprint.layoutId : undefined} layoutVersion={"layoutVersion" in page.blueprint ? page.blueprint.layoutVersion : undefined}/> : null}</>;
 }
