@@ -13,7 +13,12 @@ import { websiteDomains, websitePosts, websites } from "@/lib/db/schema";
 import styles from "./public-articles.module.css";
 import { renderArticleMarkdown } from "./rich-content";
 
-function layoutClasses(layoutId?: string, layoutVersion?: number) {\n const suffix=layoutId?.startsWith("lucia.layout.")?layoutId.slice("lucia.layout.".length):"";\n const safe=/^[a-z0-9-]+$/.test(suffix)?suffix:"";\n return safe?["layout-site","premium-layout",`premium-design-${safe}-r${Number.isSafeInteger(layoutVersion)?layoutVersion:1}`].join(" "):"layout-site";\n}\nexport function isArticlePath(path: string) {
+function layoutClasses(layoutId?: string, layoutVersion?: number) {
+ const suffix=layoutId?.startsWith("lucia.layout.")?layoutId.slice("lucia.layout.".length):"";
+ const safe=/^[a-z0-9-]+$/.test(suffix)?suffix:"";
+ return safe?["layout-site","premium-layout",`premium-design-${safe}-r${Number.isSafeInteger(layoutVersion)?layoutVersion:1}`].join(" "):"layout-site";
+}
+export function isArticlePath(path: string) {
  return /^(?:\/)?(?:blog|news)(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)?\/?$/.test(path);
 }
 const readPublished = cache(async (path: string, websiteSlug?: string) => {
