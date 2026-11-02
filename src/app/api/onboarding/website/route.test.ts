@@ -221,8 +221,9 @@ describe("POST /api/onboarding/website transaction boundary", () => {
     const response = await POST(request());
 
     expect(response.status).toBe(500);
-    await expect(response.json()).resolves.toEqual({
+    await expect(response.json()).resolves.toMatchObject({
       error: "We couldn't save your website yet. Please try again shortly.",
+      requestId: expect.any(String),
     });
     expect(transaction).toHaveBeenCalledOnce();
     expect(writes.some((write) => write.table === organizations)).toBe(true);
