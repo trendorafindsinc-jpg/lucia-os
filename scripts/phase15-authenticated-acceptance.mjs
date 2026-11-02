@@ -441,7 +441,28 @@ export async function checkPhase15AuthenticatedAcceptance({
         }
         assert(!(await (await publicSite("/blog", host)).text()).includes(hiddenTitle),
           name + " private draft became public after publishing other content");
-        bpass(name + ": Blog/News empty, draft privacy, listing/detail, metadata, tags, navigation and registered layout styling");
+
+        const contentBrowser = await browserContext.newPage();
+        try {
+          for (const width of [320, 1440]) {
+            await contentBrowser.setViewportSize({ width, height: width < 500 ? 844 : 900 });
+            for (const route of ["/blog", "/news", "/blog/" + blogStory.publishedSlug, "/news/" + newsStory.publishedSlug]) {
+              const response = await contentBrowser.goto("http://" + host + ":" + new URL(base).port + route, { waitUntil: "networkidle" });
+              assert.equal(response?.status(), 200, name + " responsive content route " + route + " at " + width);
+              await contentBrowser.locator('[data-layout-id="lucia.layout.' + name + '"]').waitFor();
+              const dimensions = await contentBrowser.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth }));
+              assert(dimensions.document <= dimensions.viewport + 1,
+                name + " Blog/News horizontal overflow at " + width + " " + route + ": " + JSON.stringify(dimensions));
+              if (name === selected[0] && width === 320) {
+                await mkdir("artifacts/phase15-acceptance", { recursive: true });
+                await contentBrowser.screenshot({ path: "artifacts/phase15-acceptance/" + route.replaceAll("/", "-").replace(/^-/, "") + "-320.png", fullPage: true });
+              }
+            }
+          }
+        } finally {
+          await contentBrowser.close();
+        }
+        bpass(name + ": Blog/News empty, draft privacy, listing/detail, metadata, tags, navigation, registered styling and 320/1440 browser rendering");
       }
       const liveBrowser = await browserContext.newPage();
       const responsive = [];
