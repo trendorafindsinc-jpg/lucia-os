@@ -183,7 +183,7 @@ export async function checkPhase15ArticleMediaAcceptance({
       await richEditor.press("Control+A");
       await page.getByRole("button", { name: "Bold", exact: true }).click();
       const richHtml = await richEditor.evaluate(element => element.innerHTML);
-      assert(/<(b|strong)>Rich text editor acceptance<\\/(b|strong)>/i.test(richHtml), "The visual editor must apply rich-text formatting");
+      assert(/<(b|strong)>Rich text editor acceptance<\/(b|strong)>/i.test(richHtml), "The visual editor must apply rich-text formatting");
       await page.getByRole("button", { name: "Markdown source" }).click();
       const markdownBody = await page.getByRole("textbox", { name: "Markdown article content" }).inputValue();
       assert(markdownBody.includes("Rich text editor acceptance"), "Switching to Markdown source must preserve rich-text content");
