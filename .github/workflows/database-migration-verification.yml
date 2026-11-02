@@ -1,0 +1,49 @@
+name: Database migration verification
+
+on:
+  pull_request:
+    paths:
+      - "drizzle/**"
+      - "src/lib/db/schema.ts"
+      - "drizzle.config.ts"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: database-migrations-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  migrate-from-empty-database:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: lucia-migration-ci-only
+          POSTGRES_DB: lucia_os_migrations
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d lucia_os_migrations"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Apply every migration to an empty PostgreSQL database
+        run: npm run db:migrate
+        env:
+          DATABASE_URL: postgres://postgres:lucia-migration-ci-only@localhost:5432/lucia_os_migrations
+      - name: Verify migration journal consistency
+        run: npm run db:check

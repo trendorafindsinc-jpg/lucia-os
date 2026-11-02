@@ -20,7 +20,8 @@ export function describeWorkspaceRoute(pathname: string, search: string): Worksp
   if (pathname === "/workspace/desktop") {
     return { appKey: "desktop", label: "Lattice", href: pathname + search, context: "home" };
   }
-  if (pathname === "/templates" || pathname === "/layouts") {
+  if (pathname === "/templates" || pathname === "/layouts" ||
+      /^\/templates\/preview\/lucia\.layout\.[a-z0-9]+(?:-[a-z0-9]+)*$/.test(pathname)) {
     return { appKey: "layouts", label: getWorkspaceApp("layouts")!.label, href: pathname + search, context: "catalogue" };
   }
   if (pathname === "/editor") {

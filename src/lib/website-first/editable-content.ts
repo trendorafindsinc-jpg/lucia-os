@@ -4,7 +4,7 @@ import type { PremiumSection } from "@/lib/layout-blueprint/premium-composition"
 export type EditableField =
   | "heading" | "body" | "eyebrow" | "email"
   | "trust-item" | "service-title" | "service-body"
-  | "project-title" | "project-description" | "action-label";
+  | "project-title" | "project-description" | "action-label" | "media-title" | "media-description";
 
 export type TextSelection = { field: EditableField; index?: number };
 
@@ -23,6 +23,8 @@ export function editableText(section: PremiumSection, selection: TextSelection):
   if (field === "action-label" && section.type === "premium-hero") return section.action?.label ?? null;
   if (field === "eyebrow" && section.type === "premium-hero") return section.eyebrow;
   if (field === "email" && section.type === "contact-panel") return section.email ?? "";
+  if (field === "media-title" && section.type === "media-embed") return section.title;
+  if (field === "media-description" && section.type === "media-embed") return section.description ?? "";
   if (field === "heading" && "heading" in section) return section.heading;
   if (field === "body" && "body" in section) return section.body;
   return null;
@@ -34,6 +36,8 @@ export function editableTextMax(section: PremiumSection, field: EditableField): 
   if (field === "service-title" || field === "project-title") return 120;
   if (field === "service-body" || field === "project-description") return 500;
   if (field === "email") return 254;
+  if (field === "media-title") return 120;
+  if (field === "media-description") return 500;
   if (field === "heading") return section.type === "premium-hero" ? 160 : 150;
   if (field === "body") {
     if (section.type === "editorial-story") return 3000;
@@ -61,6 +65,8 @@ export function replaceEditableText(section: PremiumSection, selection: TextSele
     return { ...section, action: { ...section.action, label: value } };
   if (field === "eyebrow" && section.type === "premium-hero") return { ...section, eyebrow: value };
   if (field === "email" && section.type === "contact-panel") return { ...section, email: value || undefined };
+  if (field === "media-title" && section.type === "media-embed") return { ...section, title: value };
+  if (field === "media-description" && section.type === "media-embed") return { ...section, description: value || undefined };
   if (field === "heading" && "heading" in section) return { ...section, heading: value };
   if (field === "body" && "body" in section) return { ...section, body: value };
   throw Error("This element cannot be edited directly.");
@@ -97,6 +103,8 @@ export function targetFromRenderedElement(section: PremiumSection, target: HTMLE
     }
   }
   if (section.type === "premium-hero" && closest(".layout-primary-action")) return { field: "action-label" };
+  if (section.type === "media-embed" && closest("h1,h2")) return { field: "media-title" };
+  if (section.type === "media-embed" && closest("p")) return { field: "media-description" };
   const text = target.textContent?.trim();
   if (!text) return null;
   for (const field of ["heading", "body", "eyebrow", "email"] as const) {

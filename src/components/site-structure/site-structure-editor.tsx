@@ -2,12 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { LoomRenderer } from "@/components/loom/loom-renderer";
 import { makeInitialDraft } from "@/lib/editor/site-draft";
 import { siteStructurePageToBlueprint } from "@/lib/site-structure/loom-adapter";
 import { addPage, addReusableSection, makeInitialStructure, moveReusableSection, removePage, reusableSectionLibrary, setHomepage, siteStructureSchema, toggleNavigationPage, type ReusableSectionType, type SitePage, type SiteStructure } from "@/lib/site-structure/structure";
 
 export function SiteStructureEditor() {
+  const router = useRouter();
   const [structure, setStructure] = useState<SiteStructure>(() => makeInitialStructure());
   const [previewDraft, setPreviewDraft] = useState(() => makeInitialDraft("northstar-consulting"));
   const [previewError, setPreviewError] = useState("");
@@ -24,36 +26,49 @@ export function SiteStructureEditor() {
   const previewBlueprint = useMemo(() => siteStructurePageToBlueprint(previewDraft, structure, selectedPageId), [previewDraft, structure, selectedPageId]);
 
   useEffect(() => {
-    const requestedWebsiteId = new URLSearchParams(window.location.search).get("websiteId");
+    const requestedWebsiteId = new URLSearchParams(window.location.search).get("websiteId") ?? "";
     if (!requestedWebsiteId) return;
+    let cancelled = false;
     setWebsiteId(requestedWebsiteId);
     setIsLoading(true);
-    fetch(`/api/websites/${encodeURIComponent(requestedWebsiteId)}/draft`, { cache: "no-store" })
-      .then(async (response) => {
-        const payload = await response.json();
-        if (!response.ok) throw new Error(payload.error || "Couldn't load the website's visual draft.");
-        const base = makeInitialDraft(payload.draft?.templateId || "northstar-consulting");
-        setPreviewDraft({ ...base, ...(payload.draft ?? {}), siteName: payload.draft?.siteName || payload.website?.name || base.siteName });
-        setPreviewError("");
-      })
-      .catch((error: unknown) => setPreviewError(error instanceof Error ? error.message : "The visual draft could not be loaded; preview uses a template placeholder."));
-    fetch(`/api/websites/${encodeURIComponent(requestedWebsiteId)}/structure`, { cache: "no-store" })
-      .then(async (response) => {
-        const payload = await response.json();
-        if (!response.ok) throw new Error(payload.error || "Couldn't load the saved page structure.");
-        const checked = siteStructureSchema.safeParse(payload.structure);
+    async function loadWebsiteStructure() {
+      try {
+        const draftResponse = await fetch(`/api/websites/${encodeURIComponent(requestedWebsiteId)}/draft`, { cache: "no-store" });
+        const draftPayload = await draftResponse.json();
+        if (!draftResponse.ok) throw new Error(draftPayload.error || "Couldn't load the website's visual draft.");
+        if (draftPayload.draft?.version === 2 && draftPayload.draft?.schema === "lucia.layout-composition") {
+          router.replace(`/editor?websiteId=${encodeURIComponent(requestedWebsiteId)}#pages-navigation`);
+          return;
+        }
+        const base = makeInitialDraft(draftPayload.draft?.templateId || "northstar-consulting");
+        if (!cancelled) {
+          setPreviewDraft({ ...base, ...(draftPayload.draft ?? {}), siteName: draftPayload.draft?.siteName || draftPayload.website?.name || base.siteName });
+          setPreviewError("");
+        }
+
+        const structureResponse = await fetch(`/api/websites/${encodeURIComponent(requestedWebsiteId)}/structure`, { cache: "no-store" });
+        const structurePayload = await structureResponse.json();
+        if (!structureResponse.ok) throw new Error(structurePayload.error || "Couldn't load the saved page structure.");
+        const checked = siteStructureSchema.safeParse(structurePayload.structure);
         if (!checked.success) throw new Error("The saved page structure is invalid. It has not been changed.");
-        setStructure(checked.data);
-        setSelectedPageId(checked.data.homePageId);
-        setIsDirty(false);
-        setLoadFailed(false);
-      })
-      .catch((error: unknown) => {
-        setLoadFailed(true);
-        setNotice(error instanceof Error ? `${error.message} Saving is disabled to protect existing data.` : "Couldn't load the saved structure. Saving is disabled to protect existing data.");
-      })
-      .finally(() => setIsLoading(false));
-  }, []);
+        if (!cancelled) {
+          setStructure(checked.data);
+          setSelectedPageId(checked.data.homePageId);
+          setIsDirty(false);
+          setLoadFailed(false);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setLoadFailed(true);
+          setNotice(error instanceof Error ? `${error.message} Saving is disabled to protect existing data.` : "Couldn't load the saved structure. Saving is disabled to protect existing data.");
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    }
+    void loadWebsiteStructure();
+    return () => { cancelled = true; };
+  }, [router]);
 
   async function saveStructure() {
     if (!websiteId || isLoading || loadFailed || !validation.success) return;
@@ -119,7 +134,7 @@ export function SiteStructureEditor() {
     <main className="structure-page">
       <header className="structure-topbar">
         <Link className="wordmark" href="/" aria-label="LUCIA OS home"><span className="brand-mark" aria-hidden="true">L</span><span>LUCIA <span className="muted-word">OS</span></span></Link>
-        <div className="structure-top-actions"><span className="structure-local-pill">{isLoading ? "Loading saved structure…" : loadFailed ? "Saved structure unavailable" : websiteId ? (isDirty ? "Unsaved changes" : "Saved to workspace") : "Local draft · Not saved"}</span>{websiteId && <button type="button" className="structure-back-link" onClick={saveStructure} disabled={isLoading || loadFailed || isSaving || !isDirty || !validation.success}>{isSaving ? "Saving…" : "Save structure"}</button>}<Link href={websiteId ? `/editor?websiteId=${encodeURIComponent(websiteId)}` : "/editor"} className="structure-back-link">Back to visual editor</Link></div>
+        <div className="structure-top-actions"><span className="structure-local-pill">{isLoading ? "Loading saved structure…" : loadFailed ? "Saved structure unavailable" : websiteId ? (isDirty ? "Unsaved changes" : "Saved to workspace") : "Local draft · Not saved"}</span>{websiteId && <button type="button" className="structure-back-link" onClick={saveStructure} disabled={isLoading || loadFailed || isSaving || !isDirty || !validation.success}>{isSaving ? "Saving…" : "Save structure"}</button>}<Link href={websiteId ? `/editor?websiteId=${encodeURIComponent(websiteId)}#pages-navigation` : "/editor"} className="structure-back-link">Back to visual editor</Link></div>
       </header>
       <section className="structure-intro">
         <p className="eyebrow">PHASE 10 · SITE STRUCTURE</p>

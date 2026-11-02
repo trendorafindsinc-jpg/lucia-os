@@ -79,8 +79,33 @@ export function mutateWebsite(
     return mutation;
   }
   if (mutation.kind === "assign-layout") {
-    if (isPremium(stored))
-      throw new Error("Replacing an existing composition is not supported");
+    if (isPremium(stored)) {
+      if (!premiumCandidateIds.includes(mutation.layoutId))
+        throw new Error("This design is not available for an existing composition");
+      if (!stored.permissions.advanced.includes("tokens"))
+        throw new Error("Design token changes are not permitted for this website");
+      const candidate = premiumCandidate(mutation.layoutId, stored.identity.name);
+      const tokens = { ...candidate.tokens };
+      Object.assign(tokens, Object.fromEntries(
+        stored.permissions.lockedTokens.map((locked) => [locked, stored.tokens[locked]]),
+      ));
+      const visualExperience = stored.permissions.visualExperienceLocked
+        ? stored.visualExperience
+        : candidate.visualExperience;
+      // Change only the presentation system. Keep the customer's identity,
+      // pages, paths, navigation, sections, media references and permissions.
+      // Existing design locks remain authoritative; the normal authenticated,
+      // tenant-scoped and revision-checked transaction validates media before
+      // persisting this draft-only change.
+      return premiumLayoutSchema.parse({
+        ...stored,
+        layoutId: candidate.layoutId,
+        layoutVersion: candidate.layoutVersion,
+        category: candidate.category,
+        tokens,
+        visualExperience,
+      });
+    }
     // A full canonical ID is deliberately distinct from the old structural
     // demo aliases. Assignment still runs inside existing authenticated,
     // organization-scoped, revision-checked server draft transactions.

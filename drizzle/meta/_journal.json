@@ -120,6 +120,97 @@
       "when": 1793463947034,
       "tag": "0016_customer_media",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1793547000000,
+      "tag": "0017_website_articles",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1793548800000,
+      "tag": "0018_article_featured_media",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1793550600000,
+      "tag": "0019_article_taxonomy_seo",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1793551200000,
+      "tag": "0020_scheduled_article_publication",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1793551800000,
+      "tag": "0021_legacy_article_import",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1793552400000,
+      "tag": "0022_news_story_metadata",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1793553000000,
+      "tag": "0023_article_revision_restore",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1793553600000,
+      "tag": "0024_typed_customer_media",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1793554200000,
+      "tag": "0025_media_upload_reconciliation",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1793554260000,
+      "tag": "0026_inline_article_media_authorization",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1793554320000,
+      "tag": "0027_article_slug_redirects",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1793554380000,
+      "tag": "0028_public_article_subdomain_access",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1793557500000,
+      "tag": "0029_public_article_rls_host_binding",
+      "breakpoints": true
     }
   ]
 }

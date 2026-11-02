@@ -23,6 +23,13 @@ export async function checkPhase15AuthenticatedAcceptance({
   assert(selected.length && selected.every((name) => canonical.includes(name)), "Unregistered Phase 14 candidate requested");
   assert.equal(new Set(selected).size, selected.length, "Duplicate acceptance targets");
   const evidence = [];
+  const acceptanceViewports = [
+    { width: 320, height: 844 }, { width: 360, height: 800 },
+    { width: 375, height: 812 }, { width: 390, height: 844 },
+    { width: 430, height: 932 }, { width: 768, height: 1024 },
+    { width: 1024, height: 768 }, { width: 1280, height: 800 },
+    { width: 1440, height: 900 },
+  ];
   // 'all' exercises the real assignment API; unavailable candidates fail closed.
   // This must never enable unfinished Layouts or bypass the server allow-list.
   const phase15 = process.env.WEBSITE_TEST_PHASE15 === "1";
@@ -34,7 +41,7 @@ export async function checkPhase15AuthenticatedAcceptance({
       assert.equal(await accessiblePage.locator('section[aria-labelledby="complete-layouts-title"] article.template-card').count(), 48);
       assert.equal(await accessiblePage.locator('section.template-results').nth(1).locator('article.template-card').count(), 37);
       assert(await accessiblePage.getByRole("searchbox", { name: "Search layouts" }).count() || await accessiblePage.getByLabel("Search layouts").count());
-      for (const viewport of [{ width: 320, height: 844 }, { width: 390, height: 844 }, { width: 768, height: 1024 }, { width: 1180, height: 820 }, { width: 1440, height: 900 }]) {
+      for (const viewport of acceptanceViewports) {
         await accessiblePage.setViewportSize(viewport);
         const dims = await accessiblePage.evaluate(() => ({ width: innerWidth, scroll: document.documentElement.scrollWidth }));
         assert(dims.scroll <= dims.width + 1, "Catalogue overflow at " + viewport.width);
@@ -47,7 +54,7 @@ export async function checkPhase15AuthenticatedAcceptance({
       await accessiblePage.goto(base + "/templates/preview/lucia.layout.haven", { waitUntil: "networkidle" });
       await accessiblePage.emulateMedia({ reducedMotion: "reduce" });
       assert(await accessiblePage.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches));
-      for (const viewport of [{ width: 320, height: 844 }, { width: 390, height: 844 }, { width: 768, height: 1024 }, { width: 1180, height: 820 }, { width: 1440, height: 900 }]) {
+      for (const viewport of acceptanceViewports) {
         await accessiblePage.setViewportSize(viewport);
         const dims = await accessiblePage.evaluate(() => ({ width: innerWidth, scroll: document.documentElement.scrollWidth }));
         assert(dims.scroll <= dims.width + 1, "Preview overflow at " + viewport.width);
@@ -63,11 +70,12 @@ export async function checkPhase15AuthenticatedAcceptance({
         await menu.click();
         await accessiblePage.getByRole("navigation", { name: "Mobile navigation" })
           .getByRole("link", { name: "Home" }).click();
-        await accessiblePage.locator('[data-page-path="/"]').waitFor();
+        await accessiblePage.waitForURL((url) => url.pathname === "/templates/preview/lucia.layout.haven");
+        await accessiblePage.locator('main[data-preview-page-path="/"]').waitFor();
       }
       await accessiblePage.getByRole("link", { name: "Back to Layout Library" }).click();
       await accessiblePage.getByLabel("Search layouts").waitFor();
-      bpass("Phase 15 catalogue and real preview: five viewports, search/filter, focus after navigation, mobile menu and reduced motion");
+      bpass("Phase 15 catalogue and real preview: nine viewports, search/filter, focus after navigation, mobile menu and reduced motion");
     } finally {
       await accessiblePage.close();
     }
@@ -120,6 +128,110 @@ export async function checkPhase15AuthenticatedAcceptance({
         createdBody = await creation.json();
         assert.equal(creation.status, 201, name + " persisted creation: " + createdBody.error);
         id = createdBody.website.id;
+        await view.goto(base + "/editor?websiteId=" + id, { waitUntil: "networkidle" });
+        await view.locator(".website-first-editor").waitFor();
+        await view.getByRole("button", { name: "Pages & Navigation", exact: true }).click();
+        const pagesPanel = view.getByRole("region", { name: "Pages and navigation" });
+        await pagesPanel.waitFor();
+        await pagesPanel.getByLabel("New page name").waitFor();
+        if (name === selected[0]) {
+          async function waitForEditorSave() {
+            await view.locator(".website-first-editor-status").filter({ hasText: "● Unsaved" }).waitFor();
+            await view.locator(".website-first-editor-status").filter({ hasText: "✓ Saved" }).waitFor();
+          }
+          await pagesPanel.getByLabel("New page name").fill("Phase 15 journey");
+          await pagesPanel.getByRole("button", { name: "+ Add page", exact: true }).click();
+          await waitForEditorSave();
+          const newPageCard = pagesPanel.locator(".website-first-page-list article").filter({ hasText: "Phase 15" });
+          await newPageCard.waitFor();
+          await newPageCard.getByLabel("Page address").fill("/phase-15-customer-journey");
+          await newPageCard.getByLabel("Page address").blur();
+          await waitForEditorSave();
+          await newPageCard.getByLabel("Page title").fill("Phase 15 customer journey");
+          await newPageCard.getByLabel("Page title").blur();
+          await waitForEditorSave();
+          await newPageCard.getByLabel("Show in website navigation").uncheck();
+          await waitForEditorSave();
+          assert.equal(await pagesPanel.locator(".website-first-navigation-list li").filter({ hasText: "Phase 15 customer journey" }).count(), 0);
+          await newPageCard.getByLabel("Show in website navigation").check();
+          await waitForEditorSave();
+          const navEntry = pagesPanel.locator(".website-first-navigation-list li").filter({ hasText: "Phase 15 customer journey" });
+          await navEntry.waitFor();
+          assert((await navEntry.innerText()).includes("/phase-15-customer-journey"));
+          await navEntry.getByRole("button", { name: "↑" }).click();
+          await waitForEditorSave();
+          view.once("dialog", (dialog) => dialog.accept());
+          await newPageCard.getByRole("button", { name: "Remove page", exact: true }).click();
+          await waitForEditorSave();
+          assert.equal(await pagesPanel.locator(".website-first-page-list article").filter({ hasText: "Phase 15 customer journey" }).count(), 0);
+        }
+        await pagesPanel.getByRole("button", { name: "Close", exact: true }).click();
+        await view.getByRole("button", { name: "Manage Media", exact: true }).click();
+        const mediaPanel = view.getByRole("region", { name: "Website image replacement" });
+        await mediaPanel.waitFor();
+        await mediaPanel.getByText("Your media library", { exact: true }).click();
+        const imageUpload = mediaPanel.getByLabel("Customer image (JPEG, PNG or WebP, up to 4 MB)");
+        const videoUpload = mediaPanel.getByLabel("Video (MP4/WebM up to 100 MB) or PDF (up to 25 MB)");
+        await imageUpload.waitFor();
+        await videoUpload.waitFor();
+        assert.equal(await imageUpload.getAttribute("accept"), "image/jpeg,image/png,image/webp");
+        assert.equal(await videoUpload.getAttribute("accept"), "video/mp4,video/webm,application/pdf");
+        await mediaPanel.getByLabel("Embed external content").waitFor();
+        await mediaPanel.getByRole("button", { name: "Add embed to page", exact: true }).waitFor();
+        await mediaPanel.getByLabel("Download or external link label").waitFor();
+        await mediaPanel.getByLabel("Secure external destination").waitFor();
+        await mediaPanel.getByRole("button", { name: "Add external link to page", exact: true }).waitFor();
+        await mediaPanel.getByRole("button", { name: "Close", exact: true }).click();
+        await view.getByRole("button", { name: "Change Website Design", exact: true }).click();
+        const designPanel = view.getByRole("region", { name: "Change website design" });
+        await designPanel.waitFor();
+        await designPanel.getByLabel("Choose a design").waitFor();
+        await designPanel.locator(".website-first-layout-preview [data-layout-id]").waitFor();
+        if (name === selected[0]) {
+          const originalDesign = await (await api("a", draftRoute(id))).json();
+          const nextDesign = originalDesign.draft.layoutId === "lucia.layout.canvas"
+            ? "lucia.layout.meridian" : "lucia.layout.canvas";
+          await designPanel.getByLabel("Choose a design").selectOption(nextDesign);
+          view.once("dialog", (dialog) => dialog.accept());
+          await designPanel.getByRole("button", { name: "Apply to existing website", exact: true }).click();
+          await view.locator(".website-first-editor-status").filter({ hasText: "✓ Saved" }).waitFor();
+          const switchedDesign = await (await api("a", draftRoute(id))).json();
+          assert.equal(switchedDesign.draft.layoutId, nextDesign);
+          assert.deepEqual(switchedDesign.draft.identity, originalDesign.draft.identity);
+          assert.deepEqual(switchedDesign.draft.pages, originalDesign.draft.pages);
+          assert.deepEqual(switchedDesign.draft.navigation, originalDesign.draft.navigation);
+          const restoredDesign = await api("a", draftRoute(id), "PATCH", {
+            kind: "assign-layout", layoutId: originalDesign.draft.layoutId,
+          }, { "if-match": switchedDesign.revision });
+          assert.equal(restoredDesign.status, 200, "Visual Editor should restore the original design");
+          await view.goto(base + "/editor?websiteId=" + id, { waitUntil: "networkidle" });
+          await view.locator(".website-first-editor").waitFor();
+        } else {
+          await designPanel.getByRole("button", { name: "Close", exact: true }).click();
+        }
+        await view.goto(base + "/pages?websiteId=" + id, { waitUntil: "networkidle" });
+        await view.waitForURL((url) => url.pathname === "/editor" && url.hash === "#pages-navigation");
+        await view.getByRole("region", { name: "Pages and navigation" }).waitFor();
+        await view.goto(base + "/editor?websiteId=" + id, { waitUntil: "networkidle" });
+        await view.locator(".website-first-editor-next-step").waitFor();
+        await view.getByRole("link", { name: "Continue to Detailed Settings →" }).click();
+        await view.locator(".studio-settings-destinations").waitFor();
+        await view.getByRole("link", { name: "Open SEO & social settings →" }).waitFor();
+        await view.getByRole("link", { name: "Manage website domains →" }).waitFor();
+        assert(await view.locator(".studio-settings-unavailable").innerText().then((value) => value.includes("Not connected")));
+        if (phase15 && name === selected[0]) {
+          const seoRoute = "/api/websites/" + id + "/seo";
+          const originalSeo = await (await api("a", seoRoute)).json();
+          await view.goto(base + "/seo?websiteId=" + id, { waitUntil: "networkidle" });
+          await view.locator(".seo-workspace").waitFor();
+          await view.getByLabel("Search title").fill("Phase 15 persisted SEO acceptance");
+          await view.getByRole("button", { name: "Save SEO", exact: true }).click();
+          await view.getByText(/SEO settings saved to the website workspace/).waitFor();
+          const persistedSeo = await (await api("a", seoRoute)).json();
+          assert.equal(persistedSeo.settings.title, "Phase 15 persisted SEO acceptance");
+          const restoredSeo = await api("a", seoRoute, "PATCH", originalSeo.settings);
+          assert.equal(restoredSeo.status, 200, "SEO acceptance must restore its original saved settings");
+        }
         await view.goto(base + "/editor?websiteId=" + id, { waitUntil: "networkidle" });
         await view.locator(".website-first-editor").waitFor();
         saved = await (await api("a", draftRoute(id))).json();
@@ -273,6 +385,86 @@ export async function checkPhase15AuthenticatedAcceptance({
         assert(!html.includes("hello@example.com"), name + " unedited demo contact");
         if (route === portfolioPage.path) assert(html.includes(alt));
       }
+
+      if (phase15) {
+        const articlesRoute = "/api/websites/" + id + "/articles";
+        const emptyBlog = await publicSite("/blog", host);
+        const emptyNews = await publicSite("/news", host);
+        assert.equal(emptyBlog.status, 200, name + " empty Blog route");
+        assert.equal(emptyNews.status, 200, name + " empty News route");
+        const hiddenTitle = "Phase 15 private draft " + name + " " + randomBytes(3).toString("hex");
+        const hiddenDraftResponse = await api("a", articlesRoute, "POST", { kind: "blog", title: hiddenTitle });
+        const hiddenDraftBody = await hiddenDraftResponse.json();
+        assert.equal(hiddenDraftResponse.status, 201, name + " create private Blog draft");
+        assert(!(await emptyBlog.text()).includes(hiddenTitle), name + " private draft leaked into public Blog");
+
+        async function publishLayoutStory(kind) {
+          const title = "Phase 15 " + kind + " " + name + " " + randomBytes(3).toString("hex");
+          const createdArticle = await api("a", articlesRoute, "POST", { kind, title });
+          const createdArticleBody = await createdArticle.json();
+          assert.equal(createdArticle.status, 201, name + " create " + kind + " draft: " + createdArticleBody.error);
+          const article = createdArticleBody.article;
+          const publishedResponse = await api("a", articlesRoute + "/" + article.id, "PATCH", {
+            title, slug: article.slug, excerpt: "A published " + kind + " acceptance summary for " + name + ".",
+            body: "Published " + kind + " content for the " + name + " layout acceptance matrix.",
+            category: "Phase 15 Acceptance", eventAt: null, isFeatured: false,
+            correctionNote: null, correctsSlug: null, tags: ["phase15", "layout-acceptance"],
+            seoTitle: title + " | LUCIA", seoDescription: "Verified published " + kind + " content for " + name + ".",
+            featuredMediaRef: null, scheduledAt: null, revision: article.revision, action: "publish",
+          });
+          const publishedBody = await publishedResponse.json();
+          assert.equal(publishedResponse.status, 200, name + " publish " + kind + ": " + publishedBody.error);
+          assert.equal(publishedBody.article.status, "published");
+          return publishedBody.article;
+        }
+
+        const blogStory = await publishLayoutStory("blog");
+        const newsStory = await publishLayoutStory("news");
+        for (const [kind, story] of [["blog", blogStory], ["news", newsStory]]) {
+          const index = await publicSite("/" + kind, host);
+          const detail = await publicSite("/" + kind + "/" + story.publishedSlug, host);
+          assert.equal(index.status, 200, name + " " + kind + " listing");
+          assert.equal(detail.status, 200, name + " " + kind + " article");
+          const indexHtml = await index.text();
+          const detailHtml = await detail.text();
+          const expectedLayoutClass = new RegExp("premium-design-" + name + "-r[0-9]+");
+          assert(indexHtml.includes(story.title), name + " " + kind + " listing omitted published story");
+          assert(detailHtml.includes(story.title), name + " " + kind + " detail omitted published story");
+          assert(indexHtml.includes('data-layout-id="lucia.layout.' + name + '"'), name + " " + kind + " listing lost registered layout identity");
+          assert(detailHtml.includes('data-layout-id="lucia.layout.' + name + '"'), name + " " + kind + " detail lost registered layout identity");
+          assert(expectedLayoutClass.test(indexHtml), name + " " + kind + " listing did not inherit its layout design class");
+          assert(expectedLayoutClass.test(detailHtml), name + " " + kind + " detail did not inherit its layout design class");
+          assert(detailHtml.includes("Published " + kind + " content"), name + " " + kind + " body missing");
+          assert(detailHtml.includes("layout-acceptance"), name + " " + kind + " tags missing");
+          assert(detailHtml.includes("canonical"), name + " " + kind + " canonical metadata missing");
+          assert(indexHtml.includes('href="/' + kind + '"'), name + " " + kind + " navigation link missing");
+        }
+        assert(!(await (await publicSite("/blog", host)).text()).includes(hiddenTitle),
+          name + " private draft became public after publishing other content");
+
+        const contentBrowser = await browserContext.newPage();
+        try {
+          for (const route of ["/blog", "/news", "/blog/" + blogStory.publishedSlug, "/news/" + newsStory.publishedSlug]) {
+            const response = await contentBrowser.goto("http://" + host + ":" + new URL(base).port + route, { waitUntil: "networkidle" });
+            assert.equal(response?.status(), 200, name + " responsive content route " + route);
+            await contentBrowser.locator('[data-layout-id="lucia.layout.' + name + '"]').waitFor();
+            for (const viewport of acceptanceViewports) {
+              await contentBrowser.setViewportSize(viewport);
+              await contentBrowser.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+              const dimensions = await contentBrowser.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth }));
+              assert(dimensions.document <= dimensions.viewport + 1,
+                name + " Blog/News horizontal overflow at " + viewport.width + " " + route + ": " + JSON.stringify(dimensions));
+              if (name === selected[0] && viewport.width === 320) {
+                await mkdir("artifacts/phase15-acceptance", { recursive: true });
+                await contentBrowser.screenshot({ path: "artifacts/phase15-acceptance/" + route.replaceAll("/", "-").replace(/^-/, "") + "-320.png", fullPage: true });
+              }
+            }
+          }
+        } finally {
+          await contentBrowser.close();
+        }
+        bpass(name + ": Blog/News empty, draft privacy, listing/detail, metadata, tags, navigation, registered styling and 320/1440 browser rendering");
+      }
       const liveBrowser = await browserContext.newPage();
       const responsive = [];
       const cdp = await browserContext.newCDPSession(liveBrowser);
@@ -282,8 +474,7 @@ export async function checkPhase15AuthenticatedAcceptance({
         new PerformanceObserver((list) => { for (const entry of list.getEntries()) if (!entry.hadRecentInput) window.__phase14Performance.cls += entry.value; }).observe({ type: "layout-shift", buffered: true });
       });
       try {
-        for (const viewport of [{ width: 320, height: 844 }, { width: 390, height: 844 },
-          { width: 768, height: 1024 }, { width: 1180, height: 820 }, { width: 1440, height: 900 }]) {
+        for (const viewport of acceptanceViewports) {
           await liveBrowser.setViewportSize(viewport);
           const throttled = viewport.width === 390;
           await cdp.send("Network.enable");
@@ -337,6 +528,31 @@ export async function checkPhase15AuthenticatedAcceptance({
         await liveBrowser.close();
       }
       const lastGood = await (await publicSite("/", host)).text();
+      if (phase15) {
+        const beforeLayoutChange = await (await api("a", draftRoute(id))).json();
+        const targetLayoutId = beforeLayoutChange.draft.layoutId === "lucia.layout.canvas"
+          ? "lucia.layout.meridian" : "lucia.layout.canvas";
+        const switched = await api("a", draftRoute(id), "PATCH", {
+          kind: "assign-layout", layoutId: targetLayoutId,
+        }, { "if-match": beforeLayoutChange.revision });
+        assert.equal(switched.status, 200, name + " existing website layout change");
+        const switchedBody = await switched.json();
+        assert.equal(switchedBody.draft.layoutId, targetLayoutId);
+        assert.deepEqual(switchedBody.draft.identity, beforeLayoutChange.draft.identity);
+        assert.deepEqual(switchedBody.draft.pages, beforeLayoutChange.draft.pages);
+        assert.deepEqual(switchedBody.draft.navigation, beforeLayoutChange.draft.navigation);
+        assert.deepEqual(switchedBody.draft.permissions, beforeLayoutChange.draft.permissions);
+        const stillLive = await (await publicSite("/", host)).text();
+        assert(stillLive.includes('data-layout-id="lucia.layout.' + name + '"'),
+          name + " draft layout switch changed the live website before publishing");
+        const restoredLayout = await api("a", draftRoute(id), "PATCH", {
+          kind: "assign-layout", layoutId: beforeLayoutChange.draft.layoutId,
+        }, { "if-match": switchedBody.revision });
+        assert.equal(restoredLayout.status, 200, name + " restore original design");
+        const restoredBody = await restoredLayout.json();
+        assert.deepEqual(restoredBody.draft.pages, beforeLayoutChange.draft.pages);
+        assert.deepEqual(restoredBody.draft.navigation, beforeLayoutChange.draft.navigation);
+      }
       assert.equal((await api("a", publishRoute, "POST", publishing(current),
         { "if-match": initialRevision })).status, 409, name + " stale publication accepted");
       assert.equal(await (await publicSite("/", host)).text(), lastGood);
@@ -361,6 +577,10 @@ export async function checkPhase15AuthenticatedAcceptance({
           [f.a, f.orgA]);
       }
       bpass(name + ": real synthetic-session create/assign/edit/reload/publish/public routes, tenant denial and rollback");
+      if (phase15 && name === selected[0]) {
+        const { checkPhase15ArticleMediaAcceptance } = await import("./phase15-article-media-acceptance.mjs");
+        await checkPhase15ArticleMediaAcceptance({ api, admin, f, base, browserContext, siteId: id, siteSlug, bpass, publicSite });
+      }
       if (process.env.WEBSITE_TEST_PHASE16 === "1") {
         // Continue on the exact same persisted, already-published test project.
         // This is a real browser and database test, never a mock editor state.
@@ -425,13 +645,17 @@ export async function checkPhase15AuthenticatedAcceptance({
         const publicHome = await (await publicSite("/", host)).text();
         assert(publicHome.includes(identityDescription), name + " public identity is missing");
         if (name === "meridian") {
-          for (const width of [320, 390, 768, 1180, 1440]) {
+          for (const width of acceptanceViewports.map((viewport) => viewport.width)) {
             await view.setViewportSize({ width, height: width < 500 ? 844 : 900 });
             const dimensions = await view.evaluate(() => ({
               viewport: innerWidth, document: document.documentElement.scrollWidth,
+              overflowing: [...document.querySelectorAll("body *")].map((node) => {
+                const rect=node.getBoundingClientRect();
+                return {tag:node.tagName,className:String(node.className||""),left:Math.round(rect.left),right:Math.round(rect.right),width:Math.round(rect.width),scrollWidth:node.scrollWidth,clientWidth:node.clientWidth,overflowX:getComputedStyle(node).overflowX};
+              }).filter((node) => node.right > innerWidth + 1 || node.left < -1).slice(0,16),
             }));
             assert(dimensions.document <= dimensions.viewport + 1,
-              "Editor horizontally overflows at " + width);
+              "Editor horizontally overflows at " + width + ": " + JSON.stringify(dimensions));
           }
           await view.setViewportSize({ width: 390, height: 844 });
           await view.getByRole("button", { name: "1. Business identity" }).click();

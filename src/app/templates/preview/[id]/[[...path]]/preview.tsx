@@ -1,19 +1,19 @@
 "use client";
 import { useEffect, useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import type { Route } from "next";
 import type { PremiumLayout } from "@/lib/layout-blueprint/premium-composition";
 import { LayoutRenderer } from "@/components/layout-studio/layout-renderer";
 import { getTemplateSetupHref } from "@/lib/templates/navigation";
 
 export function LayoutPreview({ blueprint, pagePath }: { blueprint: PremiumLayout; pagePath: string }) {
-  const router = useRouter();
   const previewContent = useRef<HTMLElement>(null);
   const navigate = (path: string) => {
-    if (blueprint.pages.some((page) => page.path === path)) {
-      router.push(("/templates/preview/" + blueprint.layoutId + (path === "/" ? "" : path)) as Route);
-    }
+    if (!blueprint.pages.some((page) => page.path === path)) return;
+    const target = "/templates/preview/" + blueprint.layoutId + (path === "/" ? "" : path);
+    // The preview route is server-resolved by its optional catch-all segment.
+    // A document navigation keeps desktop and native mobile-menu links on the
+    // exact same route, including the transition back to the root page.
+    if (window.location.pathname !== target) window.location.assign(target);
   };
   // Keep the real public renderer; focus the selected page after route changes.
   useEffect(() => {

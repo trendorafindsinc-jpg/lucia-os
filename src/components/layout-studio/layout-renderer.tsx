@@ -1,5 +1,6 @@
 import { resolvePremiumAsset, premiumAssetDimensions } from "@/lib/layout-blueprint/premium-assets";
 import Image from "next/image";
+import { resolveExternalEmbed, resolveExternalHttpsLink } from "@/lib/media/embed-providers";
 import React, { type CSSProperties } from "react";
 import type {
   LayoutBlueprint,
@@ -96,6 +97,7 @@ export function LayoutRenderer({
         <span>
           {preview ? "Private preview · LUCIA OS" : "Made with LUCIA OS"}
         </span>
+        {!preview&&<nav aria-label="Blog and news" style={{display:"flex",gap:"1rem"}}><a href="/blog">Blog</a><a href="/news">News</a></nav>}
       </footer>
     </Root>
   );
@@ -282,8 +284,11 @@ function PremiumLayoutPage({
                     key={item.href}
                     href={item.href}
                     onClick={preview ? (event) => {
+                      const menu = event.currentTarget.closest("details");
                       navigate(event, item.href);
-                      event.currentTarget.closest("details")?.removeAttribute("open");
+                      // Let the App Router begin its page transition before closing
+                      // the native disclosure menu; immediate removal can race navigation.
+                      if (event.defaultPrevented) requestAnimationFrame(() => menu?.removeAttribute("open"));
                     } : undefined}
                     aria-current={item.href === page.path ? "page" : undefined}
                   >
@@ -338,6 +343,7 @@ function PremiumLayoutPage({
           ))}
         </nav>
         <div className="premium-footer-end">
+          {!preview&&<nav aria-label="Blog and news" style={{display:"flex",gap:"1rem"}}><a href="/blog">Blog</a><a href="/news">News</a></nav>}
           <span>{preview ? "Private preview · LUCIA OS" : "Made with LUCIA OS"}</span>
           {/* Customer hostname navigation must issue a document request. */}
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
@@ -549,6 +555,49 @@ function PremiumSectionView({
           )}
         </section>
       );
+    case "media-embed": {
+      const mediaId = section.mediaRef?.slice(6);
+      const embed = section.kind === "embed" && section.url ? resolveExternalEmbed(section.url) : null;
+      const externalLink = section.kind === "link" && section.url ? resolveExternalHttpsLink(section.url) : null;
+      return (
+        <section
+          id={id}
+          data-section-type={section.type}
+          data-variant={section.variant}
+          className={`premium-section premium-media premium-media-${section.variant}`}
+        >
+          {heading(section.title)}
+          {section.description && <p>{section.description}</p>}
+          {section.kind === "image" && mediaId ? (
+            <Image unoptimized src={`/_media/${mediaId}`} alt={section.description || section.title}
+              width={1600} height={1000} sizes="(max-width: 900px) 100vw, 1200px"
+              className="premium-media-image" />
+          ) : section.kind === "embed" && embed ? (
+            <div className="premium-media-frame">
+              <iframe src={embed.src} title={section.title || embed.title} loading="lazy"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-forms"
+                allowFullScreen referrerPolicy="strict-origin-when-cross-origin" />
+            </div>
+          ) : section.kind === "video" && mediaId ? (
+            <video controls playsInline preload="metadata" className="premium-media-video">
+              <source src={`/_media/${mediaId}`} type={section.mime} />
+              Your browser does not support embedded video.
+            </video>
+          ) : section.kind === "document" && mediaId ? (
+            <a className="premium-media-download" href={`/_media/${mediaId}`} download>
+              Download {section.title}
+            </a>
+          ) : section.kind === "link" && externalLink ? (
+            <a className="premium-media-download" href={externalLink} target="_blank" rel="noopener noreferrer">
+              {section.title}
+            </a>
+          ) : (
+            <p role="status">This media item is not available for preview.</p>
+          )}
+        </section>
+      );
+    }
   }
 }
 /* An unresolved built-in asset is visibly unavailable, never a broken network image

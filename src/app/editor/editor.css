@@ -89,3 +89,27 @@
 
 /* Keep editor actions usable at narrow widths instead of overflowing the page. */
 @media(max-width:700px){.editor-topbar{flex-wrap:wrap;padding-block:12px}.editor-topbar-actions{min-width:0;flex-wrap:wrap;justify-content:flex-end}.editor-topbar-actions>*{max-width:100%;overflow-wrap:anywhere}}
+
+/* Phase 16 narrow-screen acceptance: keep form controls inside the editor viewport. */
+.editor-page,.editor-page *{box-sizing:border-box}
+.editor-page{min-width:0;max-width:100%}
+.editor-page>*{min-width:0;max-width:100%}
+.editor-page .composition-controls,.editor-page .composition-controls.studio-panel,
+.editor-page .studio-task-nav,.editor-page .studio-panel,.editor-page .studio-subfields,
+.editor-page .studio-media-library{box-sizing:border-box;min-width:0;max-width:100%}
+.editor-page .studio-task-nav button{box-sizing:border-box;min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere}
+.editor-page :is(input,select,textarea,button){box-sizing:border-box;max-width:100%}
+.studio-journey-progress{display:flex;flex-wrap:wrap;gap:8px;margin:0 auto 14px;max-width:1400px;padding:12px;border:1px solid #d8e3f1;border-radius:14px;background:#fbfdff}
+.studio-journey-progress a,.studio-journey-progress span{display:inline-flex;align-items:center;min-height:38px;padding:8px 11px;border-radius:9px;text-decoration:none;font-size:12px;font-weight:750;color:#526580}
+.studio-journey-progress [aria-current=step]{background:#eaf0fc;color:#1f4d9a;border:1px solid #c8d7f2}
+@media(max-width:600px){.studio-journey-progress{display:grid;grid-template-columns:1fr 1fr}.studio-journey-progress a,.studio-journey-progress span{font-size:11px;justify-content:center}}
+.studio-settings-destinations{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;max-width:1400px;margin:0 auto 14px}
+.studio-settings-destinations>div{display:flex;flex-direction:column;align-items:flex-start;gap:7px;min-width:0;padding:15px;border:1px solid #dce5f0;border-radius:13px;background:#fff}
+.studio-settings-eyebrow{font-size:9px;letter-spacing:.13em;font-weight:850;color:#536d9c}
+.studio-settings-destinations strong{font-size:13px;color:#1d3150}
+.studio-settings-destinations p{font-size:11px;line-height:1.55;color:#687991;margin:0;flex:1}
+.studio-settings-destinations a{font-size:11px;font-weight:800;color:#2454ab;text-decoration:none}
+.studio-settings-unavailable{font-size:10px;font-weight:750;color:#7a6541;padding:6px 8px;border-radius:7px;background:#fff8eb}
+@media(max-width:900px){.studio-settings-destinations{grid-template-columns:1fr 1fr}}
+@media(max-width:580px){.studio-settings-destinations{grid-template-columns:1fr}}
+

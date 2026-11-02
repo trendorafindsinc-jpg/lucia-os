@@ -33,6 +33,7 @@ const sourceFingerprint = createHash("sha256");
 for (const name of sourceFiles)
   sourceFingerprint.update(name + "\0").update(fs.readFileSync(name));
 const testedSource = sourceFingerprint.digest("hex");
+process.env.CRON_SECRET ||= "phase15-isolated-acceptance-cron-secret";
 const adminUrl = process.env.WEBSITE_TEST_ADMIN_URL,
   runtimeUrl = process.env.WEBSITE_TEST_RUNTIME_URL;
 if (
@@ -1029,7 +1030,7 @@ try {
     }
     if (process.env.WEBSITE_TEST_PHASE14_WEBSITE_FIRST === "1") {
       const { checkWebsiteFirstJourney } = await import("./phase14-website-first-journey.mjs");
-      await checkWebsiteFirstJourney({ api, f, base, browserContext, created, bpass, publicSite });
+      await checkWebsiteFirstJourney({ api, admin, f, base, browserContext, created, bpass, publicSite });
     }
     if (process.env.WEBSITE_TEST_MEDIA === "1") {
       const { checkMediaSecurity } = await import("./media-security-acceptance.mjs");

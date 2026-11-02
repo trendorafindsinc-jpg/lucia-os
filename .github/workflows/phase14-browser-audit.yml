@@ -22,7 +22,7 @@ concurrency:
 jobs:
   flagship-screenshots:
     name: Eight flagship screenshot evidence (development-only renderer)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 18
     steps:
       - name: Check out submitted Layout branch

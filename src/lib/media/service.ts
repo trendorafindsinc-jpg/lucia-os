@@ -4,12 +4,13 @@ import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { getOrganizationMembershipsForUser } from "@/lib/access/guards";
 import { hasOrganizationPermission } from "@/lib/access/policy";
-import { mediaIds } from "./references";
+import { mediaIds, mediaReferencePattern } from "./references";
 import { compressImage } from "./image";
 import { mediaStorage, storageConfigured } from "./storage";
+import { multipartStorage } from "./multipart-storage";
 export type MediaTransaction = Parameters<Parameters<ReturnType<typeof getDb>["transaction"]>[0]>[0];
 export class MediaError extends Error { constructor(message: string, public status = 422) { super(message); } }
-type MediaRow = { id: string; website_id: string; organization_id: string; object_key: string; bytes: number; width: number; height: number; alt: string; status: string };
+type MediaRow = { id: string; website_id: string; organization_id: string; object_key: string; bytes: number; width: number; height: number; alt: string; status: string; kind: string; mime:string; original_name:string|null; checksum:string|null; etag:string|null; caption:string|null; duration_ms:number|null; upload_id:string|null };
 export function boundedQuota(value: string | undefined, fallback: number) { const n = Number(value); return Number.isSafeInteger(n) && n > 0 && n <= 10_000_000_000 ? n : fallback; }
 export const uploadsEnabled = () => process.env.MEDIA_UPLOADS_ENABLED === "1" && storageConfigured();
 export async function withMediaWebsite<T>(userId: string, websiteId: string, permission: string, operation: (tx: MediaTransaction, organizationId: string) => Promise<T>): Promise<T> {
@@ -27,19 +28,42 @@ export async function withMediaWebsite<T>(userId: string, websiteId: string, per
   throw new MediaError("Website not found or access denied.", 404);
 }
 /** Called in the SAME locked transaction as draft changes and publication. */
-export async function validateMediaOwnership(tx: MediaTransaction, organizationId: string, websiteId: string, definition: unknown, publishing = false) {
+export async function validateMediaOwnership(tx: MediaTransaction, organizationId: string, websiteId: string, definition: unknown, publishing = false): Promise<Record<string,string>> {
+  const altById:Record<string,string> = {};
+  const featuredRef=definition&&typeof definition==="object"?(definition as {featuredMediaRef?:unknown}).featuredMediaRef:null;
+  const featuredId=typeof featuredRef==="string"?mediaReferencePattern.exec(featuredRef)?.[1]??null:null;
+  const expectedKinds = new Map<string, string>();
+  function collectExpectedKinds(value: unknown) {
+    if (Array.isArray(value)) { value.forEach(collectExpectedKinds); return; }
+    if (!value || typeof value !== "object") return;
+    const record = value as Record<string, unknown>;
+    if (record.type === "media-embed" && typeof record.mediaRef === "string") {
+      const match = mediaReferencePattern.exec(record.mediaRef);
+      if (match && (record.kind === "image" || record.kind === "video" || record.kind === "document"))
+        expectedKinds.set(match[1], record.kind);
+    }
+    Object.values(record).forEach(collectExpectedKinds);
+  }
+  collectExpectedKinds(definition);
   for (const id of mediaIds(definition)) {
-    const rows = await tx.execute(sql`select id from website_media where id=${id} and organization_id=${organizationId} and website_id=${websiteId} and status='ready' for share`);
-    if (!rows.length) throw new MediaError("An image is unavailable or belongs to another website.");
+    const rows = await tx.execute(sql`select id,alt,kind from website_media where id=${id} and organization_id=${organizationId} and website_id=${websiteId} and status='ready' for share`);
+    const media = rows[0] as {id:string;alt:string;kind:string}|undefined;
+    if (!media) throw new MediaError("A media asset is unavailable or belongs to another website.");
+    if(featuredId===id&&media.kind!=="image")throw new MediaError("An article featured image must be an image asset.");
+    const expectedKind = expectedKinds.get(id);
+    if (expectedKind && media.kind !== expectedKind)
+      throw new MediaError("A media section must reference a matching " + expectedKind + " asset.");
+    altById[id]=media.alt;
     if (publishing) await tx.execute(sql`update website_media set last_published_at=now() where id=${id}`);
   }
+  return altById;
 }
 export async function listMedia(userId: string, websiteId: string) {
   return withMediaWebsite(userId, websiteId, "website.read", async (tx) => {
-    const rows = await tx.execute(sql`select id,bytes,width,height,alt,status,created_at from website_media where website_id=${websiteId} and status <> 'deleted' order by created_at desc limit 200`);
-    const [usage] = await tx.execute(sql`select coalesce(sum(bytes),0)::bigint as used,count(*)::int as count from website_media where website_id=${websiteId} and status <> 'deleted'`);
-    const [limit] = await tx.execute(sql`select quota_bytes from website_media_limits where website_id=${websiteId}`);
-    return { enabled: uploadsEnabled(), items: rows.map((row) => ({ ...row, ref: "media:" + row.id })), usedBytes: Number(usage?.used ?? 0), quotaBytes: Number(limit?.quota_bytes ?? boundedQuota(process.env.MEDIA_WEBSITE_QUOTA_BYTES, 5_000_000)) };
+    const rows = await tx.execute(sql`select id,bytes,width,height,alt,status,kind,mime,original_name,checksum,etag,caption,duration_ms,created_at from website_media where website_id=${websiteId} and status <> 'deleted' order by created_at desc limit 200`);
+    const [usage] = await tx.execute(sql`select coalesce(sum(bytes),0)::bigint as used,count(*)::int as count,coalesce(sum(bytes) filter(where kind='image'),0)::bigint as image_used,coalesce(sum(bytes) filter(where kind='video'),0)::bigint as video_used,coalesce(sum(bytes) filter(where kind='document'),0)::bigint as document_used from website_media where website_id=${websiteId} and status <> 'deleted'`);
+    const [limit] = await tx.execute(sql`select quota_bytes,video_quota_bytes,document_quota_bytes from website_media_limits where website_id=${websiteId}`);
+    return { enabled: uploadsEnabled(), items: rows.map((row) => ({ ...row, ref: "media:" + row.id })), usedBytes: Number(usage?.used ?? 0), quotaBytes: Number(limit?.quota_bytes ?? boundedQuota(process.env.MEDIA_WEBSITE_QUOTA_BYTES, 5_000_000)),imageUsedBytes:Number(usage?.image_used??0),videoUsedBytes:Number(usage?.video_used??0),documentUsedBytes:Number(usage?.document_used??0),videoQuotaBytes:Number(limit?.video_quota_bytes??boundedQuota(process.env.MEDIA_VIDEO_WEBSITE_QUOTA_BYTES,500_000_000)),documentQuotaBytes:Number(limit?.document_quota_bytes??boundedQuota(process.env.MEDIA_DOCUMENT_WEBSITE_QUOTA_BYTES,50_000_000)) };
   });
 }
 export async function uploadMedia(userId: string, websiteId: string, input: Buffer, mime: string, alt: string) {
@@ -81,14 +105,18 @@ export async function removeMedia(userId: string, websiteId: string, id: string)
     // Same order as save/publish: home row, then image row. Prevent reference races.
     await tx.execute(sql`select id from website_pages where website_id=${websiteId} and path='/' for update`);
     const [image] = await tx.execute(sql`select * from website_media where id=${id} and website_id=${websiteId} and (status in ('ready','deleting') or (status='pending' and created_at < now()-interval '24 hours')) for update`);
-    if (!image) throw new MediaError("Image not found.", 404);
+    if (!image) throw new MediaError("Media asset not found.", 404);
     const pattern = '%"media:' + id + '"%';
-    const refs = await tx.execute(sql`select 1 from website_pages where website_id=${websiteId} and (content like ${pattern} or published_content like ${pattern}) union all select 1 from website_versions where website_id=${websiteId} and snapshot like ${pattern} limit 1`);
-    if (refs.length || (image.last_published_at && new Date(String(image.last_published_at)).getTime() > Date.now() - 30 * 86400000)) throw new MediaError("This image is retained by a draft, publication, recovery version or the 30-day publication grace period.", 409);
+    const bodyPattern = '%media:' + id + '%';
+    const pathPattern = '%/_media/' + id + '%';
+    const refs = await tx.execute(sql`select 1 from website_pages where website_id=${websiteId} and (content like ${pattern} or published_content like ${pattern} or content like ${pathPattern} or published_content like ${pathPattern}) union all select 1 from website_versions where website_id=${websiteId} and (snapshot like ${pattern} or snapshot like ${bodyPattern} or snapshot like ${pathPattern}) union all select 1 from website_posts where website_id=${websiteId} and (featured_media_id=${id} or published_snapshot->>$key$featuredMediaRef$key$=${"media:"+id} or body like ${bodyPattern} or body like ${pathPattern} or published_snapshot->>$key$body$key$ like ${bodyPattern} or published_snapshot->>$key$body$key$ like ${pathPattern}) union all select 1 from website_post_revisions where website_id=${websiteId} and (snapshot::text like ${pattern} or snapshot::text like ${bodyPattern} or snapshot::text like ${pathPattern}) limit 1`);
+    if (refs.length || (image.last_published_at && new Date(String(image.last_published_at)).getTime() > Date.now() - 30 * 86400000)) throw new MediaError("This asset is retained by a draft, publication, recovery version or the 30-day publication grace period.", 409);
     await tx.execute(sql`update website_media set status='deleting',updated_at=now() where id=${id}`);
     return image as MediaRow;
   });
-  await mediaStorage().remove(row.object_key);
+  if(row.kind==="image")await mediaStorage().remove(row.object_key);
+  else if(row.status==="pending"&&row.upload_id){try{await multipartStorage.abort(row.object_key,row.upload_id);}catch{await multipartStorage.remove(row.object_key);}}
+  else await multipartStorage.remove(row.object_key);
   await withMediaWebsite(userId, websiteId, "website.edit", async (tx) => {
     const removed = await tx.execute(sql`update website_media set status='deleted',updated_at=now() where id=${id} and status='deleting' returning bytes`);
     if (removed.length) await tx.execute(sql`update media_storage_budget set reserved_bytes=reserved_bytes-${row.bytes} where product='lucia-os'`);
