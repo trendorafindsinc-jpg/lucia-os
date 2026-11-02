@@ -56,7 +56,12 @@ function configureTransaction(
   } = {},
 ) {
   const writes: Array<{ table: unknown; values: unknown }> = [];
-  const execute = vi.fn().mockResolvedValue([]);
+  const events: string[] = [];
+  const execute = vi.fn().mockImplementation(async (statement: { strings?: string[] }) => {
+    const query = statement.strings?.join("") ?? "";
+    events.push(query.includes("app.current_organization_id") ? "set-organization-context" : "execute");
+    return [];
+  });
   const membershipLookup = {
     from: vi.fn().mockReturnThis(),
     innerJoin: vi.fn().mockReturnThis(),
@@ -102,6 +107,7 @@ function configureTransaction(
   const insert = vi.fn((table: unknown) => ({
     values: vi.fn((values: unknown) => {
       writes.push({ table, values });
+      events.push(table === organizations ? "insert-organizations" : table === memberships ? "insert-memberships" : table === websites ? "insert-websites" : "insert-pages");
       if (table === memberships && options.failMembership) {
         return Promise.reject(new Error("injected owner membership failure"));
       }
@@ -144,7 +150,7 @@ function configureTransaction(
     },
   );
   mocks.getDb.mockReturnValue({ transaction });
-  return { tx, transaction, writes, didCommit: () => committed };
+  return { tx, transaction, writes, events, didCommit: () => committed };
 }
 
 describe("POST /api/onboarding/website transaction boundary", () => {
@@ -249,10 +255,17 @@ describe("POST /api/onboarding/website transaction boundary", () => {
   });
 
   it("creates the organization, owner membership, website and pages in one transaction", async () => {
-    const { transaction, writes, didCommit } = configureTransaction();
+    const { transaction, writes, events, didCommit } = configureTransaction();
     const response = await POST(request());
 
     expect(response.status).toBe(201);
+    expect(events.slice(0, 4)).toEqual([
+      "execute",
+      "execute",
+      "set-organization-context",
+      "insert-organizations",
+    ]);
+    expect((writes.find((write) => write.table === organizations)?.values as { id: string }).id).toMatch(/^[0-9a-f-]{36}$/i);
     await expect(response.json()).resolves.toMatchObject({
       organization: { id: organizationId, name: payload.organisationName },
       website: { id: websiteId, slug: payload.siteSlug },

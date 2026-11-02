@@ -186,9 +186,17 @@ export async function POST(request: Request) {
         existingMembership;
       let createdOrganization = false;
       if (!organization) {
+        // INSERT ... RETURNING also requires the row to satisfy the table's
+        // SELECT RLS policy. Establish the generated tenant context first so
+        // the new organisation is visible to this transaction's RETURNING.
+        const newOrganizationId = randomUUID();
+        await tx.execute(
+          sql`select set_config('app.current_organization_id', ${newOrganizationId}, true)`,
+        );
         const [created] = await tx
           .insert(organizations)
           .values({
+            id: newOrganizationId,
             name: setup.organisationName,
             slug: organizationSlug,
             status: "active",
