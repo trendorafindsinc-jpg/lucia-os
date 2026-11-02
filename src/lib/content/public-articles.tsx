@@ -13,7 +13,7 @@ import { websiteDomains, websitePosts, websites } from "@/lib/db/schema";
 import styles from "./public-articles.module.css";
 import { renderArticleMarkdown } from "./rich-content";
 
-export function isArticlePath(path: string) {
+function layoutClasses(layoutId?: string, layoutVersion?: number) {\n const suffix=layoutId?.startsWith("lucia.layout.")?layoutId.slice("lucia.layout.".length):"";\n const safe=/^[a-z0-9-]+$/.test(suffix)?suffix:"";\n return safe?["layout-site","premium-layout",`premium-design-${safe}-r${Number.isSafeInteger(layoutVersion)?layoutVersion:1}`].join(" "):"layout-site";\n}\nexport function isArticlePath(path: string) {
  return /^(?:\/)?(?:blog|news)(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)?\/?$/.test(path);
 }
 const readPublished = cache(async (path: string, websiteSlug?: string) => {
@@ -75,7 +75,7 @@ export async function publicArticleMetadata(path:string,websiteSlug?:string):Pro
  const image=article?.featuredMediaRef ? "https://"+data.hostname+"/_media/"+article.featuredMediaRef.slice(6) : undefined;
  return {title:{absolute:title+" | "+data.site.name},description,openGraph:{type:"article",title,description,images:image?[image]:undefined},twitter:{card:image?"summary_large_image":"summary",title,description,images:image?[image]:undefined},robots:{index:true,follow:true}};
 }
-export async function PublicArticlePage({path,searchParams,websiteSlug}:{path:string;searchParams?:Record<string,string|string[]|undefined>;websiteSlug?:string}) {
+export async function PublicArticlePage({path,searchParams,websiteSlug,layoutId,layoutVersion}:{path:string;searchParams?:Record<string,string|string[]|undefined>;websiteSlug?:string;layoutId?:string;layoutVersion?:number}) {
  const {site,kind,posts,slug}=await readPublished(path,websiteSlug);
  const categoryValue=typeof searchParams?.category==="string"?searchParams.category:"";
  const tagValue=typeof searchParams?.tag==="string"?searchParams.tag:"";
@@ -84,11 +84,11 @@ export async function PublicArticlePage({path,searchParams,websiteSlug}:{path:st
  const tags=[...new Set(posts.flatMap(post=>post.tags))].sort();
  const label=kind==="blog"?"Blog":"News";
  const item=slug?posts[0]:null;
- return <main className={styles.shell}>
+ return <main className={`${styles.shell} ${layoutClasses(layoutId,layoutVersion)}`} data-layout-id={layoutId}>
   <nav className={styles.nav} aria-label="Site navigation">
    <Link href="/">{site.name}</Link><div><Link href={"/blog" as Route}>Blog</Link><Link href={"/news" as Route}>News</Link></div>
   </nav>
-  {item ? <article className={styles.article}>
+  {item ? <article className={`${styles.article} layout-content-section`}>
    <p className={styles.eyebrow}>{label}{item.category?" · "+item.category:""}</p>
    {item.tags.length>0&&<p className={styles.eyebrow}>{item.tags.join(" · ")}</p>}
    <h1>{item.title}</h1><p className={styles.excerpt}>{item.excerpt}</p>
@@ -99,11 +99,11 @@ export async function PublicArticlePage({path,searchParams,websiteSlug}:{path:st
    {item.publishedAt && <time dateTime={item.publishedAt.toISOString()}>{item.publishedAt.toLocaleDateString("en-GB",{dateStyle:"long"})}</time>}
    <div className={styles.body} dangerouslySetInnerHTML={{ __html: renderArticleMarkdown(item.body) }} />
    <a className={styles.return} href={"/"+kind}>← All {label.toLowerCase()}</a>
-  </article> : <section className={styles.index}>
+  </article> : <section className={`${styles.index} layout-content-section`}>
    <p className={styles.eyebrow}>{site.name} / {label}</p><h1>{label}</h1>
    <p className={styles.excerpt}>{kind==="blog"?"Ideas, stories and perspectives.":"Updates and announcements."}</p>
    {(categories.length>0||tags.length>0)&&<nav aria-label={label+" filters"} className={styles.taxonomy}><Link href={"/"+kind as Route}>All</Link>{categories.map(value=><Link key={"category:"+value} href={"/"+kind+"?category="+encodeURIComponent(value) as Route} aria-current={categoryValue===value?"page":undefined}>{value}</Link>)}{tags.map(value=><Link key={"tag:"+value} href={"/"+kind+"?tag="+encodeURIComponent(value) as Route} aria-current={tagValue===value?"page":undefined}>#{value}</Link>)}</nav>}
-   {filteredPosts.length? <div className={styles.grid}>{filteredPosts.map(post=><article key={post.id}>
+   {filteredPosts.length? <div className={`${styles.grid} layout-content-grid`}>{filteredPosts.map(post=><article key={post.id}>
     {post.featuredMediaRef && <Image unoptimized className={styles.cardImage} src={"/_media/"+post.featuredMediaRef.slice(6)} alt={post.featuredMediaAlt||""} width={800} height={500}/>}
     <p className={styles.eyebrow}>{post.isFeatured?"Featured · ":""}{post.category||label}</p>
     {post.authorName&&<p className={styles.eyebrow}>By {post.authorName}</p>}
@@ -127,14 +127,14 @@ export async function readPublishedContentContract(websiteSlug?:string){
  });
  return {contract:"lucia.published-content.v1",site:{name:blog.site.name,hostname:blog.hostname},content:{blog:blog.posts.map(post=>serialize(post,"blog")),news:news.posts.map(post=>serialize(post,"news"))}};
 }
-export async function PublicContentHighlights({websiteSlug}:{websiteSlug?:string}={}){
+export async function PublicContentHighlights({websiteSlug,layoutId,layoutVersion}:{websiteSlug?:string;layoutId?:string;layoutVersion?:number}={}){
  let data:Awaited<ReturnType<typeof readPublishedContentContract>>;
  try{data=await readPublishedContentContract(websiteSlug);}catch(error){if(error&&typeof error==="object"&&"digest" in error) return null;throw error;}
  const posts=[...data.content.blog,...data.content.news].sort((a,b)=>Number(b.isFeatured)-Number(a.isFeatured)||new Date(b.publishedAt??0).getTime()-new Date(a.publishedAt??0).getTime()).slice(0,3);
  if(!posts.length)return null;
- return <section className={styles.highlights} aria-labelledby="published-content-heading">
+ return <section className={`${styles.highlights} ${layoutClasses(layoutId,layoutVersion)}`} data-layout-id={layoutId} aria-labelledby="published-content-heading">
   <header><p className={styles.eyebrow}>{data.site.name} / Journal</p><h2 id="published-content-heading">Stories & updates</h2><p>Ideas, news and recent highlights.</p></header>
-  <div className={styles.highlightGrid}>{posts.map(post=><article key={post.kind+":"+post.slug}>
+  <div className={`${styles.highlightGrid} layout-content-grid`}>{posts.map(post=><article key={post.kind+":"+post.slug}>
    {post.featuredMedia&&<Image unoptimized className={styles.cardImage} src={"/_media/"+post.featuredMedia.ref.slice(6)} alt={post.featuredMedia.alt||""} width={800} height={500}/>}
    <p className={styles.eyebrow}>{post.isFeatured?"Featured · ":""}{post.kind==="blog"?"Blog":"News"}{post.category?" · "+post.category:""}</p>
    <h3><Link href={post.route as Route}>{post.title}</Link></h3><p>{post.excerpt}</p>
