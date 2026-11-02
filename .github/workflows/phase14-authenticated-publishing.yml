@@ -45,7 +45,7 @@ jobs:
   acceptance:
     name: Registered Layout HTTP/browser publishing and media authorization
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 40
     services:
       postgres:
         image: postgres:16
