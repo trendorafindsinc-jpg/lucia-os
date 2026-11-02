@@ -503,3 +503,19 @@
 .premium-media-compact .premium-media-frame{max-width:760px}
 .premium-media-image{display:block;width:100%;height:auto;max-height:850px;object-fit:contain;border-radius:14px}
 
+/* Phase 15: narrow customer previews must wrap navigation and display headings
+   without widening the Studio document at the smallest supported phone width. */
+@media(max-width:420px){
+  .layout-site,
+  .layout-site-header,
+  .layout-site-header nav,
+  .layout-page-content,
+  .layout-site-footer{min-width:0;max-width:100%}
+  .layout-site-header{width:100%;gap:.75rem;padding-inline:1rem}
+  .layout-site-header nav{display:flex;flex:1 1 100%;width:100%;gap:.5rem .75rem;flex-wrap:wrap}
+  .layout-site-header nav a{min-width:0;max-width:100%;overflow-wrap:anywhere}
+  .layout-header-action{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+  .layout-hero h1{max-width:100%;font-size:clamp(2rem,10vw,2.8rem);letter-spacing:-.055em;overflow-wrap:anywhere}
+  .layout-page-content{padding-inline:1rem}
+  .layout-content-section>header{min-width:0}
+}
