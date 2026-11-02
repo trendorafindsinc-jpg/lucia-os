@@ -305,14 +305,23 @@ describe("POST /api/onboarding/website transaction boundary", () => {
     mocks.getDb.mockImplementation(() => {
       throw new Error("private connection string details");
     });
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
     const response = await POST(request());
     expect(response.status).toBe(500);
     const body = await response.json();
-    expect(body).toEqual({
+    expect(body).toMatchObject({
       error: "We couldn't save your website yet. Please try again shortly.",
+      requestId: expect.any(String),
     });
-    expect(JSON.stringify(body)).not.toContain(
-      "private connection string details",
+    expect(log).toHaveBeenCalledWith(
+      "[website-setup] draft creation failed",
+      expect.objectContaining({
+        requestId: body.requestId,
+        errorName: "Error",
+      }),
     );
+    expect(JSON.stringify(body)).not.toContain("private connection string details");
+    expect(JSON.stringify(log.mock.calls)).not.toContain("private connection string details");
+    log.mockRestore();
   });
 });
