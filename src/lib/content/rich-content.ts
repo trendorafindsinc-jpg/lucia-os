@@ -1,6 +1,6 @@
 import { marked } from "marked";
 import sanitizeHtml from "sanitize-html";
-import { resolveExternalEmbed } from "@/lib/media/embed-providers";
+import { resolveExternalEmbed } from "../media/embed-providers";
 const localMediaPath=/^\/_media\/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const embedHosts=new Set(["www.youtube-nocookie.com","www.youtube.com","player.vimeo.com","open.spotify.com","w.soundcloud.com","embed.podcasts.apple.com","www.tiktok.com","www.instagram.com"]);
 function safeEmbedSource(value:string|undefined):string|null{
