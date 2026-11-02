@@ -75,7 +75,7 @@ export async function checkPhase15AuthenticatedAcceptance({
       }
       await accessiblePage.getByRole("link", { name: "Back to Layout Library" }).click();
       await accessiblePage.getByLabel("Search layouts").waitFor();
-      bpass("Phase 15 catalogue and real preview: five viewports, search/filter, focus after navigation, mobile menu and reduced motion");
+      bpass("Phase 15 catalogue and real preview: nine viewports, search/filter, focus after navigation, mobile menu and reduced motion");
     } finally {
       await accessiblePage.close();
     }
@@ -394,8 +394,7 @@ export async function checkPhase15AuthenticatedAcceptance({
         new PerformanceObserver((list) => { for (const entry of list.getEntries()) if (!entry.hadRecentInput) window.__phase14Performance.cls += entry.value; }).observe({ type: "layout-shift", buffered: true });
       });
       try {
-        for (const viewport of [{ width: 320, height: 844 }, { width: 390, height: 844 },
-          { width: 768, height: 1024 }, { width: 1180, height: 820 }, { width: 1440, height: 900 }]) {
+        for (const viewport of acceptanceViewports) {
           await liveBrowser.setViewportSize(viewport);
           const throttled = viewport.width === 390;
           await cdp.send("Network.enable");
