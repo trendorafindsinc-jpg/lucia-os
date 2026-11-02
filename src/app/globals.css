@@ -764,3 +764,46 @@ h1 span { color: #6979c9; }
 .lucia-support-form textarea { width:100%; border:1px solid #dce3ee; border-radius:12px; background:#fbfcff; padding:12px; color:#17243b; font:inherit; resize:vertical; }
 .lucia-support-form textarea:focus { outline:3px solid #dce2ff; border-color:#7d8be0; }
 .lucia-support-actions select { min-height:44px; padding:8px; border:1px solid #dce3ee; border-radius:10px; background:#fff; color:#17243b; }
+
+
+/* Phase 15/16 responsive acceptance: constrain shell siblings and preserve local nav scrolling. */
+@media (max-width: 400px) {
+  html, body { max-width: 100%; overflow-x: clip; }
+  .workspace-shell, .workspace-layout, .workspace-main,
+  .workspace-heading, .workspace-heading > div,
+  .workspace-tabbar, .workspace-route-navigation,
+  .lucia-workspace-theme, [data-workspace-preferences] {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .workspace-layout { width: 100%; }
+  .workspace-main { width: 100%; }
+  .workspace-heading > div { flex: 1 1 100%; }
+  .workspace-heading h1,
+  .workspace-denied h1,
+  .workspace-heading p,
+  .workspace-denied p {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+  .workspace-tabbar,
+  .workspace-route-navigation {
+    width: 100%;
+    flex: 0 1 auto;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  .workspace-tablist,
+  .workspace-route-navigation > * {
+    min-width: 0;
+  }
+  .workspace-route-navigation > a {
+    flex: 0 0 auto;
+  }
+  [data-lucia-orb] {
+    max-width: 100vw;
+  }
+}
