@@ -93,7 +93,7 @@ export async function publicWebsiteMetadata(path: string): Promise<Metadata> {
   return { title: { absolute: page.title }, description: page.description };
 }
 export async function PublicWebsite({ path, searchParams }: { path: string; searchParams?: Record<string,string|string[]|undefined> }) {
-  if (isArticlePath(path)) return <PublicArticlePage path={path} searchParams={searchParams} />;
+  if (isArticlePath(path)) { const home=await readPublicWebsitePage("/"); return <PublicArticlePage path={path} searchParams={searchParams} layoutId={home.blueprint.layoutId} layoutVersion={home.blueprint.layoutVersion}/>; }
   const page = await readPublicWebsitePage(path);
-  return <><LayoutRenderer blueprint={page.blueprint} pagePath={page.pagePath} />{page.pagePath === "/" ? <PublicContentHighlights /> : null}</>;
+  return <><LayoutRenderer blueprint={page.blueprint} pagePath={page.pagePath} />{page.pagePath === "/" ? <PublicContentHighlights layoutId={page.blueprint.layoutId} layoutVersion={page.blueprint.layoutVersion}/> : null}</>;
 }
