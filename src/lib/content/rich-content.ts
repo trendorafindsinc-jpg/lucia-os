@@ -1,5 +1,6 @@
 import { marked } from "marked";
 import sanitizeHtml from "sanitize-html";
+import { resolveExternalEmbed } from "@/lib/media/embed-providers";
 const localMediaPath=/^\/_media\/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const embedHosts=new Set(["www.youtube-nocookie.com","www.youtube.com","player.vimeo.com","open.spotify.com","w.soundcloud.com","embed.podcasts.apple.com","www.tiktok.com","www.instagram.com"]);
 function safeEmbedSource(value:string|undefined):string|null{
@@ -18,27 +19,20 @@ function safeEmbedSource(value:string|undefined):string|null{
 }
 function frame(src:string,title:string){return `<figure class="article-embed"><iframe src="${src.replace(/&/g,"&amp;").replace(/"/g,"&quot;")}" title="${title}" loading="lazy"></iframe></figure>`;}
 export function createArticleEmbedHtml(input:string):string|null{
- try{
-  const u=new URL(input.trim());if(u.protocol!=="https:")return null;let src:string|null=null,title="Embedded media";
-  if(["youtube.com","www.youtube.com","m.youtube.com"].includes(u.hostname)){const id=u.pathname.match(/^\/(?:shorts|live)\/([A-Za-z0-9_-]{6,20})\/?$/)?.[1]??(u.pathname==="/watch"?u.searchParams.get("v"):null);if(id&&/^[A-Za-z0-9_-]{6,20}$/.test(id)){src=`https://www.youtube-nocookie.com/embed/${id}`;title="YouTube video";}}
-  else if(u.hostname==="youtu.be"){const id=u.pathname.slice(1);if(/^[A-Za-z0-9_-]{6,20}$/.test(id)){src=`https://www.youtube-nocookie.com/embed/${id}`;title="YouTube video";}}
-  else if(["vimeo.com","www.vimeo.com"].includes(u.hostname)){const id=u.pathname.match(/^\/(?:video\/)?([0-9]+)\/?$/)?.[1];if(id){src=`https://player.vimeo.com/video/${id}`;title="Vimeo video";}}
-  else if(u.hostname==="open.spotify.com"){const m=u.pathname.match(/^\/(track|album|playlist|episode|show)\/([A-Za-z0-9]+)\/?$/);if(m){src=`https://open.spotify.com/embed/${m[1]}/${m[2]}`;title="Spotify "+m[1];}}
-  else if(["soundcloud.com","www.soundcloud.com"].includes(u.hostname)){if(/^\/[A-Za-z0-9_/@.-]+$/.test(u.pathname)){src="https://w.soundcloud.com/player/?url="+encodeURIComponent(u.toString());title="SoundCloud audio";}}
-  else if(["podcasts.apple.com","itunes.apple.com"].includes(u.hostname)){const m=u.pathname.match(/^\/([a-z]{2})\/podcast\/([a-z0-9-]+)\/(id[0-9]+)$/i);if(m){src=`https://embed.podcasts.apple.com/${m[1]}/podcast/${m[2]}/${m[3]}`;title="Apple Podcasts";}}
-  else if(u.hostname==="www.tiktok.com"){const id=u.pathname.match(/^\/@[A-Za-z0-9._-]+\/video\/([0-9]+)\/?$/)?.[1];if(id){src=`https://www.tiktok.com/embed/v2/${id}`;title="TikTok video";}}
-  else if(u.hostname==="www.instagram.com"){const m=u.pathname.match(/^\/(p|reel|tv)\/([A-Za-z0-9_-]+)\/?$/);if(m){src=`https://www.instagram.com/${m[1]}/${m[2]}/embed/`;title="Instagram post";}}
-  return src&&safeEmbedSource(src)?frame(src,title):null;
- }catch{return null;}
+ const embed=resolveExternalEmbed(input);
+ if(!embed)return null;
+ const src=safeEmbedSource(embed.src);
+ return src?frame(src,embed.title):null;
 }
+
 const sanitizerOptions={
  allowedTags:["p","h1","h2","h3","h4","h5","blockquote","ul","ol","li","strong","b","em","i","del","s","a","img","hr","br","code","pre","table","thead","tbody","tr","th","td","iframe","video","source","figure","figcaption","div","span","small","sup","sub","mark","dl","dt","dd","section","details","summary"],
- allowedAttributes:{a:["href","title","target","rel"],img:["src","alt","title","loading","decoding","width","height"],iframe:["src","title","allow","allowfullscreen","loading","referrerpolicy"],video:["controls","preload","playsinline"],source:["src","type"],th:["colspan","rowspan"],td:["colspan","rowspan"],"*":["aria-label","class"]},
+ allowedAttributes:{a:["href","title","target","rel"],img:["src","alt","title","loading","decoding","width","height"],iframe:["src","title","allow","allowfullscreen","loading","referrerpolicy","sandbox"],video:["controls","preload","playsinline"],source:["src","type"],th:["colspan","rowspan"],td:["colspan","rowspan"],"*":["aria-label","class"]},
  allowedSchemes:["https","http","mailto","tel"],allowProtocolRelative:false,allowedIframeHostnames:[...embedHosts],
  transformTags:{
   a:(_t:string,a:Record<string,string>)=>({tagName:"a",attribs:{...a,target:"_blank",rel:"noopener noreferrer nofollow"}}),
   img:(_t:string,a:Record<string,string>)=>({tagName:"img",attribs:{...a,loading:"lazy",decoding:"async"}}),
-  iframe:(_t:string,a:Record<string,string>)=>{const src=safeEmbedSource(a.src);return src?{tagName:"iframe",attribs:{src,title:(a.title||"Embedded media").slice(0,120),loading:"lazy",referrerpolicy:"strict-origin-when-cross-origin",allow:"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share",allowfullscreen:""}}:{tagName:"span",attribs:{} as Record<string,string>};}
+  iframe:(_t:string,a:Record<string,string>)=>{const src=safeEmbedSource(a.src);return src?{tagName:"iframe",attribs:{src,title:(a.title||"Embedded media").slice(0,120),loading:"lazy",referrerpolicy:"strict-origin-when-cross-origin",allow:"accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; web-share",sandbox:"allow-scripts allow-same-origin allow-presentation allow-popups",allowfullscreen:""}}:{tagName:"span",attribs:{} as Record<string,string>};}
   ,video:()=>({tagName:"video",attribs:{controls:"",preload:"metadata",playsinline:""}})
   ,source:(_t:string,a:Record<string,string>)=>localMediaPath.test(a.src||"")&&["video/mp4","video/webm"].includes(a.type||"")?{tagName:"source",attribs:{src:a.src,type:a.type}}:{tagName:"span",attribs:{} as Record<string,string>}
  },
