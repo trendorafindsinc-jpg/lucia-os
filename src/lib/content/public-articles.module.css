@@ -16,4 +16,14 @@
 .body :global(video){display:block;width:100%;max-width:100%;height:auto;aspect-ratio:16/9;object-fit:contain;background:#101827;border-radius:14px;margin:2em 0}
 
 .taxonomy{display:flex;flex-wrap:wrap;gap:.55rem;margin:1.5rem 0 2rem}.taxonomy a{display:inline-flex;align-items:center;border:1px solid var(--border,#d8dee8);border-radius:999px;padding:.45rem .8rem;text-decoration:none;font-size:.9rem}.taxonomy a[aria-current=page]{background:var(--foreground,#18202d);color:var(--background,#fff);border-color:transparent}
-\n/* Blog and News inherit the active website's registered design tokens and grid treatment. */\n.shell.layout-site{background:var(--layout-paper);color:var(--layout-ink);font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}\n.shell.layout-site .nav{border-color:color-mix(in srgb,var(--layout-ink) 14%,transparent)}\n.shell.layout-site .nav a,.shell.layout-site .grid a,.shell.layout-site .return{color:inherit}\n.shell.layout-site .eyebrow{color:color-mix(in srgb,var(--layout-ink) 62%,transparent)}\n.shell.layout-site .excerpt,.shell.layout-site .grid article>p:not(.eyebrow){color:color-mix(in srgb,var(--layout-ink) 72%,transparent)}\n.shell.layout-site .grid.layout-content-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,285px),1fr))}\n.shell.layout-site .highlightGrid.layout-content-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr))}\n.shell.layout-site .grid article{border-color:color-mix(in srgb,var(--layout-ink) 18%,transparent);background:color-mix(in srgb,var(--layout-paper) 82%,white)}\n.shell.layout-site .highlights{background:var(--layout-paper);border-color:color-mix(in srgb,var(--layout-ink) 18%,transparent)}\n
+
+/* Blog and News inherit the active website's registered design tokens and grid treatment. */
+.shell.layout-site{background:var(--layout-paper);color:var(--layout-ink);font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.shell.layout-site .nav{border-color:color-mix(in srgb,var(--layout-ink) 14%,transparent)}
+.shell.layout-site .nav a,.shell.layout-site .grid a,.shell.layout-site .return{color:inherit}
+.shell.layout-site .eyebrow{color:color-mix(in srgb,var(--layout-ink) 62%,transparent)}
+.shell.layout-site .excerpt,.shell.layout-site .grid article>p:not(.eyebrow){color:color-mix(in srgb,var(--layout-ink) 72%,transparent)}
+.shell.layout-site .grid.layout-content-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,285px),1fr))}
+.shell.layout-site .highlightGrid.layout-content-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr))}
+.shell.layout-site .grid article{border-color:color-mix(in srgb,var(--layout-ink) 18%,transparent);background:color-mix(in srgb,var(--layout-paper) 82%,white)}
+.shell.layout-site .highlights{background:var(--layout-paper);border-color:color-mix(in srgb,var(--layout-ink) 18%,transparent)}
