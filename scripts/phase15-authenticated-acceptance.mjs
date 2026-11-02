@@ -444,16 +444,17 @@ export async function checkPhase15AuthenticatedAcceptance({
 
         const contentBrowser = await browserContext.newPage();
         try {
-          for (const width of [320, 1440]) {
-            await contentBrowser.setViewportSize({ width, height: width < 500 ? 844 : 900 });
-            for (const route of ["/blog", "/news", "/blog/" + blogStory.publishedSlug, "/news/" + newsStory.publishedSlug]) {
-              const response = await contentBrowser.goto("http://" + host + ":" + new URL(base).port + route, { waitUntil: "networkidle" });
-              assert.equal(response?.status(), 200, name + " responsive content route " + route + " at " + width);
-              await contentBrowser.locator('[data-layout-id="lucia.layout.' + name + '"]').waitFor();
+          for (const route of ["/blog", "/news", "/blog/" + blogStory.publishedSlug, "/news/" + newsStory.publishedSlug]) {
+            const response = await contentBrowser.goto("http://" + host + ":" + new URL(base).port + route, { waitUntil: "networkidle" });
+            assert.equal(response?.status(), 200, name + " responsive content route " + route);
+            await contentBrowser.locator('[data-layout-id="lucia.layout.' + name + '"]').waitFor();
+            for (const viewport of acceptanceViewports) {
+              await contentBrowser.setViewportSize(viewport);
+              await contentBrowser.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
               const dimensions = await contentBrowser.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth }));
               assert(dimensions.document <= dimensions.viewport + 1,
-                name + " Blog/News horizontal overflow at " + width + " " + route + ": " + JSON.stringify(dimensions));
-              if (name === selected[0] && width === 320) {
+                name + " Blog/News horizontal overflow at " + viewport.width + " " + route + ": " + JSON.stringify(dimensions));
+              if (name === selected[0] && viewport.width === 320) {
                 await mkdir("artifacts/phase15-acceptance", { recursive: true });
                 await contentBrowser.screenshot({ path: "artifacts/phase15-acceptance/" + route.replaceAll("/", "-").replace(/^-/, "") + "-320.png", fullPage: true });
               }
