@@ -15,6 +15,7 @@ One application deployment serves many organisations; customer-specific deployme
 - [Architecture](docs/architecture.md) — system boundaries and technical baseline.
 - [LUCIA Core authentication-only boundary](docs/core-auth-only-boundary.md) — Core authenticates; LUCIA OS owns local authorisation and product data.
 - [Engineering Standards](docs/engineering-standards.md) and [Security Baseline](docs/security-baseline.md).
+- [Deployment Environments and Release Strategy](docs/deployment-environments-and-release-strategy.md) — approved two-environment model, protected staging, isolated integrations, and deliberate production releases.
 
 Before code changes, read [AGENTS.md](AGENTS.md), the canonical vision, roadmap, architecture/security standards, the relevant focused spec, and the actual code/tests.
 
