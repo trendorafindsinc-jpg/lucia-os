@@ -33,6 +33,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
  const [contentMode,setContentMode]=useState<"rich"|"markdown"|"html">("rich");
  const [richSync,setRichSync]=useState(0);
  const richEditorRef=useRef<HTMLDivElement|null>(null);
+ const richSelectionRef=useRef<Range|null>(null);
  const [dirty,setDirty]=useState(false);
  const [availableMediaCount,setAvailableMediaCount]=useState<number|null>(null);
  const onMediaChange=useCallback((items:{ref:string;label:string}[])=>setAvailableMediaCount(items.length),[]);
@@ -58,7 +59,11 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
  },[contentMode,selected,draft?.revision,preview,richSync]);
  function richCommand(command:string,value?:string){
   const editor=richEditorRef.current;if(!editor)return;
-  editor.focus();document.execCommand(command,false,value);
+  editor.focus();
+  const selection=window.getSelection();
+  if(selection&&richSelectionRef.current&&editor.contains(richSelectionRef.current.commonAncestorContainer)){selection.removeAllRanges();selection.addRange(richSelectionRef.current);}
+  document.execCommand(command,false,value);
+  richSelectionRef.current=null;
   const body=editor.innerHTML;
   if(body.length>50000){setMessage("Article content is limited to 50,000 characters. Remove some content to continue.");return;}
   setDraft(previous=>previous?{...previous,body}:previous);setDirty(true);setMessage("");
@@ -181,13 +186,13 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
         {contentMode!=="html"&&<div className="story-embed-tools" aria-label="External media embeds"><label htmlFor="story-embed-url">Embed from a supported app<input id="story-embed-url" type="url" inputMode="url" placeholder="Paste YouTube, Spotify, Vimeo, SoundCloud, TikTok, Instagram or Apple Podcasts URL" value={embedUrl} onChange={e=>setEmbedUrl(e.target.value)}/></label><button type="button" disabled={!embedUrl.trim()} onClick={()=>{const block=createArticleEmbedHtml(embedUrl);if(!block){setMessage("Unsupported embed URL. You can still add it as a normal external link.");return;}change("body",draft.body+"\n\n"+block);setRichSync(v=>v+1);setEmbedUrl("");setMessage("Responsive embed inserted. Preview it before publishing.");}}>Insert embed</button><small>Only approved provider URLs are embedded. Other links remain available as ordinary links.</small></div>}
         {contentMode==="rich"?<>
          <div className="story-markdown-toolbar" role="toolbar" aria-label="Rich text formatting">
-          <button type="button" onMouseDown={e=>e.preventDefault()} onClick={()=>richCommand("formatBlock","h2")}>Heading</button>
-          <button type="button" onMouseDown={e=>e.preventDefault()} onClick={()=>richCommand("bold")}>Bold</button>
-          <button type="button" onMouseDown={e=>e.preventDefault()} onClick={()=>richCommand("italic")}>Italic</button>
-          <button type="button" onMouseDown={e=>e.preventDefault()} onClick={()=>richCommand("insertUnorderedList")}>Bullet list</button>
-          <button type="button" onMouseDown={e=>e.preventDefault()} onClick={()=>richCommand("insertOrderedList")}>Numbered list</button>
-          <button type="button" onMouseDown={e=>e.preventDefault()} onClick={()=>{const url=window.prompt("Enter an HTTPS link");if(url)richCommand("createLink",url);}}>Link</button>
-          <button type="button" onMouseDown={e=>e.preventDefault()} onClick={()=>richCommand("formatBlock","blockquote")}>Quote</button>
+          <button type="button" onMouseDown={e=>{e.preventDefault();const selection=window.getSelection();richSelectionRef.current=selection&&selection.rangeCount?selection.getRangeAt(0).cloneRange():null;}} onClick={()=>richCommand("formatBlock","h2")}>Heading</button>
+          <button type="button" onMouseDown={e=>{e.preventDefault();const selection=window.getSelection();richSelectionRef.current=selection&&selection.rangeCount?selection.getRangeAt(0).cloneRange():null;}} onClick={()=>richCommand("bold")}>Bold</button>
+          <button type="button" onMouseDown={e=>{e.preventDefault();const selection=window.getSelection();richSelectionRef.current=selection&&selection.rangeCount?selection.getRangeAt(0).cloneRange():null;}} onClick={()=>richCommand("italic")}>Italic</button>
+          <button type="button" onMouseDown={e=>{e.preventDefault();const selection=window.getSelection();richSelectionRef.current=selection&&selection.rangeCount?selection.getRangeAt(0).cloneRange():null;}} onClick={()=>richCommand("insertUnorderedList")}>Bullet list</button>
+          <button type="button" onMouseDown={e=>{e.preventDefault();const selection=window.getSelection();richSelectionRef.current=selection&&selection.rangeCount?selection.getRangeAt(0).cloneRange():null;}} onClick={()=>richCommand("insertOrderedList")}>Numbered list</button>
+          <button type="button" onMouseDown={e=>{e.preventDefault();const selection=window.getSelection();richSelectionRef.current=selection&&selection.rangeCount?selection.getRangeAt(0).cloneRange():null;}} onClick={()=>{const url=window.prompt("Enter an HTTPS link");if(url)richCommand("createLink",url);}}>Link</button>
+          <button type="button" onMouseDown={e=>{e.preventDefault();const selection=window.getSelection();richSelectionRef.current=selection&&selection.rangeCount?selection.getRangeAt(0).cloneRange():null;}} onClick={()=>richCommand("formatBlock","blockquote")}>Quote</button>
          </div>
          <div className="story-rich-editor" role="textbox" aria-label="Rich text article content" aria-multiline="true" contentEditable suppressContentEditableWarning ref={richEditorRef} onInput={e=>{const value=e.currentTarget.innerHTML;if(value.length>50000){setMessage("Article content is limited to 50,000 characters. Remove some content to continue.");return;}change("body",value);}}/>
          <small>Format text directly. Switching to either source mode preserves the same underlying content; unsafe markup is removed in preview and before publication.</small>
