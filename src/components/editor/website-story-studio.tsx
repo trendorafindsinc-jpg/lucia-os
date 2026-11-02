@@ -178,7 +178,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
          <button type="button" aria-pressed={contentMode==="markdown"} onClick={()=>setContentMode("markdown")}>Markdown source</button>
          <button type="button" aria-pressed={contentMode==="html"} onClick={()=>setContentMode("html")}>HTML source</button>
         </div>
-        {contentMode!=="html"&&<div className="story-embed-tools" aria-label="External media embeds"><label htmlFor="story-embed-url">Embed from a supported app<input id="story-embed-url" type="url" inputMode="url" placeholder="Paste YouTube, Spotify, Vimeo, SoundCloud, TikTok, Instagram or Apple Podcasts URL" value={embedUrl} onChange={e=>setEmbedUrl(e.target.value)}/></label><button type="button" disabled={!embedUrl.trim()} onClick={()=>{const block=createArticleEmbedHtml(embedUrl);if(!block){setMessage("Unsupported embed URL. You can still add it as a normal external link.");return;}change("body",draft.body+"\\n\\n"+block);setRichSync(v=>v+1);setEmbedUrl("");setMessage("Responsive embed inserted. Preview it before publishing.");}}>Insert embed</button><small>Only approved provider URLs are embedded. Other links remain available as ordinary links.</small></div>}
+        {contentMode!=="html"&&<div className="story-embed-tools" aria-label="External media embeds"><label htmlFor="story-embed-url">Embed from a supported app<input id="story-embed-url" type="url" inputMode="url" placeholder="Paste YouTube, Spotify, Vimeo, SoundCloud, TikTok, Instagram or Apple Podcasts URL" value={embedUrl} onChange={e=>setEmbedUrl(e.target.value)}/></label><button type="button" disabled={!embedUrl.trim()} onClick={()=>{const block=createArticleEmbedHtml(embedUrl);if(!block){setMessage("Unsupported embed URL. You can still add it as a normal external link.");return;}change("body",draft.body+"\n\n"+block);setRichSync(v=>v+1);setEmbedUrl("");setMessage("Responsive embed inserted. Preview it before publishing.");}}>Insert embed</button><small>Only approved provider URLs are embedded. Other links remain available as ordinary links.</small></div>}
         {contentMode==="rich"?<>
          <div className="story-markdown-toolbar" role="toolbar" aria-label="Rich text formatting">
           <button type="button" onMouseDown={e=>e.preventDefault()} onClick={()=>richCommand("formatBlock","h2")}>Heading</button>
@@ -193,17 +193,17 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
          <small>Format text directly. Switching to either source mode preserves the same underlying content; unsafe markup is removed in preview and before publication.</small>
         </>:contentMode==="markdown"?<>
          <div className="story-markdown-toolbar" role="toolbar" aria-label="Markdown formatting">
-          <button type="button" onClick={()=>change("body",draft.body+"\\n\\n## Heading")}>Heading</button>
-          <button type="button" onClick={()=>change("body",draft.body+"\\n\\n**Bold text**")}>Bold</button>
-          <button type="button" onClick={()=>change("body",draft.body+"\\n\\n[Link text](https://example.com)")}>Link</button>
-          <button type="button" onClick={()=>change("body",draft.body+"\\n\\n- List item")}>Bullet list</button>
-          <button type="button" onClick={()=>change("body",draft.body+"\\n\\n> Quote")}>Quote</button>
+          <button type="button" onClick={()=>change("body",draft.body+"\n\n## Heading")}>Heading</button>
+          <button type="button" onClick={()=>change("body",draft.body+"\n\n**Bold text**")}>Bold</button>
+          <button type="button" onClick={()=>change("body",draft.body+"\n\n[Link text](https://example.com)")}>Link</button>
+          <button type="button" onClick={()=>change("body",draft.body+"\n\n- List item")}>Bullet list</button>
+          <button type="button" onClick={()=>change("body",draft.body+"\n\n> Quote")}>Quote</button>
          </div>
          <textarea aria-label="Markdown article content" spellCheck value={draft.body} maxLength={50000} rows={14} onChange={e=>change("body",e.target.value)} placeholder="Write your story using Markdown for headings, links, lists and emphasis."/>
          <small>Markdown is converted to safe semantic HTML. Images must use this website’s approved media library.</small>
         </>:<>
          <p className="story-html-help">HTML source mode is for authors who prefer writing or pasting markup. Semantic HTML is supported; scripts, event handlers, styles, unsafe URLs and unapproved embeds are stripped before publication.</p>
-         <textarea className="story-html-source" aria-label="HTML source" spellCheck={false} value={draft.body} maxLength={50000} rows={14} onChange={e=>change("body",e.target.value)} placeholder={'<h2>Your heading</h2>\\n<p>Write your article in HTML…</p>'}/>
+         <textarea className="story-html-source" aria-label="HTML source" spellCheck={false} value={draft.body} maxLength={50000} rows={14} onChange={e=>change("body",e.target.value)} placeholder={'<h2>Your heading</h2>\n<p>Write your article in HTML…</p>'}/>
          <small>Allowed HTML is sanitized on preview and publication. Use website media-library URLs for images.</small>
         </>}
        </label>
