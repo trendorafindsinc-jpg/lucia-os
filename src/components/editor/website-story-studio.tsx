@@ -30,7 +30,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
  const [message,setMessage]=useState("");
  const [preview,setPreview]=useState(false);
  const [embedUrl,setEmbedUrl]=useState("");
- const [contentMode,setContentMode]=useState<"markdown"|"html">("markdown");
+ const [contentMode,setContentMode]=useState<"rich"|"markdown"|"html">("rich");
  const [dirty,setDirty]=useState(false);
  const [availableMediaCount,setAvailableMediaCount]=useState<number|null>(null);
  const onMediaChange=useCallback((items:{ref:string;label:string}[])=>setAvailableMediaCount(items.length),[]);
@@ -158,13 +158,41 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
         <label>SEO description (160 characters maximum)<textarea value={draft.seoDescription??""} maxLength={160} rows={2} onChange={e=>change("seoDescription",e.target.value||"")}/></label>
        </details>
        <label>Summary<textarea value={draft.excerpt} maxLength={320} rows={3} onChange={e=>change("excerpt",e.target.value)}/></label>
-       <label>Article content<div className="story-content-mode" role="group" aria-label="Content editor mode"><button type="button" aria-pressed={contentMode==="markdown"} onClick={()=>setContentMode("markdown")}>Visual / Markdown</button><button type="button" aria-pressed={contentMode==="html"} onClick={()=>setContentMode("html")}>HTML source</button></div>{contentMode==="markdown"?<><div className="story-embed-tools" aria-label="External media embeds"><label htmlFor="story-embed-url">Embed from a supported app<input id="story-embed-url" type="url" inputMode="url" placeholder="Paste YouTube, Spotify, Vimeo, SoundCloud, TikTok, Instagram or Apple Podcasts URL" value={embedUrl} onChange={e=>setEmbedUrl(e.target.value)}/></label><button type="button" disabled={!embedUrl.trim()} onClick={()=>{const block=createArticleEmbedHtml(embedUrl);if(!block){setMessage("Unsupported embed URL. You can still add it as a normal external link.");return;}change("body",draft.body+"\n\n"+block);setEmbedUrl("");setMessage("Responsive embed inserted. Preview it before publishing.");}}>Insert embed</button><small>Only approved provider URLs are embedded. Other links remain available as ordinary links.</small></div><div className="story-markdown-toolbar" role="toolbar" aria-label="Article formatting">
-        <button type="button" onClick={()=>change("body",draft.body+"\n\n## Heading")}>Heading</button>
-        <button type="button" onClick={()=>change("body",draft.body+"\n\n**Bold text**")}>Bold</button>
-        <button type="button" onClick={()=>change("body",draft.body+"\n\n[Link text](https://example.com)")}>Link</button>
-        <button type="button" onClick={()=>change("body",draft.body+"\n\n- List item")}>Bullet list</button>
-        <button type="button" onClick={()=>change("body",draft.body+"\n\n> Quote")}>Quote</button>
-       </div></>:<p className="story-html-help">HTML source mode is for authors who prefer writing or pasting markup. Semantic HTML is supported; scripts, event handlers, styles, unsafe URLs and unapproved embeds are stripped before publication.</p>}<textarea className={contentMode==="html"?"story-html-source":""} aria-label={contentMode==="html"?"HTML source":"Markdown article content"} spellCheck={contentMode!=="html"} value={draft.body} maxLength={50000} rows={14} onChange={e=>change("body",e.target.value)} placeholder={contentMode==="html"?"<h2>Your heading</h2>\n<p>Write your article in HTML…</p>":"Write your story. Use the formatting tools or Markdown for headings, links, lists and emphasis."}/><small>{contentMode==="html"?"Allowed HTML is sanitized on preview and publication. Use website media-library URLs for images.":"Formatting is rendered safely. Raw scripts and unsafe links are removed; images must use this website’s approved media library."}</small></label>
+       <label>Article content
+        <div className="story-content-mode" role="group" aria-label="Content editor mode">
+         <button type="button" aria-pressed={contentMode==="rich"} onClick={()=>setContentMode("rich")}>Rich text</button>
+         <button type="button" aria-pressed={contentMode==="markdown"} onClick={()=>setContentMode("markdown")}>Markdown source</button>
+         <button type="button" aria-pressed={contentMode==="html"} onClick={()=>setContentMode("html")}>HTML source</button>
+        </div>
+        {contentMode!=="html"&&<div className="story-embed-tools" aria-label="External media embeds"><label htmlFor="story-embed-url">Embed from a supported app<input id="story-embed-url" type="url" inputMode="url" placeholder="Paste YouTube, Spotify, Vimeo, SoundCloud, TikTok, Instagram or Apple Podcasts URL" value={embedUrl} onChange={e=>setEmbedUrl(e.target.value)}/></label><button type="button" disabled={!embedUrl.trim()} onClick={()=>{const block=createArticleEmbedHtml(embedUrl);if(!block){setMessage("Unsupported embed URL. You can still add it as a normal external link.");return;}change("body",draft.body+"\\n\\n"+block);setEmbedUrl("");setMessage("Responsive embed inserted. Preview it before publishing.");}}>Insert embed</button><small>Only approved provider URLs are embedded. Other links remain available as ordinary links.</small></div>}
+        {contentMode==="rich"?<>
+         <div className="story-markdown-toolbar" role="toolbar" aria-label="Rich text formatting">
+          <button type="button" onMouseDown={e=>e.preventDefault()} onClick={()=>document.execCommand("formatBlock",false,"h2")}>Heading</button>
+          <button type="button" onMouseDown={e=>e.preventDefault()} onClick={()=>document.execCommand("bold")}>Bold</button>
+          <button type="button" onMouseDown={e=>e.preventDefault()} onClick={()=>document.execCommand("italic")}>Italic</button>
+          <button type="button" onMouseDown={e=>e.preventDefault()} onClick={()=>document.execCommand("insertUnorderedList")}>Bullet list</button>
+          <button type="button" onMouseDown={e=>e.preventDefault()} onClick={()=>document.execCommand("insertOrderedList")}>Numbered list</button>
+          <button type="button" onMouseDown={e=>e.preventDefault()} onClick={()=>{const url=window.prompt("Enter an HTTPS link");if(url)document.execCommand("createLink",false,url);}}>Link</button>
+          <button type="button" onMouseDown={e=>e.preventDefault()} onClick={()=>document.execCommand("formatBlock",false,"blockquote")}>Quote</button>
+         </div>
+         <div className="story-rich-editor" role="textbox" aria-label="Rich text article content" aria-multiline="true" contentEditable suppressContentEditableWarning dangerouslySetInnerHTML={{__html:renderArticleMarkdown(draft.body)}} onInput={e=>{const value=e.currentTarget.innerHTML;if(value.length>50000){setMessage("Article content is limited to 50,000 characters. Remove some content to continue.");return;}change("body",value);}}/>
+         <small>Format text directly. Switching to either source mode preserves the same underlying content; unsafe markup is removed in preview and before publication.</small>
+        </>:contentMode==="markdown"?<>
+         <div className="story-markdown-toolbar" role="toolbar" aria-label="Markdown formatting">
+          <button type="button" onClick={()=>change("body",draft.body+"\\n\\n## Heading")}>Heading</button>
+          <button type="button" onClick={()=>change("body",draft.body+"\\n\\n**Bold text**")}>Bold</button>
+          <button type="button" onClick={()=>change("body",draft.body+"\\n\\n[Link text](https://example.com)")}>Link</button>
+          <button type="button" onClick={()=>change("body",draft.body+"\\n\\n- List item")}>Bullet list</button>
+          <button type="button" onClick={()=>change("body",draft.body+"\\n\\n> Quote")}>Quote</button>
+         </div>
+         <textarea aria-label="Markdown article content" spellCheck value={draft.body} maxLength={50000} rows={14} onChange={e=>change("body",e.target.value)} placeholder="Write your story using Markdown for headings, links, lists and emphasis."/>
+         <small>Markdown is converted to safe semantic HTML. Images must use this website’s approved media library.</small>
+        </>:<>
+         <p className="story-html-help">HTML source mode is for authors who prefer writing or pasting markup. Semantic HTML is supported; scripts, event handlers, styles, unsafe URLs and unapproved embeds are stripped before publication.</p>
+         <textarea className="story-html-source" aria-label="HTML source" spellCheck={false} value={draft.body} maxLength={50000} rows={14} onChange={e=>change("body",e.target.value)} placeholder={'<h2>Your heading</h2>\\n<p>Write your article in HTML…</p>'}/>
+         <small>Allowed HTML is sanitized on preview and publication. Use website media-library URLs for images.</small>
+        </>}
+       </label>
        <label>Schedule publication (your device time)<input type="datetime-local" value={draft.scheduledAt?toLocalDateTime(draft.scheduledAt):""} onChange={e=>{setDraft(previous=>previous?{...previous,scheduledAt:e.target.value?new Date(e.target.value).toISOString():null}:previous);setDirty(true);}}/><small>Choose a time at least two minutes ahead.</small></label>
        <div className="story-studio-featured"><div><strong>Featured image</strong><p>Choose an image already stored for this website, or upload one to the same secure image library.</p>{availableMediaCount!==null&&<small>{availableMediaCount} ready image{availableMediaCount===1?"":"s"} in this website library.</small>}</div>{draft.featuredMediaRef&&<Image unoptimized className="story-studio-featured-preview" src={"/_media/"+draft.featuredMediaRef.slice(6)} alt={draft.featuredMediaAlt||""} width={900} height={560}/>}{draft.featuredMediaRef&&<button type="button" disabled={busy} onClick={()=>{setDraft(previous=>previous?{...previous,featuredMediaRef:null,featuredMediaAlt:null}:previous);setDirty(true);}}>Remove featured image</button>}<MediaLibrary websiteId={websiteId} accountId={accountId??""} onChange={onMediaChange} onSelect={(item:MediaLibraryItem)=>{setDraft(previous=>previous?{...previous,featuredMediaRef:item.ref,featuredMediaAlt:item.alt}:previous);setDirty(true);setMessage("");}} onInsert={(item:MediaLibraryItem)=>{const block=item.kind==="video"?`<video controls preload="metadata" playsinline><source src="/_media/${item.id}" type="${item.mime==="video/webm"?"video/webm":"video/mp4"}"></video>`:`[Download PDF](media:${item.id})`;setDraft(previous=>previous?{...previous,body:previous.body+"\n\n"+block}:previous);setDirty(true);setMessage(item.kind==="video"?"An inline video player was added. Save and publish to stream it on your website.":"A secure PDF download link was added. Save and publish to make it available.");}} selectedRef={draft.featuredMediaRef} protectedIds={Array.from(new Set([...articles.flatMap(article=>[article.featuredMediaRef,article.publishedSnapshot?.featuredMediaRef]),draft.featuredMediaRef,draft.publishedSnapshot?.featuredMediaRef].filter((ref):ref is string=>Boolean(ref)).map(ref=>ref.slice(6))) )}/></div>
       </div>}
