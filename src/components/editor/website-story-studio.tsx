@@ -55,7 +55,8 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArtic
  },[websiteId,headers,initialArticleId,startNew]);
  useEffect(()=>{void load();},[load]);
  useEffect(()=>{setLocalTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);setMounted(true);},[]);
- useEffect(()=>{onDirtyChange?.(dirty);},[dirty,onDirtyChange]);\n useEffect(()=>{if(!dirty)return;const guard=(event:BeforeUnloadEvent)=>{event.preventDefault();event.returnValue="";};window.addEventListener("beforeunload",guard);return()=>window.removeEventListener("beforeunload",guard);},[dirty]);
+ useEffect(()=>{onDirtyChange?.(dirty);},[dirty,onDirtyChange]);
+ useEffect(()=>{if(!dirty)return;const guard=(event:BeforeUnloadEvent)=>{event.preventDefault();event.returnValue="";};window.addEventListener("beforeunload",guard);return()=>window.removeEventListener("beforeunload",guard);},[dirty]);
  useEffect(()=>{
   if(contentMode!=="rich"||!richEditorRef.current)return;
   const html=renderArticleMarkdown(draft?.body??"");
