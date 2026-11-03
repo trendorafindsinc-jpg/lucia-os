@@ -12,8 +12,8 @@ type Story = {
  revision:number;status:"draft"|"scheduled"|"published";publishedSlug:string|null;publishedAt:string|null;scheduledAt:string|null;
 };
 const localTimeZone=Intl.DateTimeFormat().resolvedOptions().timeZone;\nfunction toLocalDateTime(value:string){const date=new Date(value);return new Date(date.getTime()-date.getTimezoneOffset()*60000).toISOString().slice(0,16);}
-export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArticleId=null,startNew=false,onClose}:{
- websiteId:string;accountId?:string|null;initialKind:ArticleKind;initialArticleId?:string|null;startNew?:boolean;onClose:()=>void;
+export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArticleId=null,startNew=false,closeLabel="Return to website",onDirtyChange,onClose}:{
+ websiteId:string;accountId?:string|null;initialKind:ArticleKind;initialArticleId?:string|null;startNew?:boolean;closeLabel?:string;onDirtyChange?:(dirty:boolean)=>void;onClose:()=>void;
 }) {
  const [kind,setKind]=useState<ArticleKind>(initialKind);
  const [articles,setArticles]=useState<Story[]>([]);
