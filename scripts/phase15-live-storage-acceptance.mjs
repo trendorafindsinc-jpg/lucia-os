@@ -365,8 +365,8 @@ try {
       await ctx.addCookies([{name:"lucia_os_session",value:fixture.tokens.a,url:base}]);
       const page=await ctx.newPage();
       await page.goto(base+"/editor?websiteId="+fixture.siteA,{waitUntil:"networkidle"});
-      await page.getByText("Your image library",{exact:true}).waitFor({timeout:20000});
-      await page.getByText("Your image library",{exact:true}).click();
+      await page.getByText("Your media library",{exact:true}).waitFor({timeout:20000});
+      await page.getByText("Your media library",{exact:true}).click();
       await page.locator('img[src="/_media/'+original.id+'"]').first().waitFor({timeout:20000});
       const preview=await page.locator('[data-layout-id="lucia.layout.canvas"]').first();
       assert(await preview.count());
