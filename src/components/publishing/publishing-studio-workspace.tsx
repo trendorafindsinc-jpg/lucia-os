@@ -33,7 +33,9 @@ export function PublishingStudioWorkspace({accountId}:{accountId:string}) {
  const [search,setSearch]=useState("");
  const [status,setStatus]=useState("all");
  const [kind,setKind]=useState("all");
- const [editor,setEditor]=useState<{kind:ArticleKind;articleId?:string|null}|null>(null);\n const [editorDirty,setEditorDirty]=useState(false);\n const reportEditorDirty=useCallback((dirty:boolean)=>setEditorDirty(dirty),[]);
+ const [editor,setEditor]=useState<{kind:ArticleKind;articleId?:string|null}|null>(null);
+ const [editorDirty,setEditorDirty]=useState(false);
+ const reportEditorDirty=useCallback((dirty:boolean)=>setEditorDirty(dirty),[]);
  const headers=useMemo(()=>({"x-lucia-workspace-account":accountId}),[accountId]);
  const load=useCallback(async()=>{
   if(!websiteId){setError("Choose a website before opening Publishing Studio.");setLoading(false);return;}
