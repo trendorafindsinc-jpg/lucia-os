@@ -204,7 +204,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArtic
          <small>Allowed HTML is sanitized on preview and publication. Use website media-library URLs for images.</small>
         </>}
        </label>
-</div><aside className="story-studio-settings"><div className="story-settings-heading"><strong>Post settings</strong><small>Publication, discovery and artwork</small></div>       <label>{draft.kind==="news"?"News category":"Category"} (optional)<input value={draft.category} maxLength={80} onChange={e=>change("category",e.target.value)}/></label>
+</div><aside className="story-studio-settings"><div className="story-settings-heading"><strong>Post settings</strong><small>Publication, discovery and artwork</small></div><div className="story-settings-readonly"><span>Author</span><strong>{draft.authorName||"Your LUCIA ID profile"}</strong><small>Author attribution follows the signed-in LUCIA ID.</small></div>       <label>{draft.kind==="news"?"News category":"Category"} (optional)<input value={draft.category} maxLength={80} onChange={e=>change("category",e.target.value)}/></label>
        {draft.kind==="news"&&<details open className="story-seo-fields"><summary>Newsroom metadata</summary>
         <label>Event date and time (optional)<input type="datetime-local" value={mounted&&draft.eventAt?toLocalDateTime(draft.eventAt):""} onChange={e=>{setDraft(previous=>previous?{...previous,eventAt:e.target.value?new Date(e.target.value).toISOString():null}:previous);setDirty(true);}}/></label>
         <label><input type="checkbox" checked={draft.isFeatured} onChange={e=>{setDraft(previous=>previous?{...previous,isFeatured:e.target.checked}:previous);setDirty(true);}}/> Feature this news story</label>
