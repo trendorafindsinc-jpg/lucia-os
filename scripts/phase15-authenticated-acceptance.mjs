@@ -299,6 +299,11 @@ export async function checkPhase15AuthenticatedAcceptance({
       assert.equal(firstPublic.status, 200, name + " should expose its contact page without requiring email replacement");
       const firstPublicHtml = await firstPublic.text();
       assert(!firstPublicHtml.includes("hello@example.com"), name + " public snapshot exposed demonstration email");
+      assert(Array.isArray(firstPublishBody.recommendations), name + " publish response should explain optional contact recommendations");
+      await view.goto(base + "/publish?websiteId=" + id, { waitUntil: "networkidle" });
+      await view.getByRole("button", { name: "Publish website", exact: true }).click();
+      await view.getByText(/Demonstration contact details were hidden from the public website/, { exact: false }).waitFor();
+      await view.getByRole("link", { name: "Edit contact email in Layout Studio", exact: true }).waitFor();
       const preservedDraft = await (await api("a", draftRoute(id))).json();
       const preservedContact = preservedDraft.draft.pages.find((p) => p.path === "/contact")
         ?.sections.find((section) => section.type === "contact-panel");
