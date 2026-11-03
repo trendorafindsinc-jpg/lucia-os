@@ -148,7 +148,7 @@ function hostRead(host, path) {
 function signObjectRequest(method,bucket,objectKey,body) {
   const endpoint = new URL(process.env.S3_ENDPOINT);
   const url = new URL("/"+bucket+"/"+objectKey,endpoint);
-  const when=new Date().toISOString().replace(/[:-]|\\.\\d{3}/g,""), day=when.slice(0,8);
+  const when=new Date().toISOString().replace(/[:-]|\.\d{3}/g,""), day=when.slice(0,8);
   const payload=body??Buffer.alloc(0);
   const hash=createHash("sha256").update(payload).digest("hex");
   const heads={host:url.host,"x-amz-content-sha256":hash,"x-amz-date":when};
@@ -157,10 +157,10 @@ function signObjectRequest(method,bucket,objectKey,body) {
   const hashText=(v)=>createHash("sha256").update(v).digest("hex");
   const hm=(key,val)=>createHmac("sha256",key).update(val).digest();
   const scope=day+"/"+process.env.S3_REGION+"/s3/aws4_request";
-  const canonical=[method,url.pathname,"",names.map((n)=>n+":"+heads[n]+"\\n").join(""),names.join(";"),hash].join("\\n");
+  const canonical=[method,url.pathname,"",names.map((n)=>n+":"+heads[n]+"\n").join(""),names.join(";"),hash].join("\n");
   const kd=hm("AWS4"+process.env.S3_SECRET_ACCESS_KEY,day);
   const sig=hm(hm(hm(hm(kd,process.env.S3_REGION),"s3"),"aws4_request"),
-    "AWS4-HMAC-SHA256\\n"+when+"\\n"+scope+"\\n"+hashText(canonical)).toString("hex");
+    "AWS4-HMAC-SHA256\n"+when+"\n"+scope+"\n"+hashText(canonical)).toString("hex");
   heads.authorization="AWS4-HMAC-SHA256 Credential="+process.env.S3_ACCESS_KEY_ID+"/"+scope+
     ", SignedHeaders="+names.join(";")+", Signature="+sig;
   return fetch(url,{method,headers:heads,...(method==="PUT"?{body:new Uint8Array(payload)}:{}),signal:AbortSignal.timeout(15000),redirect:"error",cache:"no-store"});
