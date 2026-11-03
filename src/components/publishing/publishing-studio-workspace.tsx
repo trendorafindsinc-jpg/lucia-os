@@ -77,7 +77,7 @@ export function PublishingStudioWorkspace({accountId}:{accountId:string}) {
    <nav className="publishing-toplinks" aria-label="Website shortcuts">
     <Link href={{pathname:"/editor",query:{websiteId}}} onClick={event=>{if(editorDirty&&!window.confirm("You have unsaved article changes. Leave the editor and keep only the last saved draft?"))event.preventDefault();}}>Edit Website</Link>
     {siteSlug&&<a href={"https://"+siteSlug+".lucia.name.ng"} target="_blank" rel="noopener noreferrer">View Website ↗</a>}
-    <Link href="/workspace/websites">All websites</Link>
+    <Link href="/workspace/websites" onClick={event=>{if(editorDirty&&!window.confirm("You have unsaved article changes. Leave the editor and keep only the last saved draft?"))event.preventDefault();}}>All websites</Link>
    </nav>
   </header>
   <div className="publishing-layout">
