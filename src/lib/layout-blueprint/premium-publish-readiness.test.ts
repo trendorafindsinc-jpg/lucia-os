@@ -22,7 +22,7 @@ describe("Phase 15 optional contact readiness and public placeholder suppression
     expect(readiness.recommendations.length).toBeGreaterThan(0);
 
     const publicCopy = sanitizePremiumPublicContacts(candidate);
-    expect(JSON.stringify(publicCopy)).not.toMatch(/@example\\.(?:com|org|net)/i);
+    expect(JSON.stringify(publicCopy)).not.toMatch(/@example\.(?:com|org|net)/i);
     expect(JSON.stringify(candidate)).toBe(original);
     expect(publicCopy.identity.name).toBe(candidate.identity.name);
     expect(publicCopy.pages.map((page) => page.path)).toEqual(candidate.pages.map((page) => page.path));
