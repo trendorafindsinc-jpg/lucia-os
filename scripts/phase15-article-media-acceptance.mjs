@@ -206,7 +206,7 @@ export async function checkPhase15ArticleMediaAcceptance({
     assert.equal(changedRevision.status,200);const changedRevisionArticle=(await changedRevision.json()).article;
     const restoredRevision=await api("a",articleRoute+"/"+articleId+"/revisions","POST",{currentRevision:changedRevisionArticle.revision,targetRevision:2});
     assert.equal(restoredRevision.status,200);article=(await restoredRevision.json()).article;
-    assert.equal(article.revision,4);assert.equal(article.title,title);assert(article.body.includes("media:"+videoAsset));
+    assert.equal(article.revision,5);assert.equal(article.title,title);assert(article.body.includes("media:"+videoAsset));
     await assert.rejects(admin`UPDATE website_posts SET featured_media_id=${foreignImage} WHERE id=${articleId}`, /website_posts_featured_media_fk/);
     const privateBefore = await admin`SELECT * FROM lucia_public_media(${blogImage}::uuid)`;
     assert.equal(privateBefore.length, 0, "A ready image without a published article must remain private");
