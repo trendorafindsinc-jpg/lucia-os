@@ -312,7 +312,12 @@ try {
     const lib=await r.json();
     assert.equal(lib.quotaBytes,5000000);
     assert(lib.items.some((x)=>x.id===original.id && x.status==="ready"));
-    assert.equal(lib.usedBytes,original.bytes);
+    const totals=await query("select kind,coalesce(sum(bytes),0)::bigint as used from website_media where website_id=$1 and status<>'deleted' group by kind",[fixture.siteA]);
+    const byKind=Object.fromEntries(totals.map((row)=>[row.kind,Number(row.used)]));
+    assert.equal(lib.usedBytes,Object.values(byKind).reduce((sum,value)=>sum+value,0));
+    assert.equal(lib.imageUsedBytes,byKind.image??0);
+    assert.equal(lib.videoUsedBytes,byKind.video??0);
+    assert.equal(lib.documentUsedBytes,byKind.document??0);
   });
   await checkpoint("spoofed-invalid-and-corrupted-image-rejection",async()=>{
     for (const [bytes,mime] of [[Buffer.from("garbage"),"image/png"],[firstPng,"image/jpeg"],[Buffer.from("badformat"),"text/plain"]]) {
