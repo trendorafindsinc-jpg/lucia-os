@@ -280,10 +280,26 @@ export async function checkPhase15AuthenticatedAcceptance({
         description: snapshot.draft.pages[0].description,
         customDomain: "",
       });
-      const blocked = await api("a", publishRoute, "POST", publishing(saved),
+      const host = siteSlug + ".lucia.name.ng";
+      const ownAvailability = await api("a", "/api/websites/" + id + "/domains?subdomain=" + encodeURIComponent(siteSlug) + "&excludeWebsiteId=" + id);
+      assert.equal(ownAvailability.status, 200);
+      assert.equal((await ownAvailability.json()).state, "available", name + " own address should be available to its owner");
+      const claimedAvailability = await api("a", "/api/websites/" + id + "/domains?subdomain=" + encodeURIComponent(siteSlug));
+      assert.equal((await claimedAvailability.json()).state, "taken", name + " claimed address must not be offered to another website");
+      const firstPublish = await api("a", publishRoute, "POST", publishing(saved),
         { "if-match": saved.revision });
-      assert.equal(blocked.status, 422, name + " published a demo address");
-      assert.equal((await publicSite("/", siteSlug + ".lucia.name.ng")).status, 404);
+      const firstPublishBody = await firstPublish.json();
+      assert.equal(firstPublish.status, 200, name + " should publish with optional demo contact: " + firstPublishBody.error);
+      const firstPublic = await publicSite("/contact", host);
+      assert.equal(firstPublic.status, 200, name + " should expose its contact page without requiring email replacement");
+      const firstPublicHtml = await firstPublic.text();
+      assert(!firstPublicHtml.includes("hello@example.com"), name + " public snapshot exposed demonstration email");
+      const preservedDraft = await (await api("a", draftRoute(id))).json();
+      const preservedContact = preservedDraft.draft.pages.find((p) => p.path === "/contact")
+        ?.sections.find((section) => section.type === "contact-panel");
+      assert(preservedContact?.type === "contact-panel" && preservedContact.email === "hello@example.com",
+        name + " publication must preserve the original editable draft");
+      saved = preservedDraft;
       const contactPage = saved.draft.pages.find((p) => p.path === "/contact");
       const contact = contactPage?.sections.find((s) => s.type === "contact-panel" && s.email);
       assert(contact && contactPage, name + " needs editable contact");
