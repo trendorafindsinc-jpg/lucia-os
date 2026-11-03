@@ -73,7 +73,7 @@ export function PublishingStudioWorkspace({accountId}:{accountId:string}) {
  return <main className="publishing-shell">
   <header className="publishing-topbar"><div className="publishing-brand">LUCIA OS <span aria-hidden="true">/</span> PUBLISHING STUDIO</div>
    <nav className="publishing-toplinks" aria-label="Website shortcuts">
-    <Link href={{pathname:"/editor",query:{websiteId}}}>Edit Website</Link>
+    <Link href={{pathname:"/editor",query:{websiteId}}} onClick={event=>{if(editorDirty&&!window.confirm("You have unsaved article changes. Leave the editor and keep only the last saved draft?"))event.preventDefault();}}>Edit Website</Link>
     {siteSlug&&<a href={"https://"+siteSlug+".lucia.name.ng"} target="_blank" rel="noopener noreferrer">View Website ↗</a>}
     <Link href="/workspace/websites">All websites</Link>
    </nav>
@@ -81,7 +81,7 @@ export function PublishingStudioWorkspace({accountId}:{accountId:string}) {
   <div className="publishing-layout">
    <aside className="publishing-sidebar" aria-label="Publishing Studio navigation">
     <div className="publishing-site-label"><small>SELECTED WEBSITE</small><strong>{siteName}</strong></div>
-    {nav.map(item=><button key={item.id} type="button" className="publishing-nav-item" aria-current={view===item.id?"page":undefined} onClick={()=>{setView(item.id);setSearch("");setStatus("all");setKind("all");setEditor(null);}}>
+    {nav.map(item=><button key={item.id} type="button" className="publishing-nav-item" aria-current={view===item.id?"page":undefined} onClick={()=>{if(editorDirty&&!window.confirm("You have unsaved article changes. Leave the editor and keep only the last saved draft?"))return;setEditorDirty(false);setView(item.id);setSearch("");setStatus("all");setKind("all");setEditor(null);}}>
       <span aria-hidden="true">{item.icon}</span>{item.label}
       {item.id==="all"&&<span>{counts.all}</span>}{item.id==="scheduled"&&<span>{counts.scheduled}</span>}
     </button>)}
@@ -90,8 +90,7 @@ export function PublishingStudioWorkspace({accountId}:{accountId:string}) {
     {error&&<p className="publishing-notice" role="alert">{error} <button className="publishing-secondary" type="button" onClick={()=>void load()}>Retry</button></p>}
     {notice&&<p className="publishing-notice" role="status">{notice}</p>}
     {editor?<div className="publishing-editor-wrap">
-      <button className="publishing-secondary publishing-back" type="button" onClick={()=>{setEditor(null);void load();}}>← Back to {title}</button>
-      <WebsiteStoryStudio key={editor.kind+":"+(editor.articleId||"new")} websiteId={websiteId} accountId={accountId} initialKind={editor.kind} initialArticleId={editor.articleId} startNew={editor.articleId===null} onClose={()=>{setEditor(null);void load();}} />
+      <WebsiteStoryStudio key={editor.kind+":"+(editor.articleId||"new")} websiteId={websiteId} accountId={accountId} initialKind={editor.kind} initialArticleId={editor.articleId} startNew={editor.articleId===null} closeLabel="Back to Publishing Studio" onDirtyChange={reportEditorDirty} onClose={()=>{setEditor(null);setEditorDirty(false);void load();}} />
     </div>:<>
      <header className="publishing-heading"><div><p className="publishing-eyebrow">YOUR WEBSITE / PUBLISHING</p><h1>{title}</h1><p>{view==="overview"?"A clear view of everything published, drafted and scheduled on this website.":view==="taxonomy"?"Review the categories and tags already used across your articles.":view==="media"?"Upload and reuse assets from this website’s secure media library.":view==="scheduled"?"Stories waiting for their scheduled publication time.":"Manage and edit your website’s "+(view==="blog"?"Blog":view==="news"?"Newsroom":"posts")+"."}</p></div>
       <div className="publishing-row-actions">{view!=="news"&&<button className="publishing-primary" type="button" onClick={()=>create("blog")}>+ New Post</button>}{view!=="blog"&&<button className="publishing-primary" type="button" onClick={()=>create("news")}>+ New News Story</button>}</div>
