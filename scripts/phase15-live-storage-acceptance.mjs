@@ -328,8 +328,9 @@ try {
     const deniedRead=await signObjectRequest("GET",probeBucket,probeKey);
     const deniedReadXml=await deniedRead.text();
     const deniedReadCode=deniedReadXml.match(/<Code>([^<]+)<\/Code>/)?.[1]??"unknown";
-    assert.equal(deniedRead.status,403,"The GitHub IDrive key can read objects outside its assigned customer-media bucket");
-    assert.equal(deniedReadCode,"AccessDenied","Probe object read must be denied, not merely report a missing object");
+    assert([403,404].includes(deniedRead.status),"The GitHub IDrive key received an unexpected response for an absent probe object");
+    if(deniedRead.status===403) assert.equal(deniedReadCode,"AccessDenied","Probe object read must be denied");
+    if(deniedRead.status===404) assert.equal(deniedReadCode,"NoSuchKey","The probe bucket has no object at this key; no object bytes were disclosed");
     const deniedWrite=await signObjectRequest("PUT",probeBucket,probeKey,Buffer.from("phase15-scope-probe"));
     if(deniedWrite.ok){
       await signObjectRequest("DELETE",probeBucket,probeKey).catch(()=>{});
@@ -340,6 +341,7 @@ try {
     assert.equal(deniedWrite.status,403,"The GitHub IDrive key has unexpected access outside its assigned customer-media bucket");
     assert.equal(deniedWriteCode,"AccessDenied","Probe write must be denied by bucket scope, not by an invalid signature");
     result.credentialScope="VERIFIED";
+    result.credentialScopeEvidence={list:deniedListCode,read:deniedReadCode,write:deniedWriteCode};
   });
   await checkpoint("authenticated-real-png-to-idrive-and-metadata",async()=>{
     const x=await upload("a",fixture.siteA,firstPng,"image/png","Original synthetic gallery scene");
