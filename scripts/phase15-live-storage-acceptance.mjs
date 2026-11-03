@@ -146,25 +146,30 @@ function hostRead(host, path) {
     req.on("error",reject);req.setTimeout(30000,()=>req.destroy(Error("Host request timed out")));
   });
 }
-function signHead(objectKey) {
-  // Supplementary provider metadata verification. Actual PUT/GET/DELETE use the unchanged app adapter.
+function signObjectRequest(method,bucket,objectKey,body) {
   const endpoint = new URL(process.env.S3_ENDPOINT);
-  const url = new URL("/"+process.env.S3_BUCKET+"/"+objectKey,endpoint);
-  const when=new Date().toISOString().replace(/[:-]|\.\d{3}/g,""), day=when.slice(0,8);
-  const hash=createHash("sha256").update("").digest("hex");
+  const url = new URL("/"+bucket+"/"+objectKey,endpoint);
+  const when=new Date().toISOString().replace(/[:-]|\\.\\d{3}/g,""), day=when.slice(0,8);
+  const payload=body??Buffer.alloc(0);
+  const hash=createHash("sha256").update(payload).digest("hex");
   const heads={host:url.host,"x-amz-content-sha256":hash,"x-amz-date":when};
+  if(method==="PUT"){heads["content-type"]="application/octet-stream";heads["x-amz-server-side-encryption"]="AES256";}
   const names=Object.keys(heads).sort();
   const hashText=(v)=>createHash("sha256").update(v).digest("hex");
   const hm=(key,val)=>createHmac("sha256",key).update(val).digest();
   const scope=day+"/"+process.env.S3_REGION+"/s3/aws4_request";
-  const canonical=["HEAD",url.pathname,"",names.map((n)=>n+":"+heads[n]+"\n").join(""),names.join(";"),hash].join("\n");
+  const canonical=[method,url.pathname,"",names.map((n)=>n+":"+heads[n]+"\\n").join(""),names.join(";"),hash].join("\\n");
   const kd=hm("AWS4"+process.env.S3_SECRET_ACCESS_KEY,day);
   const sig=hm(hm(hm(hm(kd,process.env.S3_REGION),"s3"),"aws4_request"),
-    "AWS4-HMAC-SHA256\n"+when+"\n"+scope+"\n"+hashText(canonical)).toString("hex");
+    "AWS4-HMAC-SHA256\\n"+when+"\\n"+scope+"\\n"+hashText(canonical)).toString("hex");
   heads.authorization="AWS4-HMAC-SHA256 Credential="+process.env.S3_ACCESS_KEY_ID+"/"+scope+
     ", SignedHeaders="+names.join(";")+", Signature="+sig;
-  return fetch(url,{method:"HEAD",headers:heads,signal:AbortSignal.timeout(15000),redirect:"error",cache:"no-store"});
+  return fetch(url,{method,headers:heads,...(method==="PUT"?{body:new Uint8Array(payload)}:{}),signal:AbortSignal.timeout(15000),redirect:"error",cache:"no-store"});
 }
+function signHead(objectKey,bucket=process.env.S3_BUCKET) {
+  return signObjectRequest("HEAD",bucket,objectKey);
+}
+
 async function imageInput(w=520,h=390) {
   const raw=randomBytes(w*h*3);
   return sharp(raw,{raw:{width:w,height:h,channels:3}}).png().toBuffer();
@@ -285,6 +290,20 @@ try {
   await startApp();
   const firstPng=await imageInput();
   let original,replacement;
+  await checkpoint("exact-github-key-denied-on-independent-existing-bucket",async()=>{
+    const probeBucket=process.env.S3_SCOPE_PROBE_BUCKET;
+    assert.equal(probeBucket,"lucia-os-phase15-scope-probe-2026","A separately administered existing probe bucket is required");
+    const probeKey="scope-check/"+randomUUID()+".bin";
+    const deniedRead=await signHead(probeKey,probeBucket);
+    assert.equal(deniedRead.status,403,"The GitHub IDrive key can read outside its assigned customer-media bucket");
+    const deniedWrite=await signObjectRequest("PUT",probeBucket,probeKey,Buffer.from("phase15-scope-probe"));
+    if(deniedWrite.ok){
+      await signObjectRequest("DELETE",probeBucket,probeKey).catch(()=>{});
+      throw Error("The GitHub IDrive key can write outside its assigned customer-media bucket");
+    }
+    assert.equal(deniedWrite.status,403,"The GitHub IDrive key has unexpected access outside its assigned customer-media bucket");
+    result.credentialScope="VERIFIED";
+  });
   await checkpoint("authenticated-real-png-to-idrive-and-metadata",async()=>{
     const x=await upload("a",fixture.siteA,firstPng,"image/png","Original synthetic gallery scene");
     const json=await x.json();assert.equal(x.status,201,json.error);
