@@ -200,7 +200,7 @@ export async function checkPhase15ArticleMediaAcceptance({
     const videoFeatured=await patchArticle(articleId,article,"media:"+videoAsset,"save");
     assert.equal(videoFeatured.status,422,"Video assets cannot be used as article featured images");
     const firstHistory=await api("a",articleRoute+"/"+articleId+"/revisions");assert.equal(firstHistory.status,200);
-    assert.deepEqual((await firstHistory.json()).revisions.map(item=>item.revision).sort((a,b)=>a-b),[1,2]);
+    assert.deepEqual((await firstHistory.json()).revisions.map(item=>item.revision).sort((a,b)=>a-b),[1,2,3]);
     assert.equal((await api("b",articleRoute+"/"+articleId+"/revisions")).status,404);
     const changedRevision=await patchArticle(articleId,{...article,title:title+" private draft"},null,"save");
     assert.equal(changedRevision.status,200);const changedRevisionArticle=(await changedRevision.json()).article;
