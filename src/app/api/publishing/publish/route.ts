@@ -123,6 +123,7 @@ export async function POST(request: Request) {
       403,
     );
 
+  let contactRecommendations: string[] = [];
   for (const org of permitted) {
     try {
       const result = await db.transaction(async (tx) => {
@@ -269,7 +270,7 @@ export async function POST(request: Request) {
 
         if (isPremium(definition)) {
           // Informational recommendations only; missing/demo contact data is optional.
-          checkPremiumPublishContacts(definition);
+          contactRecommendations = checkPremiumPublishContacts(definition).recommendations;
         }
 
         // The public renderer expects a validated site-draft snapshot for every
@@ -452,6 +453,7 @@ export async function POST(request: Request) {
           published: true,
           website: result,
           url: "https://" + result.slug + "." + domain,
+          recommendations: contactRecommendations,
           customDomain: settings.customDomain
             ? {
                 status: "pending_activation",
