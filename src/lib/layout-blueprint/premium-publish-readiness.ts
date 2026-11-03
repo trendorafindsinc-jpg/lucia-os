@@ -16,7 +16,7 @@ export function isDemoContactEmail(value: string | undefined): boolean {
 export function checkPremiumPublishContacts(
   definition: PremiumLayout,
 ): { ready: true; recommendations: string[] } {
-  if (!premiumCandidateIds.includes(definition.layoutId))
+  if (!premiumCandidateIds.some((id) => id === definition.layoutId))
     return { ready: true, recommendations: [] };
   const contacts = definition.pages.flatMap((page) =>
     page.sections.filter((section) => section.type === "contact-panel"),
