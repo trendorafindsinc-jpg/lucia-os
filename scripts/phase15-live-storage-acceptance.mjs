@@ -21,7 +21,7 @@ const result = {
   databaseIsolation: false, provider: "IDrive e2 London-2", bucket: "lucia-os-customer-media-2026",
   testsPassed: 0, testsFailed: 0, tests: [], objects: [], cleanup: "NOT_RUN",
   verified: false, historicalV2Rollback: "NOT_SUPPORTED_BY_CURRENT_VERSION_API",
-  credentialScope: "UNVERIFIED_NO_APPROVED_CANARY_BUCKET"
+  credentialScope: "REQUIRES_BUCKET_SCOPED_PHASE15_IDRIVE_KEY; VERIFY_BEFORE_LIVE_RUN"
 };
 let admin, runtime, fixture, child, base, port;
 const created = new Set(), synthetic = new Set();
