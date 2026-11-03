@@ -12,6 +12,7 @@ import {
   memberships,
   organizations,
   websitePages,
+  websiteDomains,
   websites,
 } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -22,6 +23,7 @@ import {
 import { makeStartingWebsiteDefinition } from "@/lib/onboarding/initial-website-draft";
 import { getStartingLayoutById as getTemplateById } from "@/lib/templates/starting-layouts";
 import { isPremium } from "@/lib/layout-blueprint/website-definition";
+import { classifyWebsiteHostname } from "@/lib/domains/hostname";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -110,7 +112,7 @@ export async function POST(request: Request) {
     goal: first.data.purpose,
     templateId: first.data.layoutId,
     country: "Global",
-    siteSlug: deriveWebsiteSlug(first.data.websiteName, user.id),
+    siteSlug: first.data.subdomain || deriveWebsiteSlug(first.data.websiteName, user.id),
   } : payload;
   const parsed = websiteSetupSchema.safeParse(setupInput);
   if (!parsed.success) {
@@ -124,6 +126,13 @@ export async function POST(request: Request) {
   }
 
   const setup = parsed.data;
+  const siteDomain = (process.env.LUCIA_SITE_DOMAIN || "lucia.name.ng")
+    .trim().toLowerCase().replace(/^\\*\\./, "").replace(/^\\./, "").replace(/\\.$/, "");
+  let subdomainClaim: ReturnType<typeof classifyWebsiteHostname>;
+  try { subdomainClaim = classifyWebsiteHostname(setup.siteSlug + "." + siteDomain); }
+  catch (error) {
+    return jsonError(error instanceof Error ? error.message : "Choose a valid free LUCIA address.", 422);
+  }
   const template = getTemplateById(setup.templateId);
   if (!template) return jsonError("Choose a valid starting design.", 422);
 
@@ -228,6 +237,25 @@ export async function POST(request: Request) {
         sql`select set_config('app.current_organization_id', ${organization.id}, true)`,
       );
 
+      const reserveFreeSubdomain = async (targetWebsiteId: string) => {
+        const [claimed] = await tx.select({
+          websiteId: websiteDomains.websiteId,
+          domainType: websiteDomains.domainType,
+        }).from(websiteDomains).where(eq(websiteDomains.hostname, subdomainClaim.hostname)).limit(1);
+        if (claimed && (claimed.websiteId !== targetWebsiteId || claimed.domainType !== "lucia_subdomain"))
+          throw new Error("FREE_SUBDOMAIN_TAKEN");
+        if (!claimed) {
+          await tx.insert(websiteDomains).values({
+            organizationId: organization.id,
+            websiteId: targetWebsiteId,
+            hostname: subdomainClaim.hostname,
+            domainType: "lucia_subdomain",
+            status: "pending",
+            isPrimary: false,
+          });
+        }
+      };
+
       const [existingWebsite] = await tx
         .select({
           id: websites.id,
@@ -244,6 +272,7 @@ export async function POST(request: Request) {
         .limit(1);
 
       if (existingWebsite) {
+        await reserveFreeSubdomain(existingWebsite.id);
         return {
           organization,
           website: existingWebsite,
@@ -265,6 +294,8 @@ export async function POST(request: Request) {
           name: websites.name,
           slug: websites.slug,
         });
+
+      await reserveFreeSubdomain(website.id);
 
       const initialDefinition = makeStartingWebsiteDefinition(
         setup.templateId,
@@ -328,6 +359,9 @@ export async function POST(request: Request) {
         "You do not have website creation permission in this organization.",
         403,
       );
+    if (error instanceof Error && (error.message === "FREE_SUBDOMAIN_TAKEN" || error.message.includes("website_domains_hostname_uq") || error.message.includes("duplicate key"))) {
+      return jsonError("That free LUCIA address is already taken. Choose another.", 409);
+    }
     if (isUniqueWebsiteWrite(error)) {
       return jsonError(
         "A workspace or website with these details was created at the same time. Refresh your workspace before trying again.",
