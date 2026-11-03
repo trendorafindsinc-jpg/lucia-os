@@ -127,7 +127,7 @@ export async function POST(request: Request) {
 
   const setup = parsed.data;
   const siteDomain = (process.env.LUCIA_SITE_DOMAIN || "lucia.name.ng")
-    .trim().toLowerCase().replace(/^\\*\\./, "").replace(/^\\./, "").replace(/\\.$/, "");
+    .trim().toLowerCase().replace(/^\*\./, "").replace(/^\./, "").replace(/\.$/, "");
   let subdomainClaim: ReturnType<typeof classifyWebsiteHostname>;
   try { subdomainClaim = classifyWebsiteHostname(setup.siteSlug + "." + siteDomain); }
   catch (error) {
