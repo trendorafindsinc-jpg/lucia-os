@@ -35,18 +35,14 @@ export async function GET(request: Request, context: RouteContext) {
         message,
       }, { headers: { "Cache-Control": "no-store" } });
     }
-    const db = getDb();
-    const [domain] = await db.select({ websiteId: websiteDomains.websiteId })
-      .from(websiteDomains).where(eq(websiteDomains.hostname, claim.hostname)).limit(1);
     const excludeWebsiteId = url.searchParams.get("excludeWebsiteId");
-    const [legacy] = await db.select({ id: websites.id })
-      .from(websites)
-      .where(and(
-        eq(websites.slug, claim.subdomain!),
-        ne(websites.status, "deleted"),
-        ...(excludeWebsiteId ? [ne(websites.id, excludeWebsiteId)] : []),
-      )).limit(1);
-    const available = (!domain || domain.websiteId === excludeWebsiteId) && !legacy;
+    if (excludeWebsiteId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(excludeWebsiteId))
+      return jsonError("Invalid website reference.", 400);
+    const db = getDb();
+    const rows = await db.execute(sql`SELECT public.lucia_website_hostname_available(
+      ${claim.hostname}, ${excludeWebsiteId}::uuid
+    ) AS available`);
+    const available = Boolean((rows as unknown as Array<{ available: boolean }>)[0]?.available);
     return NextResponse.json({
       available,
       state: available ? "available" : "taken",
