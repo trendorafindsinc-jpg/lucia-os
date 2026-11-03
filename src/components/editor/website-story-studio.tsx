@@ -11,12 +11,11 @@ type Story = {
  featuredMediaRef:string|null;featuredMediaAlt:string|null;publishedSnapshot:{featuredMediaRef?:string|null}|null;
  revision:number;status:"draft"|"scheduled"|"published";publishedSlug:string|null;publishedAt:string|null;scheduledAt:string|null;
 };
-const localTimeZone=Intl.DateTimeFormat().resolvedOptions().timeZone;
 function toLocalDateTime(value:string){const date=new Date(value);return new Date(date.getTime()-date.getTimezoneOffset()*60000).toISOString().slice(0,16);}
 export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArticleId=null,startNew=false,closeLabel="Return to website",onDirtyChange,onClose}:{
  websiteId:string;accountId?:string|null;initialKind:ArticleKind;initialArticleId?:string|null;startNew?:boolean;closeLabel?:string;onDirtyChange?:(dirty:boolean)=>void;onClose:()=>void;
 }) {
- const [kind,setKind]=useState<ArticleKind>(initialKind);
+ const [kind,setKind]=useState<ArticleKind>(initialKind);\n const [mounted,setMounted]=useState(false);\n const [localTimeZone,setLocalTimeZone]=useState("your local timezone");
  const [articles,setArticles]=useState<Story[]>([]);
  const [siteSlug,setSiteSlug]=useState("");
  const [selected,setSelected]=useState<string|null>(initialArticleId);
@@ -52,7 +51,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArtic
   } catch(error){setMessage(error instanceof Error?error.message:"Could not load articles.");}
   finally{setLoading(false);}
  },[websiteId,headers,initialArticleId,startNew]);
- useEffect(()=>{void load();},[load]);\n useEffect(()=>{onDirtyChange?.(dirty);},[dirty,onDirtyChange]);\n useEffect(()=>{onDirtyChange?.(dirty);},[dirty,onDirtyChange]);
+ useEffect(()=>{void load();},[load]);\n useEffect(()=>{setLocalTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);setMounted(true);},[]);\n useEffect(()=>{onDirtyChange?.(dirty);},[dirty,onDirtyChange]);\n useEffect(()=>{onDirtyChange?.(dirty);},[dirty,onDirtyChange]);
  useEffect(()=>{
   if(contentMode!=="rich"||!richEditorRef.current)return;
   const html=renderArticleMarkdown(draft?.body??"");
@@ -203,7 +202,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArtic
        </label>
 </div><aside className="story-studio-settings"><div className="story-settings-heading"><strong>Post settings</strong><small>Publication, discovery and artwork</small></div>       <label>{draft.kind==="news"?"News category":"Category"} (optional)<input value={draft.category} maxLength={80} onChange={e=>change("category",e.target.value)}/></label>
        {draft.kind==="news"&&<>
-        <label>Event date and time (optional)<input type="datetime-local" value={draft.eventAt?toLocalDateTime(draft.eventAt):""} onChange={e=>{setDraft(previous=>previous?{...previous,eventAt:e.target.value?new Date(e.target.value).toISOString():null}:previous);setDirty(true);}}/></label>
+        <label>Event date and time (optional)<input type="datetime-local" value={mounted&&draft.eventAt?toLocalDateTime(draft.eventAt):""} onChange={e=>{setDraft(previous=>previous?{...previous,eventAt:e.target.value?new Date(e.target.value).toISOString():null}:previous);setDirty(true);}}/></label>
         <label><input type="checkbox" checked={draft.isFeatured} onChange={e=>{setDraft(previous=>previous?{...previous,isFeatured:e.target.checked}:previous);setDirty(true);}}/> Feature this news story</label>
         <label>Correction notice (optional)<textarea value={draft.correctionNote??""} maxLength={500} rows={2} onChange={e=>change("correctionNote",e.target.value||"")}/></label>
         <label>Corrects earlier News slug (optional)<input value={draft.correctsSlug??""} maxLength={120} onChange={e=>change("correctsSlug",e.target.value||"")}/></label>
@@ -213,7 +212,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArtic
         <label>SEO title (70 characters maximum)<input value={draft.seoTitle??""} maxLength={70} onChange={e=>change("seoTitle",e.target.value||"")}/></label>
         <label>SEO description (160 characters maximum)<textarea value={draft.seoDescription??""} maxLength={160} rows={2} onChange={e=>change("seoDescription",e.target.value||"")}/></label>
        </details>
-       <label>Schedule publication (local time · {localTimeZone})<input type="datetime-local" value={draft.scheduledAt?toLocalDateTime(draft.scheduledAt):""} onChange={e=>{setDraft(previous=>previous?{...previous,scheduledAt:e.target.value?new Date(e.target.value).toISOString():null}:previous);setDirty(true);}}/><small>Choose a time at least two minutes ahead.</small></label>
+       <label>Schedule publication (local time · {localTimeZone})<input type="datetime-local" value={mounted&&draft.scheduledAt?toLocalDateTime(draft.scheduledAt):""} onChange={e=>{setDraft(previous=>previous?{...previous,scheduledAt:e.target.value?new Date(e.target.value).toISOString():null}:previous);setDirty(true);}}/><small>Choose a time at least two minutes ahead.</small></label>
        <div className="story-studio-featured"><div><strong>Featured image</strong><p>Choose an image already stored for this website, or upload one to the same secure image library.</p>{availableMediaCount!==null&&<small>{availableMediaCount} ready image{availableMediaCount===1?"":"s"} in this website library.</small>}</div>{draft.featuredMediaRef&&<Image unoptimized className="story-studio-featured-preview" src={"/_media/"+draft.featuredMediaRef.slice(6)} alt={draft.featuredMediaAlt||""} width={900} height={560}/>}{draft.featuredMediaRef&&<button type="button" disabled={busy} onClick={()=>{setDraft(previous=>previous?{...previous,featuredMediaRef:null,featuredMediaAlt:null}:previous);setDirty(true);}}>Remove featured image</button>}<MediaLibrary websiteId={websiteId} accountId={accountId??""} onChange={onMediaChange} onSelect={(item:MediaLibraryItem)=>{setDraft(previous=>previous?{...previous,featuredMediaRef:item.ref,featuredMediaAlt:item.alt}:previous);setDirty(true);setMessage("");}} onInsert={(item:MediaLibraryItem)=>{const block=item.kind==="video"?`<video controls preload="metadata" playsinline><source src="/_media/${item.id}" type="${item.mime==="video/webm"?"video/webm":"video/mp4"}"></video>`:`[Download PDF](media:${item.id})`;setDraft(previous=>previous?{...previous,body:previous.body+"\n\n"+block}:previous);setRichSync(v=>v+1);setDirty(true);setMessage(item.kind==="video"?"An inline video player was added. Save and publish to stream it on your website.":"A secure PDF download link was added. Save and publish to make it available.");}} selectedRef={draft.featuredMediaRef} protectedIds={Array.from(new Set([...articles.flatMap(article=>[article.featuredMediaRef,article.publishedSnapshot?.featuredMediaRef]),draft.featuredMediaRef,draft.publishedSnapshot?.featuredMediaRef].filter((ref):ref is string=>Boolean(ref)).map(ref=>ref.slice(6))) )}/></div>
 </aside></div>}
      <div className="story-studio-actions">
