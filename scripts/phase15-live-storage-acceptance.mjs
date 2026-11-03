@@ -397,12 +397,17 @@ try {
     const versionBody=await savedVersion.json();
     assert.equal(savedVersion.status,201,versionBody.error);
     const originalHeadline=checkpointSnapshot.headline;
+    const publishedBefore=await only("select published_content from website_pages where website_id=$1 and path='/'",[fixture.siteA]);
+    const foreignRestore=await api("b","/api/websites/"+fixture.siteA+"/versions/"+versionBody.id+"/restore","POST",undefined,{"if-match":"\\"draft-"+"0".repeat(64)+"\\""});
+    assert.equal(foreignRestore.status,404,"Cross-tenant version restore must not reveal or mutate another website");
     const current=await (await api("a","/api/websites/"+fixture.siteA+"/draft")).json();
     const home=current.draft.pages.find((page)=>page.path==="/");
     const changed=await edit(fixture.siteA,[{
       kind:"page-details",pageId:home.id,path:"/",title:"Temporary changed composition",description:home.description,navigation:true
     }]);
     assert.equal(changed.draft.pages.find((page)=>page.path==="/").title,"Temporary changed composition");
+    const staleRestore=await api("a","/api/websites/"+fixture.siteA+"/versions/"+versionBody.id+"/restore","POST",undefined,{"if-match":current.revision});
+    assert.equal(staleRestore.status,409,"Stale draft revisions must not be overwritten by rollback");
     const restore=await api("a","/api/websites/"+fixture.siteA+"/versions/"+versionBody.id+"/restore","POST",undefined,{"if-match":changed.revision});
     const restoreBody=await restore.json();
     assert.equal(restore.status,200,restoreBody.error);
@@ -411,6 +416,8 @@ try {
     assert.equal(restored.draft.pages.find((page)=>page.path==="/").title,originalHeadline);
     assert.equal(restored.draft.layoutId,saved.draft.layoutId);
     assert.deepEqual(restored.draft.pages.map((page)=>page.sections),saved.draft.pages.map((page)=>page.sections));
+    const publishedAfter=await only("select published_content from website_pages where website_id=$1 and path='/'",[fixture.siteA]);
+    assert.equal(publishedAfter.published_content,publishedBefore.published_content,"Draft rollback must not change published content");
     result.historicalV2Rollback="PASS_FULL_COMPOSITION_RESTORED_DRAFT_ONLY";
   });
   await checkpoint("private-studio-preview-with-real-image",async()=>{
