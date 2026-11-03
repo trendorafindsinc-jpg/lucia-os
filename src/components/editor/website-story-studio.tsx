@@ -51,7 +51,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArtic
   } catch(error){setMessage(error instanceof Error?error.message:"Could not load articles.");}
   finally{setLoading(false);}
  },[websiteId,headers,initialArticleId,startNew]);
- useEffect(()=>{void load();},[load]);
+ useEffect(()=>{void load();},[load]);\n useEffect(()=>{onDirtyChange?.(dirty);},[dirty,onDirtyChange]);
  useEffect(()=>{
   if(contentMode!=="rich"||!richEditorRef.current)return;
   const html=renderArticleMarkdown(draft?.body??"");
@@ -142,7 +142,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArtic
  return <section className="story-studio" aria-label="Website Blog and News Studio">
   <div className="story-studio-top">
    <div><p className="story-studio-kicker">YOUR WEBSITE / CONTENT</p><h2>Stories & updates</h2><p>Write for the website you already own. Drafts stay private until Publish.</p></div>
-   <button type="button" onClick={()=>{if(!dirty || window.confirm("Discard unsaved changes?"))onClose();}} aria-label="Return to website">✕ Return to website</button>
+   <button type="button" onClick={()=>{if(!dirty || window.confirm("Discard unsaved changes?"))onClose();}} aria-label={closeLabel}>✕ {closeLabel}</button>
   </div>
   <div className="story-studio-switch" role="group" aria-label="Content type">
    <button type="button" aria-pressed={kind==="blog"} onClick={()=>{setKind("blog");setSelected(null);setDirty(false);setDraft(null);}}>Blog</button>
@@ -219,7 +219,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArtic
       <button type="button" onClick={()=>setPreview(p=>!p)}>{preview?"Edit article":"Preview draft"}</button>
       <button type="button" disabled={busy||loading||historyBusy} onClick={()=>void loadHistory()}>{historyBusy?"Loading history…":"Version history"}</button>
       <button type="button" disabled={busy||loading||!dirty} onClick={()=>void save("save")}>Save draft</button>
-      <button className="story-studio-live" type="button" disabled={busy||loading} onClick={()=>void save("publish")}>{busy?"Publishing…":"Publish"}</button>
+      <button className="story-studio-live" type="button" disabled={busy||loading} onClick={()=>void save("publish")}>{busy?"Publishing…":draft.status==="published"?"Update":"Publish"}</button>
       <button type="button" disabled={busy||loading||!draft.scheduledAt||draft.status==="published"} onClick={()=>void save("schedule")}>Schedule</button>
       {draft.status==="published"&&<button type="button" disabled={busy} onClick={()=>void save("unpublish")}>Unpublish</button>}
       {draft.status==="scheduled"&&<button type="button" disabled={busy} onClick={()=>void save("save")}>Keep as draft</button>}
