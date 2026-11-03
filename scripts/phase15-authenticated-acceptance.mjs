@@ -684,6 +684,21 @@ export async function checkPhase15AuthenticatedAcceptance({
             }));
             assert(dimensions.document <= dimensions.viewport + 1,
               "Editor horizontally overflows at " + width + ": " + JSON.stringify(dimensions));
+          }
+          await view.setViewportSize({ width: 390, height: 844 });
+          await view.getByRole("button", { name: "1. Business identity" }).click();
+          const dir = "artifacts/phase16-acceptance";
+          await mkdir(dir, { recursive: true });
+          await view.screenshot({ path: dir + "/studio-business-390.png", fullPage: true });
+          // Restore desktop viewport before reusing this browser page for another flagship.
+          await view.setViewportSize({ width: 1180, height: 820 });
+        }
+        bpass(name + ": Phase 16 real browser business identity, contact, logo, social, page heading, save/reload, A/B isolation and republish");
+      }
+      evidence.push({ layoutId: current.draft.layoutId, pages: current.draft.pages.map((page) => page.path),
+        previewPaths: ["/", "/contact"], publicResponsive: responsive,
+        tenantDenial: "PASS", staleSave: "PASS", stalePublish: "PASS", corruptPublicationPreservesLive: "PASS", revokedMembership: "PASS",
+        authentication: "Synthetic session; not live Core OAuth", result: "PASS" });
      if (phase15 && name === selected[0]) {
        const renamedSlug = name + "-renamed-" + randomBytes(4).toString("hex");
        const renameAvailability = await api("a", "/api/websites/" + id + "/domains?subdomain=" + encodeURIComponent(renamedSlug));
@@ -705,21 +720,6 @@ export async function checkPhase15AuthenticatedAcceptance({
        assert.equal(collision.status, 400, "reserved platform labels must not be claimable");
        bpass("Phase 15 free LUCIA address: creation availability, atomic claim, tenant-authorized rename and content preservation");
      }
-          }
-          await view.setViewportSize({ width: 390, height: 844 });
-          await view.getByRole("button", { name: "1. Business identity" }).click();
-          const dir = "artifacts/phase16-acceptance";
-          await mkdir(dir, { recursive: true });
-          await view.screenshot({ path: dir + "/studio-business-390.png", fullPage: true });
-          // Restore desktop viewport before reusing this browser page for another flagship.
-          await view.setViewportSize({ width: 1180, height: 820 });
-        }
-        bpass(name + ": Phase 16 real browser business identity, contact, logo, social, page heading, save/reload, A/B isolation and republish");
-      }
-      evidence.push({ layoutId: current.draft.layoutId, pages: current.draft.pages.map((page) => page.path),
-        previewPaths: ["/", "/contact"], publicResponsive: responsive,
-        tenantDenial: "PASS", staleSave: "PASS", stalePublish: "PASS", corruptPublicationPreservesLive: "PASS", revokedMembership: "PASS",
-        authentication: "Synthetic session; not live Core OAuth", result: "PASS" });
     }
     assert.equal(errors.length, 0, errors.join("; "));
   } finally {
