@@ -392,7 +392,7 @@ export async function checkPhase15AuthenticatedAcceptance({
       assert.equal(published.status, 200, name + " publish: " + response.error);
       assert.equal(response.published, true);
       assert.equal(response.customDomain.status, "not_requested");
-      const host = siteSlug + ".lucia.name.ng";
+      
       for (const route of current.draft.pages.map((page) => page.path)) {
         const document = await publicSite(route, host);
         assert.equal(document.status, 200, name + " public route " + route);
