@@ -1,9 +1,9 @@
 name: Phase 15 real IDrive media acceptance
 
 on:
-  push:
+  pull_request:
     branches:
-      - upgrade/phase-15-content-media
+      - main
     paths:
       - 'scripts/phase15-live-storage-acceptance.mjs'
       - 'src/app/api/media/[id]/route.ts'
@@ -50,7 +50,12 @@ jobs:
       NEXT_TELEMETRY_DISABLED: '1'
     steps:
       - name: Require the Phase 15 branch
-        run: test "$GITHUB_REF_NAME" = 'upgrade/phase-15-content-media'
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            test "$GITHUB_HEAD_REF" = 'upgrade/phase-15-content-media'
+          else
+            test "$GITHUB_REF_NAME" = 'upgrade/phase-15-content-media'
+          fi
       - name: Checkout exact branch commit
         uses: actions/checkout@v4
         with:
