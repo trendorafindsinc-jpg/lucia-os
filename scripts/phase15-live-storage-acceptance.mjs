@@ -170,7 +170,7 @@ async function imageInput(w=520,h=390) {
   return sharp(raw,{raw:{width:w,height:h,channels:3}}).png().toBuffer();
 }
 async function mediaRow(id) {
-  return only("select id,organization_id,website_id,object_key,bytes,width,height,status,last_published_at from website_media where id=$1",[id]);
+  return only("select id,organization_id,website_id,object_key,bytes,width,height,status,last_published_at,kind,mime,original_name,checksum,etag from website_media where id=$1",[id]);
 }
 async function newMedia(who,site,input,alt) {
   const response=await upload(who,site,input,"image/png",alt);
