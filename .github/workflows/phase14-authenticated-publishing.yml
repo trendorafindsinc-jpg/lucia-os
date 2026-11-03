@@ -1,6 +1,9 @@
 name: Phase 14 isolated authenticated publishing
 
 on:
+  push:
+    branches:
+      - upgrade/phase-15-content-media
   workflow_dispatch:
     inputs:
       layouts:
