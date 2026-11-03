@@ -172,7 +172,7 @@ async function assertReadableHead(response,label,expectedStatus=200) {
   if(response.status!==expectedStatus) {
     const xml=(await response.text()).slice(0,2000);
     const code=xml.match(/<Code>([^<]+)<\/Code>/)?.[1] ?? "unknown";
-    const message=xml.match(/<Message>([^<]+)<\\/Message>/)?.[1] ?? "No provider message";
+    const message=xml.match(/<Message>([^<]+)<\/Message>/)?.[1] ?? "No provider message";
     throw Error(label+" expected "+expectedStatus+" received "+response.status+"; providerCode="+code+"; providerMessage="+message);
   }
   return response;
