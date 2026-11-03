@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import type { Metadata } from "next";
+import type { Metadata, Route } from "next";
 import { getCurrentUser } from "@/lib/auth/session";
 import { PublishingStudioWorkspace } from "@/components/publishing/publishing-studio-workspace";
 import "./publishing.css";
@@ -16,7 +16,7 @@ export default async function PublishingStudioPage({ searchParams }: { searchPar
   const websiteId = typeof params.websiteId === "string" ? params.websiteId : "";
   const returnTo = websiteId ? "/publishing?websiteId=" + encodeURIComponent(websiteId) : "/workspace/websites";
   const user = await getCurrentUser();
-  if (!user) redirect("/api/auth/login?returnTo=" + encodeURIComponent(returnTo));
+  if (!user) redirect(("/api/auth/login?returnTo=" + encodeURIComponent(returnTo)) as Route);
   return <Suspense fallback={<main className="publishing-shell"><p role="status">Opening Publishing Studio…</p></main>}>
     <PublishingStudioWorkspace accountId={user.id} />
   </Suspense>;
