@@ -27,6 +27,7 @@ export function WebsiteFirstPublishDialog({
   const [publishing, setPublishing] = useState(false);
   const [notice, setNotice] = useState("");
   const [publishedUrl, setPublishedUrl] = useState("");
+  const [contactRecommendations, setContactRecommendations] = useState<string[]>([]);
 
   useEffect(() => {
     const node = dialog.current;
@@ -83,7 +84,13 @@ export function WebsiteFirstPublishDialog({
       const result = await response.json();
       if (!response.ok) throw Error(result.error || "Publishing failed. Your previous live website was preserved.");
       setPublishedUrl(result.url);
-      setNotice("Publication confirmed. Your saved website is now the published version.");
+      const recommendations = Array.isArray(result.recommendations)
+        ? result.recommendations.filter((item: unknown): item is string => typeof item === "string")
+        : [];
+      setContactRecommendations(recommendations);
+      setNotice(recommendations.length
+        ? "Publication confirmed. Demonstration contact details were hidden from the public website; your editable draft was preserved. " + recommendations.join(" ")
+        : "Publication confirmed. Your saved website is now the published version.");
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Publishing could not be confirmed. Your live version was preserved.");
     } finally {
@@ -110,6 +117,9 @@ export function WebsiteFirstPublishDialog({
         {website && !valid && <p role="alert">Your website name, headline or description needs attention. Edit your website and save it before publishing.</p>}
         {notice && <p className={publishedUrl ? "website-first-publish-success" : "website-first-publish-error"} role="status">{notice}</p>}
         {publishedUrl && <p><a href={publishedUrl} target="_blank" rel="noopener noreferrer">View published website ↗</a></p>}
+        {publishedUrl && contactRecommendations.length > 0 && <p className="website-first-publish-contact-action">
+          <a href={"/editor?websiteId=" + encodeURIComponent(websiteId) + "&studio=classic"}>Edit contact email in Layout Studio</a>
+        </p>}
         <div className="website-first-publish-actions">
           <button type="button" onClick={onClose} disabled={publishing}>Return to website</button>
           <button type="button" className="website-first-editor-publish" onClick={() => void publish()}
