@@ -165,6 +165,25 @@ function signObjectRequest(method,bucket,objectKey,body) {
     ", SignedHeaders="+names.join(";")+", Signature="+sig;
   return fetch(url,{method,headers:heads,...(method==="PUT"?{body:new Uint8Array(payload)}:{}),signal:AbortSignal.timeout(15000),redirect:"error",cache:"no-store"});
 }
+function signBucketRequest(bucket) {
+  const endpoint = new URL(process.env.S3_ENDPOINT);
+  const url = new URL("/"+bucket,endpoint);
+  url.search="list-type=2";
+  const when=new Date().toISOString().replace(/[:-]|\.\d{3}/g,""), day=when.slice(0,8);
+  const hash=createHash("sha256").update("").digest("hex");
+  const heads={host:url.host,"x-amz-content-sha256":hash,"x-amz-date":when};
+  const names=Object.keys(heads).sort();
+  const hashText=(v)=>createHash("sha256").update(v).digest("hex");
+  const hm=(key,val)=>createHmac("sha256",key).update(val).digest();
+  const scope=day+"/"+process.env.S3_REGION+"/s3/aws4_request";
+  const canonical=["GET",url.pathname,"list-type=2",names.map((n)=>n+":"+heads[n]+"\n").join(""),names.join(";"),hash].join("\n");
+  const kd=hm("AWS4"+process.env.S3_SECRET_ACCESS_KEY,day);
+  const sig=hm(hm(hm(hm(kd,process.env.S3_REGION),"s3"),"aws4_request"),
+    "AWS4-HMAC-SHA256\n"+when+"\n"+scope+"\n"+hashText(canonical)).toString("hex");
+  heads.authorization="AWS4-HMAC-SHA256 Credential="+process.env.S3_ACCESS_KEY_ID+"/"+scope+
+    ", SignedHeaders="+names.join(";")+", Signature="+sig;
+  return fetch(url,{method:"GET",headers:heads,signal:AbortSignal.timeout(15000),redirect:"error",cache:"no-store"});
+}
 function signHead(objectKey,bucket=process.env.S3_BUCKET) {
   return signObjectRequest("HEAD",bucket,objectKey);
 }
@@ -301,11 +320,16 @@ try {
     const probeBucket=process.env.S3_SCOPE_PROBE_BUCKET;
     assert.equal(probeBucket,"lucia-os-phase15-scope-probe-2026","A separately administered existing probe bucket is required");
     const probeKey="scope-check/"+randomUUID()+".bin";
-    const deniedRead=await signHead(probeKey,probeBucket);
+    const deniedList=await signBucketRequest(probeBucket);
+    const deniedListXml=await deniedList.text();
+    const deniedListCode=deniedListXml.match(/<Code>([^<]+)<\/Code>/)?.[1]??"unknown";
+    assert.equal(deniedList.status,403,"The GitHub IDrive key can list objects outside its assigned customer-media bucket");
+    assert.equal(deniedListCode,"AccessDenied","Probe listing must be denied by bucket scope, not by an invalid signature");
+    const deniedRead=await signObjectRequest("GET",probeBucket,probeKey);
     const deniedReadXml=await deniedRead.text();
     const deniedReadCode=deniedReadXml.match(/<Code>([^<]+)<\/Code>/)?.[1]??"unknown";
-    assert.equal(deniedRead.status,403,"The GitHub IDrive key can read outside its assigned customer-media bucket");
-    assert.equal(deniedReadCode,"AccessDenied","Probe read must be denied by bucket scope, not by an invalid signature");
+    assert.equal(deniedRead.status,403,"The GitHub IDrive key can read objects outside its assigned customer-media bucket");
+    assert.equal(deniedReadCode,"AccessDenied","Probe object read must be denied, not merely report a missing object");
     const deniedWrite=await signObjectRequest("PUT",probeBucket,probeKey,Buffer.from("phase15-scope-probe"));
     if(deniedWrite.ok){
       await signObjectRequest("DELETE",probeBucket,probeKey).catch(()=>{});
