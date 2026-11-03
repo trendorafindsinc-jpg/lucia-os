@@ -6,6 +6,8 @@ on:
       - upgrade/phase-15-content-media
     paths:
       - 'scripts/phase15-live-storage-acceptance.mjs'
+      - 'src/app/api/media/[id]/route.ts'
+      - 'src/app/api/media/[id]/route.test.ts'
       - '.github/workflows/phase15-live-storage-acceptance.yml'
   workflow_dispatch:
 
