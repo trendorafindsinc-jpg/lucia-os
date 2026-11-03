@@ -41,6 +41,10 @@ export async function createContinuityFixtures(admin) {
   return fixtures;
 }
 export async function removeContinuityFixtures(admin, f) {
+  // Audit events are deliberately retained during normal operation, but these rows
+  // belong exclusively to synthetic *_acceptance organizations. Remove their
+  // dependent audit records before deleting the disposable fixture organizations.
+  await admin`DELETE FROM platform_audit_events WHERE organization_id IN (${f.orgA},${f.orgB})`;
   await admin`DELETE FROM websites WHERE id IN (${f.siteA},${f.siteB},${f.foreign})`;
   await admin`DELETE FROM organizations WHERE id IN (${f.orgA},${f.orgB})`;
   await admin`DELETE FROM app_users WHERE id IN (${f.a},${f.b})`;
