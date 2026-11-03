@@ -97,6 +97,46 @@ function upload(who, site, png, mime="image/png", alt="Synthetic test image") {
     body:form, signal:AbortSignal.timeout(45000)
   });
 }
+async function uploadMultipartAsset(site, kind, mime, filename, bytes) {
+  const sha256=createHash("sha256").update(bytes).digest("hex");
+  const createdResponse=await api("a","/api/websites/"+site+"/media/assets","POST",{
+    action:"create",kind,mime,filename,bytes:bytes.length,sha256,
+    headerBase64:bytes.subarray(0,32).toString("base64"),
+    alt:"Real external storage acceptance asset",
+    caption:"Synthetic Phase 15 storage test",
+    durationMs:kind==="video"?1000:null
+  });
+  const session=await createdResponse.json();
+  assert.equal(createdResponse.status,200,session.error);
+  assert.equal(session.partCount,1,"Small canary asset must use one multipart part");
+  const partResponse=await fetch(session.parts[0].url,{method:"PUT",body:new Uint8Array(bytes),signal:AbortSignal.timeout(30000)});
+  assert.equal(partResponse.status,200,"IDrive multipart part upload failed");
+  const etag=partResponse.headers.get("etag");
+  assert(etag,"IDrive did not return a part ETag");
+  const completed=await api("a","/api/websites/"+site+"/media/assets","POST",{
+    action:"complete",mediaId:session.mediaId,uploadId:session.uploadId,
+    parts:[{partNumber:1,etag}]
+  });
+  const asset=await completed.json();
+  assert.equal(completed.status,200,asset.error);
+  created.add(asset.id);
+  result.objects.push({id:asset.id,bytes:asset.bytes,kind,store:"created_by_real_application_multipart"});
+  const row=await mediaRow(asset.id);
+  assert(row&&row.status==="ready");
+  assert.equal(row.kind,kind);
+  assert.equal(row.checksum,sha256);
+  assert.equal(row.bytes,bytes.length);
+  const head=await signHead(row.object_key);
+  assert.equal(head.status,200,"IDrive multipart object HEAD failed");
+  assert.equal(Number(head.headers.get("content-length")),bytes.length);
+  const full=await api("a","/_media/"+asset.id);
+  assert.equal(full.status,200,"Application could not read private multipart asset");
+  assert.deepEqual(Buffer.from(await full.arrayBuffer()),bytes);
+  const ranged=await api("a","/_media/"+asset.id,"GET",undefined,{range:"bytes=0-7"});
+  assert.equal(ranged.status,206,"Application range read did not return 206");
+  assert.deepEqual(Buffer.from(await ranged.arrayBuffer()),bytes.subarray(0,8));
+  return asset;
+}
 function hostRead(host, path) {
   return new Promise((resolve, reject) => {
     const req = http.get({ hostname:"127.0.0.1", port, path, headers:{host} }, (res) => {
@@ -251,6 +291,12 @@ try {
     original=json.image;created.add(original.id);
     result.objects.push({id:original.id,bytes:original.bytes,store:"created_by_real_application"});
     await verifyObject(original);
+  });
+  await checkpoint("real-idrive-multipart-video-pdf-upload-checksum-and-range-read",async()=>{
+    const mp4=Buffer.from("0000ftypisom00000000synthetic-mp4-payload");
+    const pdf=Buffer.from("%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF");
+    await uploadMultipartAsset(fixture.siteA,"video","video/mp4","phase15-canary.mp4",mp4);
+    await uploadMultipartAsset(fixture.siteA,"document","application/pdf","phase15-canary.pdf",pdf);
   });
   await checkpoint("cross-tenant-private-read-delete-and-auth",async()=>{
     assert.equal((await api(null,"/_media/"+original.id)).status,404);
