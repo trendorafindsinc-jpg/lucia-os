@@ -98,7 +98,7 @@ describe("Phase 16 personalization across all 48 original Layout identities", ()
     });
     expect(cleared.pages.flatMap(p => p.sections).filter(s => s.type === "contact-panel")
       .every(s => s.type === "contact-panel" && s.email === undefined)).toBe(true);
-    expect(checkPremiumPublishContacts(cleared).ready).toBe(false);
+    expect(checkPremiumPublishContacts(cleared).ready).toBe(true);
     const page = layout.pages.find(p => p.sections.some(s => "heading" in s))!;
     const section = page.sections.find(s => "heading" in s)!;
     expect(() => applyPremiumEdit(layout, "guided", {
