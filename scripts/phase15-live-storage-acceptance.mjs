@@ -316,7 +316,8 @@ try {
   await startApp();
   const firstPng=await imageInput();
   let original,replacement;
-  await checkpoint("independent-bucket-list-and-write-scope-denial",async()=>{
+  try {
+    await checkpoint("independent-bucket-list-and-write-scope-denial",async()=>{
     const probeBucket=process.env.S3_SCOPE_PROBE_BUCKET;
     assert.equal(probeBucket,"lucia-os-phase15-scope-probe-2026","A separately administered existing probe bucket is required");
     const probeKey="scope-check/"+randomUUID()+".bin";
@@ -340,9 +341,13 @@ try {
     const deniedWriteCode=deniedWriteXml.match(/<Code>([^<]+)<\/Code>/)?.[1]??"unknown";
     assert.equal(deniedWrite.status,403,"The GitHub IDrive key has unexpected access outside its assigned customer-media bucket");
     assert.equal(deniedWriteCode,"AccessDenied","Probe write must be denied by bucket scope, not by an invalid signature");
-    result.credentialScope="VERIFIED_LIST_AND_WRITE";
-    result.credentialScopeEvidence={list:deniedListCode,read:deniedReadCode,write:deniedWriteCode};
-  });
+      result.credentialScope="VERIFIED_LIST_AND_WRITE";
+      result.credentialScopeEvidence={list:deniedListCode,read:deniedReadCode,write:deniedWriteCode};
+    });
+  } catch (error) {
+    result.credentialScope="FAILED";
+    result.credentialScopeFailure=error instanceof Error?error.message.slice(0,240):"Unknown scope verification failure";
+  }
   await checkpoint("authenticated-real-png-to-idrive-and-metadata",async()=>{
     const x=await upload("a",fixture.siteA,firstPng,"image/png","Original synthetic gallery scene");
     const json=await x.json();assert.equal(x.status,201,json.error);
