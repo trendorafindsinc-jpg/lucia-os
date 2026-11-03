@@ -194,7 +194,7 @@ export async function POST(request: Request, context: RouteContext) {
         });
       await tx.insert(platformAuditEvents).values({
         actorUserId: access.user.id,
-        actorKind: "user",
+        actorKind: "tenant",
         organizationId: access.membership.organizationId,
         action: "website.domain.claim_requested",
         targetType: "website_domain",
@@ -307,7 +307,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         ));
       await tx.insert(platformAuditEvents).values({
         actorUserId: access.user.id,
-        actorKind: "user",
+        actorKind: "tenant",
         organizationId: access.membership.organizationId,
         action: "website.lucia_subdomain.renamed",
         targetType: "website",
