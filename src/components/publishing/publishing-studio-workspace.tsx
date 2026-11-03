@@ -33,7 +33,7 @@ export function PublishingStudioWorkspace({accountId}:{accountId:string}) {
  const [search,setSearch]=useState("");
  const [status,setStatus]=useState("all");
  const [kind,setKind]=useState("all");
- const [editor,setEditor]=useState<{kind:ArticleKind;articleId?:string|null}|null>(null);
+ const [editor,setEditor]=useState<{kind:ArticleKind;articleId?:string|null}|null>(null);\n const [editorDirty,setEditorDirty]=useState(false);\n const reportEditorDirty=useCallback((dirty:boolean)=>setEditorDirty(dirty),[]);
  const headers=useMemo(()=>({"x-lucia-workspace-account":accountId}),[accountId]);
  const load=useCallback(async()=>{
   if(!websiteId){setError("Choose a website before opening Publishing Studio.");setLoading(false);return;}
@@ -66,8 +66,8 @@ export function PublishingStudioWorkspace({accountId}:{accountId:string}) {
  }),[articles,view,kind,status,search]);
  const categories=useMemo(()=>Array.from(new Set(articles.map(a=>a.category.trim()).filter(Boolean))).sort((a,b)=>a.localeCompare(b)),[articles]);
  const tags=useMemo(()=>Array.from(new Set(articles.flatMap(a=>a.tags||[]).map(t=>t.trim()).filter(Boolean))).sort((a,b)=>a.localeCompare(b)),[articles]);
- const openEditor=(article:Article)=>setEditor({kind:article.kind,articleId:article.id});
- const create=(articleKind:ArticleKind)=>setEditor({kind:articleKind,articleId:null});
+ const openEditor=(article:Article)=>{setEditorDirty(false);setEditor({kind:article.kind,articleId:article.id});};
+ const create=(articleKind:ArticleKind)=>{setEditorDirty(false);setEditor({kind:articleKind,articleId:null});};
  const title=nav.find(item=>item.id===view)?.label||"Overview";
  if(!websiteId)return <main className="publishing-shell"><h1>Choose a website</h1><p>Open Publishing Studio from one of your websites.</p><Link href="/workspace/websites">Your websites</Link></main>;
  return <main className="publishing-shell">
@@ -123,4 +123,4 @@ export function PublishingStudioWorkspace({accountId}:{accountId:string}) {
  </main>;
 }
 function EmptyState({onBlog,onNews}:{onBlog:()=>void;onNews:()=>void}){return <div className="publishing-empty"><strong>Your publishing workspace is ready.</strong><p>Create a Blog post or News story. Drafts remain private until you publish.</p><div className="publishing-row-actions"><button className="publishing-secondary" type="button" onClick={onBlog}>Create first Blog post</button><button className="publishing-secondary" type="button" onClick={onNews}>Create first News story</button></div></div>}
-function ArticleList({articles,siteSlug,onEdit}:{articles:Article[];siteSlug:string;onEdit:(article:Article)=>void}){return <div className="publishing-article-list">{articles.map(article=><article className="publishing-article-row" key={article.id}><div><h3>{article.title||"Untitled story"}</h3><p>{article.kind==="blog"?"Blog":"News"} · {article.category||"Uncategorised"} · Updated {dateLabel(article.updatedAt)} · Revision {article.revision}</p></div><div className="publishing-row-actions"><span className="publishing-status" data-status={article.status}>{statusLabel(article.status)}</span><button type="button" onClick={()=>onEdit(article)}>Edit</button>{article.status==="published"&&article.publishedSlug&&siteSlug&&<a href={"https://"+siteSlug+".lucia.name.ng"+articleRoute(article.kind,article.publishedSlug)} target="_blank" rel="noopener noreferrer">View ↗</a>}</div></article>)}</div>}
+function ArticleList({articles,siteSlug,onEdit}:{articles:Article[];siteSlug:string;onEdit:(article:Article)=>void}){return <div className="publishing-article-list">{articles.map(article=><article className="publishing-article-row" key={article.id}><div><h3>{article.title||"Untitled story"}</h3><p>{article.kind==="blog"?"Blog":"News"} · {article.category||"Uncategorised"} · Updated {dateLabel(article.updatedAt)} · Revision {article.revision}{article.status==="scheduled"?" · Scheduled for "+dateLabel(article.scheduledAt):""}</p></div><div className="publishing-row-actions"><span className="publishing-status" data-status={article.status}>{statusLabel(article.status)}</span><button type="button" onClick={()=>onEdit(article)}>Edit</button>{article.status==="published"&&article.publishedSlug&&siteSlug&&<a href={"https://"+siteSlug+".lucia.name.ng"+articleRoute(article.kind,article.publishedSlug)} target="_blank" rel="noopener noreferrer">View ↗</a>}</div></article>)}</div>}
