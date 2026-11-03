@@ -211,6 +211,13 @@
       "when": 1793557500000,
       "tag": "0029_public_article_rls_host_binding",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1793703000000,
+      "tag": "0030_global_website_hostname_availability",
+      "breakpoints": true
     }
   ]
 }
