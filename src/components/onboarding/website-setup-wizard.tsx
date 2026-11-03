@@ -25,7 +25,7 @@ export function WebsiteSetupWizard({ userId }: { userId: string }) {
   }, []);
   const recommended = useMemo(() => recommendWebsiteLayouts(description, purpose, style), [description, purpose, style]);
   const chosenId = selected || recommended[0]?.id || "";
-  const suggestedSubdomain = name.trim().toLowerCase().normalize("NFKD").replace(/[\\u0300-\\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 63).replace(/-+$/g, "");
+  const suggestedSubdomain = name.trim().toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 63).replace(/-+$/g, "");
   const subdomainValue = (subdomain || suggestedSubdomain).toLowerCase();
   const candidates = showAll ? all : recommended;
   const valid = name.trim().length >= 2 && description.trim().length >= 2 &&
@@ -92,7 +92,7 @@ export function WebsiteSetupWizard({ userId }: { userId: string }) {
       </label>
       <details className="website-first-optional"><summary>Optional: contact details and preferred style</summary>
         <div className="website-first-optional-fields">
-          <label><span>4. How should people contact you?</span><input maxLength={254} value={contact} onChange={(e) => setContact(e.target.value)} placeholder="Email address or telephone number"/></label>
+          <label><span>5. How should people contact you?</span><input maxLength={254} value={contact} onChange={(e) => setContact(e.target.value)} placeholder="Email address or telephone number"/></label>
           <label><span>5. Do you have a preferred style?</span><select value={style} onChange={(e) => setStyle(e.target.value)}>
             {["No preference", "Modern", "Classic", "Bold", "Warm"].map((value) => <option key={value}>{value}</option>)}</select></label>
         </div>
