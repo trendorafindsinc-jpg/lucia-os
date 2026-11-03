@@ -149,7 +149,6 @@ export function VersionWorkspace() {
           description: home.description.slice(0, 220),
           palette: "original",
           visibleSections: home.sections.slice(0, 12).map((section) => section.type),
-          templateId: definition.layoutId,
         }));
       } else {
         setDraft(siteDraftSchema.parse(definition));
