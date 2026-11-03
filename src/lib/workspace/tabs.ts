@@ -46,7 +46,7 @@ export function describeWorkspaceRoute(pathname: string, search: string): Worksp
   if (pathname === "/workspace/team") {
     return { appKey: "workspace-tools", label: "Team & access", href: pathname + search, context: "team" };
   }
-  if (pathname === "/publish") {
+  if (pathname === "/publishing") {\n    return { appKey: "website-engine", label: "Publishing Studio", href: pathname + search, context: websiteContext };\n  }\n  if (pathname === "/publish") {
     return { appKey: "website-engine", label: "Publishing", href: pathname + search, context: websiteContext };
   }
   if (pathname === "/analytics") {
