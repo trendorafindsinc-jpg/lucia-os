@@ -398,10 +398,9 @@ try {
     assert.equal(savedVersion.status,201,versionBody.error);
     const originalHeadline=checkpointSnapshot.headline;
     const publishedBefore=await only("select published_content from website_pages where website_id=$1 and path='/'",[fixture.siteA]);
-    const foreignRestore=await api("b","/api/websites/"+fixture.siteA+"/versions/"+versionBody.id+"/restore","POST",undefined,{"if-match":"\\"draft-"+"0".repeat(64)+"\\""});
-    assert.equal(foreignRestore.status,404,"Cross-tenant version restore must not reveal or mutate another website");
     const current=await (await api("a","/api/websites/"+fixture.siteA+"/draft")).json();
-    const home=current.draft.pages.find((page)=>page.path==="/");
+    const foreignRestore=await api("b","/api/websites/"+fixture.siteA+"/versions/"+versionBody.id+"/restore","POST",undefined,{"if-match":current.revision});
+    assert.equal(foreignRestore.status,404,"Cross-tenant version restore must not reveal or mutate another website");
     const changed=await edit(fixture.siteA,[{
       kind:"page-details",pageId:home.id,path:"/",title:"Temporary changed composition",description:home.description,navigation:true
     }]);
