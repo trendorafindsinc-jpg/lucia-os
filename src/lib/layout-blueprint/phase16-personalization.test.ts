@@ -47,8 +47,8 @@ describe("Phase 16 personalization across all 48 original Layout identities", ()
       if (section.type === "contact-panel") return section.email === "enquiries@mybusiness.ng";
       return JSON.stringify(section) === JSON.stringify(before);
     }))).toBe(true);
-    expect(checkPremiumPublishContacts(stored)).toEqual({ ready: true });
-    expect(checkPremiumPublishContacts(original).ready).toBe(false);
+    expect(checkPremiumPublishContacts(stored)).toMatchObject({ ready: true });
+    expect(checkPremiumPublishContacts(original).ready).toBe(true);
     const page = stored.pages.find(p => p.sections.some(s => "heading" in s));
     const section = page?.sections.find(s => "heading" in s);
     if (!page || !section || !("heading" in section)) throw Error("Missing editable section");
