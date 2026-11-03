@@ -120,6 +120,11 @@ export async function checkPhase15AuthenticatedAcceptance({
         await view.getByRole("link", { name: "Create this website" }).click();
         await view.locator(".website-first-form").waitFor();
         assert.equal(new URL(view.url()).searchParams.get("template"), "lucia.layout." + name);
+        const freeAddressInput = view.locator(".website-first-subdomain-input input");
+        await freeAddressInput.waitFor();
+        await freeAddressInput.fill(siteSlug);
+        await view.getByRole("button", { name: "Check availability", exact: true }).click();
+        await view.getByText("Available — " + siteSlug + ".lucia.name.ng", { exact: true }).waitFor();
         const creation = await api("a", "/api/onboarding/website", "POST", {
           organisationName: "Continuity organization A", websiteName: originalName,
           organisationType: "Business or service", goal: "Introduce my organisation",
@@ -688,6 +693,27 @@ export async function checkPhase15AuthenticatedAcceptance({
         tenantDenial: "PASS", staleSave: "PASS", stalePublish: "PASS", corruptPublicationPreservesLive: "PASS", revokedMembership: "PASS",
         authentication: "Synthetic session; not live Core OAuth", result: "PASS" });
     }
+     if (phase15 && name === selected[0]) {
+       const renamedSlug = name + "-renamed-" + randomBytes(4).toString("hex");
+       const renameAvailability = await api("a", "/api/websites/" + id + "/domains?subdomain=" + encodeURIComponent(renamedSlug));
+       assert.equal((await renameAvailability.json()).state, "available", "new free LUCIA address must be available before rename");
+       const beforeRename = await (await api("a", draftRoute(id))).json();
+       const renamedAddress = await api("a", "/api/websites/" + id + "/domains", "PATCH", {
+         organizationId: f.orgA, subdomain: renamedSlug,
+       });
+       const renamedBody = await renamedAddress.json();
+       assert.equal(renamedAddress.status, 200, "authorized free subdomain rename: " + renamedBody.error);
+       assert.equal(renamedBody.domain.hostname, renamedSlug + ".lucia.name.ng");
+       const afterRename = await (await api("a", draftRoute(id))).json();
+       assert.deepEqual(afterRename.draft, beforeRename.draft, "renaming the address must preserve the website draft");
+       assert.equal((await publicSite("/", renamedSlug + ".lucia.name.ng")).status, 200, "renamed host must resolve the same published website");
+       assert.equal((await publicSite("/", host)).status, 404, "old free host must no longer resolve after rename");
+       const collision = await api("a", "/api/websites/" + id + "/domains", "PATCH", {
+         organizationId: f.orgA, subdomain: "admin",
+       });
+       assert.equal(collision.status, 400, "reserved platform labels must not be claimable");
+       bpass("Phase 15 free LUCIA address: creation availability, atomic claim, tenant-authorized rename and content preservation");
+     }
     assert.equal(errors.length, 0, errors.join("; "));
   } finally {
     await view.close();
