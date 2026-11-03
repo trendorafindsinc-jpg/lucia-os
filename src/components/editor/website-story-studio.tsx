@@ -12,7 +12,7 @@ type Story = {
  revision:number;status:"draft"|"scheduled"|"published";publishedSlug:string|null;publishedAt:string|null;scheduledAt:string|null;
 };
 function toLocalDateTime(value:string){const date=new Date(value);return new Date(date.getTime()-date.getTimezoneOffset()*60000).toISOString().slice(0,16);}
-export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
+export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArticleId=null,startNew=false,onClose}:{
  websiteId:string;accountId?:string|null;initialKind:ArticleKind;initialArticleId?:string|null;startNew?:boolean;onClose:()=>void;
 }) {
  const [kind,setKind]=useState<ArticleKind>(initialKind);
@@ -50,7 +50,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
    setDirty(false);
   } catch(error){setMessage(error instanceof Error?error.message:"Could not load articles.");}
   finally{setLoading(false);}
- },[websiteId,headers]);
+ },[websiteId,headers,initialArticleId,startNew]);
  useEffect(()=>{void load();},[load]);
  useEffect(()=>{
   if(contentMode!=="rich"||!richEditorRef.current)return;
