@@ -300,7 +300,9 @@ export async function checkPhase15AuthenticatedAcceptance({
       const firstPublicHtml = await firstPublic.text();
       assert(!firstPublicHtml.includes("hello@example.com"), name + " public snapshot exposed demonstration email");
       assert(Array.isArray(firstPublishBody.recommendations), name + " publish response should explain optional contact recommendations");
-      await view.goto(base + "/publish?websiteId=" + id, { waitUntil: "networkidle" });
+      await view.goto(base + "/editor?websiteId=" + id, { waitUntil: "networkidle" });
+      await view.getByRole("button", { name: "Publish", exact: true }).click();
+      await view.getByRole("heading", { name: "Publish your website", exact: true }).waitFor();
       await view.getByRole("button", { name: "Publish website", exact: true }).click();
       await view.getByText(/Demonstration contact details were hidden from the public website/, { exact: false }).waitFor();
       await view.getByRole("link", { name: "Edit contact email in Layout Studio", exact: true }).waitFor();
