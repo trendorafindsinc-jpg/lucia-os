@@ -13,12 +13,12 @@ type Story = {
 };
 function toLocalDateTime(value:string){const date=new Date(value);return new Date(date.getTime()-date.getTimezoneOffset()*60000).toISOString().slice(0,16);}
 export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
- websiteId:string;accountId?:string|null;initialKind:ArticleKind;onClose:()=>void;
+ websiteId:string;accountId?:string|null;initialKind:ArticleKind;initialArticleId?:string|null;startNew?:boolean;onClose:()=>void;
 }) {
  const [kind,setKind]=useState<ArticleKind>(initialKind);
  const [articles,setArticles]=useState<Story[]>([]);
  const [siteSlug,setSiteSlug]=useState("");
- const [selected,setSelected]=useState<string|null>(null);
+ const [selected,setSelected]=useState<string|null>(initialArticleId);
  const [draft,setDraft]=useState<Story|null>(null);
  const [newTitle,setNewTitle]=useState("");
  const [busy,setBusy]=useState(false);
@@ -46,7 +46,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
    if(!response.ok)throw Error(payload.error || "Could not load content.");
    setArticles(payload.articles);
    setSiteSlug(payload.siteSlug || "");
-   setSelected(current=>current && payload.articles.some((a:Story)=>a.id===current)?current:(payload.articles[0]?.id||null));
+   setSelected(current=>current && payload.articles.some((a:Story)=>a.id===current)?current:(startNew?null:(initialArticleId && payload.articles.some((a:Story)=>a.id===initialArticleId)?initialArticleId:(payload.articles[0]?.id||null))));
    setDirty(false);
   } catch(error){setMessage(error instanceof Error?error.message:"Could not load articles.");}
   finally{setLoading(false);}
