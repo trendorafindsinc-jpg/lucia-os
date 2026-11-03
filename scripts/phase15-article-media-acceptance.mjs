@@ -160,7 +160,11 @@ export async function checkPhase15ArticleMediaAcceptance({
       await publishingUi.locator(".publishing-nav-item").filter({ hasText: "All Posts" }).click();
       const blogRow = publishingUi.locator(".publishing-article-row").filter({ hasText: title });
       await blogRow.waitFor();
+      await publishingUi.setViewportSize({ width: 390, height: 844 });
+      await publishingUi.screenshot({ path: "artifacts/phase14-auth-publish/publishing-studio-blog-390.png", fullPage: true });
       await blogRow.getByRole("button", { name: "Edit", exact: true }).click();
+      await publishingUi.setViewportSize({ width: 1440, height: 900 });
+      await publishingUi.screenshot({ path: "artifacts/phase14-auth-publish/publishing-studio-writing-1440.png", fullPage: true });
       await publishingUi.getByLabel("Summary").fill("Updated in the dedicated Publishing Studio browser journey.");
       await publishingUi.locator(".story-rich-editor").fill("This article was edited in the focused rich-text writing canvas.");
       await publishingUi.getByRole("button", { name: "Markdown source", exact: true }).click();
@@ -345,6 +349,8 @@ export async function checkPhase15ArticleMediaAcceptance({
       await newsRow.waitFor();
       await newsRow.getByRole("button", { name: "Edit", exact: true }).click();
       await newsroomUi.getByText("Newsroom metadata", { exact: true }).waitFor();
+      await newsroomUi.setViewportSize({ width: 390, height: 844 });
+      await newsroomUi.screenshot({ path: "artifacts/phase14-auth-publish/publishing-studio-news-390.png", fullPage: true });
       const localEvent = new Date(Date.now() + 3600000 - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
       await newsroomUi.getByLabel("Event date and time (optional)").fill(localEvent);
       await newsroomUi.getByLabel("Feature this news story").check();
