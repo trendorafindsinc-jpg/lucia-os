@@ -11,9 +11,12 @@ export const metadata: Metadata = {
 };
 export const dynamic = "force-dynamic";
 
-export default async function PublishingStudioPage() {
+export default async function PublishingStudioPage({ searchParams }: { searchParams: Promise<{ websiteId?: string | string[] }> }) {
+  const params = await searchParams;
+  const websiteId = typeof params.websiteId === "string" ? params.websiteId : "";
+  const returnTo = websiteId ? "/publishing?websiteId=" + encodeURIComponent(websiteId) : "/workspace/websites";
   const user = await getCurrentUser();
-  if (!user) redirect("/api/auth/login?returnTo=%2Fworkspace%2Fwebsites");
+  if (!user) redirect("/api/auth/login?returnTo=" + encodeURIComponent(returnTo));
   return <Suspense fallback={<main className="publishing-shell"><p role="status">Opening Publishing Studio…</p></main>}>
     <PublishingStudioWorkspace accountId={user.id} />
   </Suspense>;
