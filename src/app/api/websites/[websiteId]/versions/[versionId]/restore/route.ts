@@ -19,6 +19,8 @@ export async function POST(request: Request, context: RouteContext) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Sign in with LUCIA ID to restore a version." }, { status: 401 });
   if (!websiteMutationAllowed(request)) return NextResponse.json({ error: "Request origin denied." }, { status: 403 });
+  const expectedAccount = request.headers.get("x-lucia-workspace-account");
+  if (expectedAccount && expectedAccount !== user.id) return NextResponse.json({ error: "Account changed. Reload this workspace before restoring." }, { status: 409 });
   const { websiteId, versionId } = await context.params;
   if (!z.string().uuid().safeParse(websiteId).success || !z.string().uuid().safeParse(versionId).success)
     return NextResponse.json({ error: "Invalid website or version id." }, { status: 400 });
