@@ -35,6 +35,17 @@ describe("public-host media isolation", () => {
     expect(response.headers.get("content-disposition")).toContain("Annual%20report%202026.pdf");
     expect(response.headers.get("content-security-policy")).toContain("sandbox");
   });
+  it("recognizes the local platform host when the acceptance server uses a port", async () => {
+    mocks.readable.mockResolvedValue({object_key:"os/owner/site/"+id+".webp",bytes:4,kind:"image",mime:"image/webp",public:false});
+    mocks.imageGet.mockResolvedValue(Buffer.from("test"));
+    const response = await GET(new Request("http://localhost:3000/api/media/" + id, {
+      headers: { host: "localhost:3000", cookie: "lucia_os_session=synthetic" }
+    }), context);
+    expect(response.status).toBe(200);
+    expect(mocks.user).toHaveBeenCalledOnce();
+    expect(mocks.readable).toHaveBeenCalledWith(id, "owner");
+    expect(Buffer.from(await response.arrayBuffer())).toEqual(Buffer.from("test"));
+  });
   it("allows the platform hostname to check the authenticated private owner", async () => {
     await GET(new Request("http://localhost:3000/api/media/" + id, { headers: { host: "os.lucia.name.ng" } }), context);
     expect(mocks.readable).toHaveBeenCalledWith(id, "owner");
