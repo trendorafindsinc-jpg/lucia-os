@@ -43,6 +43,7 @@ jobs:
       S3_ENDPOINT: https://s3.eu-west-3.idrivee2.com
       S3_REGION: eu-west-3
       S3_BUCKET: lucia-os-customer-media-2026
+      S3_SCOPE_PROBE_BUCKET: lucia-os-phase15-scope-probe-2026
       MEDIA_UPLOADS_ENABLED: '1'
       MEDIA_WEBSITE_QUOTA_BYTES: '5000000'
       MEDIA_PRODUCT_BUDGET_BYTES: '2000000000'
