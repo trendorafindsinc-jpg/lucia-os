@@ -151,6 +151,38 @@ export async function checkPhase15ArticleMediaAcceptance({
     const initializedBody = await initialized.json();
     assert.equal(initialized.status, 200, initializedBody.error);
     article = initializedBody.article;
+
+    // Exercise the dedicated customer-facing Publishing Studio, not only its APIs.
+    const publishingUi = await browserContext.newPage();
+    try {
+      await publishingUi.goto(base + "/publishing?websiteId=" + siteId, { waitUntil: "networkidle" });
+      await publishingUi.getByRole("heading", { name: "Overview" }).waitFor();
+      await publishingUi.locator(".publishing-nav-item").filter({ hasText: "All Posts" }).click();
+      const blogRow = publishingUi.locator(".publishing-article-row").filter({ hasText: title });
+      await blogRow.waitFor();
+      await blogRow.getByRole("button", { name: "Edit", exact: true }).click();
+      await publishingUi.getByLabel("Summary").fill("Updated in the dedicated Publishing Studio browser journey.");
+      await publishingUi.locator(".story-rich-editor").fill("This article was edited in the focused rich-text writing canvas.");
+      await publishingUi.getByRole("button", { name: "Save draft", exact: true }).click();
+      await publishingUi.getByText("Draft saved. Live content was not changed.", { exact: true }).waitFor();
+      await publishingUi.getByRole("button", { name: "Version history", exact: true }).click();
+      const revisionPanel = publishingUi.getByRole("region", { name: "Article revision history" });
+      await revisionPanel.waitFor();
+      assert((await revisionPanel.locator("article").count()) >= 3, "Publishing Studio must expose the saved revision history");
+      await revisionPanel.getByRole("button", { name: "Close", exact: true }).click();
+      await publishingUi.getByRole("button", { name: "Preview draft", exact: true }).click();
+      assert(await publishingUi.getByRole("heading", { name: title }).isVisible(), "Private Blog preview must show the article headline");
+      await publishingUi.getByRole("button", { name: "Edit article", exact: true }).click();
+      await publishingUi.getByRole("button", { name: "Back to Publishing Studio", exact: true }).click();
+      await publishingUi.locator(".publishing-nav-item").filter({ hasText: "Blog" }).click();
+      assert(await publishingUi.locator(".publishing-article-row").filter({ hasText: title }).isVisible());
+    } finally {
+      await publishingUi.close();
+    }
+    articles = await (await api("a", articleRoute)).json();
+    article = articles.articles.find((entry) => entry.id === articleId);
+    assert.equal(article.status, "draft", "Saving in Publishing Studio must not publish a private draft");
+    bpass("Dedicated Publishing Studio Blog workflow: website-scoped overview/list, rich-text edit, draft save, revision history, private preview and return navigation");
     const foreignRef = await patchArticle(articleId, article, "media:" + foreignImage, "save");
     assert.equal(foreignRef.status, 422, "A different tenant's media must not be attachable");
     const foreignBody=await patchArticle(articleId,{...article,body:article.body+"\n\n[Foreign](media:"+foreignImage+")"},null,"save");
@@ -299,7 +331,29 @@ export async function checkPhase15ArticleMediaAcceptance({
     const newsDraft = { ...newsBody.article, excerpt: "A short official update.", body: "This is a synthetic news update for the isolated Phase 15 acceptance suite.", category: "Company",eventAt:null,isFeatured:false,correctionNote:null,correctsSlug:null,tags:["company","update"],seoTitle:newsTitle+" | LUCIA",seoDescription:"A short official update for the customer website." };
     const newsSaved = await patchArticle(newsId, newsDraft, null, "save");
     assert.equal(newsSaved.status, 200, (await newsSaved.clone().json()).error);
-    const newsPublished = await patchArticle(newsId, (await newsSaved.json()).article, null, "publish");
+    const newsroomUi = await browserContext.newPage();
+    try {
+      await newsroomUi.goto(base + "/publishing?websiteId=" + siteId, { waitUntil: "networkidle" });
+      await newsroomUi.locator(".publishing-nav-item").filter({ hasText: "Newsroom" }).click();
+      const newsRow = newsroomUi.locator(".publishing-article-row").filter({ hasText: newsTitle });
+      await newsRow.waitFor();
+      await newsRow.getByRole("button", { name: "Edit", exact: true }).click();
+      await newsroomUi.getByText("Newsroom metadata", { exact: true }).waitFor();
+      const localEvent = new Date(Date.now() + 3600000 - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+      await newsroomUi.getByLabel("Event date and time (optional)").fill(localEvent);
+      await newsroomUi.getByLabel("Feature this news story").check();
+      await newsroomUi.getByLabel("Correction notice (optional)").fill("Correction details verified by the newsroom.");
+      await newsroomUi.getByRole("button", { name: "Save draft", exact: true }).click();
+      await newsroomUi.getByText("Draft saved. Live content was not changed.", { exact: true }).waitFor();
+      await newsroomUi.getByRole("button", { name: "Back to Publishing Studio", exact: true }).click();
+    } finally {
+      await newsroomUi.close();
+    }
+    const newsUiCurrent = (await (await api("a", articleRoute)).json()).articles.find((entry) => entry.id === newsId);
+    assert.equal(newsUiCurrent.isFeatured, true, "Newsroom featured state must persist");
+    assert(newsUiCurrent.eventAt, "Newsroom event date must persist");
+    assert.equal(newsUiCurrent.correctionNote, "Correction details verified by the newsroom.");
+    const newsPublished = await patchArticle(newsId, newsUiCurrent, null, "publish");
     assert.equal(newsPublished.status, 200, (await newsPublished.clone().json()).error);
     const newsRecord = (await (await api("a", articleRoute)).json()).articles.find((entry) => entry.id === newsId);
     assert.equal((await publicSite("/news", host)).status, 200);
