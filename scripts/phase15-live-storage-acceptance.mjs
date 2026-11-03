@@ -20,8 +20,8 @@ const result = {
   identity: "isolated synthetic hashed application sessions; live LUCIA Core OAuth NOT tested",
   databaseIsolation: false, provider: "IDrive e2 London-2", bucket: "lucia-os-customer-media-2026",
   testsPassed: 0, testsFailed: 0, tests: [], objects: [], cleanup: "NOT_RUN",
-  verified: false, historicalV2Rollback: "NOT_SUPPORTED_BY_CURRENT_VERSION_API",
-  credentialScope: "REQUIRES_BUCKET_SCOPED_PHASE15_IDRIVE_KEY; VERIFY_BEFORE_LIVE_RUN"
+  verified: false, historicalV2Rollback: "NOT_RUN",
+  credentialScope: "REQUIRES_PROVIDER_SCOPE_EVIDENCE"
 };
 let admin, runtime, fixture, child, base, port;
 const created = new Set(), synthetic = new Set();
@@ -357,6 +357,43 @@ try {
       headline:saved.draft.pages[0].title,description:saved.draft.pages[0].description,customDomain:""
     },{"if-match":saved.revision})).status,404);
   });
+  await checkpoint("historical-v2-composition-checkpoint-restore",async()=>{
+    const checkpointSnapshot={
+      siteName:saved.draft.identity.name,
+      headline:saved.draft.pages.find((page)=>page.path==="/").title.slice(0,100),
+      description:saved.draft.pages.find((page)=>page.path==="/").description.slice(0,220),
+      palette:"original",
+      visibleSections:["hero","editorial"],
+      pages:[{id:"home",title:"Home",slug:"",sectionTypes:["hero","editorial"]}],
+      seoTitle:saved.draft.identity.name.slice(0,70),
+      seoDescription:saved.draft.identity.description.slice(0,200),
+      contentPostCount:0,
+      composition:saved.draft
+    };
+    const savedVersion=await api("a","/api/websites/"+fixture.siteA+"/versions","POST",{
+      label:"Phase 15 historical v2 rollback canary",
+      notes:"Synthetic isolated acceptance checkpoint",
+      snapshot:checkpointSnapshot
+    });
+    const versionBody=await savedVersion.json();
+    assert.equal(savedVersion.status,201,versionBody.error);
+    const originalHeadline=checkpointSnapshot.headline;
+    const current=await (await api("a","/api/websites/"+fixture.siteA+"/draft")).json();
+    const home=current.draft.pages.find((page)=>page.path==="/");
+    const changed=await edit(fixture.siteA,[{
+      kind:"page-details",pageId:home.id,path:"/",title:"Temporary changed composition",description:home.description,navigation:true
+    }]);
+    assert.equal(changed.draft.pages.find((page)=>page.path==="/").title,"Temporary changed composition");
+    const restore=await api("a","/api/websites/"+fixture.siteA+"/versions/"+versionBody.id+"/restore","POST",undefined,{"if-match":changed.revision});
+    const restoreBody=await restore.json();
+    assert.equal(restore.status,200,restoreBody.error);
+    assert.equal(restoreBody.published,false);
+    const restored=await (await api("a","/api/websites/"+fixture.siteA+"/draft")).json();
+    assert.equal(restored.draft.pages.find((page)=>page.path==="/").title,originalHeadline);
+    assert.equal(restored.draft.layoutId,saved.draft.layoutId);
+    assert.deepEqual(restored.draft.pages.map((page)=>page.sections),saved.draft.pages.map((page)=>page.sections));
+    result.historicalV2Rollback="PASS_FULL_COMPOSITION_RESTORED_DRAFT_ONLY";
+  });
   await checkpoint("private-studio-preview-with-real-image",async()=>{
     const { chromium }=await import("playwright");
     const browser=await chromium.launch({headless:true,args:["--no-sandbox","--disable-dev-shm-usage"]});
@@ -531,7 +568,7 @@ try {
     cleanup:result.cleanup
   };
   result.verified= !process.exitCode && result.testsFailed===0 && result.cleanup==="PASS_APP_DELETION_AND_S3_404"
-    && result.historicalV2Rollback!=="NOT_SUPPORTED_BY_CURRENT_VERSION_API"
+    && result.historicalV2Rollback==="PASS_FULL_COMPOSITION_RESTORED_DRAFT_ONLY"
     && result.credentialScope==="VERIFIED";
   // Never claim the two missing gates are proven by a passing smoke test.
   await mkdir("artifacts/phase15-live-storage",{recursive:true});
