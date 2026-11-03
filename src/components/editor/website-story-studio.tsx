@@ -210,7 +210,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArtic
         <label><input type="checkbox" checked={draft.isFeatured} onChange={e=>{setDraft(previous=>previous?{...previous,isFeatured:e.target.checked}:previous);setDirty(true);}}/> Feature this news story</label>
         <label>Correction notice (optional)<textarea value={draft.correctionNote??""} maxLength={500} rows={2} onChange={e=>change("correctionNote",e.target.value||"")}/></label>
         <label>Corrects earlier News slug (optional)<input value={draft.correctsSlug??""} maxLength={120} onChange={e=>change("correctsSlug",e.target.value||"")}/></label>
-       </>}
+       </details>}
        <label>Tags (comma separated)<input value={draft.tags.join(", ")} maxLength={400} onChange={e=>{setDraft(previous=>previous?{...previous,tags:Array.from(new Set(e.target.value.split(",").map(tag=>tag.trim()).filter(Boolean))).slice(0,12)}:previous);setDirty(true);}} placeholder="updates, community, events"/></label>
        <details className="story-seo-fields"><summary>Search and social preview (SEO)</summary>
         <label>SEO title (70 characters maximum)<input value={draft.seoTitle??""} maxLength={70} onChange={e=>change("seoTitle",e.target.value||"")}/></label>
