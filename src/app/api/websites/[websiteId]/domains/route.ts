@@ -38,6 +38,7 @@ export async function GET(request: Request, context: RouteContext) {
     const db = getDb();
     const [domain] = await db.select({ websiteId: websiteDomains.websiteId })
       .from(websiteDomains).where(eq(websiteDomains.hostname, claim.hostname)).limit(1);
+    const excludeWebsiteId = url.searchParams.get("excludeWebsiteId");
     const [legacy] = await db.select({ id: websites.id })
       .from(websites)
       .where(and(
@@ -45,7 +46,6 @@ export async function GET(request: Request, context: RouteContext) {
         ne(websites.status, "deleted"),
         ...(excludeWebsiteId ? [ne(websites.id, excludeWebsiteId)] : []),
       )).limit(1);
-    const excludeWebsiteId = url.searchParams.get("excludeWebsiteId");
     const available = (!domain || domain.websiteId === excludeWebsiteId) && !legacy;
     return NextResponse.json({
       available,
