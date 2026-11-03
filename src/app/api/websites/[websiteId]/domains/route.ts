@@ -43,9 +43,10 @@ export async function GET(request: Request, context: RouteContext) {
       .where(and(
         eq(websites.slug, claim.subdomain!),
         ne(websites.status, "deleted"),
-        ...(websiteId ? [ne(websites.id, websiteId)] : []),
+        ...(excludeWebsiteId ? [ne(websites.id, excludeWebsiteId)] : []),
       )).limit(1);
-    const available = (!domain || domain.websiteId === websiteId) && !legacy;
+    const excludeWebsiteId = url.searchParams.get("excludeWebsiteId");
+    const available = (!domain || domain.websiteId === excludeWebsiteId) && !legacy;
     return NextResponse.json({
       available,
       state: available ? "available" : "taken",
