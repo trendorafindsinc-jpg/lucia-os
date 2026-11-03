@@ -18,7 +18,7 @@ const nav:{id:View;label:string;icon:string}[]=[
  {id:"taxonomy",label:"Categories & Tags",icon:"⌗"},{id:"media",label:"Media Library",icon:"▧"},
  {id:"scheduled",label:"Scheduled",icon:"◷"}
 ];
-const dateLabel=(value:string|Date|null|undefined)=>value?new Date(value).toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"}):"—";
+const dateLabel=(value:string|Date|null|undefined)=>value?(value instanceof Date?value:new Date(value)).toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"}):"—";
 const statusLabel=(status:Article["status"])=>status==="published"?"Published":status==="scheduled"?"Scheduled":"Draft";
 export function PublishingStudioWorkspace({accountId}:{accountId:string}) {
  const params=useSearchParams();
@@ -105,7 +105,7 @@ export function PublishingStudioWorkspace({accountId}:{accountId:string}) {
         <div className="publishing-stat"><small>Drafts</small><strong>{counts.drafts}</strong></div>
         <div className="publishing-stat"><small>Scheduled</small><strong>{counts.scheduled}</strong></div>
        </div>
-       <section className="publishing-panel"><h2>Recent activity</h2>{articles.length?<ArticleList articles={[...articles].sort((a,b)=>new Date(b.updatedAt).getTime()-new Date(a.updatedAt).getTime()).slice(0,6)} siteSlug={siteSlug} onEdit={openEditor}/>:<EmptyState onBlog={()=>create("blog")} onNews={()=>create("news")}/>}</section>
+       <section className="publishing-panel"><h2>Recent activity</h2>{articles.length?<ArticleList articles={[...articles].sort((a,b)=>(b.updatedAt instanceof Date?b.updatedAt:new Date(b.updatedAt)).getTime()-(a.updatedAt instanceof Date?a.updatedAt:new Date(a.updatedAt)).getTime()).slice(0,6)} siteSlug={siteSlug} onEdit={openEditor}/>:<EmptyState onBlog={()=>create("blog")} onNews={()=>create("news")}/>}</section>
        <section className="publishing-panel"><h2>Quick access</h2><div className="publishing-row-actions"><button className="publishing-secondary" type="button" onClick={()=>setView("blog")}>Blog · {counts.blog}</button><button className="publishing-secondary" type="button" onClick={()=>setView("news")}>Newsroom · {counts.news}</button><button className="publishing-secondary" type="button" onClick={()=>setView("scheduled")}>Scheduled · {counts.scheduled}</button></div></section>
       </>}
       {["all","blog","news","scheduled"].includes(view)&&<section className="publishing-panel">
