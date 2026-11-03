@@ -51,7 +51,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArtic
   } catch(error){setMessage(error instanceof Error?error.message:"Could not load articles.");}
   finally{setLoading(false);}
  },[websiteId,headers,initialArticleId,startNew]);
- useEffect(()=>{void load();},[load]);\n useEffect(()=>{onDirtyChange?.(dirty);},[dirty,onDirtyChange]);
+ useEffect(()=>{void load();},[load]);\n useEffect(()=>{onDirtyChange?.(dirty);},[dirty,onDirtyChange]);\n useEffect(()=>{onDirtyChange?.(dirty);},[dirty,onDirtyChange]);
  useEffect(()=>{
   if(contentMode!=="rich"||!richEditorRef.current)return;
   const html=renderArticleMarkdown(draft?.body??"");
