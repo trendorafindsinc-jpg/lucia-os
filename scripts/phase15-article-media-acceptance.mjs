@@ -163,6 +163,12 @@ export async function checkPhase15ArticleMediaAcceptance({
       await blogRow.getByRole("button", { name: "Edit", exact: true }).click();
       await publishingUi.getByLabel("Summary").fill("Updated in the dedicated Publishing Studio browser journey.");
       await publishingUi.locator(".story-rich-editor").fill("This article was edited in the focused rich-text writing canvas.");
+      await publishingUi.getByRole("button", { name: "Markdown source", exact: true }).click();
+      assert((await publishingUi.getByLabel("Markdown article content").inputValue()).includes("focused rich-text writing canvas"), "Rich text must survive switching to Markdown source");
+      await publishingUi.getByRole("button", { name: "HTML source", exact: true }).click();
+      assert((await publishingUi.getByLabel("HTML source").inputValue()).includes("focused rich-text writing canvas"), "Article content must survive switching to HTML source");
+      await publishingUi.getByRole("button", { name: "Rich text", exact: true }).click();
+      assert((await publishingUi.locator(".story-rich-editor").innerText()).includes("focused rich-text writing canvas"), "Article content must survive returning to rich text");
       await publishingUi.getByRole("button", { name: "Save draft", exact: true }).click();
       await publishingUi.getByText("Draft saved. Live content was not changed.", { exact: true }).waitFor();
       await publishingUi.getByRole("button", { name: "Version history", exact: true }).click();
