@@ -48,7 +48,7 @@ export function DomainManagementClient({ websites, domains: initialDomains, site
       if (!response.ok) throw new Error(payload.error || "The free LUCIA address could not be changed.");
       setSiteRows((current) => current.map((row) => row.id === site.id ? { ...row, slug: payload.domain.slug } : row));
       setSubdomains((current) => ({ ...current, [site.id]: payload.domain.slug }));
-      setSubdomainStates((current) => ({ ...current, [site.id]: { state: "saved", message: "Address updated. Your website and its content are unchanged." } }));
+      setSubdomainStates((current) => ({ ...current, [site.id]: { state: "saved", message: "Address changed. The previous address is released; your website and its content are unchanged." } }));
       setMessage("Free LUCIA address updated.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "The free LUCIA address could not be changed.");
