@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { websiteDefinitionSchema } from "@/lib/layout-blueprint/website-definition";
 
 export const websiteSnapshotSchema = z.object({
   siteName: z.string().trim().min(1).max(80),
@@ -12,6 +13,8 @@ export const websiteSnapshotSchema = z.object({
   contentPostCount: z.number().int().min(0).max(500),
   templateId: z.string().optional(),
   buttonLabel: z.string().optional(),
+  /** Exact editor document for lossless v2 composition rollback. */
+  composition: websiteDefinitionSchema.optional(),
 }).strict();
 
 export type WebsiteSnapshot = z.infer<typeof websiteSnapshotSchema>;
