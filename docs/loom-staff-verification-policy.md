@@ -1,0 +1,22 @@
+# Loom — Staff Management, Verification Badges and Priority Review Bidding
+**Status:** Founder-approved product decisions; implementation not yet delivered.
+**Authority:** LUCIA OS founder; canonical product vision and roadmap. Supersedes prior "badge colours undecided" statements.
+
+## Decided policy
+1. **Dedicated Loom section in LUCIA staff workspace.** Authorized Loom staff need a clearly identifiable, permission-gated section to handle verification applications, applicants, evidence, identity/business/representative checks, website/domain checks, interviews, moderation, reports, blocking, appeals, review queue and audit history. All actions must enforce staff roles server-side, isolate confidential evidence, and leave customer Loom and staff Loom navigation distinct.
+2. **Green verification badge:** standard, staff-approved Loom verification via the regular review route. **Blue verification badge:** staff-approved verification reached through the paid priority-review/bidding route. Neither color means identity claims are beyond challenge. Blue must not appear on an unpaid, pending, or rejected application; paying alone grants no badge.
+3. **Optional paid priority-review bid:** applicant chooses a bid **at or above ₦5,000**, expressed in NGN, with an explicit confirmation of the amount, applicable service, and public terms. No fixed amount above the floor is mandatory. Bid expresses willingness to pay for priority handling, **not for approval**. The normal green route must remain available without a bid under its published eligibility rules.
+4. **Fast-track is review priority, not guaranteed outcome.** Clearly state before any charge: "Paying for priority review does not guarantee Loom verification. Every application is evaluated against the same evidence and eligibility standards." Staff decisions must remain independent of bid amount; payment must not automatically approve or increase trust scoring, organic ranking, posting privileges, or applicant eligibility.
+5. **Verification workflow:** apply → choose standard or bid priority route → disclose and record terms/amount → securely verify payment if applicable → restricted evidence and identity/business representative review → interview if required → documented staff decision → green or blue badge only after approval → appeal/re-review. Preserve application state, amount, payment verification reference, decision rationale and audit trail without exposing financial/evidence details publicly.
+6. **Priority queue safeguards:** implement a transparent, published queue rule and capacity limits before collecting payment. Higher bids may affect scheduling only under a clearly disclosed policy, not evaluation criteria. Avoid indefinite waits, backroom manual changes, or misleading guaranteed review times. Abuse prevention, fair notice, and a fallback for service disruptions are required.
+7. **Before taking money, resolve open policy decisions:** define what happens to the priority-review charge upon rejection, withdrawal, duplicate submission, failure to provide service, or service delays (including refunds); review processing timetable, max bids if any, payment methods, chargeback/dispute process, eligibility requirements, consumer disclosures, and any applicable legal/tax requirements. **No payment collection can launch until this published policy and verified-payment implementation are approved.**
+8. **Trust, safety and privacy:** badge meanings must be publicly explained; badges can be revoked on reviewed evidence with appeal; protect applicant data; retain minimal required evidence with access logs; neither badge changes account-wide LUCIA ID permissions by default.
+
+## Phase ownership
+- **Phase 20:** publish and approve badge definitions, paid-route rules, eligibility, privacy/appeal, priority queue and refunds before money is accepted.
+- **Phase 21:** design responsive public Loom experience and dedicated staff Loom navigation/access controls.
+- **Phase 22:** community and connection workflows with real permissions.
+- **Phase 23:** implement staff verification, evidence/interviews, standard and priority queue, bid/payment verification integration and auditable decisions. No automatic approval.
+- **Phase 24:** verify abuse prevention, privacy, moderation, financial fairness, badge semantics and security/end-to-end acceptance.
+
+This document sets decisions, not implementation PASS. Avoid a parallel staff authorization system: reuse existing staff workspace and LUCIA Core identity authority.
