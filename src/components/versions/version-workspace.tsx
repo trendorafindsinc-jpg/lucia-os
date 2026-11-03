@@ -16,6 +16,7 @@ import {
   type WebsiteSnapshot,
 } from "@/lib/versions/version-history";
 import { siteDraftToLoomBlueprint } from "@/lib/loom/blueprint";
+import { websiteDefinitionSchema, isPremium, type WebsiteDefinition } from "@/lib/layout-blueprint/website-definition";
 import { LoomRenderer } from "@/components/loom/loom-renderer";
 
 type SavedVersion = {
@@ -83,6 +84,7 @@ export function VersionWorkspace() {
     makeInitialDraft("northstar-consulting"),
   );
   const [history, setHistory] = useState<SavedVersion[]>([]);
+  const [composition, setComposition] = useState<WebsiteDefinition | null>(null);
   const [label, setLabel] = useState("Website checkpoint");
   const [notes, setNotes] = useState("");
   const [preview, setPreview] = useState<SiteDraft | null>(null);
@@ -100,6 +102,7 @@ export function VersionWorkspace() {
     setRevision(null);
     setLoadedWebsite("");
     setHistory([]);
+    setComposition(null);
     setPreview(null);
     if (!websiteId) {
       setLoading(false);
@@ -129,12 +132,28 @@ export function VersionWorkspace() {
         currentWebsite.current !== websiteId
       )
         return;
-      const validDraft = siteDraftSchema.safeParse(draftData.draft);
-      if (!validDraft.success || typeof draftData.revision !== "string")
+      const validDefinition = websiteDefinitionSchema.safeParse(draftData.draft);
+      if (!validDefinition.success || typeof draftData.revision !== "string")
         throw new Error(
           "The saved draft is invalid. Checkpoint actions are disabled; recover it in Layout Studio first.",
         );
-      setDraft(validDraft.data);
+      const definition = validDefinition.data;
+      setComposition(definition);
+      if (isPremium(definition)) {
+        const home = definition.pages.find((page) => page.path === "/")!;
+        const legacyPreview = makeInitialDraft("northstar-consulting");
+        setDraft(siteDraftSchema.parse({
+          ...legacyPreview,
+          siteName: definition.identity.name,
+          headline: home.title.slice(0, 100),
+          description: home.description.slice(0, 220),
+          palette: "original",
+          visibleSections: home.sections.slice(0, 12).map((section) => section.type),
+          templateId: definition.layoutId,
+        }));
+      } else {
+        setDraft(siteDraftSchema.parse(definition));
+      }
       setRevision(draftData.revision);
       setLoadedWebsite(websiteId);
       setHistory(
@@ -186,7 +205,7 @@ export function VersionWorkspace() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ label, notes, snapshot }),
+          body: JSON.stringify({ label, notes, snapshot: { ...snapshot, ...(composition ? { composition } : {}) } }),
         },
       );
       const data = await response.json();
@@ -211,72 +230,42 @@ export function VersionWorkspace() {
   }
 
   async function restoreToDraft(version: SavedVersion) {
-    if (
-      !websiteId ||
-      busy ||
-      loading ||
-      !revision ||
-      loadedWebsite !== websiteId
-    )
-      return;
-    let next: SiteDraft;
-    try {
-      next = fromSnapshot(version.snapshot, draft);
-    } catch {
-      setMessage(
-        "This checkpoint is not compatible with the current editor. Your draft was not changed.",
-      );
+    if (!websiteId || busy || loading || !revision || loadedWebsite !== websiteId) return;
+    if (!version.snapshot.composition) {
+      setMessage("This older checkpoint contains summary data only. It cannot restore a complete website composition.");
       return;
     }
-    if (
-      !window.confirm(
-        `Restore “${version.label}” into the editable draft? This will save draft content, but will NOT publish the website.`,
-      )
-    )
-      return;
+    if (!window.confirm(`Restore “${version.label}” into the editable website draft? This does not publish the website.`)) return;
     setBusy(true);
     setMessage("");
     try {
       const response = await fetch(
-        `/api/websites/${encodeURIComponent(websiteId)}/draft`,
+        `/api/websites/${encodeURIComponent(websiteId)}/versions/${encodeURIComponent(version.id)}/restore`,
         {
-          method: "PATCH",
+          method: "POST",
           headers: {
-            "Content-Type": "application/json",
             "If-Match": revision,
             ...(accountId ? { "X-LUCIA-Workspace-Account": accountId } : {}),
           },
-          body: JSON.stringify(next),
         },
       );
       const data = await response.json();
       if (currentWebsite.current !== websiteId) return;
       if (!response.ok) {
-        if (response.status === 409) {
-          setRevision(null);
-          throw new Error(
-            "The saved draft changed. Refresh history and review the current draft before restoring this checkpoint. Nothing was overwritten.",
-          );
-        }
+        if (response.status === 409) setRevision(null);
         throw new Error(data.error || "Couldn't restore this checkpoint.");
       }
-      setRevision(data.revision);
-      setDraft(next);
-      setPreview(null);
-      setMessage(
-        "Checkpoint restored to the saved draft only. The live website was not published or changed.",
-      );
+      await load();
+      if (currentWebsite.current === websiteId)
+        setMessage("Complete website composition restored to the editable draft. The live website was not published.");
     } catch (error) {
       if (currentWebsite.current === websiteId)
-        setMessage(
-          error instanceof Error
-            ? error.message
-            : "Couldn't restore this checkpoint.",
-        );
+        setMessage(error instanceof Error ? error.message : "Couldn't restore this checkpoint.");
     } finally {
       if (currentWebsite.current === websiteId) setBusy(false);
     }
   }
+
 
   return (
     <main className="version-shell">
@@ -439,7 +428,8 @@ export function VersionWorkspace() {
                         busy ||
                         loading ||
                         !revision ||
-                        loadedWebsite !== websiteId
+                        loadedWebsite !== websiteId ||
+                        !version.snapshot.composition
                       }
                     >
                       Restore to draft
