@@ -170,7 +170,7 @@ export async function checkPhase15ArticleMediaAcceptance({
       await publishingUi.getByRole("button", { name: "Markdown source", exact: true }).click();
       assert((await publishingUi.getByLabel("Markdown article content").inputValue()).includes("focused rich-text writing canvas"), "Rich text must survive switching to Markdown source");
       await publishingUi.getByRole("button", { name: "HTML source", exact: true }).click();
-      assert((await publishingUi.getByLabel("HTML source").inputValue()).includes("focused rich-text writing canvas"), "Article content must survive switching to HTML source");
+      assert((await publishingUi.getByRole("textbox", { name: "HTML source", exact: true }).inputValue()).includes("focused rich-text writing canvas"), "Article content must survive switching to HTML source");
       await publishingUi.getByRole("button", { name: "Rich text", exact: true }).click();
       assert((await publishingUi.locator(".story-rich-editor").innerText()).includes("focused rich-text writing canvas"), "Article content must survive returning to rich text");
       await publishingUi.getByRole("button", { name: "Save draft", exact: true }).click();
