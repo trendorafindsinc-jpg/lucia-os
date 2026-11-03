@@ -19,9 +19,37 @@ function jsonError(error: string, status: number) {
 
 export async function GET(request: Request, context: RouteContext) {
   const { websiteId } = await context.params;
-  const organizationId = new URL(request.url).searchParams.get(
-    "organizationId",
-  );
+  const url = new URL(request.url);
+  const requestedSubdomain = url.searchParams.get("subdomain");
+  if (requestedSubdomain !== null) {
+    const siteDomain = (process.env.LUCIA_SITE_DOMAIN || "lucia.name.ng")
+      .trim().toLowerCase().replace(/^\*\./, "").replace(/^\./, "").replace(/\.$/, "");
+    let claim: ReturnType<typeof classifyWebsiteHostname>;
+    try {
+      claim = classifyWebsiteHostname(requestedSubdomain + "." + siteDomain);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Invalid subdomain.";
+      return NextResponse.json({
+        available: false,
+        state: /reserved/i.test(message) ? "reserved" : "invalid",
+        message,
+      }, { headers: { "Cache-Control": "no-store" } });
+    }
+    const excludeWebsiteId = url.searchParams.get("excludeWebsiteId");
+    if (excludeWebsiteId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(excludeWebsiteId))
+      return jsonError("Invalid website reference.", 400);
+    const db = getDb();
+    const rows = await db.execute(sql`SELECT public.lucia_website_hostname_available(
+      ${claim.hostname}, ${excludeWebsiteId}::uuid
+    ) AS available`);
+    const available = Boolean((rows as unknown as Array<{ available: boolean }>)[0]?.available);
+    return NextResponse.json({
+      available,
+      state: available ? "available" : "taken",
+      hostname: claim.hostname,
+    }, { headers: { "Cache-Control": "no-store" } });
+  }
+  const organizationId = url.searchParams.get("organizationId");
   if (!organizationId) return jsonError("organizationId is required.", 400);
   const access = await getCurrentOrganizationAccess(
     organizationId,
@@ -166,7 +194,7 @@ export async function POST(request: Request, context: RouteContext) {
         });
       await tx.insert(platformAuditEvents).values({
         actorUserId: access.user.id,
-        actorKind: "user",
+        actorKind: "tenant",
         organizationId: access.membership.organizationId,
         action: "website.domain.claim_requested",
         targetType: "website_domain",
@@ -203,5 +231,99 @@ export async function POST(request: Request, context: RouteContext) {
       return jsonError("This website already has a primary domain.", 409);
     }
     return jsonError("Could not claim this hostname.", 400);
+  }
+}
+
+
+export async function PATCH(request: Request, context: RouteContext) {
+  const { websiteId } = await context.params;
+  let body: unknown;
+  try { body = await request.json(); }
+  catch { return jsonError("Request body must be valid JSON.", 400); }
+  if (!body || typeof body !== "object" || Array.isArray(body))
+    return jsonError("Invalid free LUCIA address details.", 400);
+  const input = body as Record<string, unknown>;
+  if (typeof input.organizationId !== "string" || typeof input.subdomain !== "string")
+    return jsonError("organizationId and subdomain are required.", 400);
+  const access = await getCurrentOrganizationAccess(input.organizationId, "website.edit");
+  if (!access) return jsonError("Organisation access denied.", 403);
+  const siteDomain = (process.env.LUCIA_SITE_DOMAIN || "lucia.name.ng")
+    .trim().toLowerCase().replace(/^\*\./, "").replace(/^\./, "").replace(/\.$/, "");
+  let claim: ReturnType<typeof classifyWebsiteHostname>;
+  try { claim = classifyWebsiteHostname(input.subdomain + "." + siteDomain); }
+  catch (error) {
+    return jsonError(error instanceof Error ? error.message : "Invalid subdomain.", 400);
+  }
+  const db = getDb();
+  try {
+    const result = await db.transaction(async (tx) => {
+      await tx.execute(sql`select set_config('app.current_organization_id', ${access.membership.organizationId}, true)`);
+      const [site] = await tx.select({
+        id: websites.id, slug: websites.slug, status: websites.status,
+      }).from(websites).where(and(
+        eq(websites.id, websiteId),
+        eq(websites.organizationId, access.membership.organizationId),
+        ne(websites.status, "deleted"),
+      )).limit(1).for("update");
+      if (!site) return { missing: true as const };
+      const [current] = await tx.select({
+        id: websiteDomains.id, hostname: websiteDomains.hostname,
+      }).from(websiteDomains).where(and(
+        eq(websiteDomains.organizationId, access.membership.organizationId),
+        eq(websiteDomains.websiteId, websiteId),
+        eq(websiteDomains.domainType, "lucia_subdomain"),
+        ne(websiteDomains.status, "removed"),
+      )).limit(1).for("update");
+      if (site.slug === claim.subdomain && current?.hostname === claim.hostname)
+        return { hostname: claim.hostname, slug: claim.subdomain!, unchanged: true as const };
+      const now = new Date();
+      if (current) {
+        await tx.update(websiteDomains).set({
+          hostname: claim.hostname,
+          status: site.status === "published" ? "active" : "pending",
+          verifiedAt: site.status === "published" ? now : null,
+          updatedAt: now,
+        }).where(and(
+          eq(websiteDomains.id, current.id),
+          eq(websiteDomains.organizationId, access.membership.organizationId),
+          eq(websiteDomains.websiteId, websiteId),
+        ));
+      } else {
+        await tx.insert(websiteDomains).values({
+          organizationId: access.membership.organizationId,
+          websiteId,
+          hostname: claim.hostname,
+          domainType: "lucia_subdomain",
+          status: site.status === "published" ? "active" : "pending",
+          verifiedAt: site.status === "published" ? now : null,
+          isPrimary: false,
+          updatedAt: now,
+        });
+      }
+      await tx.update(websites).set({ slug: claim.subdomain!, updatedAt: now })
+        .where(and(
+          eq(websites.id, websiteId),
+          eq(websites.organizationId, access.membership.organizationId),
+        ));
+      await tx.insert(platformAuditEvents).values({
+        actorUserId: access.user.id,
+        actorKind: "tenant",
+        organizationId: access.membership.organizationId,
+        action: "website.lucia_subdomain.renamed",
+        targetType: "website",
+        targetId: websiteId,
+        purpose: "website.domain.manage",
+        result: "success",
+        metadata: JSON.stringify({ previousHostname: current?.hostname ?? null, hostname: claim.hostname }),
+      });
+      return { hostname: claim.hostname, slug: claim.subdomain!, unchanged: false as const };
+    });
+    if ("missing" in result) return jsonError("Website not found.", 404);
+    return NextResponse.json({ domain: result }, { headers: { "Cache-Control": "no-store" } });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    if (message.includes("website_domains_hostname_uq") || message.includes("websites_published_slug_uq") || message.includes("duplicate key"))
+      return jsonError("That free LUCIA address has already been claimed. Choose another.", 409);
+    return jsonError("The free LUCIA address could not be changed.", 400);
   }
 }

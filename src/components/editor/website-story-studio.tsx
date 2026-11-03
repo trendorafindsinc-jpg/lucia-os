@@ -12,13 +12,15 @@ type Story = {
  revision:number;status:"draft"|"scheduled"|"published";publishedSlug:string|null;publishedAt:string|null;scheduledAt:string|null;
 };
 function toLocalDateTime(value:string){const date=new Date(value);return new Date(date.getTime()-date.getTimezoneOffset()*60000).toISOString().slice(0,16);}
-export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
- websiteId:string;accountId?:string|null;initialKind:ArticleKind;onClose:()=>void;
+export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArticleId=null,startNew=false,closeLabel="Return to website",onDirtyChange,onClose}:{
+ websiteId:string;accountId?:string|null;initialKind:ArticleKind;initialArticleId?:string|null;startNew?:boolean;closeLabel?:string;onDirtyChange?:(dirty:boolean)=>void;onClose:()=>void;
 }) {
  const [kind,setKind]=useState<ArticleKind>(initialKind);
+ const [mounted,setMounted]=useState(false);
+ const [localTimeZone,setLocalTimeZone]=useState("your local timezone");
  const [articles,setArticles]=useState<Story[]>([]);
  const [siteSlug,setSiteSlug]=useState("");
- const [selected,setSelected]=useState<string|null>(null);
+ const [selected,setSelected]=useState<string|null>(initialArticleId);
  const [draft,setDraft]=useState<Story|null>(null);
  const [newTitle,setNewTitle]=useState("");
  const [busy,setBusy]=useState(false);
@@ -46,12 +48,15 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
    if(!response.ok)throw Error(payload.error || "Could not load content.");
    setArticles(payload.articles);
    setSiteSlug(payload.siteSlug || "");
-   setSelected(current=>current && payload.articles.some((a:Story)=>a.id===current)?current:(payload.articles[0]?.id||null));
+   setSelected(current=>current && payload.articles.some((a:Story)=>a.id===current)?current:(startNew?null:(initialArticleId && payload.articles.some((a:Story)=>a.id===initialArticleId)?initialArticleId:(payload.articles[0]?.id||null))));
    setDirty(false);
   } catch(error){setMessage(error instanceof Error?error.message:"Could not load articles.");}
   finally{setLoading(false);}
- },[websiteId,headers]);
+ },[websiteId,headers,initialArticleId,startNew]);
  useEffect(()=>{void load();},[load]);
+ useEffect(()=>{setLocalTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);setMounted(true);},[]);
+ useEffect(()=>{onDirtyChange?.(dirty);},[dirty,onDirtyChange]);
+ useEffect(()=>{if(!dirty)return;const guard=(event:BeforeUnloadEvent)=>{event.preventDefault();event.returnValue="";};window.addEventListener("beforeunload",guard);return()=>window.removeEventListener("beforeunload",guard);},[dirty]);
  useEffect(()=>{
   if(contentMode!=="rich"||!richEditorRef.current)return;
   const html=renderArticleMarkdown(draft?.body??"");
@@ -142,7 +147,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
  return <section className="story-studio" aria-label="Website Blog and News Studio">
   <div className="story-studio-top">
    <div><p className="story-studio-kicker">YOUR WEBSITE / CONTENT</p><h2>Stories & updates</h2><p>Write for the website you already own. Drafts stay private until Publish.</p></div>
-   <button type="button" onClick={()=>{if(!dirty || window.confirm("Discard unsaved changes?"))onClose();}} aria-label="Return to website">✕ Return to website</button>
+   <button type="button" onClick={()=>{if(!dirty || window.confirm("Discard unsaved changes?"))onClose();}} aria-label={closeLabel}>✕ {closeLabel}</button>
   </div>
   <div className="story-studio-switch" role="group" aria-label="Content type">
    <button type="button" aria-pressed={kind==="blog"} onClick={()=>{setKind("blog");setSelected(null);setDirty(false);setDraft(null);}}>Blog</button>
@@ -161,21 +166,9 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
     {draft?<>
      <div className="story-studio-info"><span>{draft.status==="published"?"Live version exists":draft.status==="scheduled"?"Scheduled publication":"Private draft"}</span><span>{dirty?"Unsaved edits":"All edits saved"}</span></div>
      {preview?<article className="story-studio-preview"><small>Draft preview · Not a public URL</small><h3>{draft.title}</h3><p>{draft.excerpt}</p>{draft.featuredMediaRef&&<Image unoptimized className="story-studio-featured-preview" src={"/_media/"+draft.featuredMediaRef.slice(6)} alt={draft.featuredMediaAlt||""} width={1200} height={750}/>}<div dangerouslySetInnerHTML={{__html:contentMode==="html"?renderArticleHtml(draft.body):renderArticleMarkdown(draft.body)}}/></article>:
-      <div className="story-studio-fields">
+      <div className="story-studio-fields"><div className="story-studio-canvas">
        <label>Headline<input value={draft.title} maxLength={150} onChange={e=>change("title",e.target.value)}/></label>
        <label>Article URL<input value={draft.slug} maxLength={120} onChange={e=>change("slug",newArticleSlug(e.target.value))}/></label>
-       <label>{draft.kind==="news"?"News category":"Category"} (optional)<input value={draft.category} maxLength={80} onChange={e=>change("category",e.target.value)}/></label>
-       {draft.kind==="news"&&<>
-        <label>Event date and time (optional)<input type="datetime-local" value={draft.eventAt?toLocalDateTime(draft.eventAt):""} onChange={e=>{setDraft(previous=>previous?{...previous,eventAt:e.target.value?new Date(e.target.value).toISOString():null}:previous);setDirty(true);}}/></label>
-        <label><input type="checkbox" checked={draft.isFeatured} onChange={e=>{setDraft(previous=>previous?{...previous,isFeatured:e.target.checked}:previous);setDirty(true);}}/> Feature this news story</label>
-        <label>Correction notice (optional)<textarea value={draft.correctionNote??""} maxLength={500} rows={2} onChange={e=>change("correctionNote",e.target.value||"")}/></label>
-        <label>Corrects earlier News slug (optional)<input value={draft.correctsSlug??""} maxLength={120} onChange={e=>change("correctsSlug",e.target.value||"")}/></label>
-       </>}
-       <label>Tags (comma separated)<input value={draft.tags.join(", ")} maxLength={400} onChange={e=>{setDraft(previous=>previous?{...previous,tags:Array.from(new Set(e.target.value.split(",").map(tag=>tag.trim()).filter(Boolean))).slice(0,12)}:previous);setDirty(true);}} placeholder="updates, community, events"/></label>
-       <details className="story-seo-fields"><summary>Search and social preview (SEO)</summary>
-        <label>SEO title (70 characters maximum)<input value={draft.seoTitle??""} maxLength={70} onChange={e=>change("seoTitle",e.target.value||"")}/></label>
-        <label>SEO description (160 characters maximum)<textarea value={draft.seoDescription??""} maxLength={160} rows={2} onChange={e=>change("seoDescription",e.target.value||"")}/></label>
-       </details>
        <label>Summary<textarea value={draft.excerpt} maxLength={320} rows={3} onChange={e=>change("excerpt",e.target.value)}/></label>
        <label>Article content
         <div className="story-content-mode" role="group" aria-label="Content editor mode">
@@ -212,14 +205,26 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,onClose}:{
          <small>Allowed HTML is sanitized on preview and publication. Use website media-library URLs for images.</small>
         </>}
        </label>
-       <label>Schedule publication (your device time)<input type="datetime-local" value={draft.scheduledAt?toLocalDateTime(draft.scheduledAt):""} onChange={e=>{setDraft(previous=>previous?{...previous,scheduledAt:e.target.value?new Date(e.target.value).toISOString():null}:previous);setDirty(true);}}/><small>Choose a time at least two minutes ahead.</small></label>
-       <div className="story-studio-featured"><div><strong>Featured image</strong><p>Choose an image already stored for this website, or upload one to the same secure image library.</p>{availableMediaCount!==null&&<small>{availableMediaCount} ready image{availableMediaCount===1?"":"s"} in this website library.</small>}</div>{draft.featuredMediaRef&&<Image unoptimized className="story-studio-featured-preview" src={"/_media/"+draft.featuredMediaRef.slice(6)} alt={draft.featuredMediaAlt||""} width={900} height={560}/>}{draft.featuredMediaRef&&<button type="button" disabled={busy} onClick={()=>{setDraft(previous=>previous?{...previous,featuredMediaRef:null,featuredMediaAlt:null}:previous);setDirty(true);}}>Remove featured image</button>}<MediaLibrary websiteId={websiteId} accountId={accountId??""} onChange={onMediaChange} onSelect={(item:MediaLibraryItem)=>{setDraft(previous=>previous?{...previous,featuredMediaRef:item.ref,featuredMediaAlt:item.alt}:previous);setDirty(true);setMessage("");}} onInsert={(item:MediaLibraryItem)=>{const block=item.kind==="video"?`<video controls preload="metadata" playsinline><source src="/_media/${item.id}" type="${item.mime==="video/webm"?"video/webm":"video/mp4"}"></video>`:`[Download PDF](media:${item.id})`;setDraft(previous=>previous?{...previous,body:previous.body+"\n\n"+block}:previous);setRichSync(v=>v+1);setDirty(true);setMessage(item.kind==="video"?"An inline video player was added. Save and publish to stream it on your website.":"A secure PDF download link was added. Save and publish to make it available.");}} selectedRef={draft.featuredMediaRef} protectedIds={Array.from(new Set([...articles.flatMap(article=>[article.featuredMediaRef,article.publishedSnapshot?.featuredMediaRef]),draft.featuredMediaRef,draft.publishedSnapshot?.featuredMediaRef].filter((ref):ref is string=>Boolean(ref)).map(ref=>ref.slice(6))) )}/></div>
-      </div>}
+</div><aside className="story-studio-settings"><div className="story-settings-heading"><strong>Post settings</strong><small>Publication, discovery and artwork</small></div><div className="story-settings-readonly"><span>Author</span><strong>{draft.authorName||"Your LUCIA ID profile"}</strong><small>Author attribution follows the signed-in LUCIA ID.</small></div>       <label>{draft.kind==="news"?"News category":"Category"} (optional)<input value={draft.category} maxLength={80} onChange={e=>change("category",e.target.value)}/></label>
+       {draft.kind==="news"&&<details open className="story-seo-fields"><summary>Newsroom metadata</summary>
+        <label>Event date and time (optional)<input type="datetime-local" value={mounted&&draft.eventAt?toLocalDateTime(draft.eventAt):""} onChange={e=>{setDraft(previous=>previous?{...previous,eventAt:e.target.value?new Date(e.target.value).toISOString():null}:previous);setDirty(true);}}/></label>
+        <label><input type="checkbox" checked={draft.isFeatured} onChange={e=>{setDraft(previous=>previous?{...previous,isFeatured:e.target.checked}:previous);setDirty(true);}}/> Feature this news story</label>
+        <label>Correction notice (optional)<textarea value={draft.correctionNote??""} maxLength={500} rows={2} onChange={e=>change("correctionNote",e.target.value||"")}/></label>
+        <label>Corrects earlier News slug (optional)<input value={draft.correctsSlug??""} maxLength={120} onChange={e=>change("correctsSlug",e.target.value||"")}/></label>
+       </details>}
+       <label>Tags (comma separated)<input value={draft.tags.join(", ")} maxLength={400} onChange={e=>{setDraft(previous=>previous?{...previous,tags:Array.from(new Set(e.target.value.split(",").map(tag=>tag.trim()).filter(Boolean))).slice(0,12)}:previous);setDirty(true);}} placeholder="updates, community, events"/></label>
+       <details className="story-seo-fields"><summary>Search and social preview (SEO)</summary>
+        <label>SEO title (70 characters maximum)<input value={draft.seoTitle??""} maxLength={70} onChange={e=>change("seoTitle",e.target.value||"")}/></label>
+        <label>SEO description (160 characters maximum)<textarea value={draft.seoDescription??""} maxLength={160} rows={2} onChange={e=>change("seoDescription",e.target.value||"")}/></label>
+       </details>
+       <details open className="story-seo-fields"><summary>Publication schedule</summary><label>Schedule publication (local time · {localTimeZone})<input type="datetime-local" value={mounted&&draft.scheduledAt?toLocalDateTime(draft.scheduledAt):""} onChange={e=>{setDraft(previous=>previous?{...previous,scheduledAt:e.target.value?new Date(e.target.value).toISOString():null}:previous);setDirty(true);}}/><small>Choose a time at least two minutes ahead.</small></label></details>
+       <div className="story-studio-featured"><div><strong>Featured image</strong><p>Choose an image already stored for this website, or upload one to the same secure image library.</p>{availableMediaCount!==null&&<small>{availableMediaCount} ready image{availableMediaCount===1?"":"s"} in this website library.</small>}</div>{draft.featuredMediaRef&&<Image unoptimized className="story-studio-featured-preview" src={"/_media/"+draft.featuredMediaRef.slice(6)} alt={draft.featuredMediaAlt||""} width={900} height={560}/>}{draft.featuredMediaRef&&<button type="button" disabled={busy} onClick={()=>{setDraft(previous=>previous?{...previous,featuredMediaRef:null,featuredMediaAlt:null}:previous);setDirty(true);}}>Remove featured image</button>}<MediaLibrary websiteId={websiteId} accountId={accountId??""} onChange={onMediaChange} onSelect={(item:MediaLibraryItem)=>{setDraft(previous=>previous?{...previous,featuredMediaRef:item.ref,featuredMediaAlt:item.alt}:previous);setDirty(true);setMessage("");}} onInsert={(item:MediaLibraryItem)=>{const block=item.kind==="video"?`<video controls preload="metadata" playsinline><source src="/_media/${item.id}" type="${item.mime==="video/webm"?"video/webm":"video/mp4"}"></video>`:item.kind==="image"?`<img src="/_media/${item.id}" alt=${JSON.stringify(item.alt)} loading="lazy">`:`[Download PDF](media:${item.id})`;setDraft(previous=>previous?{...previous,body:previous.body+"\n\n"+block}:previous);setRichSync(v=>v+1);setDirty(true);setMessage(item.kind==="video"?"An inline video player was added. Save and publish to stream it on your website.":"A secure PDF download link was added. Save and publish to make it available.");}} insertLabel="Insert in article" selectedRef={draft.featuredMediaRef} protectedIds={Array.from(new Set([...articles.flatMap(article=>[article.featuredMediaRef,article.publishedSnapshot?.featuredMediaRef]),draft.featuredMediaRef,draft.publishedSnapshot?.featuredMediaRef].filter((ref):ref is string=>Boolean(ref)).map(ref=>ref.slice(6))) )}/></div>
+</aside></div>}
      <div className="story-studio-actions">
       <button type="button" onClick={()=>setPreview(p=>!p)}>{preview?"Edit article":"Preview draft"}</button>
       <button type="button" disabled={busy||loading||historyBusy} onClick={()=>void loadHistory()}>{historyBusy?"Loading history…":"Version history"}</button>
       <button type="button" disabled={busy||loading||!dirty} onClick={()=>void save("save")}>Save draft</button>
-      <button className="story-studio-live" type="button" disabled={busy||loading} onClick={()=>void save("publish")}>{busy?"Publishing…":"Publish"}</button>
+      <button className="story-studio-live" type="button" disabled={busy||loading} onClick={()=>void save("publish")}>{busy?"Publishing…":draft.status==="published"?"Update":"Publish"}</button>
       <button type="button" disabled={busy||loading||!draft.scheduledAt||draft.status==="published"} onClick={()=>void save("schedule")}>Schedule</button>
       {draft.status==="published"&&<button type="button" disabled={busy} onClick={()=>void save("unpublish")}>Unpublish</button>}
       {draft.status==="scheduled"&&<button type="button" disabled={busy} onClick={()=>void save("save")}>Keep as draft</button>}

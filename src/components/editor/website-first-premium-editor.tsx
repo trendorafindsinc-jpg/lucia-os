@@ -476,7 +476,7 @@ export function WebsiteFirstPremiumEditor({
   const options = [...premiumArtworkChoices, ...ownedArtwork];
   return <main className="website-first-editor">
     <header className="website-first-editor-toolbar">
-      <Link href="/workspace/websites" aria-label="Back to your websites">← Websites</Link>
+      <Link href="/workspace/websites" aria-label="Back to your websites">← Websites</Link>\n      <Link href={{ pathname: "/publishing", query: { websiteId } }}>Publishing Studio</Link>
       <label>Page <select value={page.id} onChange={(event) => { setPageId(event.target.value); setSelected(""); setField(null); }}>
         {layout.pages.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
       </select></label>

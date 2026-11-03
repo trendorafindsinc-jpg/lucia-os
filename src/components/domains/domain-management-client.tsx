@@ -13,11 +13,47 @@ function statusLabel(status: string) {
 
 export function DomainManagementClient({ websites, domains: initialDomains, siteDomain, initialWebsiteId }: Props) {
   const [domains, setDomains] = useState(initialDomains);
+  const [siteRows, setSiteRows] = useState(websites);
+  const [subdomains, setSubdomains] = useState<Record<string, string>>({});
+  const [subdomainStates, setSubdomainStates] = useState<Record<string, { state: string; message: string }>>({});
   const [websiteId, setWebsiteId] = useState(websites.some((website) => website.id === initialWebsiteId) ? initialWebsiteId! : (websites[0]?.id || ""));
   const [hostname, setHostname] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [verification, setVerification] = useState<{ domainId: string; hostname: string; recordName: string; recordValue: string } | null>(null);
+
+  async function checkFreeAddress(site: Website) {
+    const value = (subdomains[site.id] ?? site.slug).trim().toLowerCase();
+    setSubdomainStates((current) => ({ ...current, [site.id]: { state: "checking", message: "Checking availability…" } }));
+    try {
+      const response = await fetch("/api/websites/" + encodeURIComponent(site.id) + "/domains?subdomain=" + encodeURIComponent(value) + "&excludeWebsiteId=" + encodeURIComponent(site.id), { cache: "no-store" });
+      const data = await response.json() as { available?: boolean; state?: string; message?: string };
+      setSubdomainStates((current) => ({ ...current, [site.id]: { state: data.state || "unavailable", message: data.available ? "Available: " + value + "." + siteDomain : data.message || (data.state === "taken" ? "That address is taken." : "That address cannot be used.") } }));
+    } catch {
+      setSubdomainStates((current) => ({ ...current, [site.id]: { state: "unavailable", message: "Availability could not be checked." } }));
+    }
+  }
+
+  async function saveFreeAddress(site: Website) {
+    const value = (subdomains[site.id] ?? site.slug).trim().toLowerCase();
+    const status = subdomainStates[site.id];
+    if (status?.state !== "available" || busy) return;
+    setBusy(true); setMessage("");
+    try {
+      const response = await fetch("/api/websites/" + encodeURIComponent(site.id) + "/domains", {
+        method: "PATCH", headers: { "Content-Type": "application/json" }, cache: "no-store",
+        body: JSON.stringify({ organizationId: site.organizationId, subdomain: value }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "The free LUCIA address could not be changed.");
+      setSiteRows((current) => current.map((row) => row.id === site.id ? { ...row, slug: payload.domain.slug } : row));
+      setSubdomains((current) => ({ ...current, [site.id]: payload.domain.slug }));
+      setSubdomainStates((current) => ({ ...current, [site.id]: { state: "saved", message: "Address changed. The previous address is released; your website and its content are unchanged." } }));
+      setMessage("Free LUCIA address updated.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "The free LUCIA address could not be changed.");
+    } finally { setBusy(false); }
+  }
 
   async function registerDomain(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -77,10 +113,20 @@ export function DomainManagementClient({ websites, domains: initialDomains, site
   }
 
   return <>
-    <section className="workspace-panel domains-addresses-panel">\n      <div className="workspace-panel-heading"><div><h2>LUCIA subdomains</h2><p>Every website has its own address. Publishing activates that exact hostname.</p></div><span className="workspace-count">{websites.length} websites</span></div>\n      {websites.length ? <div className="workspace-org-list">{websites.map((website) => { const subdomainIsLive = website.status === "published" && domains.some((domain) => domain.websiteId === website.id && domain.domainType === "lucia_subdomain" && domain.status === "active"); return <article className="workspace-org-card domains-card" key={website.id}><div className="workspace-org-avatar">L</div><div className="workspace-org-info"><h3>{website.slug}.{siteDomain}</h3><p>{website.name} · {website.organizationName}</p><div className="workspace-org-meta"><span>LUCIA subdomain</span><span>{subdomainIsLive ? "Published website" : "Publish to activate"}</span></div></div><span className={`workspace-status ${subdomainIsLive ? "workspace-status-success" : "workspace-status-neutral"}`}>{subdomainIsLive ? "Live" : "Not live"}</span><a className="workspace-button workspace-button-secondary domains-website-link" href={subdomainIsLive ? `https://${website.slug}.${siteDomain}` : `/publish?websiteId=${encodeURIComponent(website.id)}`} target={subdomainIsLive ? "_blank" : undefined} rel={subdomainIsLive ? "noreferrer" : undefined}>{subdomainIsLive ? "Open website ↗" : "Publish website"}</a></article>; })}</div> : <div className="workspace-empty"><h3>No websites yet</h3><p>Create a website to get its own LUCIA subdomain.</p><a className="workspace-button workspace-button-secondary" href="/create">Create a website</a></div>}\n    </section>\n\n    <section className="workspace-panel domains-register-panel">
+    <section className="workspace-panel domains-addresses-panel">\n      <div className="workspace-panel-heading"><div><h2>LUCIA subdomains</h2><p>Every website has its own address. Publishing activates that exact hostname.</p></div><span className="workspace-count">{siteRows.length} websites</span></div>\n      {siteRows.length ? <div className="workspace-org-list">{siteRows.map((website) => { const subdomainIsLive = website.status === "published" && domains.some((domain) => domain.websiteId === website.id && domain.domainType === "lucia_subdomain" && domain.status === "active"); return <article className="workspace-org-card domains-card" key={website.id}><div className="workspace-org-avatar">L</div><div className="workspace-org-info"><h3>{website.slug}.{siteDomain}</h3><p>{website.name} · {website.organizationName}</p><div className="workspace-org-meta"><span>LUCIA subdomain</span><span>{subdomainIsLive ? "Published website" : "Publish to activate"}</span></div></div><span className={`workspace-status ${subdomainIsLive ? "workspace-status-success" : "workspace-status-neutral"}`}>{subdomainIsLive ? "Live" : "Not live"}</span>
+        <div className="domains-free-address">
+          <label>Free LUCIA address
+            <div className="domains-free-address-input"><input aria-label={"Free LUCIA address for " + website.name} value={subdomains[website.id] ?? website.slug} maxLength={63} onChange={(event) => { setSubdomains((current) => ({ ...current, [website.id]: event.target.value })); setSubdomainStates((current) => ({ ...current, [website.id]: { state: "unchecked", message: "Check availability before saving." } })); }} /><span>.{siteDomain}</span></div>
+          </label>
+          <div className="domains-free-address-actions">
+            <button type="button" disabled={busy || subdomainStates[website.id]?.state === "checking"} onClick={() => void checkFreeAddress(website)}>Check availability</button>
+            <button type="button" disabled={busy || subdomainStates[website.id]?.state !== "available"} onClick={() => void saveFreeAddress(website)}>Save address</button>
+          </div>
+          {subdomainStates[website.id]?.message ? <p role="status">{subdomainStates[website.id].message}</p> : null}
+        </div><a className="workspace-button workspace-button-secondary domains-website-link" href={subdomainIsLive ? `https://${website.slug}.${siteDomain}` : `/publish?websiteId=${encodeURIComponent(website.id)}`} target={subdomainIsLive ? "_blank" : undefined} rel={subdomainIsLive ? "noreferrer" : undefined}>{subdomainIsLive ? "Open website ↗" : "Publish website"}</a></article>; })}</div> : <div className="workspace-empty"><h3>No websites yet</h3><p>Create a website to get its own LUCIA subdomain.</p><a className="workspace-button workspace-button-secondary" href="/create">Create a website</a></div>}\n    </section>\n\n    <section className="workspace-panel domains-register-panel">
       <div className="workspace-panel-heading"><div><h2>Register a domain</h2><p>Choose the website it belongs to. The same hostname cannot be registered twice.</p></div><span className="workspace-count">Custom domain</span></div>
-      {websites.length ? <form className="domains-register-form" onSubmit={registerDomain}>
-        <label>Website<select value={websiteId} onChange={(event) => setWebsiteId(event.target.value)} required>{websites.map((website) => <option key={website.id} value={website.id}>{website.name} · {website.organizationName}</option>)}</select></label>
+      {siteRows.length ? <form className="domains-register-form" onSubmit={registerDomain}>
+        <label>Website<select value={websiteId} onChange={(event) => setWebsiteId(event.target.value)} required>{siteRows.map((website) => <option key={website.id} value={website.id}>{website.name} · {website.organizationName}</option>)}</select></label>
         <label>Domain hostname<input value={hostname} onChange={(event) => setHostname(event.target.value)} placeholder="www.yourdomain.com" autoComplete="url" required maxLength={253} /></label>
         <button className="workspace-button workspace-button-primary" type="submit" disabled={busy}>{busy ? "Registering…" : "Register domain"}</button>
       </form> : <div className="workspace-empty"><h3>No websites available</h3><p>Create a website, or ask an organisation owner for website publishing permission.</p><a className="workspace-button workspace-button-secondary" href="/create">Create a website</a></div>}

@@ -47,8 +47,8 @@ describe("Phase 16 personalization across all 48 original Layout identities", ()
       if (section.type === "contact-panel") return section.email === "enquiries@mybusiness.ng";
       return JSON.stringify(section) === JSON.stringify(before);
     }))).toBe(true);
-    expect(checkPremiumPublishContacts(stored)).toEqual({ ready: true });
-    expect(checkPremiumPublishContacts(original).ready).toBe(false);
+    expect(checkPremiumPublishContacts(stored)).toMatchObject({ ready: true });
+    expect(checkPremiumPublishContacts(original).ready).toBe(true);
     const page = stored.pages.find(p => p.sections.some(s => "heading" in s));
     const section = page?.sections.find(s => "heading" in s);
     if (!page || !section || !("heading" in section)) throw Error("Missing editable section");
@@ -64,7 +64,7 @@ describe("Phase 16 personalization across all 48 original Layout identities", ()
     expect(stored.pages.map(p => p.path)).toEqual(updated.pages.map(p => p.path));
   });
 
-  it("rejects unsupported HTML, insecure social links, invalid contact details and foreign assets", () => {
+  it("rejects unsafe inputs while allowing optional contact details to be cleared", () => {
     const layout = candidate("lucia.layout.meridian");
     const edit = (field: "description" | "phone" | "enquiryEmail", value: string) =>
       applyPremiumEdit(layout, "guided", { kind: "business-detail", field, value });
@@ -98,7 +98,7 @@ describe("Phase 16 personalization across all 48 original Layout identities", ()
     });
     expect(cleared.pages.flatMap(p => p.sections).filter(s => s.type === "contact-panel")
       .every(s => s.type === "contact-panel" && s.email === undefined)).toBe(true);
-    expect(checkPremiumPublishContacts(cleared).ready).toBe(false);
+    expect(checkPremiumPublishContacts(cleared).ready).toBe(true);
     const page = layout.pages.find(p => p.sections.some(s => "heading" in s))!;
     const section = page.sections.find(s => "heading" in s)!;
     expect(() => applyPremiumEdit(layout, "guided", {

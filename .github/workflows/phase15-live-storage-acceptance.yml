@@ -1,0 +1,118 @@
+name: Phase 15 real IDrive media acceptance
+
+on:
+  push:
+    branches:
+      - upgrade/phase-15-content-media
+    paths:
+      - 'scripts/phase15-live-storage-acceptance.mjs'
+      - 'src/app/api/media/[id]/route.ts'
+      - 'src/app/api/media/[id]/route.test.ts'
+      - '.github/workflows/phase15-live-storage-acceptance.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'scripts/phase15-live-storage-acceptance.mjs'
+      - 'src/app/api/media/[id]/route.ts'
+      - 'src/app/api/media/[id]/route.test.ts'
+      - '.github/workflows/phase15-live-storage-acceptance.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phase15-live-idrive-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  live-storage:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: lucia_phase15_acceptance
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ephemeral_phase15_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d lucia_phase15_acceptance"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://postgres:ephemeral_phase15_only@127.0.0.1:5432/lucia_phase15_acceptance
+      WEBSITE_TEST_ADMIN_URL: postgres://postgres:ephemeral_phase15_only@127.0.0.1:5432/lucia_phase15_acceptance
+      WEBSITE_TEST_RUNTIME_URL: postgres://lucia_acceptance_runtime:isolated_runtime_only@127.0.0.1:5432/lucia_phase15_acceptance
+      S3_ENDPOINT: https://s3.eu-west-3.idrivee2.com
+      S3_REGION: eu-west-3
+      S3_BUCKET: lucia-os-customer-media-2026
+      S3_SCOPE_PROBE_BUCKET: lucia-os-phase15-scope-probe-2026
+      MEDIA_UPLOADS_ENABLED: '1'
+      MEDIA_WEBSITE_QUOTA_BYTES: '5000000'
+      MEDIA_PRODUCT_BUDGET_BYTES: '2000000000'
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - name: Require the Phase 15 branch
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            test "$GITHUB_HEAD_REF" = 'upgrade/phase-15-content-media'
+          else
+            test "$GITHUB_REF_NAME" = 'upgrade/phase-15-content-media'
+          fi
+      - name: Checkout exact branch commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Require restricted IDrive credentials
+        env:
+          S3_ACCESS_KEY_ID: ${{ secrets.PHASE15_IDRIVE_ACCESS_KEY_ID }}
+          S3_SECRET_ACCESS_KEY: ${{ secrets.PHASE15_IDRIVE_SECRET_ACCESS_KEY }}
+        run: |
+          if [ -z "$S3_ACCESS_KEY_ID" ] || [ -z "$S3_SECRET_ACCESS_KEY" ]; then
+            echo '::error::Configure the restricted Phase 15 IDrive access and secret keys as repository Actions secrets.'
+            exit 1
+          fi
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Migrate isolated acceptance database
+        run: npm run db:migrate
+      - name: Create least-privilege NOBYPASSRLS runtime
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE ROLE lucia_acceptance_runtime LOGIN PASSWORD 'isolated_runtime_only' NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
+          GRANT CONNECT ON DATABASE lucia_phase15_acceptance TO lucia_acceptance_runtime;
+          GRANT USAGE ON SCHEMA public TO lucia_acceptance_runtime;
+          GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO lucia_acceptance_runtime;
+          GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO lucia_acceptance_runtime;
+          GRANT EXECUTE ON FUNCTION public.lucia_public_media(uuid) TO lucia_acceptance_runtime;
+          GRANT EXECUTE ON FUNCTION public.lucia_website_hostname_available(text, uuid) TO lucia_acceptance_runtime;
+          SQL
+      - name: Build compiled production app
+        run: npm run build
+      - name: Install isolated Chromium for private Studio acceptance
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Exercise actual application uploads against IDrive e2
+        env:
+          S3_ACCESS_KEY_ID: ${{ secrets.PHASE15_IDRIVE_ACCESS_KEY_ID }}
+          S3_SECRET_ACCESS_KEY: ${{ secrets.PHASE15_IDRIVE_SECRET_ACCESS_KEY }}
+        run: node scripts/phase15-live-storage-acceptance.mjs
+      - name: Upload safe test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase15-live-idrive-acceptance
+          path: artifacts/phase15-live-storage/
+          retention-days: 7
+          if-no-files-found: warn

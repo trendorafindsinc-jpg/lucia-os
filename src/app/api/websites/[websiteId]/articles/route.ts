@@ -26,14 +26,14 @@ export async function GET(request: Request, context: Context) {
   for(const org of orgs){
    if(!hasOrganizationPermission({role:org.role,status:org.status},"website.read"))continue;
    await tx.execute(sql`select set_config('app.current_organization_id', ${org.id}, true)`);
-   const [site]=await tx.select({id:websites.id,slug:websites.slug}).from(websites)
+   const [site]=await tx.select({id:websites.id,slug:websites.slug,name:websites.name}).from(websites)
     .where(and(eq(websites.id,websiteId),eq(websites.organizationId,org.id),ne(websites.status,"deleted"))).limit(1);
    if(!site)continue;
    const articles=await tx.select({post:websitePosts,mediaAlt:websiteMedia.alt}).from(websitePosts)
     .leftJoin(websiteMedia,and(eq(websiteMedia.id,websitePosts.featuredMediaId),eq(websiteMedia.websiteId,site.id),eq(websiteMedia.organizationId,org.id),eq(websiteMedia.status,"ready")))
     .where(and(eq(websitePosts.websiteId,site.id),eq(websitePosts.organizationId,org.id)))
     .orderBy(desc(websitePosts.updatedAt)).limit(200);
-   return {articles:articles.map(({post,mediaAlt})=>({...post,featuredMediaRef:post.featuredMediaId ? "media:"+post.featuredMediaId : null,featuredMediaAlt:mediaAlt ?? null})),siteSlug:site.slug};
+   return {articles:articles.map(({post,mediaAlt})=>({...post,featuredMediaRef:post.featuredMediaId ? "media:"+post.featuredMediaId : null,featuredMediaAlt:mediaAlt ?? null})),siteSlug:site.slug,siteName:site.name};
   }
   return null;
  });

@@ -13,6 +13,8 @@ export const websiteFirstSetupSchema = z.object({
       "Enter a valid email address or telephone number").optional().default(""),
   style: z.enum(["No preference", "Modern", "Classic", "Bold", "Warm"]).optional().default("No preference"),
   layoutId: z.string().refine((id) => Boolean(getStartingLayoutById(id)), "Choose a registered Layout"),
+  subdomain: z.string().trim().toLowerCase().min(3).max(63)
+    .regex(/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/, "Choose 3–63 letters, numbers or hyphens.").optional(),
 }).strict();
 export type WebsiteFirstSetup = z.infer<typeof websiteFirstSetupSchema>;
 

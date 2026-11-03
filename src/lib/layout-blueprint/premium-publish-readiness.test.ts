@@ -1,67 +1,67 @@
 import { describe, expect, it } from "vitest";
 import { makeInitialDraft } from "@/lib/editor/site-draft";
+import { mutateWebsite, websiteMutationSchema } from "./website-definition";
 import {
-  mutateWebsite, websiteMutationSchema, websiteDefinitionSchema,
-} from "./website-definition";
-import { checkPremiumPublishContacts } from "./premium-publish-readiness";
+  checkPremiumPublishContacts,
+  isDemoContactEmail,
+  sanitizePremiumPublicContacts,
+} from "./premium-publish-readiness";
 import { premiumCandidateIds } from "./premium-layouts/catalogue-candidates";
 import { premiumLayoutSchema } from "./premium-composition";
 
-describe("Phase 14 safe contact configuration before public promotion", () => {
-  it.each(premiumCandidateIds)(
-    "%s: refuses starter contact, propagates one authorized edit and then permits publication",
-    (id) => {
-      const initial = makeInitialDraft("northstar-consulting");
-      const candidate = premiumLayoutSchema.parse(mutateWebsite(
-        initial, websiteMutationSchema.parse({ kind: "assign-layout", layoutId: id }),
-      ));
-      const blocked = checkPremiumPublishContacts(candidate);
-      expect(blocked.ready).toBe(false);
-      const page = candidate.pages.find((p) =>
-        p.sections.some((s) => s.type === "contact-panel" && s.email),
-      );
-      const contact = page?.sections.find(
-        (s) => s.type === "contact-panel" && s.email,
-      );
-      if (!page || contact?.type !== "contact-panel")
-        throw Error("Every flagship needs an editable contact");
-      const updated = premiumLayoutSchema.parse(mutateWebsite(
-        candidate, websiteMutationSchema.parse({
-          kind: "composition-edit", mode: "guided",
-          edits: [{
-            kind: "replace-section",
-            pageId: page.id,
-            section: { ...contact, email: "enquiries@business.ng" },
-          }],
-        }),
-      ));
-      const stored = premiumLayoutSchema.parse(
-        websiteDefinitionSchema.parse(JSON.parse(JSON.stringify(updated))),
-      );
-      expect(checkPremiumPublishContacts(stored)).toEqual({ ready: true });
-      const contacts = stored.pages.flatMap((p) =>
-        p.sections.filter((s) => s.type === "contact-panel"),
-      );
-      expect(contacts.every((c) =>
-        c.type === "contact-panel" && c.email === "enquiries@business.ng",
-      )).toBe(true);
-      expect(checkPremiumPublishContacts(candidate).ready).toBe(false);
-      expect(() => mutateWebsite(updated, initial)).toThrow();
-    },
-  );
+describe("Phase 15 optional contact readiness and public placeholder suppression", () => {
+  it.each(premiumCandidateIds)("%s publishes with optional starter contact details", (id) => {
+    const initial = makeInitialDraft("northstar-consulting");
+    const candidate = premiumLayoutSchema.parse(mutateWebsite(
+      initial,
+      websiteMutationSchema.parse({ kind: "assign-layout", layoutId: id }),
+    ));
+    const original = JSON.stringify(candidate);
+    const readiness = checkPremiumPublishContacts(candidate);
+    expect(readiness.ready).toBe(true);
+    expect(readiness.recommendations.length).toBeGreaterThan(0);
 
-  it("rejects unconfigured contact and accepts existing nonflagship definitions unchanged", () => {
-    const value = premiumLayoutSchema.parse(mutateWebsite(
+    const publicCopy = sanitizePremiumPublicContacts(candidate);
+    expect(JSON.stringify(publicCopy)).not.toMatch(/@example\.(?:com|org|net)/i);
+    expect(JSON.stringify(candidate)).toBe(original);
+    expect(publicCopy.identity.name).toBe(candidate.identity.name);
+    expect(publicCopy.pages.map((page) => page.path)).toEqual(candidate.pages.map((page) => page.path));
+  });
+
+  it("does not suppress genuine customer email addresses", () => {
+    const candidate = premiumLayoutSchema.parse(mutateWebsite(
       makeInitialDraft("northstar-consulting"),
+      websiteMutationSchema.parse({ kind: "assign-layout", layoutId: "lucia.layout.meridian" }),
+    ));
+    const page = candidate.pages.find((entry) => entry.sections.some((section) => section.type === "contact-panel"));
+    const contact = page?.sections.find((section) => section.type === "contact-panel");
+    if (!page || contact?.type !== "contact-panel") throw Error("Contact panel missing");
+    const customerEmail = "owner@lucia.ng";
+    const edited = premiumLayoutSchema.parse(mutateWebsite(
+      candidate,
       websiteMutationSchema.parse({
-        kind: "assign-layout", layoutId: "lucia.layout.canvas",
+        kind: "composition-edit",
+        mode: "guided",
+        edits: [{ kind: "replace-section", pageId: page.id, section: { ...contact, email: customerEmail } }],
       }),
     ));
-    for (const page of value.pages) {
-      for (const section of page.sections) {
-        if (section.type === "contact-panel") section.email = undefined;
-      }
-    }
-    expect(checkPremiumPublishContacts(value).ready).toBe(false);
+    const publicCopy = sanitizePremiumPublicContacts(edited);
+    expect(JSON.stringify(publicCopy)).toContain(customerEmail);
+    expect(isDemoContactEmail(customerEmail)).toBe(false);
+  });
+
+  it.each([
+    "hello@example.com",
+    "owner@example.org",
+    "test@example.net",
+    "hello@invalid",
+    "name@yourdomain.com",
+  ])("recognizes demonstration email %s", (email) => {
+    expect(isDemoContactEmail(email)).toBe(true);
+  });
+
+  it("does not classify ordinary customer email addresses as demonstration data", () => {
+    expect(isDemoContactEmail("contact@mybusiness.ng")).toBe(false);
+    expect(isDemoContactEmail(undefined)).toBe(false);
   });
 });

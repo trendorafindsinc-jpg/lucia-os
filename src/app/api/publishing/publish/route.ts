@@ -14,7 +14,7 @@ import {
 } from "@/lib/db/schema";
 import { siteDraftSchema } from "@/lib/editor/site-draft";
 import { premiumLayoutSchema } from "@/lib/layout-blueprint/premium-composition";
-import { checkPremiumPublishContacts } from "@/lib/layout-blueprint/premium-publish-readiness";
+import { checkPremiumPublishContacts, sanitizePremiumPublicContacts } from "@/lib/layout-blueprint/premium-publish-readiness";
 import {
   isPremium,
   websiteDefinitionSchema,
@@ -123,6 +123,7 @@ export async function POST(request: Request) {
       403,
     );
 
+  let contactRecommendations: string[] = [];
   for (const org of permitted) {
     try {
       const result = await db.transaction(async (tx) => {
@@ -215,7 +216,13 @@ export async function POST(request: Request) {
         const definition = draftResult.data;
         const actualName = websiteSummary(definition).siteName;
         await validateMediaOwnership(tx, org.id, website.id, definition, action === "publish");
-        const snapshot = JSON.stringify(definition);
+        const draftSnapshot = JSON.stringify(definition);
+        // Keep the customer's editable draft intact. Only the published copy
+        // suppresses known demonstration email addresses.
+        const publicDefinition = action === "publish" && isPremium(definition)
+          ? sanitizePremiumPublicContacts(definition)
+          : definition;
+        const snapshot = action === "publish" ? JSON.stringify(publicDefinition) : draftSnapshot;
         const now = new Date();
 
         if (action === "save") {
@@ -262,8 +269,8 @@ export async function POST(request: Request) {
         }
 
         if (isPremium(definition)) {
-          const review = checkPremiumPublishContacts(definition);
-          if (!review.ready) throw new Error("PREMIUM_CONTACT_NOT_READY");
+          // Informational recommendations only; missing/demo contact data is optional.
+          contactRecommendations = checkPremiumPublishContacts(definition).recommendations;
         }
 
         // The public renderer expects a validated site-draft snapshot for every
@@ -293,7 +300,7 @@ export async function POST(request: Request) {
               publishedContent: snapshot,
               status: "published",
               updatedAt: now,
-              ...(registered.path === "/" ? { content: snapshot } : {}),
+              ...(registered.path === "/" ? { content: draftSnapshot } : {}),
             };
             if (existing)
               await tx
@@ -324,7 +331,7 @@ export async function POST(request: Request) {
             title: "Home",
             path: "/",
             status: "published",
-            content: snapshot,
+            content: draftSnapshot,
             publishedContent: snapshot,
             updatedAt: now,
           });
@@ -334,7 +341,7 @@ export async function POST(request: Request) {
             await tx
               .update(websitePages)
               .set({
-                ...(isHome ? { title: "Home", content: snapshot } : {}),
+                ...(isHome ? { title: "Home", content: draftSnapshot } : {}),
                 publishedContent: snapshot,
                 status: "published",
                 updatedAt: now,
@@ -446,6 +453,7 @@ export async function POST(request: Request) {
           published: true,
           website: result,
           url: "https://" + result.slug + "." + domain,
+          recommendations: contactRecommendations,
           customDomain: settings.customDomain
             ? {
                 status: "pending_activation",

@@ -1,6 +1,9 @@
-name: Phase 14 isolated authenticated publishing
+name: Phase 15 authenticated browser acceptance
 
 on:
+  push:
+    branches:
+      - upgrade/phase-15-content-media
   workflow_dispatch:
     inputs:
       layouts:
@@ -27,6 +30,11 @@ on:
       - '.github/workflows/phase15-scheduled-workers.yml'
       - 'docs/contracts/phase15-scheduled-workers.md'
       - 'src/lib/content/article-model.ts'
+      - 'src/app/publishing/**'
+      - 'src/components/publishing/**'
+      - 'src/components/editor/website-story-studio.*'
+      - 'src/components/editor/media-library.tsx'
+      - 'docs/contracts/phase15-publishing-studio.md'
       - 'src/lib/content/public-articles.tsx'
       - 'scripts/phase15-authenticated-acceptance.mjs'
       - 'scripts/phase15-article-media-acceptance.mjs'
@@ -88,6 +96,8 @@ jobs:
           node-version: 22
       - name: Install app dependencies
         run: npm install --no-audit --no-fund
+      - name: Run Phase 15 contact and subdomain unit tests
+        run: npm run test -- src/lib/layout-blueprint/premium-publish-readiness.test.ts src/app/api/onboarding/website/route.test.ts src/app/api/media/[id]/route.test.ts
       - name: Migrate the isolated acceptance database
         run: npm run db:migrate
       - name: Create least-privilege runtime role in disposable database
@@ -99,6 +109,7 @@ jobs:
           GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO lucia_acceptance_runtime;
           GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO lucia_acceptance_runtime;
           GRANT EXECUTE ON FUNCTION public.lucia_public_media(uuid) TO lucia_acceptance_runtime;
+          GRANT EXECUTE ON FUNCTION public.lucia_website_hostname_available(text, uuid) TO lucia_acceptance_runtime;
           GRANT EXECUTE ON FUNCTION public.lucia_publish_due_articles(integer) TO lucia_acceptance_runtime;
           SQL
       - name: Build actual production application

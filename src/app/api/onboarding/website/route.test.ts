@@ -21,6 +21,7 @@ import {
   memberships,
   organizations,
   websitePages,
+  websiteDomains,
   websites,
 } from "@/lib/db/schema";
 
@@ -100,14 +101,20 @@ function configureTransaction(
           : [],
       ),
   };
+  const domainLookup = {
+    from: vi.fn().mockReturnThis(),
+    where: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockResolvedValue([]),
+  };
   const select = vi
     .fn()
     .mockReturnValueOnce(membershipLookup)
-    .mockReturnValue(websiteLookup);
+    .mockReturnValueOnce(websiteLookup)
+    .mockReturnValue(domainLookup);
   const insert = vi.fn((table: unknown) => ({
     values: vi.fn((values: unknown) => {
       writes.push({ table, values });
-      events.push(table === organizations ? "insert-organizations" : table === memberships ? "insert-memberships" : table === websites ? "insert-websites" : "insert-pages");
+      events.push(table === organizations ? "insert-organizations" : table === memberships ? "insert-memberships" : table === websites ? "insert-websites" : table === websiteDomains ? "insert-website-domains" : "insert-pages");
       if (table === memberships && options.failMembership) {
         return Promise.reject(new Error("injected owner membership failure"));
       }
@@ -277,6 +284,7 @@ describe("POST /api/onboarding/website transaction boundary", () => {
       organizations,
       memberships,
       websites,
+      websiteDomains,
       websitePages,
     ]);
     expect(didCommit()).toBe(true);
@@ -311,7 +319,8 @@ describe("POST /api/onboarding/website transaction boundary", () => {
     });
     expect(transaction).toHaveBeenCalledOnce();
     expect(tx.execute).toHaveBeenCalledTimes(3);
-    expect(writes).toHaveLength(0);
+    expect(writes).toHaveLength(1);
+    expect(writes[0].table).toBe(websiteDomains);
     expect(didCommit()).toBe(true);
   });
 
