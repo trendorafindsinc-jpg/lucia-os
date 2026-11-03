@@ -302,13 +302,19 @@ try {
     assert.equal(probeBucket,"lucia-os-phase15-scope-probe-2026","A separately administered existing probe bucket is required");
     const probeKey="scope-check/"+randomUUID()+".bin";
     const deniedRead=await signHead(probeKey,probeBucket);
+    const deniedReadXml=await deniedRead.text();
+    const deniedReadCode=deniedReadXml.match(/<Code>([^<]+)<\\/Code>/)?.[1]??"unknown";
     assert.equal(deniedRead.status,403,"The GitHub IDrive key can read outside its assigned customer-media bucket");
+    assert.equal(deniedReadCode,"AccessDenied","Probe read must be denied by bucket scope, not by an invalid signature");
     const deniedWrite=await signObjectRequest("PUT",probeBucket,probeKey,Buffer.from("phase15-scope-probe"));
     if(deniedWrite.ok){
       await signObjectRequest("DELETE",probeBucket,probeKey).catch(()=>{});
       throw Error("The GitHub IDrive key can write outside its assigned customer-media bucket");
     }
+    const deniedWriteXml=await deniedWrite.text();
+    const deniedWriteCode=deniedWriteXml.match(/<Code>([^<]+)<\\/Code>/)?.[1]??"unknown";
     assert.equal(deniedWrite.status,403,"The GitHub IDrive key has unexpected access outside its assigned customer-media bucket");
+    assert.equal(deniedWriteCode,"AccessDenied","Probe write must be denied by bucket scope, not by an invalid signature");
     result.credentialScope="VERIFIED";
   });
   await checkpoint("authenticated-real-png-to-idrive-and-metadata",async()=>{
