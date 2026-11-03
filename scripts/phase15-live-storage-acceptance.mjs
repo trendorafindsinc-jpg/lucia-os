@@ -316,7 +316,7 @@ try {
   await startApp();
   const firstPng=await imageInput();
   let original,replacement;
-  await checkpoint("exact-github-key-denied-on-independent-existing-bucket",async()=>{
+  await checkpoint("independent-bucket-list-and-write-scope-denial",async()=>{
     const probeBucket=process.env.S3_SCOPE_PROBE_BUCKET;
     assert.equal(probeBucket,"lucia-os-phase15-scope-probe-2026","A separately administered existing probe bucket is required");
     const probeKey="scope-check/"+randomUUID()+".bin";
@@ -340,7 +340,7 @@ try {
     const deniedWriteCode=deniedWriteXml.match(/<Code>([^<]+)<\/Code>/)?.[1]??"unknown";
     assert.equal(deniedWrite.status,403,"The GitHub IDrive key has unexpected access outside its assigned customer-media bucket");
     assert.equal(deniedWriteCode,"AccessDenied","Probe write must be denied by bucket scope, not by an invalid signature");
-    result.credentialScope="VERIFIED";
+    result.credentialScope="VERIFIED_LIST_AND_WRITE";
     result.credentialScopeEvidence={list:deniedListCode,read:deniedReadCode,write:deniedWriteCode};
   });
   await checkpoint("authenticated-real-png-to-idrive-and-metadata",async()=>{
@@ -633,7 +633,7 @@ try {
   };
   result.verified= !process.exitCode && result.testsFailed===0 && result.cleanup==="PASS_APP_DELETION_AND_S3_404"
     && result.historicalV2Rollback==="PASS_FULL_COMPOSITION_RESTORED_DRAFT_ONLY"
-    && result.credentialScope==="VERIFIED";
+    && result.credentialScope==="VERIFIED_LIST_AND_WRITE";
   // Never claim the two missing gates are proven by a passing smoke test.
   await mkdir("artifacts/phase15-live-storage",{recursive:true});
   await writeFile(artifact,JSON.stringify(result,null,2));
