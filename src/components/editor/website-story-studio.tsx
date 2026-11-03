@@ -161,21 +161,9 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArtic
     {draft?<>
      <div className="story-studio-info"><span>{draft.status==="published"?"Live version exists":draft.status==="scheduled"?"Scheduled publication":"Private draft"}</span><span>{dirty?"Unsaved edits":"All edits saved"}</span></div>
      {preview?<article className="story-studio-preview"><small>Draft preview · Not a public URL</small><h3>{draft.title}</h3><p>{draft.excerpt}</p>{draft.featuredMediaRef&&<Image unoptimized className="story-studio-featured-preview" src={"/_media/"+draft.featuredMediaRef.slice(6)} alt={draft.featuredMediaAlt||""} width={1200} height={750}/>}<div dangerouslySetInnerHTML={{__html:contentMode==="html"?renderArticleHtml(draft.body):renderArticleMarkdown(draft.body)}}/></article>:
-      <div className="story-studio-fields">
+      <div className="story-studio-fields"><div className="story-studio-canvas">
        <label>Headline<input value={draft.title} maxLength={150} onChange={e=>change("title",e.target.value)}/></label>
        <label>Article URL<input value={draft.slug} maxLength={120} onChange={e=>change("slug",newArticleSlug(e.target.value))}/></label>
-       <label>{draft.kind==="news"?"News category":"Category"} (optional)<input value={draft.category} maxLength={80} onChange={e=>change("category",e.target.value)}/></label>
-       {draft.kind==="news"&&<>
-        <label>Event date and time (optional)<input type="datetime-local" value={draft.eventAt?toLocalDateTime(draft.eventAt):""} onChange={e=>{setDraft(previous=>previous?{...previous,eventAt:e.target.value?new Date(e.target.value).toISOString():null}:previous);setDirty(true);}}/></label>
-        <label><input type="checkbox" checked={draft.isFeatured} onChange={e=>{setDraft(previous=>previous?{...previous,isFeatured:e.target.checked}:previous);setDirty(true);}}/> Feature this news story</label>
-        <label>Correction notice (optional)<textarea value={draft.correctionNote??""} maxLength={500} rows={2} onChange={e=>change("correctionNote",e.target.value||"")}/></label>
-        <label>Corrects earlier News slug (optional)<input value={draft.correctsSlug??""} maxLength={120} onChange={e=>change("correctsSlug",e.target.value||"")}/></label>
-       </>}
-       <label>Tags (comma separated)<input value={draft.tags.join(", ")} maxLength={400} onChange={e=>{setDraft(previous=>previous?{...previous,tags:Array.from(new Set(e.target.value.split(",").map(tag=>tag.trim()).filter(Boolean))).slice(0,12)}:previous);setDirty(true);}} placeholder="updates, community, events"/></label>
-       <details className="story-seo-fields"><summary>Search and social preview (SEO)</summary>
-        <label>SEO title (70 characters maximum)<input value={draft.seoTitle??""} maxLength={70} onChange={e=>change("seoTitle",e.target.value||"")}/></label>
-        <label>SEO description (160 characters maximum)<textarea value={draft.seoDescription??""} maxLength={160} rows={2} onChange={e=>change("seoDescription",e.target.value||"")}/></label>
-       </details>
        <label>Summary<textarea value={draft.excerpt} maxLength={320} rows={3} onChange={e=>change("excerpt",e.target.value)}/></label>
        <label>Article content
         <div className="story-content-mode" role="group" aria-label="Content editor mode">
@@ -212,9 +200,21 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArtic
          <small>Allowed HTML is sanitized on preview and publication. Use website media-library URLs for images.</small>
         </>}
        </label>
+</div><aside className="story-studio-settings"><div className="story-settings-heading"><strong>Post settings</strong><small>Publication, discovery and artwork</small></div>       <label>{draft.kind==="news"?"News category":"Category"} (optional)<input value={draft.category} maxLength={80} onChange={e=>change("category",e.target.value)}/></label>
+       {draft.kind==="news"&&<>
+        <label>Event date and time (optional)<input type="datetime-local" value={draft.eventAt?toLocalDateTime(draft.eventAt):""} onChange={e=>{setDraft(previous=>previous?{...previous,eventAt:e.target.value?new Date(e.target.value).toISOString():null}:previous);setDirty(true);}}/></label>
+        <label><input type="checkbox" checked={draft.isFeatured} onChange={e=>{setDraft(previous=>previous?{...previous,isFeatured:e.target.checked}:previous);setDirty(true);}}/> Feature this news story</label>
+        <label>Correction notice (optional)<textarea value={draft.correctionNote??""} maxLength={500} rows={2} onChange={e=>change("correctionNote",e.target.value||"")}/></label>
+        <label>Corrects earlier News slug (optional)<input value={draft.correctsSlug??""} maxLength={120} onChange={e=>change("correctsSlug",e.target.value||"")}/></label>
+       </>}
+       <label>Tags (comma separated)<input value={draft.tags.join(", ")} maxLength={400} onChange={e=>{setDraft(previous=>previous?{...previous,tags:Array.from(new Set(e.target.value.split(",").map(tag=>tag.trim()).filter(Boolean))).slice(0,12)}:previous);setDirty(true);}} placeholder="updates, community, events"/></label>
+       <details className="story-seo-fields"><summary>Search and social preview (SEO)</summary>
+        <label>SEO title (70 characters maximum)<input value={draft.seoTitle??""} maxLength={70} onChange={e=>change("seoTitle",e.target.value||"")}/></label>
+        <label>SEO description (160 characters maximum)<textarea value={draft.seoDescription??""} maxLength={160} rows={2} onChange={e=>change("seoDescription",e.target.value||"")}/></label>
+       </details>
        <label>Schedule publication (your device time)<input type="datetime-local" value={draft.scheduledAt?toLocalDateTime(draft.scheduledAt):""} onChange={e=>{setDraft(previous=>previous?{...previous,scheduledAt:e.target.value?new Date(e.target.value).toISOString():null}:previous);setDirty(true);}}/><small>Choose a time at least two minutes ahead.</small></label>
        <div className="story-studio-featured"><div><strong>Featured image</strong><p>Choose an image already stored for this website, or upload one to the same secure image library.</p>{availableMediaCount!==null&&<small>{availableMediaCount} ready image{availableMediaCount===1?"":"s"} in this website library.</small>}</div>{draft.featuredMediaRef&&<Image unoptimized className="story-studio-featured-preview" src={"/_media/"+draft.featuredMediaRef.slice(6)} alt={draft.featuredMediaAlt||""} width={900} height={560}/>}{draft.featuredMediaRef&&<button type="button" disabled={busy} onClick={()=>{setDraft(previous=>previous?{...previous,featuredMediaRef:null,featuredMediaAlt:null}:previous);setDirty(true);}}>Remove featured image</button>}<MediaLibrary websiteId={websiteId} accountId={accountId??""} onChange={onMediaChange} onSelect={(item:MediaLibraryItem)=>{setDraft(previous=>previous?{...previous,featuredMediaRef:item.ref,featuredMediaAlt:item.alt}:previous);setDirty(true);setMessage("");}} onInsert={(item:MediaLibraryItem)=>{const block=item.kind==="video"?`<video controls preload="metadata" playsinline><source src="/_media/${item.id}" type="${item.mime==="video/webm"?"video/webm":"video/mp4"}"></video>`:`[Download PDF](media:${item.id})`;setDraft(previous=>previous?{...previous,body:previous.body+"\n\n"+block}:previous);setRichSync(v=>v+1);setDirty(true);setMessage(item.kind==="video"?"An inline video player was added. Save and publish to stream it on your website.":"A secure PDF download link was added. Save and publish to make it available.");}} selectedRef={draft.featuredMediaRef} protectedIds={Array.from(new Set([...articles.flatMap(article=>[article.featuredMediaRef,article.publishedSnapshot?.featuredMediaRef]),draft.featuredMediaRef,draft.publishedSnapshot?.featuredMediaRef].filter((ref):ref is string=>Boolean(ref)).map(ref=>ref.slice(6))) )}/></div>
-      </div>}
+</aside></div>}
      <div className="story-studio-actions">
       <button type="button" onClick={()=>setPreview(p=>!p)}>{preview?"Edit article":"Preview draft"}</button>
       <button type="button" disabled={busy||loading||historyBusy} onClick={()=>void loadHistory()}>{historyBusy?"Loading history…":"Version history"}</button>
