@@ -3,7 +3,7 @@ import {
   websiteMutationAllowed,
   isUniqueWebsiteWrite,
 } from "@/lib/websites/draft-revision";
-import { randomBytes } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { websiteFirstSetupSchema, deriveWebsiteSlug, deriveOrganizationType } from "@/lib/website-first/setup";
 import { and, eq, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
@@ -26,11 +26,49 @@ import { isPremium } from "@/lib/layout-blueprint/website-definition";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function jsonError(message: string, status: number) {
+function jsonError(message: string, status: number, extra?: Record<string, string>) {
   return NextResponse.json(
-    { error: message },
+    { error: message, ...extra },
     { status, headers: { "Cache-Control": "no-store" } },
   );
+}
+
+
+
+function safeDatabaseDiagnostic(error: unknown) {
+  let current: unknown = error;
+  let errorName = "UnknownError";
+  let sqlState: string | undefined;
+  let constraint: string | undefined;
+  let table: string | undefined;
+  for (let depth = 0; depth < 5 && current && typeof current === "object"; depth++) {
+    const entry = current as {
+      name?: unknown;
+      code?: unknown;
+      constraint?: unknown;
+      table?: unknown;
+      cause?: unknown;
+    };
+    if (depth === 0 && typeof entry.name === "string") {
+      errorName = entry.name.slice(0, 80);
+    }
+    if (!sqlState && typeof entry.code === "string" && /^[0-9A-Z]{5}$/.test(entry.code)) {
+      sqlState = entry.code;
+    }
+    if (!constraint && typeof entry.constraint === "string" && /^[a-zA-Z0-9_]{1,128}$/.test(entry.constraint)) {
+      constraint = entry.constraint;
+    }
+    if (!table && typeof entry.table === "string" && /^[a-zA-Z0-9_]{1,128}$/.test(entry.table)) {
+      table = entry.table;
+    }
+    current = entry.cause;
+  }
+  return {
+    errorName,
+    ...(sqlState ? { sqlState } : {}),
+    ...(constraint ? { constraint } : {}),
+    ...(table ? { table } : {}),
+  };
 }
 
 export async function POST(request: Request) {
@@ -148,9 +186,17 @@ export async function POST(request: Request) {
         existingMembership;
       let createdOrganization = false;
       if (!organization) {
+        // INSERT ... RETURNING also requires the row to satisfy the table's
+        // SELECT RLS policy. Establish the generated tenant context first so
+        // the new organisation is visible to this transaction's RETURNING.
+        const newOrganizationId = randomUUID();
+        await tx.execute(
+          sql`select set_config('app.current_organization_id', ${newOrganizationId}, true)`,
+        );
         const [created] = await tx
           .insert(organizations)
           .values({
+            id: newOrganizationId,
             name: setup.organisationName,
             slug: organizationSlug,
             status: "active",
@@ -288,9 +334,18 @@ export async function POST(request: Request) {
         409,
       );
     }
+    const requestId = randomUUID();
+    const diagnostic = safeDatabaseDiagnostic(error);
+    // Log only bounded, non-sensitive database metadata. Never log SQL, parameters,
+    // request bodies, account identifiers, connection strings, or raw error messages.
+    console.error("[website-setup] draft creation failed", {
+      requestId,
+      ...diagnostic,
+    });
     return jsonError(
       "We couldn't save your website yet. Please try again shortly.",
       500,
+      { requestId },
     );
   }
 }
