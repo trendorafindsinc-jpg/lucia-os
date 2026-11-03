@@ -1,6 +1,14 @@
 name: Phase 15 real IDrive media acceptance
 
 on:
+  push:
+    branches:
+      - upgrade/phase-15-content-media
+    paths:
+      - 'scripts/phase15-live-storage-acceptance.mjs'
+      - 'src/app/api/media/[id]/route.ts'
+      - 'src/app/api/media/[id]/route.test.ts'
+      - '.github/workflows/phase15-live-storage-acceptance.yml'
   pull_request:
     branches:
       - main
