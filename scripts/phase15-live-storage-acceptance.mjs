@@ -186,10 +186,10 @@ async function newMedia(who,site,input,alt) {
   result.objects.push({id:data.image.id,bytes:data.image.bytes,store:"created_by_real_application"});
   return data.image;
 }
-async function edit(site,edits,who="a") {
+async function edit(site,edits,who="a",mode="guided") {
   const route="/api/websites/"+site+"/draft";
   const before=await (await expectStatus(api(who,route),200,"Read draft")).json();
-  const r=await api(who,route,"PATCH",{kind:"composition-edit",mode:"guided",edits},{"if-match":before.revision});
+  const r=await api(who,route,"PATCH",{kind:"composition-edit",mode,edits},{"if-match":before.revision});
   await expectStatus(Promise.resolve(r),200,"Persist v2 changes");
   return (await expectStatus(api(who,route),200,"Reload draft")).json();
 }
@@ -403,7 +403,7 @@ try {
     assert.equal(foreignRestore.status,404,"Cross-tenant version restore must not reveal or mutate another website");
     const changed=await edit(fixture.siteA,[{
       kind:"page-details",pageId:home.id,path:"/",title:"Temporary changed composition",description:home.description,navigation:true
-    }]);
+    }],"a","advanced");
     assert.equal(changed.draft.pages.find((page)=>page.path==="/").title,"Temporary changed composition");
     const staleRestore=await api("a","/api/websites/"+fixture.siteA+"/versions/"+versionBody.id+"/restore","POST",undefined,{"if-match":current.revision});
     assert.equal(staleRestore.status,409,"Stale draft revisions must not be overwritten by rollback");
