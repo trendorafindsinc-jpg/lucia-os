@@ -2,7 +2,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 export type MediaLibraryItem = { id: string; ref: string; bytes: number; width: number; height: number; alt: string; status: string; kind:"image"|"video"|"document";mime:string;original_name?:string|null;caption?:string|null;created_at?:string };
-export function MediaLibrary({ websiteId, accountId, onChange, protectedIds, onSelect, onInsert, selectedRef, insertLabel }: { websiteId: string; accountId: string; onChange: (items: { ref: string; label: string }[]) => void; protectedIds: string[]; onSelect?: (item: MediaLibraryItem) => void; onInsert?: (item:MediaLibraryItem)=>void; selectedRef?: string | null; insertLabel?: string }) {
+export function MediaLibrary({ websiteId, accountId, onChange, protectedIds, onSelect, onInsert, selectedRef, insertLabel, defaultOpen = false }: { websiteId: string; accountId: string; onChange: (items: { ref: string; label: string }[]) => void; protectedIds: string[]; onSelect?: (item: MediaLibraryItem) => void; onInsert?: (item:MediaLibraryItem)=>void; selectedRef?: string | null; insertLabel?: string; defaultOpen?: boolean }) {
   const [library, setLibrary] = useState<{ items: MediaLibraryItem[]; enabled: boolean; usedBytes: number; quotaBytes: number; imageUsedBytes:number;videoUsedBytes:number;videoQuotaBytes:number;documentUsedBytes:number;documentQuotaBytes:number } | null>(null);
   const [notice, setNotice] = useState("Loading your media library…"), [busy, setBusy] = useState(false);
   const endpoint = `/api/websites/${websiteId}/media`;
@@ -52,7 +52,7 @@ export function MediaLibrary({ websiteId, accountId, onChange, protectedIds, onS
     catch (error) { setNotice(error instanceof Error ? error.message : "Removal failed."); }
     finally { setBusy(false); }
   }
-  return <details className="studio-media-library"><summary>Your media library</summary>
+  return <details className="studio-media-library" open={defaultOpen}><summary>Your media library</summary>
     <p role="status" aria-live="polite">{notice}</p>
     {library && <p>Images: {(library.imageUsedBytes/1_000_000).toFixed(1)} / {(library.quotaBytes/1_000_000).toFixed(0)} MB · Videos: {(library.videoUsedBytes/1_000_000).toFixed(1)} / {(library.videoQuotaBytes/1_000_000).toFixed(0)} MB · PDFs: {(library.documentUsedBytes/1_000_000).toFixed(1)} / {(library.documentQuotaBytes/1_000_000).toFixed(0)} MB. Total reserved: {(library.usedBytes/1_000_000).toFixed(1)} MB. Images are compressed; original image files are not retained.</p>}
     {!library?.enabled && <p>Customer uploads are not enabled yet. You can continue with built-in artwork.</p>}
