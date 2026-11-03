@@ -126,8 +126,7 @@ async function uploadMultipartAsset(site, kind, mime, filename, bytes) {
   assert.equal(row.kind,kind);
   assert.equal(row.checksum,sha256);
   assert.equal(row.bytes,bytes.length);
-  const head=await signHead(row.object_key);
-  assert.equal(head.status,200,"IDrive multipart object HEAD failed");
+  const head=await assertReadableHead(await signHead(row.object_key),"IDrive multipart object HEAD");
   assert.equal(Number(head.headers.get("content-length")),bytes.length);
   const full=await api("a","/_media/"+asset.id);
   assert.equal(full.status,200,"Application could not read private multipart asset");
@@ -169,6 +168,15 @@ function signObjectRequest(method,bucket,objectKey,body) {
 function signHead(objectKey,bucket=process.env.S3_BUCKET) {
   return signObjectRequest("HEAD",bucket,objectKey);
 }
+async function assertReadableHead(response,label,expectedStatus=200) {
+  if(response.status!==expectedStatus) {
+    const xml=(await response.text()).slice(0,2000);
+    const code=xml.match(/<Code>([^<]+)<\\/Code>/)?.[1] ?? "unknown";
+    const message=xml.match(/<Message>([^<]+)<\\/Message>/)?.[1] ?? "No provider message";
+    throw Error(label+" expected "+expectedStatus+" received "+response.status+"; providerCode="+code+"; providerMessage="+message);
+  }
+  return response;
+}
 
 async function imageInput(w=520,h=390) {
   const raw=randomBytes(w*h*3);
@@ -209,8 +217,7 @@ async function verifyObject(image) {
   assert.equal(Number(row.bytes),image.bytes);
   assert(row.object_key.startsWith("os/"+fixture.orgA+"/"+fixture.siteA+"/"));
   assert(image.width<=1600 && image.height<=1600 && image.bytes>0 && image.bytes<=260000);
-  const head=await signHead(row.object_key);
-  assert.equal(head.status,200,"Actual IDrive HEAD operation failed");
+  const head=await assertReadableHead(await signHead(row.object_key),"Actual IDrive object HEAD");
   assert.equal(Number(head.headers.get("content-length")),image.bytes);
   assert.equal(head.headers.get("content-type"),"image/webp");
   const enc=head.headers.get("x-amz-server-side-encryption");
