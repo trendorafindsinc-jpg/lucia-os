@@ -16,7 +16,8 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArtic
  websiteId:string;accountId?:string|null;initialKind:ArticleKind;initialArticleId?:string|null;startNew?:boolean;closeLabel?:string;onDirtyChange?:(dirty:boolean)=>void;onClose:()=>void;
 }) {
  const [kind,setKind]=useState<ArticleKind>(initialKind);
- const [mounted,setMounted]=useState(false);\n const [localTimeZone,setLocalTimeZone]=useState("your local timezone");
+ const [mounted,setMounted]=useState(false);
+ const [localTimeZone,setLocalTimeZone]=useState("your local timezone");
  const [articles,setArticles]=useState<Story[]>([]);
  const [siteSlug,setSiteSlug]=useState("");
  const [selected,setSelected]=useState<string|null>(initialArticleId);
