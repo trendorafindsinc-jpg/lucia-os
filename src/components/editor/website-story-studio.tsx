@@ -15,7 +15,8 @@ function toLocalDateTime(value:string){const date=new Date(value);return new Dat
 export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArticleId=null,startNew=false,closeLabel="Return to website",onDirtyChange,onClose}:{
  websiteId:string;accountId?:string|null;initialKind:ArticleKind;initialArticleId?:string|null;startNew?:boolean;closeLabel?:string;onDirtyChange?:(dirty:boolean)=>void;onClose:()=>void;
 }) {
- const [kind,setKind]=useState<ArticleKind>(initialKind);\n const [mounted,setMounted]=useState(false);\n const [localTimeZone,setLocalTimeZone]=useState("your local timezone");
+ const [kind,setKind]=useState<ArticleKind>(initialKind);
+ const [mounted,setMounted]=useState(false);\n const [localTimeZone,setLocalTimeZone]=useState("your local timezone");
  const [articles,setArticles]=useState<Story[]>([]);
  const [siteSlug,setSiteSlug]=useState("");
  const [selected,setSelected]=useState<string|null>(initialArticleId);
@@ -51,7 +52,9 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArtic
   } catch(error){setMessage(error instanceof Error?error.message:"Could not load articles.");}
   finally{setLoading(false);}
  },[websiteId,headers,initialArticleId,startNew]);
- useEffect(()=>{void load();},[load]);\n useEffect(()=>{setLocalTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);setMounted(true);},[]);\n useEffect(()=>{onDirtyChange?.(dirty);},[dirty,onDirtyChange]);\n useEffect(()=>{onDirtyChange?.(dirty);},[dirty,onDirtyChange]);
+ useEffect(()=>{void load();},[load]);
+ useEffect(()=>{setLocalTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);setMounted(true);},[]);
+ useEffect(()=>{onDirtyChange?.(dirty);},[dirty,onDirtyChange]);
  useEffect(()=>{
   if(contentMode!=="rich"||!richEditorRef.current)return;
   const html=renderArticleMarkdown(draft?.body??"");
