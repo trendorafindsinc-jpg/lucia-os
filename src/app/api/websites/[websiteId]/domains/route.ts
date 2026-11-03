@@ -23,7 +23,7 @@ export async function GET(request: Request, context: RouteContext) {
   const requestedSubdomain = url.searchParams.get("subdomain");
   if (requestedSubdomain !== null) {
     const siteDomain = (process.env.LUCIA_SITE_DOMAIN || "lucia.name.ng")
-      .trim().toLowerCase().replace(/^\\*\\./, "").replace(/^\\./, "").replace(/\\.$/, "");
+      .trim().toLowerCase().replace(/^\*\./, "").replace(/^\./, "").replace(/\.$/, "");
     let claim: ReturnType<typeof classifyWebsiteHostname>;
     try {
       claim = classifyWebsiteHostname(requestedSubdomain + "." + siteDomain);
@@ -252,7 +252,7 @@ export async function PATCH(request: Request, context: RouteContext) {
   const access = await getCurrentOrganizationAccess(input.organizationId, "website.edit");
   if (!access) return jsonError("Organisation access denied.", 403);
   const siteDomain = (process.env.LUCIA_SITE_DOMAIN || "lucia.name.ng")
-    .trim().toLowerCase().replace(/^\\*\\./, "").replace(/^\\./, "").replace(/\\.$/, "");
+    .trim().toLowerCase().replace(/^\*\./, "").replace(/^\./, "").replace(/\.$/, "");
   let claim: ReturnType<typeof classifyWebsiteHostname>;
   try { claim = classifyWebsiteHostname(input.subdomain + "." + siteDomain); }
   catch (error) {
