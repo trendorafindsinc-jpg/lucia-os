@@ -179,8 +179,8 @@ export async function checkPhase15ArticleMediaAcceptance({
     } finally {
       await publishingUi.close();
     }
-    articles = await (await api("a", articleRoute)).json();
-    article = articles.articles.find((entry) => entry.id === articleId);
+    const afterStudioBlog = await (await api("a", articleRoute)).json();
+    article = afterStudioBlog.articles.find((entry) => entry.id === articleId);
     assert.equal(article.status, "draft", "Saving in Publishing Studio must not publish a private draft");
     bpass("Dedicated Publishing Studio Blog workflow: website-scoped overview/list, rich-text edit, draft save, revision history, private preview and return navigation");
     const foreignRef = await patchArticle(articleId, article, "media:" + foreignImage, "save");
