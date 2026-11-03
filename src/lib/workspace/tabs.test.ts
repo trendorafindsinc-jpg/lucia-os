@@ -16,6 +16,16 @@ describe("workspace tab routing", () => {
     });
   });
 
+  it("opens Publishing Studio as a website-scoped workspace alongside Layout Studio", () => {
+    const publishing = describeWorkspaceRoute("/publishing", "?websiteId=site-a");
+    const editor = describeWorkspaceRoute("/editor", "?websiteId=site-a");
+    const otherSite = describeWorkspaceRoute("/publishing", "?websiteId=site-b");
+    expect(publishing).toMatchObject({ appKey: "website-engine", label: "Publishing Studio", context: "website:site-a" });
+    expect(isSafeWorkspaceTabHref("/publishing?websiteId=site-a")).toBe(true);
+    expect(getWorkspaceTabId(publishing!)).toBe(getWorkspaceTabId(editor!));
+    expect(getWorkspaceTabId(publishing!)).not.toBe(getWorkspaceTabId(otherSite!));
+  });
+
   it("keeps Layouts a separate app and preserves the catalogue route", () => {
     expect(describeWorkspaceRoute("/templates", "")).toMatchObject({
       appKey: "layouts",
