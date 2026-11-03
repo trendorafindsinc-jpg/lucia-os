@@ -64,7 +64,7 @@ describe("Phase 16 personalization across all 48 original Layout identities", ()
     expect(stored.pages.map(p => p.path)).toEqual(updated.pages.map(p => p.path));
   });
 
-  it("rejects unsupported HTML, insecure social links, invalid contact details and foreign assets", () => {
+  it("rejects unsafe inputs while allowing optional contact details to be cleared", () => {
     const layout = candidate("lucia.layout.meridian");
     const edit = (field: "description" | "phone" | "enquiryEmail", value: string) =>
       applyPremiumEdit(layout, "guided", { kind: "business-detail", field, value });
