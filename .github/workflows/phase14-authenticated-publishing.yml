@@ -1,4 +1,4 @@
-name: Phase 14 isolated authenticated publishing
+name: Phase 15 authenticated browser acceptance
 
 on:
   push:
@@ -96,6 +96,8 @@ jobs:
           node-version: 22
       - name: Install app dependencies
         run: npm install --no-audit --no-fund
+      - name: Run Phase 15 contact and subdomain unit tests
+        run: npm run test -- src/lib/layout-blueprint/premium-publish-readiness.test.ts src/app/api/onboarding/website/route.test.ts
       - name: Migrate the isolated acceptance database
         run: npm run db:migrate
       - name: Create least-privilege runtime role in disposable database
