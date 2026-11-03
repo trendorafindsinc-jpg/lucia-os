@@ -79,7 +79,7 @@ export function WebsiteSetupWizard({ userId }: { userId: string }) {
       <p>Choose your website details and free LUCIA address, then select a real website design. No technical setup required.</p></div>
     <section className="website-first-form" aria-label="Website details">
       <label><span>1. What is the name of your business or website? <b>*</b></span>
-        <input required minLength={2} maxLength={80} value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Riverside Barbers" autoComplete="organization"/></label>
+        <input required minLength={2} maxLength={80} value={name} onChange={(e) => { setName(e.target.value); setSubdomainCheck(null); }} placeholder="e.g. Riverside Barbers" autoComplete="organization"/></label>
       <label><span>2. What do you do? <b>*</b></span>
         <input required minLength={2} maxLength={160} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="e.g. Haircuts and grooming for local customers"/></label>
       <label><span>3. What is the main purpose of your website? <b>*</b></span>
