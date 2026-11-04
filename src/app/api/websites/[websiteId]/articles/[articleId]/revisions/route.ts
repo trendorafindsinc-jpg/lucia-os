@@ -3,7 +3,7 @@ import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
 import { websitePosts, websitePostRevisions } from "@/lib/db/schema";
-import { articleDraftSchema } from "@/lib/content/article-model";
+import { articleDraftSchema, articleContentBlocksSchema, legacyBodyBlocks } from "@/lib/content/article-model";
 import { MediaError, validateMediaOwnership, withMediaWebsite } from "@/lib/media/service";
 import { websiteMutationAllowed } from "@/lib/websites/draft-revision";
 export const runtime="nodejs";export const dynamic="force-dynamic";
@@ -39,16 +39,18 @@ export async function POST(request:Request,context:Context){
   const checked=articleDraftSchema.safeParse((record.snapshot as {draft?:unknown})?.draft);
   if(!checked.success)throw new MediaError("This historical entry has no restorable article draft.",422);
   const draft=checked.data;
+  const savedBlocks=articleContentBlocksSchema.safeParse((record.snapshot as {contentBlocks?:unknown})?.contentBlocks);
+  const contentBlocks=savedBlocks.success?savedBlocks.data:legacyBodyBlocks(draft.body);
   const altById=draft.featuredMediaRef?await validateMediaOwnership(tx,organizationId,websiteId,{featuredMediaRef:draft.featuredMediaRef}):{};
   const mediaId=draft.featuredMediaRef?draft.featuredMediaRef.slice(6):null;
-  const [article]=await tx.update(websitePosts).set({title:draft.title,slug:draft.slug,excerpt:draft.excerpt,body:draft.body,category:draft.category,
+  const [article]=await tx.update(websitePosts).set({title:draft.title,slug:draft.slug,excerpt:draft.excerpt,body:draft.body,contentBlocks,category:draft.category,
    eventAt:draft.eventAt?new Date(draft.eventAt):null,isFeatured:draft.isFeatured,correctionNote:draft.correctionNote,correctsSlug:draft.correctsSlug,
    tags:draft.tags,seoTitle:draft.seoTitle,seoDescription:draft.seoDescription,featuredMediaId:mediaId,scheduledAt:null,
    status:current.publishedSnapshot?"published":"draft",revision:current.revision+1,updatedAt:new Date()
   }).where(and(eq(websitePosts.id,current.id),eq(websitePosts.organizationId,organizationId))).returning();
   const restored={...draft,featuredMediaAlt:mediaId?altById[mediaId]??draft.featuredMediaAlt:null};
   await tx.insert(websitePostRevisions).values({organizationId,websiteId,postId:article.id,actorUserId:user.id,revision:article.revision,event:"restore",
-   snapshot:{draft:restored,live:current.publishedSnapshot,status:article.status,publishedSlug:current.publishedSlug,restoredFrom:input.targetRevision,at:new Date().toISOString()}});
+   snapshot:{draft:restored,contentBlocks,live:current.publishedSnapshot,status:article.status,publishedSlug:current.publishedSlug,restoredFrom:input.targetRevision,at:new Date().toISOString()}});
   return {article};
  });if("conflict" in result)return json({error:"This article changed in another session. Reload before restoring.",conflict:true},409);return json(result);}
  catch(error){return json({error:error instanceof MediaError?error.message:"Revision restore failed. The current live article remains unchanged."},error instanceof MediaError?error.status:503);}
