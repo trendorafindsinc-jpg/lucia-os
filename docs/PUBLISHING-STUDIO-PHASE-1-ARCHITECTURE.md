@@ -20,3 +20,11 @@ The migration is additive and does not rewrite existing customer rows. Existing 
 ## Explicitly deferred
 
 The current authoring UI remains the existing rich-text/Markdown/HTML authoring surface in this phase. The full Gutenberg-style block manipulation experience, media redesign, embeds, editorial management, scheduling enhancements, SEO UI, and website presentation redesign remain outside Phase 1.
+
+## Release-gate baseline repair
+
+The first Phase 1 quality run exposed a repository baseline omission, not a publishing regression. Two pre-existing layout tests (`src/lib/templates/premium-architecture.test.ts` and `src/lib/layout-blueprint/premium-layouts/meridian.test.tsx`) read `docs/layouts-48-premium-catalogue.md`; the file was absent from the `development` base used by PR #152. The tests exercise the approved canonical 48-layout inventory and Phase 12 architecture, so their dependency is valid. The authoritative versions were recovered byte-for-byte from the Phase 14 integration commit `5e584f35bff424e4163eb3f53a6c70070b012b01` (which carries the approved catalogue originally reconciled by PR #130), then restored to this feature branch. No placeholder, test skip, catalogue rewrite, or Phase 1 product change was made.
+
+The same authoritative commit supplied `docs/phase-12-premium-layout-architecture.md`, which the first test also reads. Both documents are restored unchanged. The next quality run will establish whether this closes the baseline failure.
+
+The Phase 1 authenticated acceptance harness is also extended to verify revision history visibility, restore persistence, cross-tenant revision read/restore denial, and stale-revision write conflicts for both Blog and News. These checks run against the disposable authenticated acceptance database, not the live staging tenant.
