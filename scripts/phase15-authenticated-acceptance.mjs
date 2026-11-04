@@ -222,6 +222,42 @@ export async function checkPhase15AuthenticatedAcceptance({
         }
         await view.goto(base + "/editor?websiteId=" + id, { waitUntil: "networkidle" });
         await view.locator(".website-first-editor").waitFor();
+        if (phase15 && name === selected[0]) {
+          async function exerciseStoryStudio(kind) {
+            const title = "Phase 1 UI " + kind + " " + siteSlug;
+            const updatedBody = "## Updated " + kind + " content\\n\\nThis saved revision survived reopening.";
+            const launch = kind === "blog" ? "Write Blog" : "Publish News";
+            await view.getByRole("button", { name: launch, exact: true }).first().click();
+            await view.locator("section.story-studio[aria-label='Website Blog and News Studio']").waitFor();
+            await view.getByLabel("New " + kind + " title").fill(title);
+            await view.getByRole("button", { name: /Create draft/ }).click();
+            await view.getByLabel("Headline").waitFor();
+            await view.getByRole("button", { name: "Markdown source", exact: true }).click();
+            await view.getByLabel("Markdown article content").fill("## " + kind + " opening\\n\\nInitial saved content.");
+            await view.getByRole("button", { name: "Save draft", exact: true }).click();
+            await view.locator(".story-studio-notice").filter({ hasText: "Draft saved." }).waitFor();
+            await view.getByRole("button", { name: "Return to website", exact: true }).click();
+            await view.getByRole("button", { name: launch, exact: true }).first().click();
+            await view.locator("section.story-studio[aria-label='Website Blog and News Studio']").waitFor();
+            await view.getByRole("button", { name: new RegExp(title) }).click();
+            assert.equal(await view.getByLabel("Headline").inputValue(), title, kind + " draft did not reopen");
+            await view.getByRole("button", { name: "Markdown source", exact: true }).click();
+            assert.equal(await view.getByLabel("Markdown article content").inputValue(), "## " + kind + " opening\\n\\nInitial saved content.", kind + " body did not persist after reopen");
+            await view.getByLabel("Markdown article content").fill(updatedBody);
+            await view.getByRole("button", { name: "Save draft", exact: true }).click();
+            await view.locator(".story-studio-notice").filter({ hasText: "Draft saved." }).waitFor();
+            await view.getByRole("button", { name: "Return to website", exact: true }).click();
+            await view.getByRole("button", { name: launch, exact: true }).first().click();
+            await view.locator("section.story-studio[aria-label='Website Blog and News Studio']").waitFor();
+            await view.getByRole("button", { name: new RegExp(title) }).click();
+            await view.getByRole("button", { name: "Markdown source", exact: true }).click();
+            assert.equal(await view.getByLabel("Markdown article content").inputValue(), updatedBody, kind + " update did not persist after second reopen");
+            await view.getByRole("button", { name: "Return to website", exact: true }).click();
+          }
+          await exerciseStoryStudio("blog");
+          await exerciseStoryStudio("news");
+          bpass("Phase 1 Publishing Studio UI: authenticated Blog and News create, save, reopen, update and reload");
+        }
         await view.getByRole("button", { name: "Pages & Navigation", exact: true }).click();
         const pagesPanel = view.getByRole("region", { name: "Pages and navigation" });
         await pagesPanel.waitFor();
