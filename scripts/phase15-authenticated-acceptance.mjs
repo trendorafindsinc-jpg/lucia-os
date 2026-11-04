@@ -133,6 +133,62 @@ export async function checkPhase15AuthenticatedAcceptance({
         createdBody = await creation.json();
         assert.equal(creation.status, 201, name + " persisted creation: " + createdBody.error);
         id = createdBody.website.id;
+        if (phase15 && name === selected[0]) {
+          const articlePath = "/api/websites/" + id + "/articles";
+          async function exerciseArticleDraft(kind) {
+            const title = "Phase 1 " + kind + " " + siteSlug;
+            const createdArticle = await api("a", articlePath, "POST", { kind, title });
+            const createdPayload = await createdArticle.json();
+            assert.equal(createdArticle.status, 201, kind + " draft creation: " + createdPayload.error);
+            const article = createdPayload.article;
+            assert.equal(article.kind, kind);
+            assert.equal(article.status, "draft");
+            assert.deepEqual(article.contentBlocks, []);
+            const blocks = [
+              { id: "opening", type: "paragraph", text: kind + " structured opening" },
+              { id: "section", type: "heading", level: 2, text: "Saved section" },
+            ];
+            const editable = {
+              title, slug: article.slug, excerpt: "A saved draft summary",
+              body: "<p>" + kind + " saved body</p>", contentBlocks: blocks,
+              category: "", eventAt: null, isFeatured: false, correctionNote: null,
+              correctsSlug: null, tags: [], seoTitle: null, seoDescription: null,
+              featuredMediaRef: null, revision: article.revision, action: "save",
+              scheduledAt: null,
+            };
+            const firstSave = await api("a", articlePath + "/" + article.id, "PATCH", editable);
+            const firstPayload = await firstSave.json();
+            assert.equal(firstSave.status, 200, kind + " first save: " + firstPayload.error);
+            assert.deepEqual(firstPayload.article.contentBlocks, blocks);
+            const reopened = await (await api("a", articlePath)).json();
+            const loaded = reopened.articles.find((item) => item.id === article.id);
+            assert(loaded, kind + " draft missing after reload");
+            assert.equal(loaded.kind, kind);
+            assert.deepEqual(loaded.contentBlocks, blocks, kind + " blocks changed after reload");
+            const updatedBlocks = [
+              { id: "opening", type: "paragraph", text: kind + " updated opening" },
+              { id: "section", type: "heading", level: 2, text: "Updated section" },
+            ];
+            const secondSave = await api("a", articlePath + "/" + article.id, "PATCH", {
+              ...editable, title: title + " updated", body: "<p>Updated " + kind + " body</p>",
+              contentBlocks: updatedBlocks, revision: firstPayload.article.revision,
+            });
+            const secondPayload = await secondSave.json();
+            assert.equal(secondSave.status, 200, kind + " update: " + secondPayload.error);
+            const finalList = await (await api("a", articlePath)).json();
+            const matches = finalList.articles.filter((item) => item.id === article.id);
+            assert.equal(matches.length, 1, kind + " update created a duplicate draft");
+            assert.deepEqual(matches[0].contentBlocks, updatedBlocks);
+            assert.equal(matches[0].revision, secondPayload.article.revision);
+            const denied = await api("b", articlePath + "/" + article.id, "PATCH", {
+              ...editable, revision: secondPayload.article.revision,
+            });
+            assert([403, 404].includes(denied.status), kind + " cross-tenant update was accepted");
+          }
+          await exerciseArticleDraft("blog");
+          await exerciseArticleDraft("news");
+          bpass("Phase 1 Blog and News: create, structured save, reload, update without duplication, and cross-tenant write denial");
+        }
         await view.goto(base + "/editor?websiteId=" + id, { waitUntil: "networkidle" });
         await view.locator(".website-first-editor").waitFor();
         await view.getByRole("button", { name: "Pages & Navigation", exact: true }).click();
