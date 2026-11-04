@@ -476,6 +476,7 @@ export const websitePosts = pgTable("website_posts", {
   title: text("title").notNull(),
   excerpt: text("excerpt").notNull().default(""),
   body: text("body").notNull().default(""),
+  contentBlocks: jsonb("content_blocks").$type<import("@/lib/content/article-model").ArticleContentBlock[]>().notNull().default([]),
   category: text("category").notNull().default(""),
   eventAt: timestamp("event_at", { withTimezone: true }),
   isFeatured: boolean("is_featured").notNull().default(false),
