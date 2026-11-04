@@ -5,6 +5,21 @@ import { mediaReferencePattern } from "@/lib/media/references";
 // Initial production-safe plain-text format: JSX escapes output; HTML paste is not executed.
 // Rich blocks and media links follow only after dedicated sanitization and reference verification.
 export const articleKind = z.enum(["blog","news"]);
+const blockId = z.string().regex(/^[a-zA-Z0-9_-]{1,64}$/);
+export const articleContentBlockSchema = z.discriminatedUnion("type", [
+  z.object({ id: blockId, type: z.literal("paragraph"), text: z.string().max(10000) }).strict(),
+  z.object({ id: blockId, type: z.literal("heading"), level: z.union([z.literal(2), z.literal(3)]), text: z.string().max(500) }).strict(),
+  z.object({ id: blockId, type: z.literal("list"), ordered: z.boolean(), items: z.array(z.string().max(1000)).max(100) }).strict(),
+  z.object({ id: blockId, type: z.literal("quote"), text: z.string().max(5000), citation: z.string().max(300).nullable().default(null) }).strict(),
+  // Compatibility block keeps existing Markdown/HTML articles byte-for-byte intact during migration.
+  z.object({ id: blockId, type: z.literal("legacy"), source: z.string().max(50000) }).strict(),
+]);
+export const articleContentBlocksSchema = z.array(articleContentBlockSchema).max(200);
+export type ArticleContentBlock = z.infer<typeof articleContentBlockSchema>;
+export function legacyBodyBlocks(body: string): ArticleContentBlock[] {
+  return body.length ? [{ id: "legacy-body", type: "legacy", source: body }] : [];
+}
+
 export const articleDraftSchema = z.object({
   kind: articleKind,
   title: z.string().trim().min(1).max(150),
@@ -31,6 +46,7 @@ export const updateArticleSchema = articleDraftSchema.omit({kind:true,featuredMe
   revision: z.number().int().positive(),
   action: z.enum(["save","publish","unpublish","schedule"]),
   scheduledAt: z.string().datetime().nullable().default(null),
+  contentBlocks: articleContentBlocksSchema.optional(),
 }).strict().superRefine((value, context) => {
  if(value.action==="schedule"&&!value.scheduledAt)context.addIssue({code:"custom",path:["scheduledAt"],message:"Choose a publication date and time."});
 });
