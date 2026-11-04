@@ -186,6 +186,35 @@ export async function checkPhase15AuthenticatedAcceptance({
               ...editable, revision: secondPayload.article.revision,
             });
             assert([403, 404].includes(denied.status), kind + " cross-tenant update was accepted");
+
+            const revisionsPath = articlePath + "/" + article.id + "/revisions";
+            const historyResponse = await api("a", revisionsPath);
+            const historyPayload = await historyResponse.json();
+            assert.equal(historyResponse.status, 200, kind + " revision history: " + historyPayload.error);
+            assert(historyPayload.revisions.some((entry) => entry.revision === firstPayload.article.revision));
+            const hiddenHistory = await api("b", revisionsPath);
+            assert([403, 404].includes(hiddenHistory.status), kind + " cross-tenant revision read was accepted");
+
+            const staleWrite = await api("a", articlePath + "/" + article.id, "PATCH", {
+              ...editable, contentBlocks: blocks, revision: firstPayload.article.revision,
+            });
+            assert.equal(staleWrite.status, 409, kind + " stale revision did not conflict");
+
+            const restored = await api("a", revisionsPath, "POST", {
+              currentRevision: secondPayload.article.revision,
+              targetRevision: firstPayload.article.revision,
+            });
+            const restoredPayload = await restored.json();
+            assert.equal(restored.status, 200, kind + " revision restore: " + restoredPayload.error);
+            assert.deepEqual(restoredPayload.article.contentBlocks, blocks, kind + " restored blocks differ");
+            const hiddenRestore = await api("b", revisionsPath, "POST", {
+              currentRevision: restoredPayload.article.revision,
+              targetRevision: firstPayload.article.revision,
+            });
+            assert([403, 404].includes(hiddenRestore.status), kind + " cross-tenant revision restore was accepted");
+            const afterRestore = await (await api("a", articlePath)).json();
+            const restoredArticle = afterRestore.articles.find((item) => item.id === article.id);
+            assert.deepEqual(restoredArticle.contentBlocks, blocks, kind + " restored blocks did not persist");
           }
           await exerciseArticleDraft("blog");
           await exerciseArticleDraft("news");
