@@ -144,6 +144,8 @@ export async function checkPhase15AuthenticatedAcceptance({
             assert.equal(article.kind, kind);
             assert.equal(article.status, "draft");
             assert.deepEqual(article.contentBlocks, []);
+            const hiddenList = await api("b", articlePath);
+            assert([403, 404].includes(hiddenList.status), kind + " cross-tenant read was accepted");
             const blocks = [
               { id: "opening", type: "paragraph", text: kind + " structured opening" },
               { id: "section", type: "heading", level: 2, text: "Saved section" },
