@@ -218,6 +218,13 @@
       "when": 1793703000000,
       "tag": "0030_global_website_hostname_availability",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1793818500000,
+      "tag": "0031_article_content_blocks",
+      "breakpoints": true
     }
   ]
 }

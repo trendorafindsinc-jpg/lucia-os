@@ -133,8 +133,131 @@ export async function checkPhase15AuthenticatedAcceptance({
         createdBody = await creation.json();
         assert.equal(creation.status, 201, name + " persisted creation: " + createdBody.error);
         id = createdBody.website.id;
+        if (phase15 && name === selected[0]) {
+          const articlePath = "/api/websites/" + id + "/articles";
+          async function exerciseArticleDraft(kind) {
+            const title = "Phase 1 " + kind + " " + siteSlug;
+            const createdArticle = await api("a", articlePath, "POST", { kind, title });
+            const createdPayload = await createdArticle.json();
+            assert.equal(createdArticle.status, 201, kind + " draft creation: " + createdPayload.error);
+            const article = createdPayload.article;
+            assert.equal(article.kind, kind);
+            assert.equal(article.status, "draft");
+            assert.deepEqual(article.contentBlocks, []);
+            const hiddenList = await api("b", articlePath);
+            assert([403, 404].includes(hiddenList.status), kind + " cross-tenant read was accepted");
+            const blocks = [
+              { id: "opening", type: "paragraph", text: kind + " structured opening" },
+              { id: "section", type: "heading", level: 2, text: "Saved section" },
+            ];
+            const editable = {
+              title, slug: article.slug, excerpt: "A saved draft summary",
+              body: "<p>" + kind + " saved body</p>", contentBlocks: blocks,
+              category: "", eventAt: null, isFeatured: false, correctionNote: null,
+              correctsSlug: null, tags: [], seoTitle: null, seoDescription: null,
+              featuredMediaRef: null, revision: article.revision, action: "save",
+              scheduledAt: null,
+            };
+            const firstSave = await api("a", articlePath + "/" + article.id, "PATCH", editable);
+            const firstPayload = await firstSave.json();
+            assert.equal(firstSave.status, 200, kind + " first save: " + firstPayload.error);
+            assert.deepEqual(firstPayload.article.contentBlocks, blocks);
+            const reopened = await (await api("a", articlePath)).json();
+            const loaded = reopened.articles.find((item) => item.id === article.id);
+            assert(loaded, kind + " draft missing after reload");
+            assert.equal(loaded.kind, kind);
+            assert.deepEqual(loaded.contentBlocks, blocks, kind + " blocks changed after reload");
+            const updatedBlocks = [
+              { id: "opening", type: "paragraph", text: kind + " updated opening" },
+              { id: "section", type: "heading", level: 2, text: "Updated section" },
+            ];
+            const secondSave = await api("a", articlePath + "/" + article.id, "PATCH", {
+              ...editable, title: title + " updated", body: "<p>Updated " + kind + " body</p>",
+              contentBlocks: updatedBlocks, revision: firstPayload.article.revision,
+            });
+            const secondPayload = await secondSave.json();
+            assert.equal(secondSave.status, 200, kind + " update: " + secondPayload.error);
+            const finalList = await (await api("a", articlePath)).json();
+            const matches = finalList.articles.filter((item) => item.id === article.id);
+            assert.equal(matches.length, 1, kind + " update created a duplicate draft");
+            assert.deepEqual(matches[0].contentBlocks, updatedBlocks);
+            assert.equal(matches[0].revision, secondPayload.article.revision);
+            const denied = await api("b", articlePath + "/" + article.id, "PATCH", {
+              ...editable, revision: secondPayload.article.revision,
+            });
+            assert([403, 404].includes(denied.status), kind + " cross-tenant update was accepted");
+
+            const revisionsPath = articlePath + "/" + article.id + "/revisions";
+            const historyResponse = await api("a", revisionsPath);
+            const historyPayload = await historyResponse.json();
+            assert.equal(historyResponse.status, 200, kind + " revision history: " + historyPayload.error);
+            assert(historyPayload.revisions.some((entry) => entry.revision === firstPayload.article.revision));
+            const hiddenHistory = await api("b", revisionsPath);
+            assert([403, 404].includes(hiddenHistory.status), kind + " cross-tenant revision read was accepted");
+
+            const staleWrite = await api("a", articlePath + "/" + article.id, "PATCH", {
+              ...editable, contentBlocks: blocks, revision: firstPayload.article.revision,
+            });
+            assert.equal(staleWrite.status, 409, kind + " stale revision did not conflict");
+
+            const restored = await api("a", revisionsPath, "POST", {
+              currentRevision: secondPayload.article.revision,
+              targetRevision: firstPayload.article.revision,
+            });
+            const restoredPayload = await restored.json();
+            assert.equal(restored.status, 200, kind + " revision restore: " + restoredPayload.error);
+            assert.deepEqual(restoredPayload.article.contentBlocks, blocks, kind + " restored blocks differ");
+            const hiddenRestore = await api("b", revisionsPath, "POST", {
+              currentRevision: restoredPayload.article.revision,
+              targetRevision: firstPayload.article.revision,
+            });
+            assert([403, 404].includes(hiddenRestore.status), kind + " cross-tenant revision restore was accepted");
+            const afterRestore = await (await api("a", articlePath)).json();
+            const restoredArticle = afterRestore.articles.find((item) => item.id === article.id);
+            assert.deepEqual(restoredArticle.contentBlocks, blocks, kind + " restored blocks did not persist");
+          }
+          await exerciseArticleDraft("blog");
+          await exerciseArticleDraft("news");
+          bpass("Phase 1 Blog and News: create, structured save, reload, update without duplication, and cross-tenant write denial");
+        }
         await view.goto(base + "/editor?websiteId=" + id, { waitUntil: "networkidle" });
         await view.locator(".website-first-editor").waitFor();
+        if (phase15 && name === selected[0]) {
+          async function exerciseStoryStudio(kind) {
+            const title = "Phase 1 UI " + kind + " " + siteSlug;
+            const updatedBody = "## Updated " + kind + " content\\n\\nThis saved revision survived reopening.";
+            const launch = kind === "blog" ? "Write Blog" : "Publish News";
+            await view.getByRole("button", { name: launch, exact: true }).first().click();
+            await view.locator("section.story-studio[aria-label='Website Blog and News Studio']").waitFor();
+            await view.getByLabel("New " + kind + " title").fill(title);
+            await view.getByRole("button", { name: /Create draft/ }).click();
+            await view.getByLabel("Headline").waitFor();
+            await view.getByRole("button", { name: "Markdown source", exact: true }).click();
+            await view.getByLabel("Markdown article content").fill("## " + kind + " opening\\n\\nInitial saved content.");
+            await view.getByRole("button", { name: "Save draft", exact: true }).click();
+            await view.locator(".story-studio-notice").filter({ hasText: "Draft saved." }).waitFor();
+            await view.getByRole("button", { name: "Return to website", exact: true }).click();
+            await view.getByRole("button", { name: launch, exact: true }).first().click();
+            await view.locator("section.story-studio[aria-label='Website Blog and News Studio']").waitFor();
+            await view.getByRole("button", { name: new RegExp(title) }).click();
+            assert.equal(await view.getByLabel("Headline").inputValue(), title, kind + " draft did not reopen");
+            await view.getByRole("button", { name: "Markdown source", exact: true }).click();
+            assert.equal(await view.getByLabel("Markdown article content").inputValue(), "## " + kind + " opening\\n\\nInitial saved content.", kind + " body did not persist after reopen");
+            await view.getByLabel("Markdown article content").fill(updatedBody);
+            await view.getByRole("button", { name: "Save draft", exact: true }).click();
+            await view.locator(".story-studio-notice").filter({ hasText: "Draft saved." }).waitFor();
+            await view.getByRole("button", { name: "Return to website", exact: true }).click();
+            await view.getByRole("button", { name: launch, exact: true }).first().click();
+            await view.locator("section.story-studio[aria-label='Website Blog and News Studio']").waitFor();
+            await view.getByRole("button", { name: new RegExp(title) }).click();
+            await view.getByRole("button", { name: "Markdown source", exact: true }).click();
+            assert.equal(await view.getByLabel("Markdown article content").inputValue(), updatedBody, kind + " update did not persist after second reopen");
+            await view.getByRole("button", { name: "Return to website", exact: true }).click();
+          }
+          await exerciseStoryStudio("blog");
+          await exerciseStoryStudio("news");
+          bpass("Phase 1 Publishing Studio UI: authenticated Blog and News create, save, reopen, update and reload");
+        }
         await view.getByRole("button", { name: "Pages & Navigation", exact: true }).click();
         const pagesPanel = view.getByRole("region", { name: "Pages and navigation" });
         await pagesPanel.waitFor();

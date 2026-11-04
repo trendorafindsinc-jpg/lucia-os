@@ -68,10 +68,11 @@ export async function POST(request: Request, context: Context) {
      excerpt:"",body:"",category:"",eventAt:null,isFeatured:false,correctionNote:null,correctsSlug:null,tags:[],seoTitle:null,seoDescription:null,status:"draft",revision:1,
     }).returning();
     const initialDraft={kind:created.kind as "blog"|"news",title:created.title,slug:created.slug,excerpt:"",body:"",category:"",authorName:null,eventAt:null,isFeatured:false,correctionNote:null,correctsSlug:null,tags:[],seoTitle:null,seoDescription:null,featuredMediaRef:null,featuredMediaAlt:null};
+    const contentBlocks: import("@/lib/content/article-model").ArticleContentBlock[] = [];
     await tx.insert(websitePostRevisions).values({
      organizationId:org.id,websiteId:site.id,postId:created.id,
      actorUserId:user.id,revision:1,event:"create",
-     snapshot:{draft:initialDraft,live:null,status:"draft",publishedSlug:null,at:new Date().toISOString()},
+     snapshot:{draft:initialDraft,contentBlocks,live:null,status:"draft",publishedSlug:null,at:new Date().toISOString()},
     });
     return created;
    }

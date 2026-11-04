@@ -1,13 +1,13 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { ArticleKind } from "@/lib/content/article-model";
+import { legacyBodyBlocks, type ArticleContentBlock, type ArticleKind } from "@/lib/content/article-model";
 import Image from "next/image";
 import { MediaLibrary, type MediaLibraryItem } from "./media-library";
 import { articleRoute, newArticleSlug } from "@/lib/content/article-model";
 import { createArticleEmbedHtml, renderArticleHtml, renderArticleMarkdown } from "@/lib/content/rich-content";
 import "./website-story-studio.css";
 type Story = {
- id:string;kind:ArticleKind;title:string;slug:string;excerpt:string;body:string;category:string;authorName?:string|null;eventAt:string|null;isFeatured:boolean;correctionNote:string|null;correctsSlug:string|null;tags:string[];seoTitle:string|null;seoDescription:string|null;
+ id:string;kind:ArticleKind;title:string;slug:string;excerpt:string;body:string;contentBlocks:ArticleContentBlock[];category:string;authorName?:string|null;eventAt:string|null;isFeatured:boolean;correctionNote:string|null;correctsSlug:string|null;tags:string[];seoTitle:string|null;seoDescription:string|null;
  featuredMediaRef:string|null;featuredMediaAlt:string|null;publishedSnapshot:{featuredMediaRef?:string|null}|null;
  revision:number;status:"draft"|"scheduled"|"published";publishedSlug:string|null;publishedAt:string|null;scheduledAt:string|null;
 };
@@ -46,7 +46,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArtic
    const response=await fetch("/api/websites/"+encodeURIComponent(websiteId)+"/articles",{cache:"no-store",headers});
    const payload=await response.json();
    if(!response.ok)throw Error(payload.error || "Could not load content.");
-   setArticles(payload.articles);
+   setArticles((payload.articles as Story[]).map(article=>({...article,contentBlocks:article.contentBlocks?.length?article.contentBlocks:legacyBodyBlocks(article.body)})));
    setSiteSlug(payload.siteSlug || "");
    setSelected(current=>current && payload.articles.some((a:Story)=>a.id===current)?current:(startNew?null:(initialArticleId && payload.articles.some((a:Story)=>a.id===initialArticleId)?initialArticleId:(payload.articles[0]?.id||null))));
    setDirty(false);
@@ -71,14 +71,14 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArtic
   richSelectionRef.current=null;
   const body=editor.innerHTML;
   if(body.length>50000){setMessage("Article content is limited to 50,000 characters. Remove some content to continue.");return;}
-  setDraft(previous=>previous?{...previous,body}:previous);setDirty(true);setMessage("");
+  setDraft(previous=>previous?{...previous,body,contentBlocks:legacyBodyBlocks(body)}:previous);setDirty(true);setMessage("");
  }
  useEffect(()=>{
   if(dirty)return;
   setDraft(articles.find(a=>a.id===selected)??null);
  },[articles,selected,dirty]);
  function change(field:"title"|"slug"|"excerpt"|"body"|"category"|"seoTitle"|"seoDescription"|"correctionNote"|"correctsSlug",value:string) {
-  setDraft(previous=>previous?{...previous,[field]:value}:previous);
+  setDraft(previous=>previous?{...previous,[field]:value,...(field==="body"?{contentBlocks:legacyBodyBlocks(value)}:{})}:previous);
   setDirty(true);setMessage("");
  }
  function choose(id:string) {
@@ -132,7 +132,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArtic
    const response=await fetch("/api/websites/"+websiteId+"/articles/"+draft.id,{
     method:"PATCH",headers:{"Content-Type":"application/json",...headers},
     body:JSON.stringify({title:draft.title,slug:draft.slug,excerpt:draft.excerpt,
-     body:draft.body,category:draft.category,eventAt:draft.eventAt,isFeatured:draft.isFeatured,correctionNote:draft.correctionNote,correctsSlug:draft.correctsSlug,tags:draft.tags,seoTitle:draft.seoTitle,seoDescription:draft.seoDescription,featuredMediaRef:draft.featuredMediaRef,revision:draft.revision,action,scheduledAt:draft.scheduledAt}),
+     body:draft.body,contentBlocks:draft.contentBlocks,category:draft.category,eventAt:draft.eventAt,isFeatured:draft.isFeatured,correctionNote:draft.correctionNote,correctsSlug:draft.correctsSlug,tags:draft.tags,seoTitle:draft.seoTitle,seoDescription:draft.seoDescription,featuredMediaRef:draft.featuredMediaRef,revision:draft.revision,action,scheduledAt:draft.scheduledAt}),
    });
    const payload=await response.json();
    if(!response.ok)throw Error(payload.error || "Article could not be saved.");

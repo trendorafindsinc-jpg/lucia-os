@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { articleDraftSchema, articleRoute, publicationReady, newArticleSlug, updateArticleSchema } from "./article-model";
+import { articleDraftSchema, articleContentBlocksSchema, legacyBodyBlocks, articleRoute, publicationReady, newArticleSlug, updateArticleSchema } from "./article-model";
 describe("Phase 15 content-contract foundation", () => {
  const valid={kind:"blog" as const,title:"A Barber's Story",slug:"a-barbers-story",excerpt:"How we welcome our customers",body:"A thoughtful story about working with our local customers.",category:"Grooming",authorName:null,eventAt:null,isFeatured:false,correctionNote:null,correctsSlug:null,tags:["community","local"],seoTitle:"A Barber’s Story",seoDescription:"How we welcome customers to our local barber shop.",featuredMediaRef:null,featuredMediaAlt:null};
  it("supports two honest content kinds with stable URLs",()=>{
@@ -15,6 +15,22 @@ describe("Phase 15 content-contract foundation", () => {
   expect(articleRoute("news","first-post")).toBe("/news/first-post");
   expect(newArticleSlug("A Barber's Story")).toBe("a-barber-s-story");
  });
+ it("validates ordered reusable blocks and preserves legacy article source",()=>{
+  const blocks=[
+   {id:"intro",type:"paragraph",text:"Opening paragraph"},
+   {id:"section",type:"heading",level:2,text:"A section"},
+   {id:"points",type:"list",ordered:false,items:["First","Second"]},
+   {id:"quote",type:"quote",text:"A quotation",citation:"Author"},
+  ];
+  expect(articleContentBlocksSchema.parse(blocks)).toEqual(blocks);
+  expect(articleContentBlocksSchema.safeParse([{id:"bad",type:"heading",level:1,text:"Invalid level"}]).success).toBe(false);
+  expect(articleContentBlocksSchema.safeParse(Array(201).fill(blocks[0])).success).toBe(false);
+  const legacy="<h2>Existing article</h2><p>Preserve exact markup.</p>";
+  expect(legacyBodyBlocks(legacy)).toEqual([{id:"legacy-body",type:"legacy",source:legacy}]);
+  expect(legacyBodyBlocks("")).toEqual([]);
+  const editable = Object.fromEntries(Object.entries(valid).filter(([key])=>!["kind","featuredMediaAlt","authorName"].includes(key)));
+  expect(updateArticleSchema.safeParse({...editable,revision:1,action:"save",contentBlocks:blocks}).success).toBe(true);
+ });
  it("prevents premature publication of unfinished articles",()=>{
   expect(publicationReady(valid)).toBe(true);
   expect(publicationReady({...valid,body:""})).toBe(false);
@@ -24,7 +40,7 @@ describe("Phase 15 content-contract foundation", () => {
   expect(articleDraftSchema.safeParse({...valid,slug:"../../admin"}).success).toBe(false);
   expect(updateArticleSchema.safeParse({...valid,revision:-1,action:"publish"}).success).toBe(false);
   expect(updateArticleSchema.safeParse({...valid,revision:2,action:"schedule"}).success).toBe(false);
-  const {kind,featuredMediaAlt,authorName,...editable}=valid;
+  const editable = Object.fromEntries(Object.entries(valid).filter(([key])=>!["kind","featuredMediaAlt","authorName"].includes(key)));
   expect(updateArticleSchema.safeParse({...editable,revision:2,action:"schedule",scheduledAt:"2026-11-02T10:00:00.000Z"}).success).toBe(true);
   expect(updateArticleSchema.safeParse({...valid,revision:2,action:"publish",injected:"unexpected"}).success).toBe(false);
   expect(articleDraftSchema.parse({...valid,featuredMediaRef:"media:b8e95a60-fbde-4c37-93e6-a2916c7b13d4"}).featuredMediaRef).toMatch(/^media:/);

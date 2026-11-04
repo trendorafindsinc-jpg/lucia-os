@@ -3,7 +3,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
 import { memberships, organizations, websitePosts, websitePostRevisions, websites } from "@/lib/db/schema";
 import { hasOrganizationPermission } from "@/lib/access/policy";
-import { updateArticleSchema, publicationReady, type PublishedArticle } from "@/lib/content/article-model";
+import { updateArticleSchema, publicationReady, legacyBodyBlocks, type PublishedArticle } from "@/lib/content/article-model";
 import { isUniqueWebsiteWrite, websiteMutationAllowed } from "@/lib/websites/draft-revision";
 import { MediaError, validateMediaOwnership } from "@/lib/media/service";
 import { z } from "zod";
@@ -53,6 +53,7 @@ export async function PATCH(request:Request,context:Context){
      }
     }
     const mediaAltById=input.action==="unpublish" ? {} : await validateMediaOwnership(tx,org.id,site.id,{featuredMediaRef:input.featuredMediaRef,body:input.body},input.action==="publish");
+    const contentBlocks = input.contentBlocks ?? legacyBodyBlocks(input.body);
     const featuredMediaId=input.featuredMediaRef ? input.featuredMediaRef.slice(6) : null;
     const featuredMediaAlt=featuredMediaId ? mediaAltById[featuredMediaId] ?? null : null;
     // getCurrentUser resolves the authenticated profile through the session
@@ -64,7 +65,7 @@ export async function PATCH(request:Request,context:Context){
     const status=input.action==="schedule"?"scheduled":live?"published":"draft";
     const publishedSlug=live ? (input.action==="publish" ? draft.slug : current.publishedSlug) : null;
     const [saved]=await tx.update(websitePosts).set({
-     title:input.title,slug:input.slug,excerpt:input.excerpt,body:input.body,category:input.category,eventAt:input.eventAt?new Date(input.eventAt):null,isFeatured:input.isFeatured,correctionNote:input.correctionNote,correctsSlug:input.correctsSlug,tags:input.tags,seoTitle:input.seoTitle,seoDescription:input.seoDescription,featuredMediaId,
+     title:input.title,slug:input.slug,excerpt:input.excerpt,body:input.body,contentBlocks,category:input.category,eventAt:input.eventAt?new Date(input.eventAt):null,isFeatured:input.isFeatured,correctionNote:input.correctionNote,correctsSlug:input.correctsSlug,tags:input.tags,seoTitle:input.seoTitle,seoDescription:input.seoDescription,featuredMediaId,
      revision:current.revision+1,status,publishedSnapshot:live,publishedSlug,
      publishedAt:live ? (input.action==="publish" ? new Date() : current.publishedAt) : null,
      scheduledAt:input.action==="schedule"?new Date(input.scheduledAt!):null,updatedAt:new Date(),
@@ -72,7 +73,7 @@ export async function PATCH(request:Request,context:Context){
     await tx.insert(websitePostRevisions).values({
      organizationId:org.id,websiteId:site.id,postId:saved.id,actorUserId:user.id,
      revision:saved.revision,event:input.action,
-     snapshot:{draft,live,status,publishedSlug,at:new Date().toISOString()},
+     snapshot:{draft,contentBlocks,live,status,publishedSlug,at:new Date().toISOString()},
     });
     return {article:{...saved,featuredMediaRef:input.featuredMediaRef,featuredMediaAlt}};
    }
