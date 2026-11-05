@@ -26,7 +26,7 @@ export function createArticleEmbedHtml(input:string):string|null{
 }
 
 const sanitizerOptions={
- allowedTags:["p","h1","h2","h3","h4","h5","blockquote","ul","ol","li","strong","b","em","i","del","s","a","img","hr","br","code","pre","table","thead","tbody","tr","th","td","iframe","video","source","figure","figcaption","div","span","small","sup","sub","mark","dl","dt","dd","section","details","summary"],
+ allowedTags:["p","h1","h2","h3","h4","h5","blockquote","ul","ol","li","strong","b","em","i","u","del","s","a","img","hr","br","code","pre","table","thead","tbody","tr","th","td","iframe","video","source","figure","figcaption","div","span","small","sup","sub","mark","dl","dt","dd","section","details","summary"],
  allowedAttributes:{a:["href","title","target","rel"],img:["src","alt","title","loading","decoding","width","height"],iframe:["src","title","allow","allowfullscreen","loading","referrerpolicy","sandbox"],video:["controls","preload","playsinline"],source:["src","type"],th:["colspan","rowspan"],td:["colspan","rowspan"],"*":["aria-label","class"]},
  allowedSchemes:["https","http","mailto","tel"],allowProtocolRelative:false,allowedIframeHostnames:[...embedHosts],
  transformTags:{
@@ -51,7 +51,7 @@ export function renderArticleBlocks(blocks: import("./article-model").ArticleCon
  const escape = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
  const html = blocks.map(block => {
   switch (block.type) {
-   case "paragraph": return "<p>" + escape(block.text).replace(/\\n/g, "<br>") + "</p>";
+   case "paragraph": return renderArticleMarkdown(block.text);
    case "heading": return "<h" + block.level + ">" + escape(block.text) + "</h" + block.level + ">";
    case "list": return "<" + (block.ordered ? "ol" : "ul") + ">" + block.items.map(item => "<li>" + escape(item) + "</li>").join("") + "</" + (block.ordered ? "ol" : "ul") + ">";
    case "quote": return "<blockquote><p>" + escape(block.text) + "</p>" + (block.citation ? "<cite>" + escape(block.citation) + "</cite>" : "") + "</blockquote>";
