@@ -26,7 +26,7 @@ export function createArticleEmbedHtml(input:string):string|null{
 }
 
 const sanitizerOptions={
- allowedTags:["p","h1","h2","h3","h4","h5","blockquote","ul","ol","li","strong","b","em","i","u","del","s","a","img","hr","br","code","pre","table","thead","tbody","tr","th","td","iframe","video","source","figure","figcaption","div","span","small","sup","sub","mark","dl","dt","dd","section","details","summary"],
+ allowedTags:["p","h1","h2","h3","h4","h5","h6","blockquote","ul","ol","li","strong","b","em","i","u","del","s","a","img","hr","br","code","pre","table","thead","tbody","tr","th","td","iframe","video","source","figure","figcaption","div","span","small","sup","sub","mark","dl","dt","dd","cite","section","details","summary"],
  allowedAttributes:{a:["href","title","target","rel"],img:["src","alt","title","loading","decoding","width","height"],iframe:["src","title","allow","allowfullscreen","loading","referrerpolicy","sandbox"],video:["controls","preload","playsinline"],source:["src","type"],th:["colspan","rowspan"],td:["colspan","rowspan"],"*":["aria-label","class"]},
  allowedSchemes:["https","http","mailto","tel"],allowProtocolRelative:false,allowedIframeHostnames:[...embedHosts],
  transformTags:{
