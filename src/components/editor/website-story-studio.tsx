@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { legacyBodyBlocks, type ArticleContentBlock, type ArticleKind } from "@/lib/content/article-model";
 import Image from "next/image";
 import { MediaLibrary, type MediaLibraryItem } from "./media-library";
+import { ArticleBlockEditor, articleBlocksPlainText } from "./article-block-editor";
 import { articleRoute, newArticleSlug } from "@/lib/content/article-model";
 import { createArticleEmbedHtml, renderArticleHtml, renderArticleMarkdown } from "@/lib/content/rich-content";
 import "./website-story-studio.css";
@@ -167,10 +168,12 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArtic
      <div className="story-studio-info"><span>{draft.status==="published"?"Live version exists":draft.status==="scheduled"?"Scheduled publication":"Private draft"}</span><span>{dirty?"Unsaved edits":"All edits saved"}</span></div>
      {preview?<article className="story-studio-preview"><small>Draft preview · Not a public URL</small><h3>{draft.title}</h3><p>{draft.excerpt}</p>{draft.featuredMediaRef&&<Image unoptimized className="story-studio-featured-preview" src={"/_media/"+draft.featuredMediaRef.slice(6)} alt={draft.featuredMediaAlt||""} width={1200} height={750}/>}<div dangerouslySetInnerHTML={{__html:contentMode==="html"?renderArticleHtml(draft.body):renderArticleMarkdown(draft.body)}}/></article>:
       <div className="story-studio-fields"><div className="story-studio-canvas">
+       <ArticleBlockEditor blocks={draft.contentBlocks} onChange={blocks=>{setDraft(previous=>previous?{...previous,contentBlocks:blocks,body:articleBlocksPlainText(blocks)}:previous);setDirty(true);setMessage("");}}/>
+      
        <label>Headline<input value={draft.title} maxLength={150} onChange={e=>change("title",e.target.value)}/></label>
        <label>Article URL<input value={draft.slug} maxLength={120} onChange={e=>change("slug",newArticleSlug(e.target.value))}/></label>
        <label>Summary<textarea value={draft.excerpt} maxLength={320} rows={3} onChange={e=>change("excerpt",e.target.value)}/></label>
-       <label>Article content
+       <details className="story-advanced-source"><summary>Advanced source editing (optional)</summary><label>Article content
         <div className="story-content-mode" role="group" aria-label="Content editor mode">
          <button type="button" aria-pressed={contentMode==="rich"} onClick={()=>setContentMode("rich")}>Rich text</button>
          <button type="button" aria-pressed={contentMode==="markdown"} onClick={()=>setContentMode("markdown")}>Markdown source</button>
@@ -204,7 +207,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArtic
          <textarea className="story-html-source" aria-label="HTML source" spellCheck={false} value={draft.body} maxLength={50000} rows={14} onChange={e=>change("body",e.target.value)} placeholder={'<h2>Your heading</h2>\n<p>Write your article in HTML…</p>'}/>
          <small>Allowed HTML is sanitized on preview and publication. Use website media-library URLs for images.</small>
         </>}
-       </label>
+       </label></details>
 </div><aside className="story-studio-settings"><div className="story-settings-heading"><strong>Post settings</strong><small>Publication, discovery and artwork</small></div><div className="story-settings-readonly"><span>Author</span><strong>{draft.authorName||"Your LUCIA ID profile"}</strong><small>Author attribution follows the signed-in LUCIA ID.</small></div>       <label>{draft.kind==="news"?"News category":"Category"} (optional)<input value={draft.category} maxLength={80} onChange={e=>change("category",e.target.value)}/></label>
        {draft.kind==="news"&&<details open className="story-seo-fields"><summary>Newsroom metadata</summary>
         <label>Event date and time (optional)<input type="datetime-local" value={mounted&&draft.eventAt?toLocalDateTime(draft.eventAt):""} onChange={e=>{setDraft(previous=>previous?{...previous,eventAt:e.target.value?new Date(e.target.value).toISOString():null}:previous);setDirty(true);}}/></label>
