@@ -33,6 +33,15 @@ function convert(block: ArticleContentBlock, type: string): ArticleContentBlock 
  }
 }
 export function ArticleBlockEditor({ blocks, onChange }: { blocks: ArticleContentBlock[]; onChange: (blocks: ArticleContentBlock[]) => void }) {
+ const paragraphRefs = useRef<Record<string, HTMLTextAreaElement | null>>({});
+ function formatParagraph(index: number, block: Extract<ArticleContentBlock,{type:"paragraph"}>, before: string, after: string) {
+  const field = paragraphRefs.current[block.id]; if (!field) return;
+  const start = field.selectionStart, end = field.selectionEnd;
+  const selected = block.text.slice(start,end) || "text";
+  const next = block.text.slice(0,start) + before + selected + after + block.text.slice(end);
+  update(index,{...block,text:next});
+  field.focus(); field.setSelectionRange(start+before.length,start+before.length+selected.length);
+ }
  function update(index: number, next: ArticleContentBlock) { onChange(blocks.map((block, i) => i === index ? next : block)); }
  function add(type: string) {
   const empty: ArticleContentBlock = type === "heading" ? { id: makeId(), type: "heading", level: 2, text: "" }
