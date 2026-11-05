@@ -5,7 +5,7 @@ import Image from "next/image";
 import { MediaLibrary, type MediaLibraryItem } from "./media-library";
 import { ArticleBlockEditor, articleBlocksPlainText } from "./article-block-editor";
 import { articleRoute, newArticleSlug } from "@/lib/content/article-model";
-import { createArticleEmbedHtml, renderArticleHtml, renderArticleMarkdown } from "@/lib/content/rich-content";
+import { createArticleEmbedHtml, renderArticleHtml, renderArticleMarkdown, renderArticleBlocks } from "@/lib/content/rich-content";
 import "./website-story-studio.css";
 type Story = {
  id:string;kind:ArticleKind;title:string;slug:string;excerpt:string;body:string;contentBlocks:ArticleContentBlock[];category:string;authorName?:string|null;eventAt:string|null;isFeatured:boolean;correctionNote:string|null;correctsSlug:string|null;tags:string[];seoTitle:string|null;seoDescription:string|null;
@@ -166,7 +166,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArtic
    <div className="story-studio-editor">
     {draft?<>
      <div className="story-studio-info"><span>{draft.status==="published"?"Live version exists":draft.status==="scheduled"?"Scheduled publication":"Private draft"}</span><span>{dirty?"Unsaved edits":"All edits saved"}</span></div>
-     {preview?<article className="story-studio-preview"><small>Draft preview · Not a public URL</small><h3>{draft.title}</h3><p>{draft.excerpt}</p>{draft.featuredMediaRef&&<Image unoptimized className="story-studio-featured-preview" src={"/_media/"+draft.featuredMediaRef.slice(6)} alt={draft.featuredMediaAlt||""} width={1200} height={750}/>}<div dangerouslySetInnerHTML={{__html:contentMode==="html"?renderArticleHtml(draft.body):renderArticleMarkdown(draft.body)}}/></article>:
+     {preview?<article className="story-studio-preview"><small>Draft preview · Not a public URL</small><h3>{draft.title}</h3><p>{draft.excerpt}</p>{draft.featuredMediaRef&&<Image unoptimized className="story-studio-featured-preview" src={"/_media/"+draft.featuredMediaRef.slice(6)} alt={draft.featuredMediaAlt||""} width={1200} height={750}/>}<div dangerouslySetInnerHTML={{__html:renderArticleBlocks(draft.contentBlocks,draft.body)}}/></article>:
       <div className="story-studio-fields"><div className="story-studio-canvas">
        <ArticleBlockEditor blocks={draft.contentBlocks} onChange={blocks=>{setDraft(previous=>previous?{...previous,contentBlocks:blocks,body:articleBlocksPlainText(blocks)}:previous);setDirty(true);setMessage("");}}/>
       
