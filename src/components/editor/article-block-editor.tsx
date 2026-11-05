@@ -44,6 +44,7 @@ export function ArticleBlockEditor({ blocks, onChange }: { blocks: ArticleConten
  }
  function update(index: number, next: ArticleContentBlock) { onChange(blocks.map((block, i) => i === index ? next : block)); }
  function add(type: string) {
+  if (blocks.length >= 200) return;
   const empty: ArticleContentBlock = type === "heading" ? { id: makeId(), type: "heading", level: 2, text: "" }
    : type === "list" ? { id: makeId(), type: "list", ordered: false, items: [""] }
    : type === "quote" ? { id: makeId(), type: "quote", text: "", citation: null }
@@ -84,7 +85,7 @@ export function ArticleBlockEditor({ blocks, onChange }: { blocks: ArticleConten
    {block.type === "legacy" && <textarea aria-label="Existing article content" rows={8} value={block.source} onChange={e => update(index, { ...block, source: e.target.value })}/>}
    {block.type === "divider" && <hr/>}
   </article>)}
-  <div className="article-block-add"><label htmlFor="article-block-kind">Add a block</label><select id="article-block-kind" defaultValue="paragraph" onChange={e => { add(e.target.value); e.currentTarget.value = "paragraph"; }}><option value="paragraph">Paragraph</option><option value="heading">Heading</option><option value="list">Bulleted / numbered list</option><option value="quote">Blockquote</option><option value="table">Table</option><option value="divider">Divider</option><option value="link">Link</option></select><button type="button" onClick={() => add("paragraph")}>+ Paragraph</button></div>
+  <div className="article-block-add"><label htmlFor="article-block-kind">Add a block</label><select id="article-block-kind" disabled={blocks.length >= 200} defaultValue="paragraph" onChange={e => { add(e.target.value); e.currentTarget.value = "paragraph"; }}><option value="paragraph">Paragraph</option><option value="heading">Heading</option><option value="list">Bulleted / numbered list</option><option value="quote">Blockquote</option><option value="table">Table</option><option value="divider">Divider</option><option value="link">Link</option></select><button type="button" disabled={blocks.length >= 200} onClick={() => add("paragraph")}>+ Paragraph</button></div>
  </section>;
 }
 export function articleBlocksPlainText(blocks: ArticleContentBlock[]) { return plainText(blocks); }
