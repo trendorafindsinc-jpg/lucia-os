@@ -29,6 +29,7 @@ export const articleDraftSchema = z.object({
   slug: z.string().trim().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(120),
   excerpt: z.string().max(320),
   body: z.string().max(50000),
+  contentBlocks: articleContentBlocksSchema.optional(),
   category: z.string().trim().max(80),
   authorName: z.string().trim().max(80).nullable().default(null),
   eventAt: z.string().datetime().nullable().default(null),
