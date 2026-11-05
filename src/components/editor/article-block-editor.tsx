@@ -27,6 +27,7 @@ function convert(block: ArticleContentBlock, type: string): ArticleContentBlock 
   case "table": return { id, type: "table", headers: ["Column 1", "Column 2"], rows: [["", ""]] };
   case "divider": return { id, type: "divider" };
   case "link": return { id, type: "link", text, url: "https://example.com" };
+  case "legacy": return { id, type: "legacy", source: text };
   default: return { id, type: "paragraph", text };
  }
 }
