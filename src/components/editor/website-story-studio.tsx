@@ -171,7 +171,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArtic
        <label>Headline<input value={draft.title} maxLength={150} onChange={e=>change("title",e.target.value)}/></label>
        <label>Article URL<input value={draft.slug} maxLength={120} onChange={e=>change("slug",newArticleSlug(e.target.value))}/></label>
        <label>Summary<textarea value={draft.excerpt} maxLength={320} rows={3} onChange={e=>change("excerpt",e.target.value)}/></label>
-       <ArticleBlockEditor blocks={draft.contentBlocks} onChange={blocks=>{setDraft(previous=>previous?{...previous,contentBlocks:blocks,body:articleBlocksPlainText(blocks)}:previous);setDirty(true);setMessage("");}}/>
+       <ArticleBlockEditor blocks={draft.contentBlocks} onChange={blocks=>{setDraft(previous=>previous?{...previous,contentBlocks:blocks,body:articleBlocksPlainText(blocks)}:previous);setDirty(true);setMessage("");setRichSync(value=>value+1);}}/>
        <details className="story-advanced-source"><summary>Advanced source editing (optional)</summary><label>Article content
         <div className="story-content-mode" role="group" aria-label="Content editor mode">
          <button type="button" aria-pressed={contentMode==="rich"} onClick={()=>setContentMode("rich")}>Rich text</button>
