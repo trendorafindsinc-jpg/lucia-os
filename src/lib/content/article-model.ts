@@ -13,7 +13,7 @@ export const articleContentBlockSchema = z.discriminatedUnion("type", [
   z.object({ id: blockId, type: z.literal("quote"), text: z.string().max(5000), citation: z.string().max(300).nullable().default(null) }).strict(),
   z.object({ id: blockId, type: z.literal("table"), headers: z.array(z.string().max(200)).min(1).max(10), rows: z.array(z.array(z.string().max(1000)).max(10)).max(50) }).strict(),
   z.object({ id: blockId, type: z.literal("divider") }).strict(),
-  z.object({ id: blockId, type: z.literal("link"), text: z.string().max(500), url: z.string().url().max(2048).refine(value => /^https?:\\/\\//i.test(value)) }).strict(),
+  z.object({ id: blockId, type: z.literal("link"), text: z.string().max(500), url: z.string().url().max(2048).refine(value => /^https?:\/\//i.test(value)) }).strict(),
   // Compatibility block keeps existing Markdown/HTML articles byte-for-byte intact during migration.
   z.object({ id: blockId, type: z.literal("legacy"), source: z.string().max(50000) }).strict(),
 ]);
