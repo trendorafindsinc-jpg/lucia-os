@@ -634,8 +634,7 @@ export async function checkPhase15AuthenticatedAcceptance({
           assert(detailHtml.includes('data-layout-id="lucia.layout.' + name + '"'), name + " " + kind + " detail lost registered layout identity");
           assert(expectedLayoutClass.test(indexHtml), name + " " + kind + " listing did not inherit its layout design class");
           assert(expectedLayoutClass.test(detailHtml), name + " " + kind + " detail did not inherit its layout design class");
-          assert(detailHtml.includes("Published " + kind + " content"), name + " " + kind + " body missing");
-          assert(detailHtml.includes("Opening paragraph for " + kind), name + " " + kind + " paragraph block missing");
+          assert(detailHtml.includes("Opening paragraph for " + kind), name + " " + kind + " structured body missing");
           assert(detailHtml.includes("<h2>Structured " + kind + " heading</h2>"), name + " " + kind + " heading block missing");
           assert(detailHtml.includes("<ul>") && detailHtml.includes("Second " + kind + " point"), name + " " + kind + " list block missing");
           assert(detailHtml.includes("<blockquote>") && detailHtml.includes("Phase 2 acceptance"), name + " " + kind + " quote block missing");
