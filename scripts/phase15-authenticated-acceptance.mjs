@@ -133,6 +133,8 @@ export async function checkPhase15AuthenticatedAcceptance({
         createdBody = await creation.json();
         assert.equal(creation.status, 201, name + " persisted creation: " + createdBody.error);
         id = createdBody.website.id;
+
+        created.push(id);
         if (phase15 && name === selected[0]) {
           const articlePath = "/api/websites/" + id + "/articles";
           async function exerciseArticleDraft(kind) {
@@ -416,6 +418,8 @@ export async function checkPhase15AuthenticatedAcceptance({
         createdBody = await creation.json();
         assert.equal(creation.status, 201, name + " create: " + createdBody.error);
         id = createdBody.website.id;
+
+        created.push(id);
         saved = await (await api("a", draftRoute(id))).json();
         initialRevision = saved.revision;
         const assigned = await api("a", draftRoute(id), "PATCH", {
@@ -424,7 +428,6 @@ export async function checkPhase15AuthenticatedAcceptance({
         assert.equal(assigned.status, 200, name + " assignment denied");
         saved = await (await api("a", draftRoute(id))).json();
       }
-      created.push(id);
       assert.equal(createdBody.organization.id, f.orgA);
       assert.equal(saved.draft.layoutId, "lucia.layout." + name);
       assert(saved.draft.pages.length >= 6);
