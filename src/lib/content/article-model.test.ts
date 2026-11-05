@@ -49,7 +49,7 @@ describe("Phase 15 content-contract foundation", () => {
   expect(html).toContain("<blockquote>");
   expect(html).toContain("<table>");
   expect(html).toContain('href="https://example.com"');
-  expect(renderArticleBlocks([{id:"old",type:"legacy",source:"## Existing\\n\\nBody"}],"")).toContain("<h2>Existing</h2>");
+  expect(renderArticleBlocks([{id:"old",type:"legacy",source:"## Existing\n\nBody"}],"")).toContain("<h2>Existing</h2>");
   expect(renderArticleBlocks(undefined,"Legacy body")).toContain("Legacy body");
   expect(renderArticleBlocks([{id:"bad",type:"paragraph",text:"<script>alert(1)</script>"}],"")).not.toContain("<script>");
  });
