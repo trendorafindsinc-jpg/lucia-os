@@ -124,7 +124,7 @@ export async function PublicArticlePage({path,searchParams,websiteSlug,layoutId,
 export async function readPublishedContentContract(websiteSlug?:string){
  const [blog,news]=await Promise.all([readPublished("/blog",websiteSlug),readPublished("/news",websiteSlug)]);
  const serialize=(article:typeof blog.posts[number],kind:"blog"|"news")=>({
-  kind,title:article.title,slug:article.slug,route:articleRoute(kind,article.slug),excerpt:article.excerpt,body:article.body,
+  kind,title:article.title,slug:article.slug,route:articleRoute(kind,article.slug),excerpt:article.excerpt,body:article.body,contentBlocks:article.contentBlocks??[],
   category:article.category,tags:article.tags,author:article.authorName,eventAt:article.eventAt,isFeatured:article.isFeatured,
   correctionNote:article.correctionNote,correctsSlug:article.correctsSlug,seoTitle:article.seoTitle,seoDescription:article.seoDescription,
   publishedAt:article.publishedAt?.toISOString()??null,
