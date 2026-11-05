@@ -580,6 +580,8 @@ export async function checkPhase15AuthenticatedAcceptance({
         const hiddenDraftBody = await hiddenDraftResponse.json();
         assert.equal(hiddenDraftResponse.status, 201, name + " create private Blog draft");
         assert(!(await emptyBlog.text()).includes(hiddenTitle), name + " private draft leaked into public Blog");
+        assert.equal((await publicSite("/blog/" + hiddenDraftBody.article.slug, host)).status, 404,
+          name + " unpublished Blog article URL must fail closed");
 
         async function publishLayoutStory(kind) {
           const title = "Phase 2 " + kind + " " + name + " " + randomBytes(3).toString("hex");
@@ -624,12 +626,22 @@ export async function checkPhase15AuthenticatedAcceptance({
           const detailHtml = await detail.text();
           const expectedLayoutClass = new RegExp("premium-design-" + name + "-r[0-9]+");
           assert(indexHtml.includes(story.title), name + " " + kind + " listing omitted published story");
+          const otherStory = kind === "blog" ? newsStory : blogStory;
+          assert(!indexHtml.includes(otherStory.title), name + " " + kind + " listing included the other content kind");
+          assert(!detailHtml.includes(otherStory.title), name + " " + kind + " article included the other content kind");
           assert(detailHtml.includes(story.title), name + " " + kind + " detail omitted published story");
           assert(indexHtml.includes('data-layout-id="lucia.layout.' + name + '"'), name + " " + kind + " listing lost registered layout identity");
           assert(detailHtml.includes('data-layout-id="lucia.layout.' + name + '"'), name + " " + kind + " detail lost registered layout identity");
           assert(expectedLayoutClass.test(indexHtml), name + " " + kind + " listing did not inherit its layout design class");
           assert(expectedLayoutClass.test(detailHtml), name + " " + kind + " detail did not inherit its layout design class");
           assert(detailHtml.includes("Published " + kind + " content"), name + " " + kind + " body missing");
+          assert(detailHtml.includes("Opening paragraph for " + kind), name + " " + kind + " paragraph block missing");
+          assert(detailHtml.includes("<h2>Structured " + kind + " heading</h2>"), name + " " + kind + " heading block missing");
+          assert(detailHtml.includes("<ul>") && detailHtml.includes("Second " + kind + " point"), name + " " + kind + " list block missing");
+          assert(detailHtml.includes("<blockquote>") && detailHtml.includes("Phase 2 acceptance"), name + " " + kind + " quote block missing");
+          assert(detailHtml.includes("<table>") && detailHtml.includes("Content type"), name + " " + kind + " table block missing");
+          assert(detailHtml.includes('href="https://lucia.name.ng"'), name + " " + kind + " link block missing");
+          assert(detailHtml.includes("<hr"), name + " " + kind + " divider block missing");
           assert(detailHtml.includes("layout-acceptance"), name + " " + kind + " tags missing");
           assert(detailHtml.includes("canonical"), name + " " + kind + " canonical metadata missing");
           assert(indexHtml.includes('href="/' + kind + '"'), name + " " + kind + " navigation link missing");
