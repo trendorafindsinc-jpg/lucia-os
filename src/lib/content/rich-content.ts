@@ -43,3 +43,23 @@ export function renderArticleMarkdown(source:string):string{
  const linked=source.replace(/\]\(media:([0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})\)/gi,"](/_media/$1)");
  const html=marked.parse(linked,{async:false,gfm:true,breaks:false,pedantic:false});return typeof html==="string"?renderArticleHtml(html):"";
 }
+
+
+/** Render the canonical structured blocks through the same sanitizer as legacy article content. */
+export function renderArticleBlocks(blocks: import("./article-model").ArticleContentBlock[] | undefined, fallbackBody: string): string {
+ if (!blocks?.length) return renderArticleMarkdown(fallbackBody);
+ const escape = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+ const html = blocks.map(block => {
+  switch (block.type) {
+   case "paragraph": return "<p>" + escape(block.text).replace(/\\n/g, "<br>") + "</p>";
+   case "heading": return "<h" + block.level + ">" + escape(block.text) + "</h" + block.level + ">";
+   case "list": return "<" + (block.ordered ? "ol" : "ul") + ">" + block.items.map(item => "<li>" + escape(item) + "</li>").join("") + "</" + (block.ordered ? "ol" : "ul") + ">";
+   case "quote": return "<blockquote><p>" + escape(block.text) + "</p>" + (block.citation ? "<cite>" + escape(block.citation) + "</cite>" : "") + "</blockquote>";
+   case "table": return "<table><thead><tr>" + block.headers.map(cell => "<th>" + escape(cell) + "</th>").join("") + "</tr></thead><tbody>" + block.rows.map(row => "<tr>" + block.headers.map((_, index) => "<td>" + escape(row[index] ?? "") + "</td>").join("") + "</tr>").join("") + "</tbody></table>";
+   case "divider": return "<hr>";
+   case "link": return '<p><a href="' + escape(block.url) + '">' + escape(block.text) + "</a></p>";
+   case "legacy": return renderArticleMarkdown(block.source);
+  }
+ }).join("");
+ return renderArticleHtml(html);
+}
