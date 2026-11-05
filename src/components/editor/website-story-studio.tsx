@@ -168,11 +168,10 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArtic
      <div className="story-studio-info"><span>{draft.status==="published"?"Live version exists":draft.status==="scheduled"?"Scheduled publication":"Private draft"}</span><span>{dirty?"Unsaved edits":"All edits saved"}</span></div>
      {preview?<article className="story-studio-preview"><small>Draft preview · Not a public URL</small><h3>{draft.title}</h3><p>{draft.excerpt}</p>{draft.featuredMediaRef&&<Image unoptimized className="story-studio-featured-preview" src={"/_media/"+draft.featuredMediaRef.slice(6)} alt={draft.featuredMediaAlt||""} width={1200} height={750}/>}<div dangerouslySetInnerHTML={{__html:renderArticleBlocks(draft.contentBlocks,draft.body)}}/></article>:
       <div className="story-studio-fields"><div className="story-studio-canvas">
-       <ArticleBlockEditor blocks={draft.contentBlocks} onChange={blocks=>{setDraft(previous=>previous?{...previous,contentBlocks:blocks,body:articleBlocksPlainText(blocks)}:previous);setDirty(true);setMessage("");}}/>
-      
        <label>Headline<input value={draft.title} maxLength={150} onChange={e=>change("title",e.target.value)}/></label>
        <label>Article URL<input value={draft.slug} maxLength={120} onChange={e=>change("slug",newArticleSlug(e.target.value))}/></label>
        <label>Summary<textarea value={draft.excerpt} maxLength={320} rows={3} onChange={e=>change("excerpt",e.target.value)}/></label>
+       <ArticleBlockEditor blocks={draft.contentBlocks} onChange={blocks=>{setDraft(previous=>previous?{...previous,contentBlocks:blocks,body:articleBlocksPlainText(blocks)}:previous);setDirty(true);setMessage("");}}/>
        <details className="story-advanced-source"><summary>Advanced source editing (optional)</summary><label>Article content
         <div className="story-content-mode" role="group" aria-label="Content editor mode">
          <button type="button" aria-pressed={contentMode==="rich"} onClick={()=>setContentMode("rich")}>Rich text</button>
