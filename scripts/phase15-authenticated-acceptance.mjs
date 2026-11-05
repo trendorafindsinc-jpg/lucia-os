@@ -582,22 +582,34 @@ export async function checkPhase15AuthenticatedAcceptance({
         assert(!(await emptyBlog.text()).includes(hiddenTitle), name + " private draft leaked into public Blog");
 
         async function publishLayoutStory(kind) {
-          const title = "Phase 15 " + kind + " " + name + " " + randomBytes(3).toString("hex");
+          const title = "Phase 2 " + kind + " " + name + " " + randomBytes(3).toString("hex");
           const createdArticle = await api("a", articlesRoute, "POST", { kind, title });
           const createdArticleBody = await createdArticle.json();
           assert.equal(createdArticle.status, 201, name + " create " + kind + " draft: " + createdArticleBody.error);
           const article = createdArticleBody.article;
+          const contentBlocks = [
+            { id: "phase2-opening", type: "paragraph", text: "Opening paragraph for " + kind + " on " + name + "." },
+            { id: "phase2-heading", type: "heading", level: 2, text: "Structured " + kind + " heading" },
+            { id: "phase2-list", type: "list", ordered: false, items: ["First " + kind + " point", "Second " + kind + " point"] },
+            { id: "phase2-quote", type: "quote", text: "A published " + kind + " quotation.", citation: "Phase 2 acceptance" },
+            { id: "phase2-table", type: "table", headers: ["Field", "Value"], rows: [["Content type", kind], ["Layout", name]] },
+            { id: "phase2-link", type: "link", text: "LUCIA website", url: "https://lucia.name.ng" },
+            { id: "phase2-divider", type: "divider" },
+          ];
           const publishedResponse = await api("a", articlesRoute + "/" + article.id, "PATCH", {
             title, slug: article.slug, excerpt: "A published " + kind + " acceptance summary for " + name + ".",
-            body: "Published " + kind + " content for the " + name + " layout acceptance matrix.",
-            category: "Phase 15 Acceptance", eventAt: null, isFeatured: false,
-            correctionNote: null, correctsSlug: null, tags: ["phase15", "layout-acceptance"],
-            seoTitle: title + " | LUCIA", seoDescription: "Verified published " + kind + " content for " + name + ".",
+            body: "Published " + kind + " compatibility body for the " + name + " layout acceptance matrix. Structured blocks follow.",
+            contentBlocks,
+            category: "Phase 2 Acceptance", eventAt: null, isFeatured: false,
+            correctionNote: null, correctsSlug: null, tags: ["phase2", "structured-content"],
+            seoTitle: title + " | LUCIA", seoDescription: "Verified structured " + kind + " content for " + name + ".",
             featuredMediaRef: null, scheduledAt: null, revision: article.revision, action: "publish",
           });
           const publishedBody = await publishedResponse.json();
           assert.equal(publishedResponse.status, 200, name + " publish " + kind + ": " + publishedBody.error);
           assert.equal(publishedBody.article.status, "published");
+          assert.deepEqual(publishedBody.article.publishedSnapshot.contentBlocks, contentBlocks,
+            name + " " + kind + " published snapshot omitted structured blocks");
           return publishedBody.article;
         }
 
