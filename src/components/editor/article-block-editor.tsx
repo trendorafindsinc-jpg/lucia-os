@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import type { ArticleContentBlock } from "@/lib/content/article-model";
 
 function makeId() {
@@ -59,7 +60,13 @@ export function ArticleBlockEditor({ blocks, onChange }: { blocks: ArticleConten
     <button type="button" aria-label={"Duplicate block " + (index + 1)} onClick={() => { const copy = { ...block, id: makeId() } as ArticleContentBlock; onChange([...blocks.slice(0, index + 1), copy, ...blocks.slice(index + 1)]); }}>Duplicate</button>
     <button type="button" aria-label={"Delete block " + (index + 1)} onClick={() => onChange(blocks.filter((_, i) => i !== index))}>Delete</button>
    </div></header>
-   {block.type === "paragraph" && <textarea aria-label={"Paragraph " + (index + 1)} rows={4} value={block.text} onChange={e => update(index, { ...block, text: e.target.value })} placeholder="Write your paragraph…"/>}
+   {block.type === "paragraph" && <div><div className="article-inline-toolbar" role="toolbar" aria-label={"Paragraph " + (index + 1) + " formatting"}>
+    <button type="button" onClick={() => formatParagraph(index,block,"**","**")}>Bold</button>
+    <button type="button" onClick={() => formatParagraph(index,block,"*","*")}>Italic</button>
+    <button type="button" onClick={() => formatParagraph(index,block,"<u>","</u>")}>Underline</button>
+    <button type="button" onClick={() => formatParagraph(index,block,"~~","~~")}>Strikethrough</button>
+    <button type="button" onClick={() => formatParagraph(index,block,"[","](https://example.com)")}>Link</button>
+   </div><textarea ref={element => {paragraphRefs.current[block.id]=element;}} aria-label={"Paragraph " + (index + 1)} rows={4} value={block.text} onChange={e => update(index, { ...block, text: e.target.value })} placeholder="Write your paragraph…"/></div>}
    {block.type === "heading" && <div className="article-block-inline"><select aria-label="Heading level" value={block.level} onChange={e => update(index, { ...block, level: Number(e.target.value) as 2|3|4|5|6 })}>{[2,3,4,5,6].map(level => <option key={level} value={level}>Heading {level}</option>)}</select><input aria-label={"Heading " + (index + 1)} value={block.text} onChange={e => update(index, { ...block, text: e.target.value })} placeholder="Section heading"/></div>}
    {block.type === "list" && <div><label><input type="checkbox" checked={block.ordered} onChange={e => update(index, { ...block, ordered: e.target.checked })}/> Numbered list</label>{block.items.map((item, itemIndex) => <div className="article-block-inline" key={itemIndex}><input aria-label={"List item " + (itemIndex + 1)} value={item} onChange={e => update(index, { ...block, items: block.items.map((v, i) => i === itemIndex ? e.target.value : v) })}/><button type="button" onClick={() => update(index, { ...block, items: block.items.filter((_, i) => i !== itemIndex) })}>Remove</button></div>)}<button type="button" onClick={() => update(index, { ...block, items: [...block.items, ""] })}>+ Add list item</button></div>}
    {block.type === "quote" && <div><textarea aria-label="Quotation" rows={3} value={block.text} onChange={e => update(index, { ...block, text: e.target.value })} placeholder="Write a quotation…"/><input aria-label="Quote attribution" value={block.citation ?? ""} onChange={e => update(index, { ...block, citation: e.target.value || null })} placeholder="Attribution (optional)"/></div>}
