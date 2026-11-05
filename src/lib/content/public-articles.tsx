@@ -11,7 +11,7 @@ import { normalizeHostname } from "@/lib/domains/hostname";
 import { articleDraftSchema, articleRoute } from "@/lib/content/article-model";
 import { websiteDomains, websitePosts, websites } from "@/lib/db/schema";
 import styles from "./public-articles.module.css";
-import { renderArticleMarkdown } from "./rich-content";
+import { renderArticleBlocks } from "./rich-content";
 
 function layoutClasses(layoutId?: string, layoutVersion?: number) {
  const suffix=layoutId?.startsWith("lucia.layout.")?layoutId.slice("lucia.layout.".length):"";
@@ -102,7 +102,7 @@ export async function PublicArticlePage({path,searchParams,websiteSlug,layoutId,
    {item.correctionNote&&<aside className={styles.correction}><strong>Correction / update</strong><p>{item.correctionNote}</p>{item.correctsSlug&&<Link href={"/news/"+item.correctsSlug as Route}>View the earlier report</Link>}</aside>}
    {item.featuredMediaRef && <Image unoptimized className={styles.featuredImage} src={"/_media/"+item.featuredMediaRef.slice(6)} alt={item.featuredMediaAlt||""} width={1600} height={1000}/>}
    {item.publishedAt && <time dateTime={item.publishedAt.toISOString()}>{item.publishedAt.toLocaleDateString("en-GB",{dateStyle:"long"})}</time>}
-   <div className={styles.body} dangerouslySetInnerHTML={{ __html: renderArticleMarkdown(item.body) }} />
+   <div className={styles.body} dangerouslySetInnerHTML={{ __html: renderArticleBlocks(item.contentBlocks, item.body) }} />
    <a className={styles.return} href={"/"+kind}>← All {label.toLowerCase()}</a>
   </article> : <section className={`${styles.index} layout-content-section`}>
    <p className={styles.eyebrow}>{site.name} / {label}</p><h1>{label}</h1>
