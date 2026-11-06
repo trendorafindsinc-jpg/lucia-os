@@ -166,6 +166,7 @@ export async function checkPhase15ArticleMediaAcceptance({
       await publishingUi.setViewportSize({ width: 1440, height: 900 });
       await publishingUi.screenshot({ path: "artifacts/phase14-auth-publish/publishing-studio-writing-1440.png", fullPage: true });
       await publishingUi.getByRole("textbox", { name: "Summary", exact: true }).fill("Updated in the dedicated Publishing Studio browser journey.");
+      await publishingUi.locator("details.story-advanced-source > summary").click();
       await publishingUi.locator(".story-rich-editor").fill("This article was edited in the focused rich-text writing canvas.");
       await publishingUi.getByRole("button", { name: "Markdown source", exact: true }).click();
       assert((await publishingUi.getByLabel("Markdown article content").inputValue()).includes("focused rich-text writing canvas"), "Rich text must survive switching to Markdown source");
@@ -220,6 +221,7 @@ export async function checkPhase15ArticleMediaAcceptance({
       await page.locator(".studio-media-library summary").click();
       const imageRow = page.locator(".studio-media-library li").filter({ hasText: alts[0] });
       await imageRow.getByRole("button", { name: "Use as featured image" }).click();
+      await page.locator("details.story-advanced-source > summary").click();
       const richEditor = page.getByRole("textbox", { name: "Rich text article content" });
       await richEditor.fill("Rich text editor acceptance");
       assert.equal(await richEditor.evaluate(element => getComputedStyle(element).fontWeight), "400", "Rich editor must not inherit the surrounding field label weight");

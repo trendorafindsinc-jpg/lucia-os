@@ -59,7 +59,7 @@ export async function PATCH(request:Request,context:Context){
     // getCurrentUser resolves the authenticated profile through the session
     // security-definer path. Re-querying app_users under tenant RLS can hide
     // the same author row and silently publish a null attribution.
-    const draft:PublishedArticle={kind:current.kind as "blog"|"news",title:input.title,slug:input.slug,excerpt:input.excerpt,body:input.body,category:input.category,authorName:user.displayName?.trim()||null,eventAt:input.eventAt,isFeatured:input.isFeatured,correctionNote:input.correctionNote,correctsSlug:input.correctsSlug,tags:input.tags,seoTitle:input.seoTitle,seoDescription:input.seoDescription,featuredMediaRef:input.featuredMediaRef,featuredMediaAlt};
+    const draft:PublishedArticle={kind:current.kind as "blog"|"news",title:input.title,slug:input.slug,excerpt:input.excerpt,body:input.body,contentBlocks,category:input.category,authorName:user.displayName?.trim()||null,eventAt:input.eventAt,isFeatured:input.isFeatured,correctionNote:input.correctionNote,correctsSlug:input.correctsSlug,tags:input.tags,seoTitle:input.seoTitle,seoDescription:input.seoDescription,featuredMediaRef:input.featuredMediaRef,featuredMediaAlt};
     if((input.action==="publish" || input.action==="schedule") && !publicationReady(draft))return {validation:"Add a meaningful summary and article body before publishing."};
     const live=input.action==="publish"?draft:input.action==="unpublish"||input.action==="schedule"?null:current.publishedSnapshot;
     const status=input.action==="schedule"?"scheduled":live?"published":"draft";

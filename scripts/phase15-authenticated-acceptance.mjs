@@ -133,6 +133,8 @@ export async function checkPhase15AuthenticatedAcceptance({
         createdBody = await creation.json();
         assert.equal(creation.status, 201, name + " persisted creation: " + createdBody.error);
         id = createdBody.website.id;
+
+        created.push(id);
         if (phase15 && name === selected[0]) {
           const articlePath = "/api/websites/" + id + "/articles";
           async function exerciseArticleDraft(kind) {
@@ -224,34 +226,63 @@ export async function checkPhase15AuthenticatedAcceptance({
         await view.locator(".website-first-editor").waitFor();
         if (phase15 && name === selected[0]) {
           async function exerciseStoryStudio(kind) {
-            const title = "Phase 1 UI " + kind + " " + siteSlug;
-            const updatedBody = "## Updated " + kind + " content\\n\\nThis saved revision survived reopening.";
+            const title = "Phase 2 UI " + kind + " " + siteSlug;
             const launch = kind === "blog" ? "Write Blog" : "Publish News";
             await view.getByRole("button", { name: launch, exact: true }).first().click();
             await view.locator("section.story-studio[aria-label='Website Blog and News Studio']").waitFor();
             await view.getByLabel("New " + kind + " title").fill(title);
             await view.getByRole("button", { name: /Create draft/ }).click();
             await view.getByLabel("Headline").waitFor();
-            await view.getByRole("button", { name: "Markdown source", exact: true }).click();
-            await view.getByLabel("Markdown article content").fill("## " + kind + " opening\\n\\nInitial saved content.");
+            await view.getByLabel("Headline").fill(title);
+            await view.getByLabel("Summary").fill("A real Phase 2 " + kind + " block-editor acceptance summary.");
+            await view.getByRole("button", { name: "+ Paragraph", exact: true }).click();
+            const paragraph = view.getByRole("textbox", { name: "Paragraph 1" });
+            await paragraph.fill("Phase 2 opening paragraph for " + kind + ".");
+            await paragraph.evaluate((element) => element.setSelectionRange(0, 7));
+            await view.getByRole("button", { name: "Bold", exact: true }).click();
+            assert((await paragraph.inputValue()).includes("**Phase 2**"), kind + " inline bold formatting failed");
+            await view.getByLabel("Add a block").selectOption("heading");
+            await view.getByRole("textbox", { name: "Heading 2", exact: true }).fill("Structured " + kind + " heading");
+            await view.getByLabel("Add a block").selectOption("list");
+            await view.getByLabel("List item 1").fill("First " + kind + " list item");
+            await view.getByRole("button", { name: "+ Add list item", exact: true }).click();
+            await view.getByLabel("List item 2").fill("Second " + kind + " list item");
+            await view.getByLabel("Add a block").selectOption("quote");
+            await view.getByRole("textbox", { name: "Quotation", exact: true }).fill("A memorable " + kind + " quotation.");
+            await view.getByLabel("Quote attribution").fill("Phase 2 acceptance");
+            await view.getByLabel("Add a block").selectOption("table");
+            await view.getByLabel("Table heading 1").fill("Field");
+            await view.getByLabel("Table heading 2").fill("Value");
+            await view.getByLabel("Table row 1 column 1").fill("Content type");
+            await view.getByLabel("Table row 1 column 2").fill(kind);
+            await view.getByLabel("Add a block").selectOption("link");
+            await view.getByLabel("Link text").fill("LUCIA website");
+            await view.getByLabel("Link URL").fill("https://lucia.name.ng");
+            await view.getByLabel("Add a block").selectOption("divider");
+            await view.getByRole("button", { name: "Move block 4 up", exact: true }).click();
+            await view.getByRole("button", { name: "Duplicate block 2", exact: true }).click();
+            await view.getByRole("button", { name: "Delete block 3", exact: true }).click();
             await view.getByRole("button", { name: "Save draft", exact: true }).click();
             await view.locator(".story-studio-notice").filter({ hasText: "Draft saved." }).waitFor();
+            await view.getByRole("button", { name: "Preview draft", exact: true }).click();
+            await view.getByText("Structured " + kind + " heading", { exact: true }).waitFor();
+            await view.getByText("First " + kind + " list item", { exact: true }).waitFor();
+            await view.getByText("A memorable " + kind + " quotation.", { exact: true }).waitFor();
+            await view.getByRole("button", { name: "Edit article", exact: true }).click();
             await view.getByRole("button", { name: "Return to website", exact: true }).click();
             await view.getByRole("button", { name: launch, exact: true }).first().click();
             await view.locator("section.story-studio[aria-label='Website Blog and News Studio']").waitFor();
             await view.getByRole("button", { name: new RegExp(title) }).click();
-            assert.equal(await view.getByLabel("Headline").inputValue(), title, kind + " draft did not reopen");
-            await view.getByRole("button", { name: "Markdown source", exact: true }).click();
-            assert.equal(await view.getByLabel("Markdown article content").inputValue(), "## " + kind + " opening\\n\\nInitial saved content.", kind + " body did not persist after reopen");
-            await view.getByLabel("Markdown article content").fill(updatedBody);
-            await view.getByRole("button", { name: "Save draft", exact: true }).click();
-            await view.locator(".story-studio-notice").filter({ hasText: "Draft saved." }).waitFor();
-            await view.getByRole("button", { name: "Return to website", exact: true }).click();
-            await view.getByRole("button", { name: launch, exact: true }).first().click();
-            await view.locator("section.story-studio[aria-label='Website Blog and News Studio']").waitFor();
-            await view.getByRole("button", { name: new RegExp(title) }).click();
-            await view.getByRole("button", { name: "Markdown source", exact: true }).click();
-            assert.equal(await view.getByLabel("Markdown article content").inputValue(), updatedBody, kind + " update did not persist after second reopen");
+            assert.equal(await view.getByLabel("Headline").inputValue(), title, kind + " headline did not persist");
+            assert((await view.getByRole("textbox", { name: "Paragraph 1" }).inputValue()).includes("**Phase 2**"), kind + " formatted paragraph did not persist");
+            assert.equal(await view.getByRole("textbox", { name: "Heading 2", exact: true }).inputValue(), "Structured " + kind + " heading");
+            assert.equal(await view.getByLabel("List item 2").inputValue(), "Second " + kind + " list item");
+            assert.equal(await view.getByRole("textbox", { name: "Quotation", exact: true }).inputValue(), "A memorable " + kind + " quotation.");
+            assert.equal(await view.getByLabel("Table row 1 column 2").inputValue(), kind);
+            assert.equal(await view.getByLabel("Link URL").inputValue(), "https://lucia.name.ng");
+            await view.getByRole("button", { name: "Preview draft", exact: true }).click();
+            await view.getByText("Structured " + kind + " heading", { exact: true }).waitFor();
+            await view.getByRole("button", { name: "Edit article", exact: true }).click();
             await view.getByRole("button", { name: "Return to website", exact: true }).click();
           }
           await exerciseStoryStudio("blog");
@@ -387,6 +418,8 @@ export async function checkPhase15AuthenticatedAcceptance({
         createdBody = await creation.json();
         assert.equal(creation.status, 201, name + " create: " + createdBody.error);
         id = createdBody.website.id;
+
+        created.push(id);
         saved = await (await api("a", draftRoute(id))).json();
         initialRevision = saved.revision;
         const assigned = await api("a", draftRoute(id), "PATCH", {
@@ -395,7 +428,6 @@ export async function checkPhase15AuthenticatedAcceptance({
         assert.equal(assigned.status, 200, name + " assignment denied");
         saved = await (await api("a", draftRoute(id))).json();
       }
-      created.push(id);
       assert.equal(createdBody.organization.id, f.orgA);
       assert.equal(saved.draft.layoutId, "lucia.layout." + name);
       assert(saved.draft.pages.length >= 6);
@@ -548,24 +580,38 @@ export async function checkPhase15AuthenticatedAcceptance({
         const hiddenDraftBody = await hiddenDraftResponse.json();
         assert.equal(hiddenDraftResponse.status, 201, name + " create private Blog draft");
         assert(!(await emptyBlog.text()).includes(hiddenTitle), name + " private draft leaked into public Blog");
+        assert.equal((await publicSite("/blog/" + hiddenDraftBody.article.slug, host)).status, 404,
+          name + " unpublished Blog article URL must fail closed");
 
         async function publishLayoutStory(kind) {
-          const title = "Phase 15 " + kind + " " + name + " " + randomBytes(3).toString("hex");
+          const title = "Phase 2 " + kind + " " + name + " " + randomBytes(3).toString("hex");
           const createdArticle = await api("a", articlesRoute, "POST", { kind, title });
           const createdArticleBody = await createdArticle.json();
           assert.equal(createdArticle.status, 201, name + " create " + kind + " draft: " + createdArticleBody.error);
           const article = createdArticleBody.article;
+          const contentBlocks = [
+            { id: "phase2-opening", type: "paragraph", text: "Opening paragraph for " + kind + " on " + name + "." },
+            { id: "phase2-heading", type: "heading", level: 2, text: "Structured " + kind + " heading" },
+            { id: "phase2-list", type: "list", ordered: false, items: ["First " + kind + " point", "Second " + kind + " point"] },
+            { id: "phase2-quote", type: "quote", text: "A published " + kind + " quotation.", citation: "Phase 2 acceptance" },
+            { id: "phase2-table", type: "table", headers: ["Field", "Value"], rows: [["Content type", kind], ["Layout", name]] },
+            { id: "phase2-link", type: "link", text: "LUCIA website", url: "https://lucia.name.ng" },
+            { id: "phase2-divider", type: "divider" },
+          ];
           const publishedResponse = await api("a", articlesRoute + "/" + article.id, "PATCH", {
             title, slug: article.slug, excerpt: "A published " + kind + " acceptance summary for " + name + ".",
-            body: "Published " + kind + " content for the " + name + " layout acceptance matrix.",
-            category: "Phase 15 Acceptance", eventAt: null, isFeatured: false,
-            correctionNote: null, correctsSlug: null, tags: ["phase15", "layout-acceptance"],
-            seoTitle: title + " | LUCIA", seoDescription: "Verified published " + kind + " content for " + name + ".",
+            body: "Published " + kind + " compatibility body for the " + name + " layout acceptance matrix. Structured blocks follow.",
+            contentBlocks,
+            category: "Phase 2 Acceptance", eventAt: null, isFeatured: false,
+            correctionNote: null, correctsSlug: null, tags: ["phase2", "structured-content"],
+            seoTitle: title + " | LUCIA", seoDescription: "Verified structured " + kind + " content for " + name + ".",
             featuredMediaRef: null, scheduledAt: null, revision: article.revision, action: "publish",
           });
           const publishedBody = await publishedResponse.json();
           assert.equal(publishedResponse.status, 200, name + " publish " + kind + ": " + publishedBody.error);
           assert.equal(publishedBody.article.status, "published");
+          assert.deepEqual(publishedBody.article.publishedSnapshot.contentBlocks, contentBlocks,
+            name + " " + kind + " published snapshot omitted structured blocks");
           return publishedBody.article;
         }
 
@@ -580,13 +626,22 @@ export async function checkPhase15AuthenticatedAcceptance({
           const detailHtml = await detail.text();
           const expectedLayoutClass = new RegExp("premium-design-" + name + "-r[0-9]+");
           assert(indexHtml.includes(story.title), name + " " + kind + " listing omitted published story");
+          const otherStory = kind === "blog" ? newsStory : blogStory;
+          assert(!indexHtml.includes(otherStory.title), name + " " + kind + " listing included the other content kind");
+          assert(!detailHtml.includes(otherStory.title), name + " " + kind + " article included the other content kind");
           assert(detailHtml.includes(story.title), name + " " + kind + " detail omitted published story");
           assert(indexHtml.includes('data-layout-id="lucia.layout.' + name + '"'), name + " " + kind + " listing lost registered layout identity");
           assert(detailHtml.includes('data-layout-id="lucia.layout.' + name + '"'), name + " " + kind + " detail lost registered layout identity");
           assert(expectedLayoutClass.test(indexHtml), name + " " + kind + " listing did not inherit its layout design class");
           assert(expectedLayoutClass.test(detailHtml), name + " " + kind + " detail did not inherit its layout design class");
-          assert(detailHtml.includes("Published " + kind + " content"), name + " " + kind + " body missing");
-          assert(detailHtml.includes("layout-acceptance"), name + " " + kind + " tags missing");
+          assert(detailHtml.includes("Opening paragraph for " + kind), name + " " + kind + " structured body missing");
+          assert(detailHtml.includes("<h2>Structured " + kind + " heading</h2>"), name + " " + kind + " heading block missing");
+          assert(detailHtml.includes("<ul>") && detailHtml.includes("Second " + kind + " point"), name + " " + kind + " list block missing");
+          assert(detailHtml.includes("<blockquote>") && detailHtml.includes("Phase 2 acceptance"), name + " " + kind + " quote block missing");
+          assert(detailHtml.includes("<table>") && detailHtml.includes("Content type"), name + " " + kind + " table block missing");
+          assert(detailHtml.includes('href="https://lucia.name.ng"'), name + " " + kind + " link block missing");
+          assert(detailHtml.includes("<hr"), name + " " + kind + " divider block missing");
+          assert(detailHtml.includes("structured-content"), name + " " + kind + " tags missing");
           assert(detailHtml.includes("canonical"), name + " " + kind + " canonical metadata missing");
           assert(indexHtml.includes('href="/' + kind + '"'), name + " " + kind + " navigation link missing");
         }

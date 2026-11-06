@@ -26,7 +26,7 @@ export function createArticleEmbedHtml(input:string):string|null{
 }
 
 const sanitizerOptions={
- allowedTags:["p","h1","h2","h3","h4","h5","blockquote","ul","ol","li","strong","b","em","i","del","s","a","img","hr","br","code","pre","table","thead","tbody","tr","th","td","iframe","video","source","figure","figcaption","div","span","small","sup","sub","mark","dl","dt","dd","section","details","summary"],
+ allowedTags:["p","h1","h2","h3","h4","h5","h6","blockquote","ul","ol","li","strong","b","em","i","u","del","s","a","img","hr","br","code","pre","table","thead","tbody","tr","th","td","iframe","video","source","figure","figcaption","div","span","small","sup","sub","mark","dl","dt","dd","cite","section","details","summary"],
  allowedAttributes:{a:["href","title","target","rel"],img:["src","alt","title","loading","decoding","width","height"],iframe:["src","title","allow","allowfullscreen","loading","referrerpolicy","sandbox"],video:["controls","preload","playsinline"],source:["src","type"],th:["colspan","rowspan"],td:["colspan","rowspan"],"*":["aria-label","class"]},
  allowedSchemes:["https","http","mailto","tel"],allowProtocolRelative:false,allowedIframeHostnames:[...embedHosts],
  transformTags:{
@@ -42,4 +42,24 @@ export function renderArticleHtml(source:string):string{return sanitizeHtml(sour
 export function renderArticleMarkdown(source:string):string{
  const linked=source.replace(/\]\(media:([0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})\)/gi,"](/_media/$1)");
  const html=marked.parse(linked,{async:false,gfm:true,breaks:false,pedantic:false});return typeof html==="string"?renderArticleHtml(html):"";
+}
+
+
+/** Render the canonical structured blocks through the same sanitizer as legacy article content. */
+export function renderArticleBlocks(blocks: import("./article-model").ArticleContentBlock[] | undefined, fallbackBody: string): string {
+ if (!blocks?.length) return renderArticleMarkdown(fallbackBody);
+ const escape = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+ const html = blocks.map(block => {
+  switch (block.type) {
+   case "paragraph": return renderArticleMarkdown(block.text);
+   case "heading": return "<h" + block.level + ">" + escape(block.text) + "</h" + block.level + ">";
+   case "list": return "<" + (block.ordered ? "ol" : "ul") + ">" + block.items.map(item => "<li>" + escape(item) + "</li>").join("") + "</" + (block.ordered ? "ol" : "ul") + ">";
+   case "quote": return "<blockquote><p>" + escape(block.text) + "</p>" + (block.citation ? "<cite>" + escape(block.citation) + "</cite>" : "") + "</blockquote>";
+   case "table": return "<table><thead><tr>" + block.headers.map(cell => "<th>" + escape(cell) + "</th>").join("") + "</tr></thead><tbody>" + block.rows.map(row => "<tr>" + block.headers.map((_, index) => "<td>" + escape(row[index] ?? "") + "</td>").join("") + "</tr>").join("") + "</tbody></table>";
+   case "divider": return "<hr>";
+   case "link": return '<p><a href="' + escape(block.url) + '">' + escape(block.text) + "</a></p>";
+   case "legacy": return renderArticleMarkdown(block.source);
+  }
+ }).join("");
+ return renderArticleHtml(html);
 }

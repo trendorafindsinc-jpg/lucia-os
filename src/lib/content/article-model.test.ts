@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { articleDraftSchema, articleContentBlocksSchema, legacyBodyBlocks, articleRoute, publicationReady, newArticleSlug, updateArticleSchema } from "./article-model";
+import { renderArticleBlocks } from "./rich-content";
 describe("Phase 15 content-contract foundation", () => {
  const valid={kind:"blog" as const,title:"A Barber's Story",slug:"a-barbers-story",excerpt:"How we welcome our customers",body:"A thoughtful story about working with our local customers.",category:"Grooming",authorName:null,eventAt:null,isFeatured:false,correctionNote:null,correctsSlug:null,tags:["community","local"],seoTitle:"A Barber’s Story",seoDescription:"How we welcome customers to our local barber shop.",featuredMediaRef:null,featuredMediaAlt:null};
  it("supports two honest content kinds with stable URLs",()=>{
@@ -30,6 +31,27 @@ describe("Phase 15 content-contract foundation", () => {
   expect(legacyBodyBlocks("")).toEqual([]);
   const editable = Object.fromEntries(Object.entries(valid).filter(([key])=>!["kind","featuredMediaAlt","authorName"].includes(key)));
   expect(updateArticleSchema.safeParse({...editable,revision:1,action:"save",contentBlocks:blocks}).success).toBe(true);
+ });
+ it("accepts all Phase 2 article block types and safely renders them",()=>{
+  const blocks=[
+   {id:"p1",type:"paragraph" as const,text:"A paragraph"},
+   {id:"h1",type:"heading" as const,level:4 as const,text:"A subheading"},
+   {id:"list",type:"list" as const,ordered:true,items:["One","Two"]},
+   {id:"quote",type:"quote" as const,text:"A quote",citation:"An author"},
+   {id:"table",type:"table" as const,headers:["Name","Role"],rows:[["Ada","Editor"]]},
+   {id:"divider",type:"divider" as const},
+   {id:"link",type:"link" as const,text:"Read more",url:"https://example.com"},
+  ];
+  expect(articleContentBlocksSchema.parse(blocks)).toEqual(blocks);
+  const html=renderArticleBlocks(blocks,"");
+  expect(html).toContain("<h4>A subheading</h4>");
+  expect(html).toContain("<ol>");
+  expect(html).toContain("<blockquote>");
+  expect(html).toContain("<table>");
+  expect(html).toContain('href="https://example.com"');
+  expect(renderArticleBlocks([{id:"old",type:"legacy",source:"## Existing\n\nBody"}],"")).toContain("<h2>Existing</h2>");
+  expect(renderArticleBlocks(undefined,"Legacy body")).toContain("Legacy body");
+  expect(renderArticleBlocks([{id:"bad",type:"paragraph",text:"<script>alert(1)</script>"}],"")).not.toContain("<script>");
  });
  it("prevents premature publication of unfinished articles",()=>{
   expect(publicationReady(valid)).toBe(true);
