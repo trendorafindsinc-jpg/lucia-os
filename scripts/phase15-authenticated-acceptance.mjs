@@ -248,7 +248,7 @@ export async function checkPhase15AuthenticatedAcceptance({
             await view.getByRole("button", { name: "+ Add list item", exact: true }).click();
             await view.getByLabel("List item 2").fill("Second " + kind + " list item");
             await view.getByLabel("Add a block").selectOption("quote");
-            await view.getByLabel("Quotation").fill("A memorable " + kind + " quotation.");
+            await view.getByRole("textbox", { name: "Quotation", exact: true }).fill("A memorable " + kind + " quotation.");
             await view.getByLabel("Quote attribution").fill("Phase 2 acceptance");
             await view.getByLabel("Add a block").selectOption("table");
             await view.getByLabel("Table heading 1").fill("Field");
@@ -277,7 +277,7 @@ export async function checkPhase15AuthenticatedAcceptance({
             assert((await view.getByRole("textbox", { name: "Paragraph 1" }).inputValue()).includes("**Phase 2**"), kind + " formatted paragraph did not persist");
             assert.equal(await view.getByRole("textbox", { name: "Heading 2", exact: true }).inputValue(), "Structured " + kind + " heading");
             assert.equal(await view.getByLabel("List item 2").inputValue(), "Second " + kind + " list item");
-            assert.equal(await view.getByLabel("Quotation").inputValue(), "A memorable " + kind + " quotation.");
+            assert.equal(await view.getByRole("textbox", { name: "Quotation", exact: true }).inputValue(), "A memorable " + kind + " quotation.");
             assert.equal(await view.getByLabel("Table row 1 column 2").inputValue(), kind);
             assert.equal(await view.getByLabel("Link URL").inputValue(), "https://lucia.name.ng");
             await view.getByRole("button", { name: "Preview draft", exact: true }).click();
