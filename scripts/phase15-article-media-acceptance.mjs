@@ -166,6 +166,7 @@ export async function checkPhase15ArticleMediaAcceptance({
       await publishingUi.setViewportSize({ width: 1440, height: 900 });
       await publishingUi.screenshot({ path: "artifacts/phase14-auth-publish/publishing-studio-writing-1440.png", fullPage: true });
       await publishingUi.getByRole("textbox", { name: "Summary", exact: true }).fill("Updated in the dedicated Publishing Studio browser journey.");
+      await publishingUi.locator("details.story-advanced-source > summary").click();
       await publishingUi.locator(".story-rich-editor").fill("This article was edited in the focused rich-text writing canvas.");
       await publishingUi.getByRole("button", { name: "Markdown source", exact: true }).click();
       assert((await publishingUi.getByLabel("Markdown article content").inputValue()).includes("focused rich-text writing canvas"), "Rich text must survive switching to Markdown source");
