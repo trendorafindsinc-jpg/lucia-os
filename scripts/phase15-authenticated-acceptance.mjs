@@ -236,7 +236,7 @@ export async function checkPhase15AuthenticatedAcceptance({
             await view.getByLabel("Headline").fill(title);
             await view.getByLabel("Summary").fill("A real Phase 2 " + kind + " block-editor acceptance summary.");
             await view.getByRole("button", { name: "+ Paragraph", exact: true }).click();
-            const paragraph = view.getByLabel("Paragraph 1");
+            const paragraph = view.getByRole("textbox", { name: "Paragraph 1" });
             await paragraph.fill("Phase 2 opening paragraph for " + kind + ".");
             await paragraph.evaluate((element) => element.setSelectionRange(0, 7));
             await view.getByRole("button", { name: "Bold", exact: true }).click();
@@ -274,7 +274,7 @@ export async function checkPhase15AuthenticatedAcceptance({
             await view.locator("section.story-studio[aria-label='Website Blog and News Studio']").waitFor();
             await view.getByRole("button", { name: new RegExp(title) }).click();
             assert.equal(await view.getByLabel("Headline").inputValue(), title, kind + " headline did not persist");
-            assert((await view.getByLabel("Paragraph 1").inputValue()).includes("**Phase 2**"), kind + " formatted paragraph did not persist");
+            assert((await view.getByRole("textbox", { name: "Paragraph 1" }).inputValue()).includes("**Phase 2**"), kind + " formatted paragraph did not persist");
             assert.equal(await view.getByLabel("Heading 2").inputValue(), "Structured " + kind + " heading");
             assert.equal(await view.getByLabel("List item 2").inputValue(), "Second " + kind + " list item");
             assert.equal(await view.getByLabel("Quotation").inputValue(), "A memorable " + kind + " quotation.");
