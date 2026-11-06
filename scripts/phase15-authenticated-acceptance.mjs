@@ -641,7 +641,7 @@ export async function checkPhase15AuthenticatedAcceptance({
           assert(detailHtml.includes("<table>") && detailHtml.includes("Content type"), name + " " + kind + " table block missing");
           assert(detailHtml.includes('href="https://lucia.name.ng"'), name + " " + kind + " link block missing");
           assert(detailHtml.includes("<hr"), name + " " + kind + " divider block missing");
-          assert(detailHtml.includes("layout-acceptance"), name + " " + kind + " tags missing");
+          assert(detailHtml.includes("structured-content"), name + " " + kind + " tags missing");
           assert(detailHtml.includes("canonical"), name + " " + kind + " canonical metadata missing");
           assert(indexHtml.includes('href="/' + kind + '"'), name + " " + kind + " navigation link missing");
         }
