@@ -221,6 +221,7 @@ export async function checkPhase15ArticleMediaAcceptance({
       await page.locator(".studio-media-library summary").click();
       const imageRow = page.locator(".studio-media-library li").filter({ hasText: alts[0] });
       await imageRow.getByRole("button", { name: "Use as featured image" }).click();
+      await page.locator("details.story-advanced-source > summary").click();
       const richEditor = page.getByRole("textbox", { name: "Rich text article content" });
       await richEditor.fill("Rich text editor acceptance");
       assert.equal(await richEditor.evaluate(element => getComputedStyle(element).fontWeight), "400", "Rich editor must not inherit the surrounding field label weight");
