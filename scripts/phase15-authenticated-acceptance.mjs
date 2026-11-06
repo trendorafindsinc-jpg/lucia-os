@@ -242,7 +242,7 @@ export async function checkPhase15AuthenticatedAcceptance({
             await view.getByRole("button", { name: "Bold", exact: true }).click();
             assert((await paragraph.inputValue()).includes("**Phase 2**"), kind + " inline bold formatting failed");
             await view.getByLabel("Add a block").selectOption("heading");
-            await view.getByLabel("Heading 2").fill("Structured " + kind + " heading");
+            await view.getByRole("textbox", { name: "Heading 2", exact: true }).fill("Structured " + kind + " heading");
             await view.getByLabel("Add a block").selectOption("list");
             await view.getByLabel("List item 1").fill("First " + kind + " list item");
             await view.getByRole("button", { name: "+ Add list item", exact: true }).click();
@@ -275,7 +275,7 @@ export async function checkPhase15AuthenticatedAcceptance({
             await view.getByRole("button", { name: new RegExp(title) }).click();
             assert.equal(await view.getByLabel("Headline").inputValue(), title, kind + " headline did not persist");
             assert((await view.getByRole("textbox", { name: "Paragraph 1" }).inputValue()).includes("**Phase 2**"), kind + " formatted paragraph did not persist");
-            assert.equal(await view.getByLabel("Heading 2").inputValue(), "Structured " + kind + " heading");
+            assert.equal(await view.getByRole("textbox", { name: "Heading 2", exact: true }).inputValue(), "Structured " + kind + " heading");
             assert.equal(await view.getByLabel("List item 2").inputValue(), "Second " + kind + " list item");
             assert.equal(await view.getByLabel("Quotation").inputValue(), "A memorable " + kind + " quotation.");
             assert.equal(await view.getByLabel("Table row 1 column 2").inputValue(), kind);
