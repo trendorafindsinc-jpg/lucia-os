@@ -66,7 +66,7 @@ export async function listMedia(userId: string, websiteId: string) {
     return { enabled: uploadsEnabled(), items: rows.map((row) => ({ ...row, ref: "media:" + row.id })), usedBytes: Number(usage?.used ?? 0), quotaBytes: Number(limit?.quota_bytes ?? boundedQuota(process.env.MEDIA_WEBSITE_QUOTA_BYTES, 5_000_000)),imageUsedBytes:Number(usage?.image_used??0),videoUsedBytes:Number(usage?.video_used??0),documentUsedBytes:Number(usage?.document_used??0),videoQuotaBytes:Number(limit?.video_quota_bytes??boundedQuota(process.env.MEDIA_VIDEO_WEBSITE_QUOTA_BYTES,500_000_000)),documentQuotaBytes:Number(limit?.document_quota_bytes??boundedQuota(process.env.MEDIA_DOCUMENT_WEBSITE_QUOTA_BYTES,50_000_000)) };
   });
 }
-export async function uploadMedia(userId: string, websiteId: string, input: Buffer, mime: string, alt: string) {
+export async function uploadMedia(userId: string, websiteId: string, input: Buffer, mime: string, alt: string, caption: string | null = null) {
   await withMediaWebsite(userId, websiteId, "website.edit", async (tx) => {
     const [rate] = await tx.execute(sql`select count(*)::int as count from website_media where website_id=${websiteId} and created_at > now() - interval '1 minute'`);
     if (Number(rate?.count ?? 0) >= 10) throw new MediaError("Wait a minute before uploading more images.", 429);
@@ -87,7 +87,7 @@ export async function uploadMedia(userId: string, websiteId: string, input: Buff
     const updated = await tx.execute(sql`update media_storage_budget set reserved_bytes=reserved_bytes+${optimized.bytes} where product='lucia-os' and reserved_bytes+${optimized.bytes} <= ${budget} returning product`);
     if (!updated.length) throw new MediaError("Storage capacity is unavailable. Try again later.", 507);
     const key = `os/${org}/${websiteId}/${id}.webp`;
-    await tx.execute(sql`insert into website_media(id,organization_id,website_id,created_by_user_id,object_key,bytes,width,height,alt,status) values(${id},${org},${websiteId},${userId},${key},${optimized.bytes},${optimized.width},${optimized.height},${alt},'pending')`);
+    await tx.execute(sql`insert into website_media(id,organization_id,website_id,created_by_user_id,object_key,bytes,width,height,alt,caption,status) values(${id},${org},${websiteId},${userId},${key},${optimized.bytes},${optimized.width},${optimized.height},${alt},${caption},'pending')`);
     return key;
   });
   // On an uncertain provider failure keep the pending record and its reservation.
@@ -98,7 +98,7 @@ export async function uploadMedia(userId: string, websiteId: string, input: Buff
     const ready = await tx.execute(sql`update website_media set status='ready',updated_at=now() where id=${id} and website_id=${websiteId} and status='pending' returning id`);
     if (!ready.length) throw new MediaError("Upload finalization was not confirmed. Refresh the library before retrying.", 503);
   });
-  return { id, ref: "media:" + id, bytes: optimized.bytes, width: optimized.width, height: optimized.height, alt };
+  return { id, ref: "media:" + id, bytes: optimized.bytes, width: optimized.width, height: optimized.height, alt, caption };
 }
 export async function removeMedia(userId: string, websiteId: string, id: string) {
   const row = await withMediaWebsite(userId, websiteId, "website.edit", async (tx) => {
