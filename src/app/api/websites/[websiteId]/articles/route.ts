@@ -1,7 +1,7 @@
 import { and, desc, eq, ne, sql } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
-import { memberships, organizations, websiteMedia, websitePosts, websitePostRevisions, websites } from "@/lib/db/schema";
+import { memberships, organizations, websiteMedia, websitePosts, websitePostRevisions, websiteDomains, websites } from "@/lib/db/schema";
 import { hasOrganizationPermission } from "@/lib/access/policy";
 import { createArticleSchema, newArticleSlug } from "@/lib/content/article-model";
 import { isUniqueWebsiteWrite, websiteMutationAllowed } from "@/lib/websites/draft-revision";
@@ -29,11 +29,14 @@ export async function GET(request: Request, context: Context) {
    const [site]=await tx.select({id:websites.id,slug:websites.slug,name:websites.name}).from(websites)
     .where(and(eq(websites.id,websiteId),eq(websites.organizationId,org.id),ne(websites.status,"deleted"))).limit(1);
    if(!site)continue;
+   const [publicDomain]=await tx.select({hostname:websiteDomains.hostname}).from(websiteDomains)
+    .where(and(eq(websiteDomains.websiteId,site.id),eq(websiteDomains.organizationId,org.id),eq(websiteDomains.status,"active")))
+    .orderBy(desc(websiteDomains.isPrimary),desc(websiteDomains.updatedAt)).limit(1);
    const articles=await tx.select({post:websitePosts,mediaAlt:websiteMedia.alt}).from(websitePosts)
     .leftJoin(websiteMedia,and(eq(websiteMedia.id,websitePosts.featuredMediaId),eq(websiteMedia.websiteId,site.id),eq(websiteMedia.organizationId,org.id),eq(websiteMedia.status,"ready")))
     .where(and(eq(websitePosts.websiteId,site.id),eq(websitePosts.organizationId,org.id)))
     .orderBy(desc(websitePosts.updatedAt)).limit(200);
-   return {articles:articles.map(({post,mediaAlt})=>({...post,featuredMediaRef:post.featuredMediaId ? "media:"+post.featuredMediaId : null,featuredMediaAlt:mediaAlt ?? null})),siteSlug:site.slug,siteName:site.name};
+   return {articles:articles.map(({post,mediaAlt})=>({...post,featuredMediaRef:post.featuredMediaId ? "media:"+post.featuredMediaId : null,featuredMediaAlt:mediaAlt ?? null})),siteSlug:site.slug,siteName:site.name,publicHostname:publicDomain?.hostname??null};
   }
   return null;
  });
