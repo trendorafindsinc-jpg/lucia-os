@@ -25,6 +25,17 @@ export function createArticleEmbedHtml(input:string):string|null{
  return src?frame(src,embed.title):null;
 }
 
+const mediaIdPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const escapeMarkup=(value:string)=>value.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+export function createArticleImageHtml(item:{id:string;alt:string;caption?:string|null}):string|null{
+ if(!mediaIdPattern.test(item.id)||!item.alt.trim()||item.alt.length>200||(item.caption?.length??0)>200)return null;
+ return '<figure class="article-image"><img src="/_media/'+item.id+'" alt="'+escapeMarkup(item.alt)+'" loading="lazy">'+(item.caption?.trim()?'<figcaption>'+escapeMarkup(item.caption.trim())+'</figcaption>':"")+'</figure>';
+}
+export function createArticleGalleryHtml(items:{id:string;alt:string;caption?:string|null}[]):string|null{
+ if(items.length<2||items.length>12||items.some(item=>!mediaIdPattern.test(item.id)||!item.alt.trim()||item.alt.length>200||(item.caption?.length??0)>200))return null;
+ return '<div class="article-gallery">'+items.map(item=>'<figure><img src="/_media/'+item.id+'" alt="'+escapeMarkup(item.alt)+'" loading="lazy">'+(item.caption?.trim()?'<figcaption>'+escapeMarkup(item.caption.trim())+'</figcaption>':"")+'</figure>').join("")+'</div>';
+}
+
 const sanitizerOptions={
  allowedTags:["p","h1","h2","h3","h4","h5","h6","blockquote","ul","ol","li","strong","b","em","i","u","del","s","a","img","hr","br","code","pre","table","thead","tbody","tr","th","td","iframe","video","source","figure","figcaption","div","span","small","sup","sub","mark","dl","dt","dd","cite","section","details","summary"],
  allowedAttributes:{a:["href","title","target","rel"],img:["src","alt","title","loading","decoding","width","height"],iframe:["src","title","allow","allowfullscreen","loading","referrerpolicy","sandbox"],video:["controls","preload","playsinline"],source:["src","type"],th:["colspan","rowspan"],td:["colspan","rowspan"],"*":["aria-label","class"]},
