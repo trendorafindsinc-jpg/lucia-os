@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { articleDraftSchema, articleContentBlocksSchema, legacyBodyBlocks, articleRoute, publicationReady, newArticleSlug, updateArticleSchema } from "./article-model";
+import { articleDraftSchema, articleContentBlocksSchema, legacyBodyBlocks, articleRoute, articlePublicUrl, publicationReady, newArticleSlug, updateArticleSchema } from "./article-model";
 import { renderArticleBlocks } from "./rich-content";
 describe("Phase 15 content-contract foundation", () => {
  const valid={kind:"blog" as const,title:"A Barber's Story",slug:"a-barbers-story",excerpt:"How we welcome our customers",body:"A thoughtful story about working with our local customers.",category:"Grooming",authorName:null,eventAt:null,isFeatured:false,correctionNote:null,correctsSlug:null,tags:["community","local"],seoTitle:"A Barber’s Story",seoDescription:"How we welcome customers to our local barber shop.",featuredMediaRef:null,featuredMediaAlt:null};
@@ -14,6 +14,9 @@ describe("Phase 15 content-contract foundation", () => {
   expect(articleDraftSchema.safeParse({...valid,seoDescription:"x".repeat(161)}).success).toBe(false);
   expect(articleRoute("blog","first-post")).toBe("/blog/first-post");
   expect(articleRoute("news","first-post")).toBe("/news/first-post");
+  expect(articlePublicUrl("time-flow.dev.lucia.name.ng","blog","first-post")).toBe("https://time-flow.dev.lucia.name.ng/blog/first-post");
+  expect(articlePublicUrl("time-flow.lucia.name.ng","news","first-post")).toBe("https://time-flow.lucia.name.ng/news/first-post");
+  expect(articlePublicUrl("https://evil.example","blog","first-post")).toBeNull();
   expect(newArticleSlug("A Barber's Story")).toBe("a-barber-s-story");
  });
  it("validates ordered reusable blocks and preserves legacy article source",()=>{
