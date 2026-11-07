@@ -35,6 +35,10 @@ export function createArticleGalleryHtml(items:{id:string;alt:string;caption?:st
  if(items.length<2||items.length>12||items.some(item=>!mediaIdPattern.test(item.id)||!item.alt.trim()||item.alt.length>200||(item.caption?.length??0)>200))return null;
  return '<div class="article-gallery">'+items.map(item=>'<figure><img src="/_media/'+item.id+'" alt="'+escapeMarkup(item.alt)+'" loading="lazy">'+(item.caption?.trim()?'<figcaption>'+escapeMarkup(item.caption.trim())+'</figcaption>':"")+'</figure>').join("")+'</div>';
 }
+export function createArticleVideoHtml(item:{id:string;mime:string;caption?:string|null}):string|null{
+ if(!mediaIdPattern.test(item.id)||!(item.mime==="video/mp4"||item.mime==="video/webm")||(item.caption?.length??0)>200)return null;
+ return '<figure class="article-video"><video controls preload="metadata" playsinline><source src="/_media/'+item.id+'" type="'+item.mime+'"></video>'+(item.caption?.trim()?'<figcaption>'+escapeMarkup(item.caption.trim())+'</figcaption>':"")+'</figure>';
+}
 
 const sanitizerOptions={
  allowedTags:["p","h1","h2","h3","h4","h5","h6","blockquote","ul","ol","li","strong","b","em","i","u","del","s","a","img","hr","br","code","pre","table","thead","tbody","tr","th","td","iframe","video","source","figure","figcaption","div","span","small","sup","sub","mark","dl","dt","dd","cite","section","details","summary"],
