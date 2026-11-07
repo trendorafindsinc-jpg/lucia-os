@@ -59,6 +59,10 @@ The existing media service already provides tenant-owned media records, image up
 
 Article media is retained in the existing body/legacy-block compatibility path so the Phase 2 structured content model, Markdown/HTML compatibility, media ownership validation, and existing public media authorization function continue to work. The public media function only serves assets referenced by published content; private uploads remain private.
 
+### Staging upload gate
+
+The current Vercel `development` preview environment inherits `MEDIA_UPLOADS_ENABLED=0`. The flag is enabled only on two older, branch-scoped preview configurations; it is not enabled for `development`. The media service explicitly requires both this flag and a configured storage provider. Therefore the editor can exercise media-library selection and rendering in staging, but real customer upload acceptance is blocked until the flag is deliberately enabled for the `development` preview and the authorized manual deployment is completed. This task does not change that environment variable or trigger a deployment.
+
 ## 4. Security and tenancy requirements
 
 - Every referenced media asset must be ready and belong to the same organization and website as the article.
