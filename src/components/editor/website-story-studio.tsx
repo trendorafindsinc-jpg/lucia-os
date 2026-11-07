@@ -20,7 +20,6 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArtic
  const [mounted,setMounted]=useState(false);
  const [localTimeZone,setLocalTimeZone]=useState("your local timezone");
  const [articles,setArticles]=useState<Story[]>([]);
- const [siteSlug,setSiteSlug]=useState("");
  const [publicHostname,setPublicHostname]=useState("");
  const [selected,setSelected]=useState<string|null>(initialArticleId);
  const [draft,setDraft]=useState<Story|null>(null);
@@ -49,7 +48,6 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArtic
    const payload=await response.json();
    if(!response.ok)throw Error(payload.error || "Could not load content.");
    setArticles((payload.articles as Story[]).map(article=>({...article,contentBlocks:article.contentBlocks?.length?article.contentBlocks:legacyBodyBlocks(article.body)})));
-   setSiteSlug(payload.siteSlug || "");
    setPublicHostname(payload.publicHostname || "");
    setSelected(current=>current && payload.articles.some((a:Story)=>a.id===current)?current:(startNew?null:(initialArticleId && payload.articles.some((a:Story)=>a.id===initialArticleId)?initialArticleId:(payload.articles[0]?.id||null))));
    setDirty(false);
@@ -240,8 +238,8 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArtic
       {draft.status==="scheduled"&&<button type="button" disabled={busy} onClick={()=>void save("save")}>Keep as draft</button>}
      </div>
      {showHistory&&<section className="story-revision-history" aria-label="Article revision history"><div><strong>Revision history</strong><button type="button" onClick={()=>setShowHistory(false)}>Close</button></div>{history.length?history.map(item=><article key={item.revision}><span>Revision {item.revision} · {item.event}</span><time dateTime={item.createdAt}>{new Date(item.createdAt).toLocaleString()}</time><button type="button" disabled={historyBusy||item.revision===draft.revision||item.event==="legacy_import"} onClick={()=>void restoreRevision(item.revision)}>Restore as draft</button></article>):<p>No earlier revisions are available yet.</p>}</section>}
-     {draft.status==="published"&&draft.publishedSlug&&siteSlug&&
-       <p><a target="_blank" rel="noopener noreferrer" href={"https://"+siteSlug+".lucia.name.ng"+articleRoute(draft.kind,draft.publishedSlug)}>View live article ↗</a></p>}
+     {draft.status==="published"&&draft.publishedSlug&&publicHostname&&
+       <p><a target="_blank" rel="noopener noreferrer" href={"https://"+publicHostname+articleRoute(draft.kind,draft.publishedSlug)}>View live article ↗</a></p>}
     </>:<p>Choose an article or create your first draft.</p>}
    </div>
   </div>
