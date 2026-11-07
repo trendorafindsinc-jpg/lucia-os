@@ -21,6 +21,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArtic
  const [localTimeZone,setLocalTimeZone]=useState("your local timezone");
  const [articles,setArticles]=useState<Story[]>([]);
  const [siteSlug,setSiteSlug]=useState("");
+ const [publicHostname,setPublicHostname]=useState("");
  const [selected,setSelected]=useState<string|null>(initialArticleId);
  const [draft,setDraft]=useState<Story|null>(null);
  const [newTitle,setNewTitle]=useState("");
@@ -49,6 +50,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArtic
    if(!response.ok)throw Error(payload.error || "Could not load content.");
    setArticles((payload.articles as Story[]).map(article=>({...article,contentBlocks:article.contentBlocks?.length?article.contentBlocks:legacyBodyBlocks(article.body)})));
    setSiteSlug(payload.siteSlug || "");
+   setPublicHostname(payload.publicHostname || "");
    setSelected(current=>current && payload.articles.some((a:Story)=>a.id===current)?current:(startNew?null:(initialArticleId && payload.articles.some((a:Story)=>a.id===initialArticleId)?initialArticleId:(payload.articles[0]?.id||null))));
    setDirty(false);
   } catch(error){setMessage(error instanceof Error?error.message:"Could not load articles.");}
@@ -138,6 +140,12 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArtic
    const payload=await response.json();
    if(!response.ok)throw Error(payload.error || "Article could not be saved.");
    const saved=payload.article as Story;
+   if(action==="publish"&&(saved.status!=="published"||!saved.publishedSlug||!saved.publishedAt||!saved.publishedSnapshot)){
+    setArticles(prev=>prev.map(a=>a.id===saved.id?saved:a));
+    setDraft(saved);setDirty(false);
+    setMessage("The server saved the article but did not confirm a public publication. Check its status before sharing a URL.");
+    return;
+   }
    setArticles(prev=>prev.map(a=>a.id===saved.id?saved:a));
    setDraft(saved);setDirty(false);
    setMessage(action==="publish"?"Published to your live website.":action==="unpublish"?"Article unpublished.":action==="schedule"?"Scheduled. The website will publish this article at the selected time.":"Draft saved. Live content was not changed.");
