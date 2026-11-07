@@ -32,8 +32,9 @@ async function handle(request: Request, context: Context, method: string) {
     while (true) { const next = await reader.read(); if (next.done) break; bytes += next.value.length; if (bytes > MAX_UPLOAD_BYTES + 8192) { await reader.cancel(); return json({ error: "Image too large." }, 413); } chunks.push(next.value); }
     const form = await new Request(request.url, { method: "POST", headers: { "content-type": request.headers.get("content-type")! }, body: Buffer.concat(chunks) }).formData();
     const file = form.get("file"), alt = z.string().trim().min(1).max(200).safeParse(form.get("alt"));
-    if (!(file instanceof File) || !alt.success) return json({ error: "Choose an image and describe it in 1–200 characters." }, 422);
-    const image = await uploadMedia(user.id, websiteId, Buffer.from(await file.arrayBuffer()), file.type, alt.data);
+    const caption = z.string().trim().max(200).nullable().optional().safeParse(form.get("caption"));
+    if (!(file instanceof File) || !alt.success || !caption.success) return json({ error: "Choose an image, describe it in 1–200 characters, and keep its optional caption under 200 characters." }, 422);
+    const image = await uploadMedia(user.id, websiteId, Buffer.from(await file.arrayBuffer()), file.type, alt.data, caption.data?.trim() || null);
     return json({ image }, 201);
   } catch (error) { return json({ error: error instanceof MediaError ? error.message : "Image operation could not be completed. Your saved website is unchanged." }, error instanceof MediaError ? error.status : 503); }
 }
