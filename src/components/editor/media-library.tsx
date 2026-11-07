@@ -60,6 +60,7 @@ export function MediaLibrary({ websiteId, accountId, onChange, protectedIds, onS
     <form onSubmit={upload} className="composition-controls">
       <label>Customer image (JPEG, PNG or WebP, up to 4 MB)<input name="file" type="file" accept="image/jpeg,image/png,image/webp" required disabled={busy || !library?.enabled} /></label>
       <label>Describe the image<input name="alt" maxLength={200} required disabled={busy || !library?.enabled} /></label>
+       <label>Image caption (optional)<input name="caption" maxLength={200} disabled={busy || !library?.enabled} /></label>
       <button disabled={busy || !library?.enabled}>Upload and compress</button>
       <button type="button" disabled={busy} onClick={() => { load().then(() => setNotice("Library refreshed.")).catch((error) => setNotice(error.message)); }}>Refresh library</button>
     </form>
