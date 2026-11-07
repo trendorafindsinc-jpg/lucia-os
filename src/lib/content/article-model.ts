@@ -63,3 +63,8 @@ export function publicationReady(article: PublishedArticle) {
 export function articleRoute(kind: ArticleKind, slug: string) {
   return "/" + (kind === "blog" ? "blog" : "news") + "/" + slug;
 }
+export function articlePublicUrl(hostname: string | null | undefined, kind: ArticleKind, slug: string): string | null {
+  const host = (hostname ?? "").trim().toLowerCase().replace(/\\.$/, "");
+  if (!host || host.length > 253 || !/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z]{2,63}$/.test(host)) return null;
+  return "https://" + host + articleRoute(kind, slug);
+}
