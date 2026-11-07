@@ -4,7 +4,7 @@ import { legacyBodyBlocks, type ArticleContentBlock, type ArticleKind } from "@/
 import Image from "next/image";
 import { MediaLibrary, type MediaLibraryItem } from "./media-library";
 import { ArticleBlockEditor, articleBlocksPlainText } from "./article-block-editor";
-import { articleRoute, newArticleSlug } from "@/lib/content/article-model";
+import { articlePublicUrl, newArticleSlug } from "@/lib/content/article-model";
 import { createArticleEmbedHtml, renderArticleMarkdown, renderArticleBlocks } from "@/lib/content/rich-content";
 import "./website-story-studio.css";
 type Story = {
@@ -238,8 +238,8 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArtic
       {draft.status==="scheduled"&&<button type="button" disabled={busy} onClick={()=>void save("save")}>Keep as draft</button>}
      </div>
      {showHistory&&<section className="story-revision-history" aria-label="Article revision history"><div><strong>Revision history</strong><button type="button" onClick={()=>setShowHistory(false)}>Close</button></div>{history.length?history.map(item=><article key={item.revision}><span>Revision {item.revision} · {item.event}</span><time dateTime={item.createdAt}>{new Date(item.createdAt).toLocaleString()}</time><button type="button" disabled={historyBusy||item.revision===draft.revision||item.event==="legacy_import"} onClick={()=>void restoreRevision(item.revision)}>Restore as draft</button></article>):<p>No earlier revisions are available yet.</p>}</section>}
-     {draft.status==="published"&&draft.publishedSlug&&publicHostname&&
-       <p><a target="_blank" rel="noopener noreferrer" href={"https://"+publicHostname+articleRoute(draft.kind,draft.publishedSlug)}>View live article ↗</a></p>}
+     {draft.status==="published"&&draft.publishedSlug&&articlePublicUrl(publicHostname,draft.kind,draft.publishedSlug)&&
+       <p><a target="_blank" rel="noopener noreferrer" href={articlePublicUrl(publicHostname,draft.kind,draft.publishedSlug)!}>View live article ↗</a></p>}
     </>:<p>Choose an article or create your first draft.</p>}
    </div>
   </div>
