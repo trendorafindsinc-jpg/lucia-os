@@ -26,6 +26,7 @@ export function PublishingStudioWorkspace({accountId}:{accountId:string}) {
  const [view,setView]=useState<View>("overview");
  const [articles,setArticles]=useState<Article[]>([]);
  const [siteSlug,setSiteSlug]=useState("");
+ const [publicHostname,setPublicHostname]=useState("");
  const [siteName,setSiteName]=useState("Your website");
  const [loading,setLoading]=useState(true);
  const [error,setError]=useState("");
@@ -44,7 +45,7 @@ export function PublishingStudioWorkspace({accountId}:{accountId:string}) {
    const response=await fetch("/api/websites/"+encodeURIComponent(websiteId)+"/articles",{cache:"no-store",headers});
    const payload=await response.json();
    if(!response.ok)throw Error(payload.error||"Your website content could not be loaded.");
-   setArticles(payload.articles||[]);setSiteSlug(payload.siteSlug||"");
+   setArticles(payload.articles||[]);setSiteSlug(payload.siteSlug||"");setPublicHostname(payload.publicHostname||"");
    setSiteName(payload.siteName||payload.siteSlug||"Your website");
   }catch(e){setError(e instanceof Error?e.message:"Publishing data is unavailable.");}
   finally{setLoading(false);}
@@ -76,7 +77,7 @@ export function PublishingStudioWorkspace({accountId}:{accountId:string}) {
   <header className="publishing-topbar"><div className="publishing-brand">LUCIA OS <span aria-hidden="true">/</span> PUBLISHING STUDIO</div>
    <nav className="publishing-toplinks" aria-label="Website shortcuts">
     <Link href={{pathname:"/editor",query:{websiteId}}} onClick={event=>{if(editorDirty&&!window.confirm("You have unsaved article changes. Leave the editor and keep only the last saved draft?"))event.preventDefault();}}>Edit Website</Link>
-    {siteSlug&&<a href={"https://"+siteSlug+".lucia.name.ng"} target="_blank" rel="noopener noreferrer">View Website ↗</a>}
+    {publicHostname&&<a href={"https://"+publicHostname} target="_blank" rel="noopener noreferrer">View Website ↗</a>}
     <Link href="/workspace/websites" onClick={event=>{if(editorDirty&&!window.confirm("You have unsaved article changes. Leave the editor and keep only the last saved draft?"))event.preventDefault();}}>All websites</Link>
    </nav>
   </header>
@@ -105,7 +106,7 @@ export function PublishingStudioWorkspace({accountId}:{accountId:string}) {
         <div className="publishing-stat"><small>Drafts</small><strong>{counts.drafts}</strong></div>
         <div className="publishing-stat"><small>Scheduled</small><strong>{counts.scheduled}</strong></div>
        </div>
-       <section className="publishing-panel"><h2>Recent activity</h2>{articles.length?<ArticleList articles={[...articles].sort((a,b)=>(b.updatedAt instanceof Date?b.updatedAt:new Date(b.updatedAt)).getTime()-(a.updatedAt instanceof Date?a.updatedAt:new Date(a.updatedAt)).getTime()).slice(0,6)} siteSlug={siteSlug} onEdit={openEditor}/>:<EmptyState onBlog={()=>create("blog")} onNews={()=>create("news")}/>}</section>
+       <section className="publishing-panel"><h2>Recent activity</h2>{articles.length?<ArticleList articles={[...articles].sort((a,b)=>(b.updatedAt instanceof Date?b.updatedAt:new Date(b.updatedAt)).getTime()-(a.updatedAt instanceof Date?a.updatedAt:new Date(a.updatedAt)).getTime()).slice(0,6)} publicHostname={publicHostname} onEdit={openEditor}/>:<EmptyState onBlog={()=>create("blog")} onNews={()=>create("news")}/>}</section>
        <section className="publishing-panel"><h2>Quick access</h2><div className="publishing-row-actions"><button className="publishing-secondary" type="button" onClick={()=>setView("blog")}>Blog · {counts.blog}</button><button className="publishing-secondary" type="button" onClick={()=>setView("news")}>Newsroom · {counts.news}</button><button className="publishing-secondary" type="button" onClick={()=>setView("scheduled")}>Scheduled · {counts.scheduled}</button></div></section>
       </>}
       {["all","blog","news","scheduled"].includes(view)&&<section className="publishing-panel">
@@ -124,4 +125,4 @@ export function PublishingStudioWorkspace({accountId}:{accountId:string}) {
  </main>;
 }
 function EmptyState({onBlog,onNews}:{onBlog:()=>void;onNews:()=>void}){return <div className="publishing-empty"><strong>Your publishing workspace is ready.</strong><p>Create a Blog post or News story. Drafts remain private until you publish.</p><div className="publishing-row-actions"><button className="publishing-secondary" type="button" onClick={onBlog}>Create first Blog post</button><button className="publishing-secondary" type="button" onClick={onNews}>Create first News story</button></div></div>}
-function ArticleList({articles,siteSlug,onEdit}:{articles:Article[];siteSlug:string;onEdit:(article:Article)=>void}){return <div className="publishing-article-list">{articles.map(article=><article className="publishing-article-row" key={article.id}><div><h3>{article.title||"Untitled story"}</h3><p>{article.kind==="blog"?"Blog":"News"} · {article.category||"Uncategorised"} · By {article.authorName||"you"} · Updated {dateLabel(article.updatedAt)} · Revision {article.revision}{article.status==="scheduled"?" · Scheduled for "+dateLabel(article.scheduledAt):""}</p></div><div className="publishing-row-actions"><span className="publishing-status" data-status={article.status}>{statusLabel(article.status)}</span><button type="button" onClick={()=>onEdit(article)}>Edit</button>{article.status==="published"&&article.publishedSlug&&siteSlug&&<a href={"https://"+siteSlug+".lucia.name.ng"+articleRoute(article.kind,article.publishedSlug)} target="_blank" rel="noopener noreferrer">View ↗</a>}</div></article>)}</div>}
+function ArticleList({articles,publicHostname,onEdit}:{articles:Article[];publicHostname:string;onEdit:(article:Article)=>void}){return <div className="publishing-article-list">{articles.map(article=><article className="publishing-article-row" key={article.id}><div><h3>{article.title||"Untitled story"}</h3><p>{article.kind==="blog"?"Blog":"News"} · {article.category||"Uncategorised"} · By {article.authorName||"you"} · Updated {dateLabel(article.updatedAt)} · Revision {article.revision}{article.status==="scheduled"?" · Scheduled for "+dateLabel(article.scheduledAt):""}</p></div><div className="publishing-row-actions"><span className="publishing-status" data-status={article.status}>{statusLabel(article.status)}</span><button type="button" onClick={()=>onEdit(article)}>Edit</button>{article.status==="published"&&article.publishedSlug&&publicHostname&&<a href={"https://"+publicHostname+articleRoute(article.kind,article.publishedSlug)} target="_blank" rel="noopener noreferrer">View ↗</a>}</div></article>)}</div>}
