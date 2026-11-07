@@ -300,7 +300,7 @@ export async function checkPhase15ArticleMediaAcceptance({
     }
     assert(renderedArticleBody, "Published article body must be present in the rendered document");
     assert(renderedArticleBody.includes('class="article-gallery"'), "The rendered public article body must contain the gallery");
-    assert(renderedArticleBody.indexOf("/_media/"+blogImage) < renderedArticleBody.indexOf("/_media/"+inlineImage), "Gallery images must retain selection order");
+    const galleryStart=renderedArticleBody.indexOf('class="article-gallery"');const galleryEnd=renderedArticleBody.indexOf("</div>",galleryStart);const galleryHtml=renderedArticleBody.slice(galleryStart,galleryEnd);assert(galleryHtml.indexOf("/_media/"+blogImage) < galleryHtml.indexOf("/_media/"+inlineImage), "Gallery images must retain selection order");
     assert(!renderedArticleBody.includes("evil.example") && !/<script\\b/i.test(renderedArticleBody)
       && !/\\sonclick\\s*=/i.test(renderedArticleBody), "Published article DOM must remain sanitized");
     assert(detailHtml.includes("<video controls") && detailHtml.includes('href="/_media/'+pdfAsset+'"'), "Published HTML must support inline video and secure PDF downloads");
