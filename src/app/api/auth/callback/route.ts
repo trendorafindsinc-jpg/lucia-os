@@ -2,7 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db/client";
 import { appUsers, sessions } from "@/lib/db/schema";
-import { getCoreIssuer, matchesOAuthState } from "@/lib/auth/oauth";
+import { getCoreIssuer, getSafeReturnTo, matchesOAuthState } from "@/lib/auth/oauth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,11 +14,24 @@ function safeFailure(request: Request, reason = "callback_failed") {
   const destination = new URL("/", request.url);
   destination.searchParams.set("auth", "failed");
   destination.searchParams.set("reason", reason);
-  return NextResponse.redirect(destination);
+  const response = NextResponse.redirect(destination);
+  const secureCookies = process.env.NODE_ENV === "production" || new URL(request.url).protocol === "https:";
+  for (const name of ["lucia_os_return_to", "lucia_os_oauth_state"]) {
+    response.cookies.set(name, "", {
+      httpOnly: true,
+      secure: secureCookies,
+      sameSite: "lax",
+      path: "/api/auth",
+      maxAge: 0,
+    });
+  }
+  response.headers.set("Cache-Control", "no-store");
+  return response;
 }
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
+  const secureCookies = process.env.NODE_ENV === "production" || requestUrl.protocol === "https:";
   const code = requestUrl.searchParams.get("code") ?? undefined;
   const state = requestUrl.searchParams.get("state") ?? undefined;
   const expectedState = request.headers.get("cookie")
@@ -27,33 +40,9 @@ export async function GET(request: Request) {
     .find((part) => part.startsWith("lucia_os_oauth_state="))
     ?.slice("lucia_os_oauth_state=".length);
 
-  const returnTo = request.headers.get("cookie")
-    ?.split(";")
-    .map((part) => part.trim())
-    .find((part) => part.startsWith("lucia_os_return_to="))
-    ?.slice("lucia_os_return_to=".length);
-  const safeReturnTo = returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//") && !returnTo.includes("\\") && !returnTo.startsWith("/api/auth")
-    ? returnTo
-    : "/workspace";
+  const safeReturnTo = getSafeReturnTo(request.headers.get("cookie"));
 
   let failureStage = "state_validation";
-  const response = safeFailure(request);
-  response.cookies.set("lucia_os_return_to", "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production" || requestUrl.protocol === "https:",
-    sameSite: "lax",
-    path: "/api/auth",
-    maxAge: 0,
-  });
-  response.cookies.set("lucia_os_oauth_state", "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production" || requestUrl.protocol === "https:",
-    sameSite: "lax",
-    path: "/api/auth",
-    maxAge: 0,
-  });
-  response.headers.set("Cache-Control", "no-store");
-
   if (!matchesOAuthState(expectedState, state) || !code) {
     console.error("[LUCIA_OS_OAUTH] callback rejected", {
       stage: failureStage,
@@ -160,21 +149,21 @@ export async function GET(request: Request) {
     const success = NextResponse.redirect(new URL(safeReturnTo, request.url));
     success.cookies.set(SESSION_COOKIE, rawSessionToken, {
       httpOnly: true,
-      secure: requestUrl.protocol === "https:",
+      secure: secureCookies,
       sameSite: "lax",
       path: "/",
       maxAge: SESSION_TTL_SECONDS,
     });
     success.cookies.set("lucia_os_return_to", "", {
       httpOnly: true,
-      secure: requestUrl.protocol === "https:",
+      secure: secureCookies,
       sameSite: "lax",
       path: "/api/auth",
       maxAge: 0,
     });
     success.cookies.set("lucia_os_oauth_state", "", {
       httpOnly: true,
-      secure: requestUrl.protocol === "https:",
+      secure: secureCookies,
       sameSite: "lax",
       path: "/api/auth",
       maxAge: 0,
