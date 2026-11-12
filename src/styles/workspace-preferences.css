@@ -1,0 +1,80 @@
+/* Deliberately scoped to authenticated /workspace layout, never customer renderers. */
+[data-workspace-preferences] {
+  --wp-panel: #ffffffed;
+  --wp-text: #132238;
+  --wp-muted: #405575;
+}
+[data-workspace-preferences][data-appearance="dark"] {
+  --wp-panel: #0e2544f5;
+  --wp-text: #f2f7ff;
+  --wp-muted: #c5d7ef;
+  color-scheme: dark;
+}
+[data-workspace-preferences][data-appearance="light"] {
+  color-scheme: light;
+}
+[data-workspace-preferences] .lucia-workspace-theme {
+  color: var(--wp-text);
+}
+[data-workspace-preferences] .lucia-workspace-theme :where(h1, h2, h3) {
+  color: inherit;
+}
+[data-workspace-preferences][data-motion="reduce"] *,
+[data-workspace-preferences][data-motion="reduce"] *::before,
+[data-workspace-preferences][data-motion="reduce"] *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+[data-workspace-preferences][data-transparency="reduce"] * {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+[data-workspace-preferences][data-readability="large"] {
+  font-size: 18px;
+}
+[data-workspace-preferences][data-readability="large"]
+  :where(p, label, select, button, li) {
+  font-size: 1.05rem;
+}
+[data-workspace-preferences][data-density="compact"] [data-home-app-grid] {
+  gap: 7px;
+}
+[data-workspace-preferences][data-density="compact"] [data-home-app-grid] > a {
+  min-height: 85px;
+  padding: 12px;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-workspace-preferences] *,
+  [data-workspace-preferences] *::before,
+  [data-workspace-preferences] *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  [data-workspace-preferences] * {
+    backdrop-filter: none !important;
+  }
+}
+[data-workspace-preferences][data-transparency="reduce"] {
+  --wp-panel: #f2f7ff;
+}
+[data-workspace-preferences][data-transparency="reduce"][data-appearance="dark"] {
+  --wp-panel: #0e2544;
+}
+@media (prefers-reduced-transparency: reduce) {
+  [data-workspace-preferences] {
+    --wp-panel: #f2f7ff;
+  }
+  [data-workspace-preferences][data-appearance="dark"] {
+    --wp-panel: #0e2544;
+  }
+}
+
+/* The shared Orb and tab navigation are shell siblings of the route boundary. */
+body:has([data-workspace-preferences][data-motion="reduce"]) :where([data-lucia-orb],.workspace-tabbar,.lucia-mobile-switcher) *,
+body:has([data-workspace-preferences][data-motion="reduce"]) [data-lucia-orb] *::before,
+body:has([data-workspace-preferences][data-motion="reduce"]) [data-lucia-orb] *::after { animation:none!important;transition:none!important;scroll-behavior:auto!important; }
+body:has([data-workspace-preferences][data-transparency="reduce"]) [data-lucia-orb] * { backdrop-filter:none!important;-webkit-backdrop-filter:none!important; }

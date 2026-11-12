@@ -1,0 +1,692 @@
+import { sql } from "drizzle-orm";
+import {
+  bigint,
+  check,
+  doublePrecision,
+  integer,
+  jsonb,
+  boolean,
+  foreignKey,
+  index,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from "drizzle-orm/pg-core";
+
+const createdAt = () => timestamp("created_at", { withTimezone: true }).notNull().defaultNow();
+const updatedAt = () => timestamp("updated_at", { withTimezone: true }).notNull().defaultNow();
+
+/**
+ * LUCIA Core remains the identity authority. coreSubjectId is the stable,
+ * verified subject identifier returned by the Core integration; this table
+ * is only an application-side reference and does not authenticate users.
+ */
+export const appUsers = pgTable(
+  "app_users",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    coreSubjectId: text("core_subject_id").notNull(),
+    displayName: text("display_name"),
+    active: boolean("active").notNull().default(true),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [uniqueIndex("app_users_core_subject_id_uq").on(table.coreSubjectId)],
+);
+
+export const organizations = pgTable(
+  "organizations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    slug: text("slug").notNull(),
+    status: text("status").notNull().default("active"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    uniqueIndex("organizations_slug_uq").on(table.slug),
+    index("organizations_status_idx").on(table.status),
+  ],
+);
+
+export const memberships = pgTable(
+  "organization_memberships",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => appUsers.id, { onDelete: "cascade" }),
+    role: text("role").notNull().default("owner"),
+    status: text("status").notNull().default("active"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    uniqueIndex("organization_memberships_org_user_uq").on(table.organizationId, table.userId),
+    index("organization_memberships_user_status_idx").on(table.userId, table.status),
+    index("organization_memberships_org_status_idx").on(table.organizationId, table.status),
+  ],
+);
+
+export const websites = pgTable(
+  "websites",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "restrict" }),
+    name: text("name").notNull(),
+    slug: text("slug").notNull(),
+    status: text("status").notNull().default("draft"),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    uniqueIndex("websites_org_slug_uq").on(table.organizationId, table.slug),
+    uniqueIndex("websites_org_id_id_uq").on(table.organizationId, table.id),
+    uniqueIndex("websites_published_slug_uq").on(table.slug).where(sql`status = 'published'`),
+    index("websites_org_status_idx").on(table.organizationId, table.status),
+  ],
+);
+
+export const websitePages = pgTable(
+  "website_pages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "restrict" }),
+    websiteId: uuid("website_id").notNull(),
+    title: text("title").notNull(),
+    path: text("path").notNull(),
+    status: text("status").notNull().default("draft"),
+    content: text("content").notNull().default(""),
+    publishedContent: text("published_content"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    foreignKey({
+      name: "website_pages_website_org_fk",
+      columns: [table.organizationId, table.websiteId],
+      foreignColumns: [websites.organizationId, websites.id],
+    }).onDelete("cascade"),
+    uniqueIndex("website_pages_org_website_path_uq").on(
+      table.organizationId,
+      table.websiteId,
+      table.path,
+    ),
+    index("website_pages_org_website_idx").on(table.organizationId, table.websiteId),
+  ],
+);
+
+
+export const websiteDomains = pgTable(
+  "website_domains",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
+    websiteId: uuid("website_id").notNull(),
+    hostname: text("hostname").notNull(),
+    domainType: text("domain_type").notNull(),
+    status: text("status").notNull().default("pending"),
+    isPrimary: boolean("is_primary").notNull().default(false),
+    verificationTokenHash: text("verification_token_hash"),
+    verifiedAt: timestamp("verified_at", { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    foreignKey({
+      name: "website_domains_website_org_fk",
+      columns: [table.organizationId, table.websiteId],
+      foreignColumns: [websites.organizationId, websites.id],
+    }).onDelete("cascade"),
+    uniqueIndex("website_domains_hostname_uq").on(table.hostname),
+    uniqueIndex("website_domains_one_lucia_subdomain_per_site_uq")
+      .on(table.organizationId, table.websiteId)
+      .where(sql`domain_type = 'lucia_subdomain' AND status <> 'removed'`),
+    uniqueIndex("website_domains_one_primary_per_site_uq")
+      .on(table.organizationId, table.websiteId)
+      .where(sql`is_primary = true AND status <> 'removed'`),
+    index("website_domains_org_status_idx").on(table.organizationId, table.status),
+    index("website_domains_active_hostname_idx").on(table.hostname)
+      .where(sql`status = 'active'`),
+  ],
+);
+
+/**
+ * Product-local opaque sessions. Core remains the identity authority; this
+ * table only persists the product session created after a successful Core
+ * Consumer Contract exchange.
+ */
+export const sessions = pgTable(
+  "app_sessions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => appUsers.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    uniqueIndex("app_sessions_token_hash_uq").on(table.tokenHash),
+    index("app_sessions_user_id_idx").on(table.userId),
+    index("app_sessions_expires_at_idx").on(table.expiresAt),
+  ],
+);
+
+
+/** Tenant-scoped billing ledger. LUCIA Core remains the identity authority. */
+export const billingInvoices = pgTable(
+  "billing_invoices",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
+    invoiceNumber: text("invoice_number").notNull(),
+    amountDueMinor: bigint("amount_due_minor", { mode: "number" }).notNull(),
+    amountPaidMinor: bigint("amount_paid_minor", { mode: "number" }).notNull().default(0),
+    currency: text("currency").notNull(),
+    status: text("status").notNull().default("open"),
+    dueAt: timestamp("due_at", { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    uniqueIndex("billing_invoices_org_number_uq").on(table.organizationId, table.invoiceNumber),
+    uniqueIndex("billing_invoices_org_id_id_uq").on(table.organizationId, table.id),
+    index("billing_invoices_org_status_created_idx").on(table.organizationId, table.status, table.createdAt),
+  ],
+);
+
+export const billingPaymentAttempts = pgTable(
+  "billing_payment_attempts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
+    invoiceId: uuid("invoice_id").notNull().references(() => billingInvoices.id, { onDelete: "restrict" }),
+    provider: text("provider").notNull(),
+    providerReference: text("provider_reference").notNull(),
+    providerTransactionId: text("provider_transaction_id"),
+    idempotencyKey: text("idempotency_key").notNull(),
+    amountMinor: bigint("amount_minor", { mode: "number" }).notNull(),
+    currency: text("currency").notNull(),
+    status: text("status").notNull().default("initialized"),
+    checkoutUrl: text("checkout_url"),
+    verifiedAt: timestamp("verified_at", { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    foreignKey({
+      name: "billing_payment_attempts_invoice_org_fk",
+      columns: [table.organizationId, table.invoiceId],
+      foreignColumns: [billingInvoices.organizationId, billingInvoices.id],
+    }).onDelete("restrict"),
+    uniqueIndex("billing_payment_attempts_org_provider_reference_uq").on(table.organizationId, table.provider, table.providerReference),
+    uniqueIndex("billing_payment_attempts_org_idempotency_uq").on(table.organizationId, table.idempotencyKey),
+    uniqueIndex("billing_payment_attempts_org_id_id_uq").on(table.organizationId, table.id),
+    uniqueIndex("billing_payment_attempts_provider_txn_uq")
+      .on(table.provider, table.providerTransactionId)
+      .where(sql`provider_transaction_id IS NOT NULL`),
+    index("billing_payment_attempts_org_invoice_created_idx").on(table.organizationId, table.invoiceId, table.createdAt),
+  ],
+);
+
+export const billingWebhookEvents = pgTable(
+  "billing_webhook_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
+    paymentAttemptId: uuid("payment_attempt_id").notNull(),
+    provider: text("provider").notNull(),
+    providerEventId: text("provider_event_id").notNull(),
+    eventType: text("event_type").notNull(),
+    payloadSha256: text("payload_sha256").notNull(),
+    processingStatus: text("processing_status").notNull().default("received"),
+    receivedAt: timestamp("received_at", { withTimezone: true }).notNull().defaultNow(),
+    processedAt: timestamp("processed_at", { withTimezone: true }),
+  },
+  (table) => [
+    uniqueIndex("billing_webhook_events_org_provider_event_uq").on(table.organizationId, table.provider, table.providerEventId),
+    index("billing_webhook_events_org_status_received_idx").on(table.organizationId, table.processingStatus, table.receivedAt),
+    foreignKey({
+      name: "billing_webhook_events_attempt_org_fk",
+      columns: [table.organizationId, table.paymentAttemptId],
+      foreignColumns: [billingPaymentAttempts.organizationId, billingPaymentAttempts.id],
+    }).onDelete("restrict"),
+  ],
+);
+
+
+/** Platform staff access is independent of organisation membership. */
+export const staffGrants = pgTable(
+  "platform_staff_grants",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
+    role: text("role").notNull(),
+    status: text("status").notNull().default("active"),
+    grantedByUserId: uuid("granted_by_user_id").references(() => appUsers.id, { onDelete: "restrict" }),
+    reason: text("reason").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    uniqueIndex("platform_staff_grants_user_role_uq").on(table.userId, table.role),
+    index("platform_staff_grants_user_status_idx").on(table.userId, table.status),
+  ],
+);
+
+/** Support cases are tenant-scoped; staff access is separately authorized and audited. */
+export const supportCases = pgTable(
+  "support_cases",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
+    createdByUserId: uuid("created_by_user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
+    assignedStaffUserId: uuid("assigned_staff_user_id").references(() => appUsers.id, { onDelete: "restrict" }),
+    subject: text("subject").notNull(),
+    category: text("category").notNull().default("general"),
+    priority: text("priority").notNull().default("normal"),
+    status: text("status").notNull().default("open"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+    closedAt: timestamp("closed_at", { withTimezone: true }),
+  },
+  (table) => [
+    uniqueIndex("support_cases_org_id_id_uq").on(table.organizationId, table.id),
+    index("support_cases_org_status_updated_idx").on(table.organizationId, table.status, table.updatedAt),
+    index("support_cases_assignee_status_idx").on(table.assignedStaffUserId, table.status),
+  ],
+);
+
+export const supportMessages = pgTable(
+  "support_messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
+    caseId: uuid("case_id").notNull(),
+    authorUserId: uuid("author_user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
+    authorKind: text("author_kind").notNull(),
+    visibility: text("visibility").notNull().default("customer"),
+    body: text("body").notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    foreignKey({
+      name: "support_messages_case_org_fk",
+      columns: [table.organizationId, table.caseId],
+      foreignColumns: [supportCases.organizationId, supportCases.id],
+    }).onDelete("restrict"),
+    index("support_messages_case_created_idx").on(table.organizationId, table.caseId, table.createdAt),
+  ],
+);
+
+export const platformAuditEvents = pgTable(
+  "platform_audit_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    actorUserId: uuid("actor_user_id").references(() => appUsers.id, { onDelete: "set null" }),
+    actorKind: text("actor_kind").notNull(),
+    organizationId: uuid("organization_id").references(() => organizations.id, { onDelete: "restrict" }),
+    action: text("action").notNull(),
+    targetType: text("target_type").notNull(),
+    targetId: text("target_id"),
+    purpose: text("purpose"),
+    result: text("result").notNull(),
+    requestId: text("request_id"),
+    metadata: text("metadata"),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    index("platform_audit_events_org_created_idx").on(table.organizationId, table.createdAt),
+    index("platform_audit_events_actor_created_idx").on(table.actorUserId, table.createdAt),
+    index("platform_audit_events_action_created_idx").on(table.action, table.createdAt),
+  ],
+);
+
+
+/** Durable, tenant-scoped website draft checkpoints. Snapshot contains validated JSON only. */
+export const websiteVersions = pgTable("website_versions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
+  websiteId: uuid("website_id").notNull(),
+  createdByUserId: uuid("created_by_user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
+  label: text("label").notNull(),
+  notes: text("notes").notNull().default(""),
+  snapshot: text("snapshot").notNull(),
+  createdAt: createdAt(),
+}, (table) => [
+  foreignKey({ name: "website_versions_website_org_fk", columns: [table.organizationId, table.websiteId], foreignColumns: [websites.organizationId, websites.id] }).onDelete("cascade"),
+  uniqueIndex("website_versions_org_id_id_uq").on(table.organizationId, table.id),
+  index("website_versions_org_website_created_idx").on(table.organizationId, table.websiteId, table.createdAt),
+]);
+
+
+/** Durable, tenant-scoped page/navigation structure, separate from published content and editor drafts. */
+export const websiteStructures = pgTable("website_structures", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
+  websiteId: uuid("website_id").notNull(),
+  createdByUserId: uuid("created_by_user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
+  structure: text("structure").notNull(),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+}, (table) => [
+  foreignKey({ name: "website_structures_website_org_fk", columns: [table.organizationId, table.websiteId], foreignColumns: [websites.organizationId, websites.id] }).onDelete("cascade"),
+  uniqueIndex("website_structures_org_website_uq").on(table.organizationId, table.websiteId),
+  uniqueIndex("website_structures_org_id_id_uq").on(table.organizationId, table.id),
+]);
+
+
+/** Tenant-scoped blog drafts and media references. Media source is a URL/storage key, not uploaded bytes. */
+export const websiteContentLibraries = pgTable("website_content_libraries", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
+  websiteId: uuid("website_id").notNull(),
+  createdByUserId: uuid("created_by_user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
+  library: text("library").notNull(),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+}, (table) => [
+  foreignKey({ name: "website_content_libraries_website_org_fk", columns: [table.organizationId, table.websiteId], foreignColumns: [websites.organizationId, websites.id] }).onDelete("cascade"),
+  uniqueIndex("website_content_libraries_org_website_uq").on(table.organizationId, table.websiteId),
+  uniqueIndex("website_content_libraries_org_id_id_uq").on(table.organizationId, table.id),
+]);
+
+/** Tenant-scoped SEO/social metadata; public output must consume it only through the publishing path. */
+export const websiteSeoSettings = pgTable("website_seo_settings", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
+  websiteId: uuid("website_id").notNull(),
+  createdByUserId: uuid("created_by_user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
+  settings: text("settings").notNull(),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+}, (table) => [
+  foreignKey({ name: "website_seo_settings_website_org_fk", columns: [table.organizationId, table.websiteId], foreignColumns: [websites.organizationId, websites.id] }).onDelete("cascade"),
+  uniqueIndex("website_seo_settings_org_website_uq").on(table.organizationId, table.websiteId),
+  uniqueIndex("website_seo_settings_org_id_id_uq").on(table.organizationId, table.id),
+]);
+
+/** Account-owned presentation preferences, never authentication or permissions. */
+export const workspacePreferences = pgTable("workspace_preferences", {
+ userId: uuid("user_id").primaryKey().references(()=>appUsers.id,{onDelete:"cascade"}),
+ preferences: jsonb("preferences").$type<import("@/lib/workspace/preferences").WorkspacePreferences>().notNull(),
+ revision: integer("revision").notNull().default(1),
+ updatedAt: updatedAt(),
+});
+
+/** Private customer media; immutable object identity and tenant/project ownership. */
+export const websiteMedia = pgTable("website_media", {
+  id: uuid("id").primaryKey(),
+  organizationId: uuid("organization_id").notNull(),
+  websiteId: uuid("website_id").notNull(),
+  createdByUserId: uuid("created_by_user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
+  objectKey: text("object_key").notNull(),
+  kind: text("kind").notNull().default("image"),
+  mime: text("mime").notNull().default("image/webp"),
+  originalName: text("original_name"),
+  checksum: text("checksum"),
+  etag: text("etag"),
+  uploadId: text("upload_id"),
+  caption: text("caption"),
+  durationMs: integer("duration_ms"),
+  lastPublishedAt: timestamp("last_published_at", { withTimezone: true }),
+  bytes: integer("bytes").notNull(),
+  width: integer("width").notNull(), height: integer("height").notNull(),
+  alt: text("alt").notNull(),
+  status: text("status").notNull().default("pending"),
+  createdAt: createdAt(), updatedAt: updatedAt(),
+}, (table) => [
+  foreignKey({ name: "website_media_website_org_fk", columns: [table.organizationId, table.websiteId], foreignColumns: [websites.organizationId, websites.id] }).onDelete("restrict"),
+  uniqueIndex("website_media_key_uq").on(table.objectKey),
+  uniqueIndex("website_media_org_website_id_uq").on(table.organizationId,table.websiteId,table.id),
+  index("website_media_owner_idx").on(table.organizationId, table.websiteId, table.status),
+]);
+export const mediaStorageBudget = pgTable("media_storage_budget", {
+  product: text("product").primaryKey(),
+  reservedBytes: bigint("reserved_bytes", { mode: "number" }).notNull().default(0),
+});
+export const websiteMediaLimits = pgTable("website_media_limits", {
+  websiteId: uuid("website_id").primaryKey().references(() => websites.id, { onDelete: "restrict" }),
+  quotaBytes: integer("quota_bytes").notNull(),
+  videoQuotaBytes: bigint("video_quota_bytes", { mode: "number" }).notNull().default(500_000_000),
+  documentQuotaBytes: bigint("document_quota_bytes", { mode: "number" }).notNull().default(50_000_000),
+});
+
+
+/** Phase 15: normalized Blog/News records. Public delivery only consumes publishedSnapshot. */
+export const websitePosts = pgTable("website_posts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
+  websiteId: uuid("website_id").notNull(),
+  authorUserId: uuid("author_user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
+  kind: text("kind").notNull(),
+  slug: text("slug").notNull(),
+  title: text("title").notNull(),
+  excerpt: text("excerpt").notNull().default(""),
+  body: text("body").notNull().default(""),
+  contentBlocks: jsonb("content_blocks").$type<import("@/lib/content/article-model").ArticleContentBlock[]>().notNull().default([]),
+  category: text("category").notNull().default(""),
+  eventAt: timestamp("event_at", { withTimezone: true }),
+  isFeatured: boolean("is_featured").notNull().default(false),
+  correctionNote: text("correction_note"),
+  correctsSlug: text("corrects_slug"),
+  tags: jsonb("tags").$type<string[]>().notNull().default([]),
+  seoTitle: text("seo_title"),
+  seoDescription: text("seo_description"),
+  legacySourceId: text("legacy_source_id"),
+  featuredMediaId: uuid("featured_media_id"),
+  status: text("status").notNull().default("draft"),
+  revision: integer("revision").notNull().default(1),
+  publishedSnapshot: jsonb("published_snapshot").$type<import("@/lib/content/article-model").PublishedArticle | null>(),
+  publishedSlug: text("published_slug"),
+  publishedAt: timestamp("published_at", { withTimezone: true }),
+  scheduledAt: timestamp("scheduled_at", { withTimezone: true }),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+}, (table) => [
+  foreignKey({ name: "website_posts_website_org_fk", columns: [table.organizationId,table.websiteId], foreignColumns: [websites.organizationId,websites.id] }).onDelete("cascade"),
+  foreignKey({ name: "website_posts_featured_media_fk", columns: [table.organizationId,table.websiteId,table.featuredMediaId], foreignColumns: [websiteMedia.organizationId,websiteMedia.websiteId,websiteMedia.id] }).onDelete("restrict"),
+  uniqueIndex("website_posts_site_slug_uq").on(table.organizationId,table.websiteId,table.kind,table.slug),
+  uniqueIndex("website_posts_legacy_source_uq").on(table.organizationId,table.websiteId,table.legacySourceId).where(sql`legacy_source_id IS NOT NULL`),
+  uniqueIndex("website_posts_legacy_source_uq").on(table.organizationId,table.websiteId,table.legacySourceId).where(sql`legacy_source_id IS NOT NULL`),
+  uniqueIndex("website_posts_public_slug_uq").on(table.organizationId,table.websiteId,table.kind,table.publishedSlug),
+  index("website_posts_owner_idx").on(table.organizationId,table.websiteId,table.updatedAt),
+]);
+
+export const websitePostRevisions = pgTable("website_post_revisions", {
+ id: uuid("id").primaryKey().defaultRandom(),
+ organizationId: uuid("organization_id").notNull(),
+ websiteId: uuid("website_id").notNull(),
+ postId: uuid("post_id").notNull().references(() => websitePosts.id, { onDelete: "cascade" }),
+ actorUserId: uuid("actor_user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
+ revision: integer("revision").notNull(),
+ event: text("event").notNull(),
+ snapshot: jsonb("snapshot").notNull(),
+ createdAt: createdAt(),
+}, (table) => [
+ foreignKey({ name: "website_post_revisions_website_org_fk", columns: [table.organizationId,table.websiteId], foreignColumns: [websites.organizationId,websites.id] }).onDelete("cascade"),
+ uniqueIndex("website_post_revisions_unique").on(table.postId,table.revision),
+]);
+
+
+/**
+ * Graph Engine persistence is additive. The existing website draft and
+ * publishing tables remain intact until a separately approved import/cutover.
+ */
+export const websiteGraphs = pgTable("website_graphs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull(),
+  websiteId: uuid("website_id").notNull(),
+  schemaVersion: integer("schema_version").notNull().default(1),
+  draftRevision: integer("draft_revision").notNull().default(0),
+  // The matching graph-version FK is installed by migration 0032 after both
+  // sides of the circular graph/version relationship have been created.
+  publishedVersionId: uuid("published_version_id"),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+}, (table) => [
+  foreignKey({
+    name: "website_graphs_website_org_fk",
+    columns: [table.organizationId, table.websiteId],
+    foreignColumns: [websites.organizationId, websites.id],
+  }).onDelete("cascade"),
+  uniqueIndex("website_graphs_org_website_uq").on(table.organizationId, table.websiteId),
+  uniqueIndex("website_graphs_org_website_id_uq").on(table.organizationId, table.websiteId, table.id),
+  check("website_graphs_version_revision_check", sql`${table.schemaVersion} > 0 AND ${table.draftRevision} >= 0`),
+]);
+
+export const websiteNodes = pgTable("website_nodes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull(),
+  websiteId: uuid("website_id").notNull(),
+  graphId: uuid("graph_id").notNull(),
+  nodeType: text("node_type").notNull(),
+  schemaVersion: integer("schema_version").notNull().default(1),
+  properties: jsonb("properties").$type<Record<string, unknown>>().notNull().default({}),
+  lifecycleStatus: text("lifecycle_status").notNull().default("active"),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+}, (table) => [
+  foreignKey({
+    name: "website_nodes_graph_scope_fk",
+    columns: [table.organizationId, table.websiteId, table.graphId],
+    foreignColumns: [websiteGraphs.organizationId, websiteGraphs.websiteId, websiteGraphs.id],
+  }).onDelete("cascade"),
+  uniqueIndex("website_nodes_graph_id_id_uq").on(table.graphId, table.id),
+  index("website_nodes_graph_type_idx").on(table.graphId, table.nodeType),
+  check("website_nodes_type_check", sql`${table.nodeType} IN ('website','page','section','component','design_token','shared_data','interaction','responsive_config','media_reference')`),
+  check("website_nodes_version_status_check", sql`${table.schemaVersion} > 0 AND ${table.lifecycleStatus} IN ('active','deleted')`),
+  check("website_nodes_properties_object_check", sql`jsonb_typeof(${table.properties}) = 'object'`),
+]);
+
+export const websiteEdges = pgTable("website_edges", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull(),
+  websiteId: uuid("website_id").notNull(),
+  graphId: uuid("graph_id").notNull(),
+  sourceNodeId: uuid("source_node_id").notNull(),
+  targetNodeId: uuid("target_node_id").notNull(),
+  edgeType: text("edge_type").notNull(),
+  schemaVersion: integer("schema_version").notNull().default(1),
+  sortOrder: integer("sort_order"),
+  properties: jsonb("properties").$type<Record<string, unknown>>().notNull().default({}),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+}, (table) => [
+  foreignKey({
+    name: "website_edges_graph_scope_fk",
+    columns: [table.organizationId, table.websiteId, table.graphId],
+    foreignColumns: [websiteGraphs.organizationId, websiteGraphs.websiteId, websiteGraphs.id],
+  }).onDelete("cascade"),
+  foreignKey({
+    name: "website_edges_source_graph_fk",
+    columns: [table.graphId, table.sourceNodeId],
+    foreignColumns: [websiteNodes.graphId, websiteNodes.id],
+  }).onDelete("cascade"),
+  foreignKey({
+    name: "website_edges_target_graph_fk",
+    columns: [table.graphId, table.targetNodeId],
+    foreignColumns: [websiteNodes.graphId, websiteNodes.id],
+  }).onDelete("cascade"),
+  uniqueIndex("website_edges_graph_id_id_uq").on(table.graphId, table.id),
+  uniqueIndex("website_edges_unique_relationship_uq").on(table.graphId, table.edgeType, table.sourceNodeId, table.targetNodeId),
+  index("website_edges_source_order_idx").on(table.graphId, table.sourceNodeId, table.edgeType, table.sortOrder),
+  index("website_edges_target_idx").on(table.graphId, table.targetNodeId),
+  check("website_edges_type_check", sql`${table.edgeType} IN ('contains_page','contains_section','contains_component','uses_design_token','binds_shared_data','references_media','configures_interaction','has_responsive_config')`),
+  check("website_edges_version_order_check", sql`${table.schemaVersion} > 0 AND (${table.sortOrder} IS NULL OR ${table.sortOrder} >= 0) AND (${table.edgeType} NOT IN ('contains_page','contains_section','contains_component') OR ${table.sortOrder} IS NOT NULL)`),
+  check("website_edges_properties_object_check", sql`jsonb_typeof(${table.properties}) = 'object'`),
+]);
+
+export const websiteGraphVersions = pgTable("website_graph_versions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull(),
+  websiteId: uuid("website_id").notNull(),
+  graphId: uuid("graph_id").notNull(),
+  revision: integer("revision").notNull(),
+  schemaVersion: integer("schema_version").notNull().default(1),
+  snapshot: jsonb("snapshot").$type<Record<string, unknown>>().notNull(),
+  contentHash: text("content_hash").notNull(),
+  createdByUserId: uuid("created_by_user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
+  createdAt: createdAt(),
+}, (table) => [
+  foreignKey({
+    name: "website_graph_versions_graph_scope_fk",
+    columns: [table.organizationId, table.websiteId, table.graphId],
+    foreignColumns: [websiteGraphs.organizationId, websiteGraphs.websiteId, websiteGraphs.id],
+  }).onDelete("cascade"),
+  uniqueIndex("website_graph_versions_graph_revision_uq").on(table.graphId, table.revision),
+  uniqueIndex("website_graph_versions_graph_id_id_uq").on(table.graphId, table.id),
+  index("website_graph_versions_graph_created_idx").on(table.graphId, table.createdAt),
+  check("website_graph_versions_revision_check", sql`${table.revision} >= 0 AND ${table.schemaVersion} > 0`),
+  check("website_graph_versions_snapshot_object_check", sql`jsonb_typeof(${table.snapshot}) = 'object'`),
+  check("website_graph_versions_hash_check", sql`${table.contentHash} ~ '^[a-f0-9]{64}$'`),
+]);
+
+export const websiteGraphOperations = pgTable("website_graph_operations", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull(),
+  websiteId: uuid("website_id").notNull(),
+  graphId: uuid("graph_id").notNull(),
+  actorUserId: uuid("actor_user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
+  idempotencyKey: text("idempotency_key").notNull(),
+  requestHash: text("request_hash").notNull(),
+  baseRevision: integer("base_revision").notNull(),
+  resultRevision: integer("result_revision").notNull(),
+  operations: jsonb("operations").$type<unknown[]>().notNull(),
+  result: jsonb("result").$type<Record<string, unknown>>().notNull(),
+  createdAt: createdAt(),
+}, (table) => [
+  foreignKey({
+    name: "website_graph_operations_graph_scope_fk",
+    columns: [table.organizationId, table.websiteId, table.graphId],
+    foreignColumns: [websiteGraphs.organizationId, websiteGraphs.websiteId, websiteGraphs.id],
+  }).onDelete("cascade"),
+  uniqueIndex("website_graph_operations_idempotency_uq").on(table.graphId, table.actorUserId, table.idempotencyKey),
+  uniqueIndex("website_graph_operations_graph_id_id_uq").on(table.graphId, table.id),
+  index("website_graph_operations_graph_created_idx").on(table.graphId, table.createdAt),
+  check("website_graph_operations_revision_check", sql`${table.baseRevision} >= 0 AND ${table.resultRevision} = ${table.baseRevision} + 1`),
+  check("website_graph_operations_idempotency_check", sql`length(btrim(${table.idempotencyKey})) BETWEEN 8 AND 200`),
+  check("website_graph_operations_hash_check", sql`${table.requestHash} ~ '^[a-f0-9]{64}$'`),
+  check("website_graph_operations_payload_check", sql`jsonb_typeof(${table.operations}) = 'array' AND jsonb_typeof(${table.result}) = 'object'`),
+]);
+
+export const websiteCanvasPositions = pgTable("website_canvas_positions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull(),
+  websiteId: uuid("website_id").notNull(),
+  graphId: uuid("graph_id").notNull(),
+  userId: uuid("user_id").notNull().references(() => appUsers.id, { onDelete: "cascade" }),
+  nodeId: uuid("node_id").notNull(),
+  x: doublePrecision("x").notNull(),
+  y: doublePrecision("y").notNull(),
+  locked: boolean("locked").notNull().default(false),
+  updatedAt: updatedAt(),
+}, (table) => [
+  foreignKey({
+    name: "website_canvas_positions_graph_scope_fk",
+    columns: [table.organizationId, table.websiteId, table.graphId],
+    foreignColumns: [websiteGraphs.organizationId, websiteGraphs.websiteId, websiteGraphs.id],
+  }).onDelete("cascade"),
+  foreignKey({
+    name: "website_canvas_positions_node_graph_fk",
+    columns: [table.graphId, table.nodeId],
+    foreignColumns: [websiteNodes.graphId, websiteNodes.id],
+  }).onDelete("cascade"),
+  uniqueIndex("website_canvas_positions_graph_user_node_uq").on(table.graphId, table.userId, table.nodeId),
+  index("website_canvas_positions_graph_user_idx").on(table.graphId, table.userId),
+  check("website_canvas_positions_bounds_check", sql`${table.x} BETWEEN -1000000 AND 1000000 AND ${table.y} BETWEEN -1000000 AND 1000000`),
+]);

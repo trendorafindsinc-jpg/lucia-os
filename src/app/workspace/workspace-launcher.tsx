@@ -1,0 +1,255 @@
+"use client";
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
+import { usePreferences } from "@/components/workspace/preference-provider";
+import type { WorkspaceApp } from "@/lib/workspace/app-registry";
+import { WORKSPACE_APPS, WORKSPACE_TOOLS } from "@/lib/workspace/app-registry";
+
+// Local mobile Settings is registered once, but is not a dead desktop tile.
+const HOME_APPS = WORKSPACE_APPS.filter((app) => app.launch.kind !== "local");
+const HOME_AVAILABLE = HOME_APPS.filter(
+  (app) => app.status === "available" && app.href,
+);
+import {
+  formatWorkspaceDate,
+  resolveOrganization,
+} from "@/lib/workspace/preferences";
+import styles from "./workspace-launcher.module.css";
+import { OpenAppLibraryButton } from "./open-app-library-button";
+import { LatticeLauncher } from "@/components/workspace/lattice-launcher";
+import MobileExperience from "./mobile-experience";
+import { WorkspaceIcon } from "@/components/workspace/workspace-icon";
+
+type WorkspaceLauncherProps = {
+  userId: string;
+  displayName: string;
+  organizationCount: number;
+  websiteCount: number;
+  organizations?: { id: string; name: string }[];
+};
+
+function AppTile({ app }: { app: WorkspaceApp }) {
+  const icon = (
+    <span className={`${styles.iconSurface} ${styles[`icon_${app.icon}`]}`}>
+      <WorkspaceIcon icon={app.icon} />
+    </span>
+  );
+
+  if (app.status === "available" && app.href) {
+    return (
+      <Link className={styles.appTile} href={app.href} aria-label={app.label}>
+        {icon}
+        <span className={styles.appLabel}>{app.label}</span>
+        <span className={styles.appDescription}>{app.description}</span>
+        <span className={styles.appChevron} aria-hidden="true">
+          ›
+        </span>
+      </Link>
+    );
+  }
+
+  return (
+    <div
+      className={`${styles.appTile} ${styles.appTileUnavailable}`}
+      aria-disabled="true"
+      title={app.reason}
+    >
+      {icon}
+      <span className={styles.appLabel}>
+        {app.label}
+        <span className={styles.unavailableTag}>Unavailable</span>
+      </span>
+      <span className={styles.appDescription}>{app.reason}</span>
+    </div>
+  );
+}
+
+export default function WorkspaceLauncher({
+  userId,
+  displayName,
+  organizationCount,
+  websiteCount,
+  organizations = [],
+}: WorkspaceLauncherProps) {
+  const { preferences } = usePreferences();
+  const homeApps = [
+    ...HOME_APPS.filter((a) => a.id === "overview" || a.id === "settings"),
+    ...(preferences.showHomeApps
+      ? preferences.homeApps.flatMap((id) =>
+          HOME_APPS.filter((a) => a.id === id),
+        )
+      : []),
+  ];
+  const [now, setNow] = useState<Date | null>(null);
+  useEffect(() => {
+    setNow(new Date());
+    const timer = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+  const organization = resolveOrganization(
+    organizations,
+    preferences.preferredOrganizationId,
+  );
+  const firstName = displayName.trim().split(/\s+/)[0] || "there";
+
+  return (
+    <main className={`${styles.workspace} lucia-workspace-theme`}>
+      <div data-lucia-launcher-background>
+        <header className={styles.header}>
+          <Link
+            className={styles.brand}
+            href="/workspace"
+            aria-label="LUCIA OS workspace home"
+          >
+            <span className={styles.brandMark} aria-hidden="true">
+              <span />
+            </span>
+            <span>
+              LUCIA <span className={styles.brandMuted}>OS</span>
+            </span>
+          </Link>
+          <div className={styles.headerActions}>
+            <Link href="/workspace/apps" className={styles.headerContext}>
+              App Library
+            </Link>
+            <span className={styles.headerContext}>
+              {organization?.name ?? "Personal workspace"}
+            </span>
+            <span
+              className={styles.avatar}
+              aria-label={`Signed in as ${displayName || "user"}`}
+            >
+              {(displayName || "U").slice(0, 1).toUpperCase()}
+            </span>
+          </div>
+        </header>
+
+        <div className={styles.content}>
+          <section className={styles.welcome} aria-labelledby="workspace-title">
+            <p className={styles.eyebrow}>YOUR DIGITAL WORKSPACE</p>
+            <p className={styles.mobileGreeting}>Good to see you,</p>
+            <h1 id="workspace-title">
+              <span className={styles.desktopGreeting}>Welcome back, </span>
+              {firstName}.
+            </h1>
+            {now && (
+              <p className={styles.lead}>
+                <time dateTime={now.toISOString()}>
+                  {formatWorkspaceDate(now, preferences)}
+                </time>
+              </p>
+            )}
+            <p className={styles.lead}>
+              Build, create and manage your digital space with LUCIA OS.
+            </p>
+            <div className={styles.mobileSearch}>
+              <span aria-hidden="true">⌕</span>
+              <span>Explore your apps below</span>
+            </div>
+            <div className={styles.summary} aria-label="Workspace summary">
+              <span>
+                <strong>{organizationCount}</strong>{" "}
+                {organizationCount === 1 ? "organisation" : "organisations"}
+              </span>
+              <span className={styles.summaryDivider} aria-hidden="true" />
+              <span>
+                <strong>{websiteCount}</strong>{" "}
+                {websiteCount === 1 ? "website" : "websites"}
+              </span>
+            </div>
+            <div
+              className={styles.mobileStats}
+              aria-label="Workspace at a glance"
+            >
+              <Link href="/workspace" className={styles.mobileStat}>
+                <span aria-hidden="true">
+                  <WorkspaceIcon icon="organizations" />
+                </span>
+                <strong>{organizationCount}</strong>
+                <small>Orgs</small>
+              </Link>
+              <Link href="/workspace/websites" className={styles.mobileStat}>
+                <span aria-hidden="true">
+                  <WorkspaceIcon icon="domains" />
+                </span>
+                <strong>{websiteCount}</strong>
+                <small>Websites</small>
+              </Link>
+              <OpenAppLibraryButton className={styles.mobileStat}>
+                <span aria-hidden="true">
+                  <WorkspaceIcon icon="overview" />
+                </span>
+                <strong>{HOME_AVAILABLE.length}</strong>
+                <small>Apps</small>
+              </OpenAppLibraryButton>
+              <Link href="/workspace/domains" className={styles.mobileStat}>
+                <span aria-hidden="true">
+                  <WorkspaceIcon icon="domains" />
+                </span>
+                <strong>↗</strong>
+                <small>Domains</small>
+              </Link>
+            </div>
+          </section>
+
+          <section
+            className={styles.desktopEntry}
+            aria-label="Lattice workspace"
+          >
+            <LatticeLauncher />
+          </section>
+
+          <section className={styles.appSection} aria-labelledby="apps-title">
+            <div className={styles.sectionHeading}>
+              <div>
+                <h2 id="apps-title">Your apps</h2>
+                <p>Choose where you want to work.</p>
+              </div>
+              <span className={styles.sectionCount}>
+                {
+                  WORKSPACE_APPS.filter((app) => app.status === "available")
+                    .length
+                }{" "}
+                available
+              </span>
+            </div>
+            <div className={styles.appGrid} data-home-app-grid>
+              {homeApps.map((app) => (
+                <AppTile app={app} key={app.id} />
+              ))}
+            </div>
+          </section>
+
+          <section
+            className={styles.toolsSection}
+            aria-labelledby="tools-title"
+          >
+            <div className={styles.sectionHeading}>
+              <div>
+                <h2 id="tools-title">Workspace tools</h2>
+                <p>Manage the details behind your work.</p>
+              </div>
+            </div>
+            <nav className={styles.toolsGrid} aria-label="Workspace tools">
+              {WORKSPACE_TOOLS.map((tool) => (
+                <Link
+                  href={tool.href}
+                  className={styles.toolLink}
+                  key={tool.key}
+                >
+                  {tool.label}
+                  <span aria-hidden="true">↗</span>
+                </Link>
+              ))}
+            </nav>
+          </section>
+          <p className={styles.footerNote}>
+            Your access is checked by LUCIA OS. Unavailable apps are shown for
+            clarity and cannot be launched.
+          </p>
+        </div>
+      </div>
+      <MobileExperience key={userId} />
+    </main>
+  );
+}
