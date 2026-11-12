@@ -56,7 +56,7 @@ describe("Design Intelligence foundations and recipe registry", () => {
     const request = {
       layer: "component" as const,
       nodeType: "component" as const,
-      availableTokens: ["color.primary", "color.onPrimary", "radius.md", "spacing.md"],
+      availableTokens: ["color.primary", "color.onPrimary", "color.surface", "color.text", "radius.md", "spacing.md"],
     };
     const first = selectDesignRecipes(request);
     const second = selectDesignRecipes(request);
