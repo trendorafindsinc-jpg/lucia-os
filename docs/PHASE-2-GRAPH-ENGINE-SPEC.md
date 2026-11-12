@@ -682,3 +682,49 @@ A source review also identified pre-persistence hardening items:
 - Review the Zod 4 registry type annotations under the actual TypeScript compiler; source inspection cannot establish type correctness.
 
 **Verification record:** the Graph Engine hardening increment passed the focused Graph Engine test file, the full unit suite (90 files / 1,138 tests), and TypeScript typecheck in GitHub Actions run `43280383040` (attempt 2). The additive persistence increment then passed GitHub Actions run `43281830233`: PostgreSQL 16 migration apply, Drizzle `db:check`, TypeScript typecheck, and tenant/RLS/append-only/canvas smoke tests as the non-owner `NOBYPASSRLS` runtime role. These checks ran only against a disposable CI database; no shared or production database was migrated.
+
+
+## 19. Graph persistence service and authenticated API — implementation increment
+
+**Status: implemented on `development`; automated verification is running. This is additive and does not replace legacy draft or publishing behavior.**
+
+### 19.1 Service capabilities
+
+`src/lib/graph/service.ts` provides the first database-backed graph service:
+
+- Create one graph per website and initialize its website root node plus immutable revision-zero snapshot.
+- Retrieve the canonical graph and the current user's own canvas positions.
+- Apply bounded, versioned mutation batches inside one database transaction.
+- Lock the graph row before checking idempotency and expected revision.
+- Scope idempotency to graph, authenticated actor and idempotency key; compare a stable request hash and return the recorded result for exact replays.
+- Reject key reuse with a different request payload.
+- Apply create/update/tombstone/delete-relationship/connect/disconnect/reorder operations and validate the resulting complete graph before persistence.
+- Insert an immutable snapshot and append-only operation record, and advance the graph revision exactly once.
+- Restore an immutable prior snapshot as a new revision. The persistence layer reconciles the node and edge set with the restored snapshot rather than leaving later-created nodes behind.
+- Save canvas positions separately, enforce per-user RLS, preserve lock state, and never increment content revisions.
+- List immutable graph revision metadata.
+
+Authorization is resolved through the existing current-user and organization-permission guard. Both transaction-local user and organization contexts are set on the same transaction. The database's RLS policies re-check active membership; the service does not treat tenant context as authorization.
+
+### 19.2 Authenticated routes
+
+New isolated routes are available:
+
+- `GET /api/websites/[websiteId]/graph` — graph plus immutable version metadata.
+- `POST /api/websites/[websiteId]/graph` — create the initial graph if absent.
+- `POST /api/websites/[websiteId]/graph/mutations` — submit a mutation batch.
+- `PUT /api/websites/[websiteId]/graph/canvas` — save the current user's canvas position.
+
+The routes require the existing session, origin protection for writes, account-consistency header where supplied, and a valid `x-lucia-workspace-organization` header. They are non-cacheable. Mutation bodies are size-bounded and website IDs are matched to the route path.
+
+### 19.3 Coexistence and safety boundary
+
+- Existing `/draft` routes and the legacy draft data model are unchanged.
+- No legacy draft is imported or dual-written.
+- No publishing or public rendering path reads graph data.
+- No production/shared database migration was run.
+- No existing website, page, media item or customer record was deleted or rewritten.
+
+### 19.4 Remaining verification gate
+
+The current implementation must pass focused Graph Engine tests, full unit tests and TypeScript typecheck. A separate review/test increment is still required for database-backed service scenarios: transaction rollback, simultaneous revision conflicts, exact idempotent replay, hash mismatch, tenant isolation through service calls, immutable revision preservation, restore reconciliation, and canvas revision independence. Do not mark Phase 2 complete until those scenarios and the full repository quality checks (lint/build/routing) have passing evidence.

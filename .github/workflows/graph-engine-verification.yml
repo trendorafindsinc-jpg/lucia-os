@@ -7,6 +7,7 @@ on:
     paths:
       - ".github/workflows/graph-engine-verification.yml"
       - "src/lib/graph/**"
+      - "src/app/api/websites/**/graph/**"
       - "tsconfig.json"
       - "package.json"
   pull_request:
