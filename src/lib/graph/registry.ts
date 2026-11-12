@@ -1,0 +1,74 @@
+import { z } from "zod";
+import type { GraphEdgeType, GraphNodeType } from "./contracts";
+
+/**
+ * Initial versioned registry. These schemas deliberately validate the minimum
+ * stable contract; recipe-specific and renderer-specific detail belongs to
+ * later Design Intelligence and Rendering contracts.
+ */
+const properties = z.record(z.string(), z.unknown());
+
+export const nodePropertySchemas: Record<GraphNodeType, z.ZodType> = {
+  website: z.object({ name: z.string().trim().min(1).max(120) }).passthrough(),
+  page: z.object({
+    title: z.string().trim().min(1).max(120),
+    path: z.string().trim().min(1).max(240),
+  }).passthrough(),
+  section: properties,
+  component: properties,
+  design_token: z.object({
+    namespace: z.string().trim().min(1).max(80),
+    key: z.string().trim().min(1).max(120),
+  }).passthrough(),
+  shared_data: z.object({
+    dataSchemaId: z.string().trim().min(1).max(160),
+    dataSchemaVersion: z.number().int().positive(),
+  }).passthrough(),
+  interaction: z.object({
+    trigger: z.string().trim().min(1).max(80),
+    action: z.string().trim().min(1).max(80),
+  }).passthrough(),
+  responsive_config: properties,
+  media_reference: z.object({
+    assetId: z.string().uuid(),
+  }).passthrough(),
+};
+
+export interface GraphEdgeRule {
+  source: readonly GraphNodeType[];
+  target: readonly GraphNodeType[];
+  containment: boolean;
+  ordered: boolean;
+  uniquePair: boolean;
+}
+
+export const edgeRules: Record<GraphEdgeType, GraphEdgeRule> = {
+  contains_page: {
+    source: ["website"], target: ["page"], containment: true, ordered: true, uniquePair: true,
+  },
+  contains_section: {
+    source: ["page"], target: ["section"], containment: true, ordered: true, uniquePair: true,
+  },
+  contains_component: {
+    source: ["section", "component"], target: ["component"], containment: true, ordered: true, uniquePair: true,
+  },
+  uses_design_token: {
+    source: ["section", "component"], target: ["design_token"], containment: false, ordered: false, uniquePair: true,
+  },
+  binds_shared_data: {
+    source: ["section", "component"], target: ["shared_data"], containment: false, ordered: false, uniquePair: true,
+  },
+  references_media: {
+    source: ["section", "component"], target: ["media_reference"], containment: false, ordered: false, uniquePair: true,
+  },
+  configures_interaction: {
+    source: ["section", "component"], target: ["interaction"], containment: false, ordered: false, uniquePair: true,
+  },
+  has_responsive_config: {
+    source: ["section", "component"], target: ["responsive_config"], containment: false, ordered: false, uniquePair: true,
+  },
+};
+
+export function validateNodeProperties(type: GraphNodeType, value: unknown) {
+  return nodePropertySchemas[type].safeParse(value);
+}
