@@ -606,7 +606,7 @@ A follow-up source review separated canvas state from graph operations and corre
 
 ## 17. Additive database migration — implementation increment 1
 
-**Status: six-table Drizzle schema and forward-only SQL migration authored on `development`; not applied to any shared or production database. The existing website data model remains intact.**
+**Status: six-table Drizzle schema and forward-only SQL migration committed on `development`; verified against a fresh PostgreSQL 16 CI database. No shared or production database was touched. The existing website data model remains intact.**
 
 The first persistence increment should add six Graph Engine tables and leave all existing website tables and data intact. The graph is introduced alongside the existing draft and publishing model; it is not populated from legacy content and is not made authoritative until a later import/parity/cutover task is separately approved.
 
@@ -656,7 +656,7 @@ A repeated idempotency key with the same actor and request hash returns the stor
 2. Append the forward-only `0032_website_graph_engine` SQL migration and journal entry. The Drizzle schema is updated in parallel; the existing `0016_snapshot.json` remains untouched.
 3. Run the migration workflow against a fresh PostgreSQL 16 service, creating `lucia_os_runtime` as a non-owner `NOBYPASSRLS` role before applying migrations so conditional grants are actually exercised.
 4. Run `npm run db:check` after migration application and execute `scripts/test-graph-rls.sql` under the least-privilege runtime role. Cover tenant A/B isolation, viewer/editor permissions, cross-graph endpoint FK rejection, append-only history and per-user canvas isolation.
-5. Apply schema only after the disposable-database workflow passes. Do not backfill customer sites, dual-write, change draft reads, change publishing, or remove legacy tables in this migration.
+5. The disposable-database workflow passed: all migrations applied, `db:check` passed, the updated Drizzle schema typechecked, and the runtime-role RLS smoke tests passed. No customer site backfill, dual-write, draft-read change, publishing change or legacy-table removal is part of this migration.
 
 ### 17.6 Migration acceptance criteria
 
@@ -681,4 +681,4 @@ A source review also identified pre-persistence hardening items:
 - Add tests for deleted-node references, unsupported graph/edge schema versions, duplicate edge IDs/relationships, multiple roots, disconnected cycles and root/parent invariants.
 - Review the Zod 4 registry type annotations under the actual TypeScript compiler; source inspection cannot establish type correctness.
 
-**Verification record:** the Graph Engine hardening increment passed the focused Graph Engine test file, the full unit suite (90 files / 1,138 tests), and TypeScript typecheck in GitHub Actions run `43280383040` (attempt 2). Persistence migration verification is separate and must pass before any database deployment.
+**Verification record:** the Graph Engine hardening increment passed the focused Graph Engine test file, the full unit suite (90 files / 1,138 tests), and TypeScript typecheck in GitHub Actions run `43280383040` (attempt 2). The additive persistence increment then passed GitHub Actions run `43281830233`: PostgreSQL 16 migration apply, Drizzle `db:check`, TypeScript typecheck, and tenant/RLS/append-only/canvas smoke tests as the non-owner `NOBYPASSRLS` runtime role. These checks ran only against a disposable CI database; no shared or production database was migrated.
