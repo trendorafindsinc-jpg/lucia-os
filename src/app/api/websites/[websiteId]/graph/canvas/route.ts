@@ -34,7 +34,7 @@ export async function PUT(request: Request, context: Context) {
     return json(await saveCanvasPosition(organizationId!, websiteId, body));
   } catch (error) {
     if (error instanceof GraphServiceError) {
-      const status = error.code === "FORBIDDEN" ? 403 : error.code === "NOT_FOUND" ? 404 : 422;
+      const status = error.code === "FORBIDDEN" ? 403 : error.code === "NOT_FOUND" ? 404 : error.code === "CONFLICT" ? 409 : 422;
       return json({ error: error.message, code: error.code }, status);
     }
     if (error instanceof z.ZodError) return json({ error: "Canvas position is invalid.", issues: error.flatten() }, 422);

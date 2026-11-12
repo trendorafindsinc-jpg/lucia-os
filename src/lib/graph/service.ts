@@ -14,6 +14,7 @@ import {
   websites,
 } from "@/lib/db/schema";
 import { canvasPositionMutationSchema, graphMutationBatchSchema, graphDocumentSchema, GRAPH_SCHEMA_VERSION, type GraphDocument, type GraphEdge, type GraphMutationBatch, type GraphNode, type GraphOperation } from "./contracts";
+import { edgeRules } from "./registry";
 import { canonicalGraphStringify, validateGraphDocument } from "./validate";
 
 type Transaction = Parameters<Parameters<ReturnType<typeof getDb>["transaction"]>[0]>[0];
@@ -144,6 +145,9 @@ function applyOperations(
         break;
       }
       case "REORDER_CHILDREN": {
+        if (!edgeRules[operation.edgeType].ordered) {
+          throw new GraphServiceError("Only ordered containment relationships can be reordered.", "VALIDATION");
+        }
         const matching = edges.filter((edge) =>
           edge.sourceNodeId === operation.parentNodeId && edge.type === operation.edgeType,
         );

@@ -14,6 +14,7 @@ on:
     paths:
       - ".github/workflows/graph-engine-verification.yml"
       - "src/lib/graph/**"
+      - "src/app/api/websites/**/graph/**"
       - "tsconfig.json"
       - "package.json"
   workflow_dispatch:
@@ -45,3 +46,9 @@ jobs:
         run: npm test
       - name: Run TypeScript typecheck
         run: npm run typecheck
+      - name: Run lint
+        run: npm run lint
+      - name: Production build
+        run: npm run build
+      - name: Compiled host-routing HTTP checks
+        run: npm run test:routing:http
