@@ -75,7 +75,7 @@ describe("Design Intelligence foundations and recipe registry", () => {
   });
 
   it("rejects executable and external-reference keys nested in recipe defaults", () => {
-    const recipe = structuredClone(designRecipeRegistry[0]) as unknown as Record<string, any>;
+    const recipe = structuredClone(designRecipeRegistry[0]) as unknown as Record<string, unknown>;
     recipe.defaults = { layout: { nested: { href: "https://example.com" } } };
     expect(designRecipeSchema.safeParse(recipe).success).toBe(false);
   });
