@@ -1,7 +1,6 @@
 import {
   designFoundationSchema,
   designRecipeSchema,
-  type DesignFoundation,
   type DesignRecipe,
   type DesignRecipeInput,
   type RecipeLayer,
@@ -26,7 +25,7 @@ export const coreFoundation = designFoundationSchema.parse({
     scale: { xs: 12, sm: 14, md: 16, lg: 20, xl: 28, display: 40 },
     lineHeight: { compact: 1.25, normal: 1.5, relaxed: 1.7 },
   },
-  spacing: { xs: 4, sm: 8, md: 16, lg: 24, xl: 40, "2xl": 64 },
+  spacing: { xs: 4, sm: 8, md: 16, lg: 24, xl: 40, xxl: 64 },
   radius: { none: 0, sm: 4, md: 8, lg: 16, pill: 999 },
   shadows: { none: "none", subtle: "0 1px 3px rgba(0,0,0,0.08)" },
   breakpoints: { mobile: 640, tablet: 900, desktop: 1200 },
