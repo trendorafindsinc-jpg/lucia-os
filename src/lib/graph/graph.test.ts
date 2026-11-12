@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { graphDocumentSchema } from "./contracts";
+import { canvasPositionMutationSchema, graphDocumentSchema, graphOperationSchema } from "./contracts";
 import { canonicalGraphStringify, validateGraphDocument } from "./validate";
 
 const graphId = "00000000-0000-4000-8000-000000000001";
@@ -76,6 +76,25 @@ describe("Graph Engine contracts", () => {
   it("serializes identical graph content deterministically despite input ordering", () => {
     const reversed = { ...validGraph, nodes: [...validGraph.nodes].reverse(), edges: [...validGraph.edges].reverse() };
     expect(canonicalGraphStringify(validGraph)).toBe(canonicalGraphStringify(reversed));
+  });
+
+
+  it("allows reusable reference nodes without structural containment parents", () => {
+    const mediaId = "00000000-0000-4000-8000-000000000013";
+    const withMedia = {
+      ...validGraph,
+      nodes: [
+        ...validGraph.nodes,
+        { id: mediaId, graphId, type: "media_reference" as const, schemaVersion: 1, properties: { assetId: "00000000-0000-4000-8000-000000000014" }, lifecycleStatus: "active" as const },
+      ],
+    };
+    expect(validateGraphDocument(withMedia)).toEqual([]);
+  });
+
+  it("keeps canvas movement outside graph content operations", () => {
+    const canvasMove = { nodeId: pageId, x: 120, y: 240, locked: true };
+    expect(canvasPositionMutationSchema.safeParse(canvasMove).success).toBe(true);
+    expect(graphOperationSchema.safeParse({ type: "MOVE_CANVAS_NODE", ...canvasMove }).success).toBe(false);
   });
 
   it("does not accept duplicate node IDs", () => {
