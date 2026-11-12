@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createHash, randomUUID } from "node:crypto";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { getCurrentOrganizationAccess } from "@/lib/access/guards";
 import { getDb } from "@/lib/db/client";
 import {
@@ -28,6 +28,18 @@ export class GraphServiceError extends Error {
   }
 }
 
+function stableValue(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(stableValue);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([key, child]) => [key, stableValue(child)]),
+    );
+  }
+  return value;
+}
+
 function sha256(value: string): string {
   return createHash("sha256").update(value).digest("hex");
 }
@@ -41,7 +53,7 @@ async function inTenantTransaction<T>(
     await tx.execute(
       // Both settings are transaction-local and are set only after the caller
       // has resolved the verified session and active organization permission.
-      (await import("drizzle-orm")).sql`select
+      sql`select
         set_config('app.current_user_id', ${userId}, true),
         set_config('app.current_organization_id', ${organizationId}, true)`,
     );
@@ -202,7 +214,7 @@ export async function getWebsiteGraph(organizationId: string, websiteId: string)
 
   return inTenantTransaction(access.user.id, organizationId, async (tx) => {
     const [website] = await tx.select({ id: websites.id }).from(websites)
-      .where(and(eq(websites.id, websiteId), eq(websites.organizationId, organizationId))).limit(1);
+      .where(and(eq(websites.id, websiteId), eq(websites.organizationId, organizationId))).for("update").limit(1);
     if (!website) throw new GraphServiceError("Website not found.", "NOT_FOUND");
     const [graph] = await tx.select().from(websiteGraphs)
       .where(and(eq(websiteGraphs.websiteId, websiteId), eq(websiteGraphs.organizationId, organizationId))).limit(1);
@@ -263,7 +275,7 @@ export async function mutateWebsiteGraph(organizationId: string, input: unknown)
   const batch = graphMutationBatchSchema.parse(input) as GraphMutationBatch;
   const access = await getCurrentOrganizationAccess(organizationId, "website.edit");
   if (!access) throw new GraphServiceError("Organization edit access denied.", "FORBIDDEN");
-  const requestHash = sha256(JSON.stringify(batch));
+  const requestHash = sha256(JSON.stringify(stableValue(batch)));
 
   return inTenantTransaction(access.user.id, organizationId, async (tx) => {
     const [website] = await tx.select({ id: websites.id }).from(websites)
