@@ -543,3 +543,126 @@ Still to investigate:
 - A data migration inventory and backfill feasibility assessment before choosing exact graph schema.
 
 **Phase 1 remains IN PROGRESS.** The editor save and publishing source trace is complete at the primary route level; it does not complete the overall architecture specification or authorize implementation.
+
+
+## 14. Investigation task 4 — database migration, RLS and graph-transition audit
+
+**Status:** Source-level review of the complete migration journal (32 entries, `0000`–`0031`), the SQL migration directory, current Drizzle schema, tenant-scope helper and its unit tests. This is not a connection to or inspection of a live database. Actual production catalog state, role ownership, applied migration ledger and customer row counts remain unverified. No SQL was executed against an environment and no application code was changed.
+
+### 14.1 Migration chain inventory
+
+The repository's `drizzle/meta/_journal.json` contains 32 ordered PostgreSQL migration entries, indexed 0 through 31, and the `drizzle/` directory contains matching SQL files. The sequence covers:
+- Tenant foundation, sessions, billing ledger and management/support foundations (`0000`–`0003`).
+- Website publication, public reads, domains, snapshots and tenant integrity (`0004`–`0008`).
+- Tenant RLS hardening, website structure/content/SEO, billing RLS, staff grants and runtime identity/session RLS (`0009`–`0014`).
+- Workspace preferences, media, normalized articles, article metadata/scheduling/import/revisions, typed media, upload reconciliation, media authorization, slug redirects and public host access (`0015`–`0031`).
+
+The SQL files are ordered and the journal is aligned by tag. The repository's `drizzle/meta` directory currently exposes only `0016_snapshot.json` and `_journal.json`; no later snapshot files were found in that directory listing. This should be checked against the team's Drizzle Kit generation workflow before generating any new migration. Do not regenerate or rewrite migration history as part of this architecture work.
+
+### 14.2 Tenant and identity security controls observed
+
+The SQL and source establish several useful controls:
+
+1. **Tenant ownership in relational constraints.** Website pages, domains, structures, content libraries, SEO settings, versions, media and normalized posts use organization/website composite foreign keys in the relevant migrations. Migration `0008` replaces the weaker page-to-website relationship with a composite organization-plus-website relationship. Cross-tenant parent-child mismatches are therefore constrained at the database layer.
+2. **Transaction-local RLS context.** Policies read `app.current_organization_id` and/or `app.current_user_id`. `src/lib/db/tenant-scope.ts` sets these using parameterized `set_config(..., true)` calls inside a transaction and explicitly documents that these values are not authentication or permission checks.
+3. **Application authorization remains required.** Route/service code must resolve the verified session, active organization membership and action-specific permission before setting scope. A caller-supplied organization UUID is only a selector, never proof of access.
+4. **Least-privilege runtime intent.** `src/lib/db/client.ts` requires `DATABASE_URL_RUNTIME` in production and documents that it must use a dedicated `NOBYPASSRLS` runtime role. Actual role attributes and table ownership are not available from source inspection.
+5. **Forced RLS is used selectively.** The reviewed migrations explicitly use `FORCE ROW LEVEL SECURITY` for billing ledger tables, workspace preferences, website media, website posts, post revisions and article slug redirects. Many other tenant tables use `ENABLE ROW LEVEL SECURITY` without `FORCE`. This is not automatically a defect if the runtime role is neither table owner nor privileged, but ownership and role grants must be verified. `NOBYPASSRLS` alone does not make a table owner subject to ordinary RLS policies; owner/role arrangement is a required production verification.
+6. **Public access is deliberately separate.** Published website/page policies expose published snapshots; domain records have an active-host public-read policy. Article public-read policy history shows an important correction: migration `0028` broadened public article reads to published sites without requiring an active domain, and `0029` restored the active-domain binding. The final migration state should be tested, not inferred only from the initial policy.
+7. **Privileged functions are constrained in SQL.** Reviewed `SECURITY DEFINER` functions set a fixed search path and revoke default PUBLIC execution before granting the runtime role explicit execution. Their owners, grants and runtime behavior still require catalog-level verification.
+
+### 14.3 RLS coverage and verification gaps
+
+The current Drizzle schema declares 24 tables. The migration chain adds the article slug redirect table as an additional table. RLS coverage is present across the main identity, tenant, website, billing, support, audit, version, structure, SEO/content, media and editorial data domains, but enforcement modes and access paths are not uniform.
+
+Specific follow-up checks:
+- `media_storage_budget` and `website_media_limits` are granted to the runtime role in `0016`, but that migration enables/forces RLS on `website_media`, not those two supporting tables. The budget is product-wide and limits are website-scoped; inspect every query path and decide whether explicit server-only access, narrowly scoped functions, or RLS is the right control.
+- `website_domains`, `website_versions`, `website_structures`, `website_content_libraries`, `website_seo_settings`, `websites`, `website_pages`, organizations and memberships are not all marked FORCE RLS in the reviewed migrations. Verify their owner/runtime role relationship.
+- Public read policies for published pages/sites and articles must be exercised with anonymous and cross-tenant requests, including inactive organization, inactive host, removed domain, unpublished page, invalid snapshot and hostname reassignment cases.
+- The public media function uses a SECURITY DEFINER read and checks for a published website/page whose snapshot references the media ID. Confirm function owner, execute grants, exact reference serialization, and that unpublished or cross-tenant media cannot be resolved.
+- Staff RLS context is a database visibility mechanism, not proof of a staff grant. Confirm every staff entry point checks active grant, expiry, role and permission before setting `app.is_platform_staff`.
+- The application tenant-scope test (`src/lib/db/tenant-scope.test.ts`) verifies UUID normalization, transaction-local context setup and operation ordering. It does not execute PostgreSQL policies or prove cross-tenant isolation. No database-backed RLS integration test was confirmed in this focused review.
+
+### 14.4 Data integrity and migration safety observations
+
+- `0008_website_page_tenant_integrity.sql` introduces the composite page-to-website tenant relationship and removes the old single-column FK only after the new relationship is added. The migration's preflight behavior should be retained as a model: fail clearly on inconsistent legacy rows rather than silently reassigning or deleting them.
+- Most later migrations are additive: new tables, columns, constraints, indexes, functions or policy replacements. Some migrations intentionally replace policies/functions. Treat those as security behavior changes requiring explicit regression tests.
+- `0020` adds scheduled article publication and performs a data update to transition due scheduled posts into published snapshots/revisions. Migration execution must be understood as data-changing, not merely DDL.
+- `0025` adds media upload reconciliation functions that update media lifecycle state and reserved-byte accounting. Preserve this recovery behavior if the media ownership model changes.
+- Website and blog tables have different deletion semantics: many website-owned children cascade when their parent website is deleted, while organization and billing records use restrictive relationships. Migration planning must not assume all tenant data is safely cascade-deletable.
+- The schema source contains two occurrences of `website_posts_legacy_source_uq` in its index declaration. This remains a source-level duplication requiring comparison with migration SQL, Drizzle snapshots and actual database indexes before any correction.
+
+### 14.5 Database entity mapping to the agreed Lucia OS architecture
+
+| Existing entity/domain | Recommended target treatment | Reason / migration note |
+|---|---|---|
+| `app_users`, `app_sessions` | Preserve | Identity authority and product session foundation; do not couple graph identity to auth internals |
+| `organizations`, `organization_memberships` | Preserve and strengthen | Tenant boundary and permission authority for all graph/media/domain operations |
+| `websites` | Preserve as website aggregate/root | Stable website identity, ownership, status and slug remain useful |
+| `website_pages` | Transitional compatibility projection; progressively replace content authority | Current draft and published JSON are stored here; preserve paths/status/routing compatibility while graph becomes canonical |
+| `website_structures` | Import then retire as independent structure authority | Its page/section/navigation model becomes graph nodes/edges; keep an adapter during transition |
+| `website_versions` | Preserve as legacy archive; map snapshots to graph versions | Do not discard historical snapshots; validate/import what can be represented |
+| `website_content_libraries` | Inventory and split by domain | Editorial content remains blog-owned; media references move to central Media Engine; avoid opaque JSON as canonical graph state |
+| `website_seo_settings` | Preserve as SEO domain record or typed graph reference | Decide per-field ownership; retain existing values and public metadata behavior |
+| `website_domains` | Preserve and adapt | Hostname ownership, verification and active status are infrastructure concerns, not canvas nodes |
+| `website_media` | Migrate to organization-level media asset model | Existing website-scoped asset IDs/object keys/public references must remain resolvable through migration |
+| `media_storage_budget`, `website_media_limits` | Revisit as centralized storage/entitlement accounting | Current quota model is product/website scoped and should be reconciled with organization library capacity |
+| `website_posts`, `website_post_revisions`, slug redirects | Preserve as first-class Blog domain | Graph stores blog placements/templates/references, not full article bodies; retain revisions, published snapshots and redirects |
+| Billing ledger, webhook events, support and audit tables | Preserve | Not graph content; protect financial, support and audit history |
+| `workspace_preferences` | Preserve, evolve separately | User workspace settings are not website graph state |
+
+No existing entity is authorised for deletion by this mapping. "Retire" means remove as an active source of truth only after successful import, compatibility validation, rollback window and explicit release approval.
+
+### 14.6 Recommended graph schema boundary (proposal, not implementation)
+
+Introduce graph persistence as a forward-only addition, with tenant and website ownership on every graph record:
+- `website_graphs`: one canonical graph aggregate per website, organization-scoped, with active draft/version metadata and optimistic concurrency revision.
+- `website_nodes`: stable node ID, organization ID, website ID, type, schema version, validated properties JSONB, timestamps and soft-delete/lifecycle fields.
+- `website_edges`: stable edge ID, organization ID, website ID, typed source/target node IDs, relationship properties and constraints. Composite foreign keys should ensure both endpoints belong to the same graph/website/organization.
+- `website_graph_versions`: immutable, validated graph snapshots or version manifests, creator, label, source revision, checksum and creation time.
+- `website_graph_operations`: append-only operation batches with actor, idempotency key, base revision, resulting revision, operation payload/schema version and audit metadata. Do not rely on this table alone as the only recovery mechanism.
+- `website_canvas_positions`: node-to-canvas coordinates, viewport/lock state, kept separate from website layout properties. This may be JSONB on a graph-scoped canvas state record if concurrent editing and access patterns justify it.
+- Optional normalized design-token/recipe registries should be separate from customer graph content and versioned independently.
+
+Use PostgreSQL relational columns and constraints for identity, tenant ownership, relationships, revisions and queryable invariants. Use JSONB only for versioned, Zod-validated node properties and operation payloads. Do not use one giant JSONB blob as the sole canonical editable graph. Exact names, constraints and indexes remain Phase 1 specification decisions.
+
+### 14.7 Safe transition strategy
+
+Use an expand → inspect/backfill → validate → switch → contract sequence:
+
+1. **Baseline and backup:** capture migration ledger, schema/catalog, role attributes/ownership, row counts, storage inventory, public host mappings and checksums. Confirm recoverable database and object-storage backups.
+2. **Additive schema:** add graph tables and RLS policies in forward-only migrations. Do not rewrite historical migrations or remove current tables.
+3. **Deterministic importer:** convert each supported website definition and structure into graph nodes/edges using stable ID mapping. Preserve unknown legacy payloads and attach import warnings rather than dropping them.
+4. **Domain reference mapping:** preserve blog post IDs, media IDs/object keys, SEO metadata, routes, domain records and published URL behavior. Do not copy binaries or create duplicate editorial records merely to populate graph nodes.
+5. **Backfill in bounded batches:** idempotent jobs record source version, target graph revision, counts, checksums, warnings and completion state. Re-running a batch must not duplicate nodes or edges.
+6. **Validation gate:** compare page/path sets, content values, navigation, media references, article references, SEO, domain mappings and published output. Reject cutover on missing references, cross-tenant edges, invalid node schemas or unexplained count/checksum mismatches.
+7. **Controlled cutover:** select one canonical draft writer and reader at a time. After graph cutover, the graph is the canonical draft; old tables may be compatibility projections/read adapters, not a second independently writable source of truth. Keep the existing public published snapshot path until graph-version publishing has passed acceptance.
+8. **Rollback window:** retain original content/snapshots and a tested route back to the previous reader/writer before contract/removal. Avoid bidirectional dual writes; if temporary compatibility writes are unavoidable, define a single owner, ordering, reconciliation and expiry date.
+9. **Contract only after evidence:** remove obsolete read/write paths in a later release after all tenant data is migrated, acceptance tests pass, customer impact is checked and explicit approval is granted.
+
+### 14.8 Required security and migration acceptance tests
+
+Before graph schema or migration is approved, require:
+- Tenant A cannot read, create, mutate, connect, move, version, publish or delete Tenant B graph data, including by guessing UUIDs.
+- A graph edge cannot connect nodes from different websites or organizations; invalid/missing endpoint and cross-tenant references fail at database and service layers.
+- Viewer/editor/admin/owner permissions are tested for every graph operation and publishing action.
+- Anonymous public reads expose only the currently published graph version for the exact active hostname and published route.
+- Pending, removed, suspended or reassigned domains cannot expose a website; stale host cache cannot leak content between tenants.
+- Runtime role cannot bypass RLS; verify role is NOBYPASSRLS, not a table owner/superuser, and has only required grants.
+- SECURITY DEFINER functions have safe owner, fixed search path, row-security behavior, narrow inputs/outputs and explicit EXECUTE grants.
+- Migration preflight fails safely on inconsistent source records; importer is idempotent; rollback restores the previous read/write path.
+- Counts/checksums and referential integrity are verified for pages, graph nodes/edges, versions, media references, posts/revisions, SEO and domains.
+- Concurrent graph edits use revision checks/transactions; duplicate retries are idempotent; partial failures do not leave half-connected graph state.
+- Media upload/reconciliation, published media access and article public access remain correct after asset ownership migration.
+
+### 14.9 Audit conclusions and unresolved evidence
+
+1. The migration chain is substantial and deliberately incremental; preserve its history and use forward-only changes.
+2. Tenant isolation is a real existing architectural asset, but source inspection cannot prove production role configuration or catalog state.
+3. RLS coverage is not equivalent to complete authorization: every route must continue to check authenticated identity, membership and action permission.
+4. The graph should become canonical for website structure and design composition, while identity, billing, domains, blog editorial records and central media remain domain-owned systems.
+5. The migration should be additive and staged. Do not delete `website_pages`, `website_structures`, `website_versions`, legacy libraries or media rows as part of initial graph introduction.
+6. Current test evidence is insufficient to certify database RLS or migration safety; helper unit tests exist, but database-backed isolation and importer tests are required.
+7. The Drizzle snapshot directory, runtime role/table ownership, applied production migration ledger, actual database indexes and production data inventory remain unverified.
+
+**Phase 1 remains IN PROGRESS.** This task completes a repository-level migration/RLS assessment and a proposed entity mapping; it does not certify live database security, finalise exact DDL or authorise implementation.
