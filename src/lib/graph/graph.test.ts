@@ -53,16 +53,24 @@ describe("Graph Engine contracts", () => {
     expect(validateGraphDocument(invalid).some((item) => item.code === "GRAPH_EDGE_TYPE_INVALID")).toBe(true);
   });
 
-  it("detects containment cycles", () => {
+  it("detects containment cycles between valid component nodes", () => {
+    const componentA = "00000000-0000-4000-8000-000000000008";
+    const componentB = "00000000-0000-4000-8000-000000000009";
     const invalid = {
       ...validGraph,
+      nodes: [
+        ...validGraph.nodes,
+        { id: componentA, graphId, type: "component" as const, schemaVersion: 1, properties: {}, lifecycleStatus: "active" as const },
+        { id: componentB, graphId, type: "component" as const, schemaVersion: 1, properties: {}, lifecycleStatus: "active" as const },
+      ],
       edges: [
         ...validGraph.edges,
-        { id: "00000000-0000-4000-8000-000000000007", graphId, sourceNodeId: sectionId, targetNodeId: sectionId, type: "contains_component" as const, schemaVersion: 1, order: 1, properties: {} },
+        { id: "00000000-0000-4000-8000-000000000010", graphId, sourceNodeId: sectionId, targetNodeId: componentA, type: "contains_component" as const, schemaVersion: 1, order: 0, properties: {} },
+        { id: "00000000-0000-4000-8000-000000000011", graphId, sourceNodeId: componentA, targetNodeId: componentB, type: "contains_component" as const, schemaVersion: 1, order: 0, properties: {} },
+        { id: "00000000-0000-4000-8000-000000000012", graphId, sourceNodeId: componentB, targetNodeId: componentA, type: "contains_component" as const, schemaVersion: 1, order: 0, properties: {} },
       ],
     };
-    // The self-edge is also an invalid endpoint-type pair for section -> section.
-    expect(validateGraphDocument(invalid).some((item) => item.code === "GRAPH_EDGE_TYPE_INVALID")).toBe(true);
+    expect(validateGraphDocument(invalid).some((item) => item.code === "GRAPH_CONTAINMENT_CYCLE")).toBe(true);
   });
 
   it("serializes identical graph content deterministically despite input ordering", () => {
