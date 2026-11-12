@@ -666,3 +666,192 @@ Before graph schema or migration is approved, require:
 7. The Drizzle snapshot directory, runtime role/table ownership, applied production migration ledger, actual database indexes and production data inventory remain unverified.
 
 **Phase 1 remains IN PROGRESS.** This task completes a repository-level migration/RLS assessment and a proposed entity mapping; it does not certify live database security, finalise exact DDL or authorise implementation.
+
+---
+
+## 15. Investigation task 5 — billing, subscriptions, entitlements and commerce audit
+
+**Status:** Repository inspection complete for the billing/provider prototype and current schema. Subscription persistence, entitlement enforcement, commerce, and live payment operation are not implemented in the inspected branch. This is a source-code assessment only; it does not inspect live provider dashboards, production database contents, credentials, or actual payment transactions.
+
+### 15.1 Evidence reviewed
+
+Inspected the development branch repository tree and these implementation files:
+
+- src/app/billing/page.tsx
+- src/components/billing/billing-workspace.tsx
+- src/lib/billing/billing.ts
+- src/lib/billing/providers.ts
+- src/lib/billing/paystack.ts
+- src/lib/billing/verify-transaction.ts
+- src/lib/billing/verify-paystack-server.ts
+- src/lib/billing/record-verified-paystack-settlement.ts
+- Billing/provider/settlement unit tests
+- src/lib/db/schema.ts
+- drizzle/0002_tenant_billing_ledger.sql
+- drizzle/0012_force_rls_billing_ledger.sql
+- Full recursive repository tree (752 entries; no commerce, subscription API, checkout API, or payment webhook route paths were present).
+
+The inspected branch contains Paystack and Flutterwave helper modules, a billing invoice page, and a tenant billing ledger. The tree did not contain a product catalogue, inventory, cart, order, commerce checkout, persisted subscription, entitlement, or subscription lifecycle module.
+
+### 15.2 Existing payment and invoice foundation
+
+The current database model includes:
+
+- billing_invoices: tenant-owned invoice number, due/paid amounts in minor currency units, currency, status and due date.
+- billing_payment_attempts: tenant/invoice relation, provider, provider reference, provider transaction ID, idempotency key, amount, currency, status, checkout URL and verification timestamp.
+- billing_webhook_events: tenant/payment-attempt relation, provider, provider event ID/type, payload hash, processing state and timestamps.
+
+Useful existing controls:
+
+- Organization ownership is represented in the rows and composite foreign keys bind payment attempts and webhook events to records in the same organization.
+- Unique constraints cover organization/invoice number, organization/provider/reference, organization/idempotency key, provider transaction ID, and organization/provider/event ID.
+- Billing tables have RLS enabled in migration 0002 and FORCE RLS added in migration 0012.
+- The runtime must still use a non-owner, non-superuser, NOBYPASSRLS role; FORCE RLS does not constrain superusers or BYPASSRLS roles.
+- Invoice settlement locks the payment attempt and invoice, checks exact reference/amount/currency, and commits both payment and invoice state in one transaction.
+- Repeat settlement for the same provider transaction is idempotent; a different transaction ID for an already settled attempt is rejected.
+- Database constraints and application checks reject invalid amounts/currencies and prevent invoice overpayment.
+
+The invoice ledger is reusable as a foundation for Lucia's platform billing. It is not yet a subscription or commerce ledger.
+
+### 15.3 Provider integration: implemented versus missing
+
+**Implemented as reusable helpers:**
+
+- Paystack and Flutterwave checkout initialization requests.
+- HTTPS callback URL validation and exact allowlisting of provider checkout hosts.
+- Server-side credential lookup and fail-closed configuration checks.
+- Paystack raw-body HMAC-SHA512 webhook signature verification.
+- Flutterwave webhook secret-hash comparison.
+- Webhook event parsing and normalization for a limited set of Paystack and Flutterwave events.
+- Paystack server-to-server transaction verification by reference.
+- Shared transaction verification of reference, success status, amount and currency.
+- A Paystack-only atomic settlement function for an already verified transaction.
+
+**Not found in the inspected repository tree:**
+
+- A customer-facing checkout API route that creates a local payment attempt, invokes initiateCheckout, persists the provider checkout URL and returns it to the client.
+- A Paystack or Flutterwave webhook route that verifies the raw request, resolves the local attempt, verifies the provider transaction server-to-server, persists the webhook event and processes it idempotently.
+- A persisted webhook-event processor/retry/reconciliation worker.
+- A Flutterwave server-to-server verification and settlement path equivalent to the Paystack path.
+- A provider-independent settlement orchestration service.
+- Refund, chargeback, dispute, payout or payment-reconciliation workflows.
+- Evidence that the checkout/provider helper functions are called by a production route. They are currently tested as library functions, not shown as an end-to-end payment workflow.
+
+Important distinction: accepting a correctly signed webhook is not the same as verifying and settling a payment. Provider event payloads must not directly grant paid access. The existing provider helper comments also require callers to perform server-to-server transaction verification and idempotent persistence.
+
+### 15.4 Subscription and pricing contracts
+
+src/lib/billing/billing.ts currently defines Zod contracts and pure helper functions for:
+
+- Billing cadences: weekly, monthly and annual.
+- Subscription statuses: trialing, active, past_due, cancelled and expired.
+- Price records with plan key, cadence, currency, amount in minor units, active flag and effective date.
+- Subscription records with tenant, product key, plan key, cadence, status and trial/period dates.
+- Discount records with percent/fixed discount, date window, currency and redemption limit.
+- Payment-record validation.
+- Trial-window calculation and discount validation.
+
+These are in-memory TypeScript contracts, not persisted subscription/price/discount tables. The repository does not contain a durable subscription lifecycle service or entitlement resolver. The current subscriptionSchema requires trial start/end dates even for statuses such as active; the final persisted lifecycle model should distinguish trial dates from paid billing-period dates and model cancellation timing explicitly.
+
+The current billing screen is explicit that it is a prototype:
+- It reads and displays saved invoice history for active organisations.
+- The trial button creates only a browser-local preview window.
+- Discount validation uses an empty in-memory code list.
+- No payment is collected and no subscription is created.
+- Pricing is not configured.
+
+### 15.5 Schema and contract gaps to resolve
+
+1. **Status consistency:** The pure payment contract includes refunded, while the payment-attempt database constraint allows initialized, pending, succeeded, failed and cancelled. Define canonical state machines and transitions before adding workflows.
+2. **Webhook event identity:** The normalized provider helper returns provider transaction identity but not a durable provider event identity. Event identity, event deduplication and payload hash persistence must be wired into webhook processing.
+3. **Provider symmetry:** Flutterwave has checkout and webhook-signature/normalization helpers, but no equivalent server-side verification/atomic settlement implementation was found.
+4. **Currency minor units:** Checkout conversion currently divides Flutterwave minor units by 100. A production system must use currency-specific exponent rules rather than assume every supported currency has two decimal places.
+5. **Invoice settlement policy:** Current Paystack settlement requires a payment to exactly clear the remaining invoice balance. Decide whether partial payments, multiple attempts, overpayment handling and invoice credits are required.
+6. **Financial reversals:** Define refund, chargeback, dispute and failed-renewal handling without rewriting historical payment facts.
+7. **Discount concurrency:** Discount validation is a pure function. Redemption limits need transactional reservation/consumption to prevent concurrent redemptions exceeding the cap.
+8. **Subscription lifecycle:** Define renewal periods, cancellation-at-period-end, immediate cancellation, grace periods, retry/dunning, pause/resume, upgrade/downgrade proration, trial conversion and expiration.
+9. **Auditability:** Persist who initiated plan changes, what entitlement changed, the source payment/provider event, and when each transition occurred.
+10. **Operational evidence:** Unit tests cover provider helpers and the Paystack settlement function, but no end-to-end route, database-backed webhook idempotency, recurring billing, subscription state machine or entitlement enforcement test was found in the reviewed tree.
+
+### 15.6 Commerce audit
+
+No commerce domain implementation was found in the inspected repository tree. Specifically, there were no persisted entities or modules for:
+
+- Products, product variants, SKUs or product categories.
+- Inventory and stock movements.
+- Carts and checkout sessions.
+- Customer orders, order items or order status history.
+- Shipping, fulfilment or tax calculation.
+- Commerce-specific discounts or promotions.
+- Storefront product and collection APIs.
+- Merchant order-management workflows.
+
+A commerce illustration/layout asset is not evidence of commerce functionality. The future Lucia Store must not assume that a working product/order engine already exists.
+
+### 15.7 Recommended target architecture for Lucia Store
+
+Keep four separate responsibilities:
+
+1. **Payment provider adapter:** Initiates provider checkout, verifies signatures, retrieves provider transactions server-to-server, normalizes events, and supports refunds/reconciliation where providers allow.
+2. **Financial ledger:** Immutable/append-only financial facts for invoices, payment attempts, verified settlements, refunds and provider events. Preserve existing invoice/payment foundations and evolve them additively.
+3. **Subscription and entitlement engine:** Stores subscription state and billing periods; derives durable entitlements from verified financial/lifecycle events; enforces access on the server for every protected operation.
+4. **Commerce engine:** Stores products, variants, inventory, carts, orders, order items, fulfilment and customer records. It is a customer-facing optional website capability, not the same thing as a Lucia platform subscription.
+
+Suggested conceptual entities for later specification (not approved DDL):
+
+- Catalog: billing_products, billing_plans, billing_prices, billing_price_versions.
+- Subscriptions: subscriptions, subscription_items, subscription_events, subscription_periods.
+- Access: entitlements, entitlement_grants or a deterministic entitlement projection with an auditable source.
+- Financial operations: existing invoices/payment attempts/webhook events plus payment transactions, refunds and reconciliation records as required.
+- Commerce: store_products, store_product_variants, store_inventory, store_carts, store_orders, store_order_items, and fulfilment records.
+
+Names are illustrative. Final names, relationships, indexes, RLS policies and state machines belong in the database/API specification before implementation.
+
+### 15.8 Lucia Store entitlement flow
+
+1. A customer chooses a capability (for example, Lucia Store or custom-domain connection) and sees the price, billing period, currency, limits, renewal/cancellation terms and what happens after expiry.
+2. The server checks tenant authority, eligibility, existing entitlements and price version; it creates an invoice/payment attempt with a unique idempotency key.
+3. The server initializes checkout with the selected provider and stores the returned reference/checkout URL. The browser is never trusted to set price, amount, tenant or payment status.
+4. A webhook route verifies the exact raw-body signature, validates the event, resolves the stored attempt and verifies the transaction directly with the provider.
+5. One transaction records the provider event, settlement and invoice state idempotently. Repeated or out-of-order events must not duplicate grants or reverse a later valid state.
+6. Subscription lifecycle logic records the paid period and grants the corresponding entitlement.
+7. Every relevant backend route checks the entitlement and its scope. UI visibility is only a convenience; it is not access control.
+8. Renewal, failed payment, refund, chargeback, cancellation or expiration produces an auditable entitlement transition.
+9. Subscription lapse must not silently delete store products, orders, customers, media or website content. Define read/export and write restrictions separately.
+
+### 15.9 Product rules to preserve
+
+- Lucia Store is an upgrade marketplace inside Lucia OS, not a separate website builder.
+- Lucia Store features attach to the customer's existing website and must be addable later without rebuilding that website.
+- A platform subscription (payment for Lucia capabilities) is distinct from a customer's own commerce transactions with their shoppers.
+- A customer's store orders and shopper payment records must never be mixed with Lucia's invoices/subscriptions.
+- Product, price and inventory data must remain independent from page presentation; graph nodes reference commerce data but do not become a second product/order database.
+- Media used by store products must reference the central Media Engine assets; do not duplicate original uploads.
+- Entitlement scope must be explicit (organisation, website, or module) and server-enforced.
+- A failed payment or expired subscription changes access according to a documented policy; it does not erase customer data.
+
+### 15.10 Phase 1 acceptance requirements for billing and commerce
+
+Before Phase 1 is considered complete, specify and test:
+
+- Canonical state machines for payment attempts, provider events, invoices, subscriptions, refunds and entitlements.
+- End-to-end checkout initiation, raw-body webhook verification, server-to-server transaction verification and atomic idempotent settlement for every supported provider.
+- Duplicate, delayed, reordered, malformed and forged webhook tests.
+- Provider outage, retry, reconciliation and recovery behavior.
+- Currency exponent and rounding rules.
+- Discount concurrency and redemption limits.
+- Tenant isolation and authorization for billing, subscription, entitlement and commerce records.
+- Server-side entitlement enforcement across every protected API and background job.
+- Renewal, grace-period, cancellation, downgrade, expiration, refund and chargeback behavior.
+- No data deletion on entitlement lapse.
+- Separation of Lucia platform billing from customer store sales.
+- Commerce product/order/inventory integrity and migration/back-up requirements.
+- Tests using the actual runtime DB role and RLS policies, not only mocked query helpers.
+
+### 15.11 Audit conclusion
+
+The existing invoice ledger, tenant isolation, Paystack/Flutterwave provider helpers, Paystack verification and atomic settlement function are valuable foundations and should be evaluated for reuse. However, the current billing page is a prototype, provider helpers are not connected to an end-to-end route in the inspected tree, subscription contracts are not persisted, entitlement enforcement is absent, and commerce has not been implemented.
+
+**Recommendation:** retain and harden the existing financial ledger and provider adapters; design subscription/entitlement as a distinct domain; build Lucia Store commerce as a separate optional module that integrates with the existing website graph and central Media Engine. Do not treat current trial previews, schemas or provider helpers as production-ready billing.
+
+**Phase 1 remains IN PROGRESS.** This audit does not change application code, database state, payment-provider configuration, live subscriptions or customer data. It does not certify production payment operations.
