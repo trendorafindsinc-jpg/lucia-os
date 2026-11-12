@@ -1257,14 +1257,29 @@ These decisions do not justify guessing during Phase 1. Provider-neutral interfa
 | Product-owner and live-infrastructure decision register | RECORDED — Section 17.7; choices remain open where identified. |
 | Exact implementation schema, endpoint payload schemas and event catalog | NEXT IMPLEMENTATION-DESIGN DETAIL — refine per phase/module against current code before coding; do not infer these as already implemented. |
 | Production database role, live provider settings, DNS/TLS, backup and restore evidence | VERIFY LIVE — not accessible or certified by repository audit. |
-| Product-owner approval of this consolidated architecture and outstanding commercial/operational decisions | PENDING. |
+| Product-owner approval of the consolidated architecture baseline and module boundaries | APPROVED — user confirmation received on 2026-11-12. Outstanding commercial/operational decisions remain individually open as listed in Section 17.7. |
 
 ### 17.9 Phase 1 exit interpretation
 
 Phase 1 has produced a consolidated, implementation-guiding architecture baseline. It is suitable to guide the next detailed implementation specifications, but it is **not a production-readiness certification** and it does not authorise broad implementation or destructive migration.
 
-Phase 1 may be marked **CLOSED — ARCHITECTURE BASELINE APPROVED** only after the product owner reviews and approves the agreed decisions and module boundaries in this document, or records explicit amendments. Items labelled VERIFY LIVE remain launch-readiness work and must not be represented as completed merely to close the architecture phase.
+The product owner approved the consolidated architecture baseline and module boundaries on 2026-11-12. Phase 1 is therefore **CLOSED — ARCHITECTURE BASELINE APPROVED**. Items labelled PROPOSED — OWNER APPROVAL remain open decisions for their dependent implementation or launch gates; items labelled VERIFY LIVE remain operational verification work. Closing the architecture phase does not certify production readiness or imply that these later decisions and checks are complete.
 
 Phase 2 must begin with a focused Graph Engine implementation specification: final node/edge discriminated unions, schema versions, constraints/cardinality/cycle rules, relational schema and RLS policies, operation-batch contract, concurrency/idempotency, immutable version model, canvas-state contract, migration adapter boundary and executable acceptance tests. Inspect the current branch and code again immediately before implementation.
 
 **Scope and safety:** This consolidation changes documentation only. It does not change application code, database schema/data, customer websites, payment configuration, subscriptions, domains, DNS, TLS, object storage, hosting or deployments. No live infrastructure or backup/restore drill has been verified.
+
+
+---
+
+## 18. Phase 1 approval record
+
+- **Decision:** Approved.
+- **Approver:** Lucia OS product owner (approval received in the project conversation).
+- **Date:** 2026-11-12.
+- **Approved scope:** Consolidated architecture baseline, canonical decisions, module boundaries, data ownership rules, contract baseline, security/operational invariants and the eight-phase roadmap.
+- **Phase status:** **CLOSED — ARCHITECTURE BASELINE APPROVED.**
+- **Remaining work:** Product and commercial choices in Section 17.7 remain open until their dependent implementation/launch gate. Live infrastructure, provider configuration, backup/restore and production database-role checks remain VERIFY LIVE items. They do not prevent closure of the architecture-definition phase, but they must be completed before relevant production launch gates.
+- **Next phase:** Phase 2 — Graph Engine.
+- **Implementation guardrail:** Begin with a focused Graph Engine implementation specification and a fresh inspection of the current development branch. Do not implement the whole roadmap in one change. No application code or production resources are authorised by this approval record alone.
+
