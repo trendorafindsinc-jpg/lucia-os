@@ -63,6 +63,8 @@ jobs:
           DATABASE_URL: postgres://postgres:lucia-migration-ci-only@localhost:5432/lucia_os_migrations
       - name: Verify migration journal consistency
         run: npm run db:check
+      - name: Typecheck the updated Drizzle schema
+        run: npm run typecheck
       - name: Verify graph tenant isolation and append-only history
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f scripts/test-graph-rls.sql
         env:

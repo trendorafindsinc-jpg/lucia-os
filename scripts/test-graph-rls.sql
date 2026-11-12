@@ -43,6 +43,7 @@ SELECT set_config('app.current_user_id', '10000000-0000-4000-8000-000000000001',
 SELECT set_config('app.current_organization_id', '30000000-0000-4000-8000-000000000001', false);
 DO $$
 DECLARE visible_count integer;
+DECLARE changed_count integer;
 BEGIN
   SELECT count(*) INTO visible_count FROM website_graphs;
   IF visible_count <> 1 THEN RAISE EXCEPTION 'Tenant A graph visibility failed: %', visible_count; END IF;
@@ -59,7 +60,8 @@ BEGIN
   END;
   BEGIN
     UPDATE website_graphs SET draft_revision = 1 WHERE id = '60000000-0000-4000-8000-000000000001';
-    RAISE EXCEPTION 'Viewer unexpectedly updated graph content';
+    GET DIAGNOSTICS changed_count = ROW_COUNT;
+    IF changed_count <> 0 THEN RAISE EXCEPTION 'Viewer unexpectedly updated graph content'; END IF;
   EXCEPTION WHEN insufficient_privilege THEN
     NULL;
   END;
