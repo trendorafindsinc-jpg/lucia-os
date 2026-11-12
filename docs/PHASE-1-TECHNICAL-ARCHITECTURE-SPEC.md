@@ -855,3 +855,207 @@ The existing invoice ledger, tenant isolation, Paystack/Flutterwave provider hel
 **Recommendation:** retain and harden the existing financial ledger and provider adapters; design subscription/entitlement as a distinct domain; build Lucia Store commerce as a separate optional module that integrates with the existing website graph and central Media Engine. Do not treat current trial previews, schemas or provider helpers as production-ready billing.
 
 **Phase 1 remains IN PROGRESS.** This audit does not change application code, database state, payment-provider configuration, live subscriptions or customer data. It does not certify production payment operations.
+
+---
+
+## 16. Investigation task 6 — domain, hosting, deployment and operational lifecycle audit
+
+**Status:** Repository-level inspection complete for domain registry, hostname routing, publishing, media object storage and scheduled workers. Custom-domain activation/TLS automation, production hosting configuration, backup/restore evidence and live provider state are not established by this source review. No live DNS, hosting account, Vercel project, database or storage provider was accessed or changed.
+
+### 16.1 Evidence reviewed
+
+Inspected the development branch recursive tree, domain/publishing routes and libraries, relevant migrations, media storage adapters, cron authorization and worker routes, and GitHub Actions workflows, including:
+
+- src/lib/domains/hostname.ts and hostname.test.ts
+- src/lib/domains/public-site.tsx
+- src/lib/publishing/host.ts and host.test.ts
+- src/lib/publishing/platform-hosts.ts
+- src/lib/publishing/publishing.ts and publishing.test.ts
+- src/app/api/domains/route.ts
+- src/app/api/domains/[domainId]/route.ts
+- src/app/api/domains/verify/route.ts
+- src/app/api/websites/[websiteId]/domains/route.ts
+- src/app/api/publishing/publish/route.ts
+- src/app/api/publishing/websites/route.ts
+- src/app/workspace/domains/page.tsx
+- src/lib/media/storage.ts and multipart-storage.ts
+- src/lib/media/service.ts
+- src/lib/cron/authorization.ts
+- src/app/api/cron/publish-articles/route.ts
+- src/app/api/cron/reconcile-media/route.ts
+- drizzle/0004_website_publishing.sql
+- drizzle/0006_website_domains.sql
+- drizzle/0025_media_upload_reconciliation.sql
+- GitHub Actions workflows under .github/workflows
+
+### 16.2 Domain registry and hostname model
+
+The repository has a domain registry, not just a free-form domain field.
+
+- website_domains records organisation, website, globally unique hostname, type (lucia_subdomain/custom), lifecycle status, primary flag, verification-token hash and verified timestamp.
+- Database constraints enforce hostname formatting, same-organisation website ownership, one hostname globally, at most one non-removed Lucia subdomain per site, and at most one primary domain per site.
+- Domain statuses include pending, verifying, verified, active, suspended and removed.
+- Tenant RLS is enabled; active domains also have a public-read policy so the public resolver can identify an exact active hostname.
+- Hostname normalization lowercases, handles trailing dots and IDNs, rejects URL syntax/wildcards, and reserves platform subdomains.
+- Public routing requires an exact active hostname joined to the same organisation/website and a published website; requested page paths must resolve to a published page with a valid published snapshot.
+- The public renderer is request-cached, and its comment explicitly documents request-local caching so tenant host authorization/data is not shared across different requests.
+- Platform-host detection and tenant-host routing are deliberately separate. Host selection is not resource authorization.
+
+This is a useful foundation to preserve. Wildcard DNS is only transport; it must never be treated as proof of domain ownership or permission to publish.
+
+### 16.3 Free Lucia subdomain lifecycle
+
+The free subdomain path is comparatively complete in application code:
+
+1. A website has a slug.
+2. The owner can request a one-level, non-reserved subdomain.
+3. Availability is checked against the hostname registry/database function.
+4. The website must be published before its Lucia subdomain is activated for public routing.
+5. The publish transaction writes published page snapshots, marks the website published and activates/creates the exact Lucia hostname record atomically.
+6. Renaming the subdomain locks the website/domain rows, updates the website slug and matching hostname in a transaction, and writes an audit event.
+7. Public routing only serves the exact active hostname and published page snapshot.
+
+The migration history includes the website domain registry and a later global hostname availability function. Domain uniqueness is therefore enforced beyond a UI availability check.
+
+### 16.4 Custom-domain lifecycle: partial and not production-complete
+
+The repository has useful ownership-verification pieces:
+
+- Custom hostname registration creates a pending domain record and generates a random 32-byte token; only its SHA-256 hash is stored.
+- The verification API resolves the TXT record at _lucia-verification.<hostname>, hashes the returned value and compares it using timing-safe comparison.
+- A successful DNS TXT check advances pending to verified.
+- Domain status is not changed to active by this verification endpoint.
+- Domain activation policy helper requires verified status, ownership proof, expected-deployment DNS target, HTTPS readiness and (for custom domains) verified paid access.
+- A helper test verifies these gates.
+
+However, the reviewed tree does not contain a complete activation controller that proves all those gates and changes a custom domain to active. In particular, no provider API integration or worker was found for:
+- checking authoritative A/AAAA/CNAME target against the current expected deployment,
+- provisioning/observing a TLS certificate,
+- retrying certificate issuance/renewal,
+- validating certificate hostname and expiry,
+- transitioning verified to active only after all checks pass,
+- suspending a domain when DNS/TLS is broken or entitlement is revoked.
+
+The publish UI/schema explicitly says the separate one-time custom-domain purchase and DNS/TLS verification are not connected. The older website-scoped domains POST route also fails closed for custom domains because purchase verification is not connected. A newer top-level custom-domain registration route permits a pending claim after website-publish authorization and TXT token creation; that is only a claim/verification start, not activation. These route variants should be consolidated behind one domain service/API contract to avoid confusing or divergent lifecycle behavior.
+
+The domain page's text and helper function must not be interpreted as proof that automated custom-domain TLS is already working.
+
+### 16.5 Hosting, DNS and deployment evidence
+
+- Source code contains the default public host lucia.name.ng and known Vercel-style deployment hostnames; it reads APP_BASE_URL, VERCEL_URL and VERCEL_BRANCH_URL for platform-host classification.
+- The project uses Vercel-oriented environment conventions and GitHub Actions, but vercel.json is empty.
+- No infrastructure-as-code, custom-domain provider adapter, explicit Vercel domain provisioning API, certificate-management integration, DNS provider adapter, or deployment promotion/rollback controller was found in the inspected repository tree.
+- The publish route creates a database publication snapshot and activates a Lucia subdomain record; this is application-level publication, not evidence that a new hosting deployment is built for every customer edit.
+- The public Next.js renderer resolves the current published snapshot at request time. This is compatible with a shared multi-tenant hosting model, provided host routing, database availability and cache isolation remain correct.
+- Production deployment provider, project settings, wildcard DNS records, edge routing, custom-domain onboarding, TLS provider, regions and runtime limits cannot be confirmed from repository code alone. They require an authorised live infrastructure inventory.
+
+### 16.6 Object storage and media operations
+
+The media system uses S3-compatible object storage through server-side AWS Signature Version 4 adapters.
+
+- Required configuration includes S3 endpoint, bucket, region and access credentials.
+- The endpoint must be HTTPS; endpoint credentials/query/path are rejected.
+- Object keys are constrained to tenant/website/asset UUID paths; signed URLs/credentials are not sent to callers for ordinary image operations.
+- Images use server-side PUT/GET/DELETE and WebP processing.
+- Large video/document uploads use multipart storage, signed individual-part URLs, bounded part numbers, server-side completion and object verification.
+- Upload records and reserved capacity are persisted before external object writes, avoiding false success on uncertain storage outcomes.
+- Scheduled reconciliation claims stale pending/deleting records with a bounded batch and SKIP LOCKED; it verifies objects before finalizing or removes invalid partial objects and releases reserved bytes.
+- The scheduled worker also removes old orphaned multipart uploads.
+- Product storage budget and per-website quotas exist, with a staff storage view and audit-logged quota updates.
+
+Important limits/gaps:
+- The inspected image library is capped at 200 images per website and uses website quotas; this is not the proposed central, reusable, large-library Media Engine.
+- Storage quota/reservation tracking is not a backup system. It does not prove object versioning, replication, retention, off-site backup, restore testing or disaster recovery.
+- Storage reconciliation protects against abandoned uploads, not accidental bulk deletion, compromised credentials or provider-wide outage.
+- Public delivery and CDN behavior, cache invalidation, bandwidth accounting, storage lifecycle policies and provider SLA are not fully specified in source.
+- Current signed multipart URLs are time-limited; the final media design should preserve short expiry, tenant-scoped authorization, size/type validation and resumable upload recovery.
+
+### 16.7 Scheduled workers and operational automation
+
+The repository has a GitHub Actions scheduled workflow running every five minutes. It obtains a short-lived GitHub OIDC token with a fixed audience and invokes:
+- /api/cron/publish-articles
+- /api/cron/reconcile-media
+
+The API validates the token signature against GitHub JWKS and checks issuer, audience, repository, owner, main branch, exact workflow reference, event type and token time bounds. A constant-time CRON_SECRET fallback remains supported.
+
+The worker endpoints:
+- are dynamic Node.js routes,
+- reject unauthorized requests,
+- return no-store responses,
+- publish due articles in bounded batches,
+- reconcile stale media uploads and old multipart uploads,
+- report failures so the workflow can fail and be retried.
+
+This is a meaningful scheduled-worker foundation. It is not a general durable job system. No generic queue, job dashboard, retry schedule/dead-letter queue, alerting integration, worker lease/heartbeat model or operational runbook was found for future graph builds, publishing, video processing, TLS renewal or backup workflows.
+
+### 16.8 Backup, restore, rollback and observability gaps
+
+The inspected source tree did not establish a complete operational safety system for:
+
+- automated PostgreSQL point-in-time recovery and scheduled logical backups,
+- object-storage backup/versioning and cross-region recovery,
+- tested full restore of database plus object storage and domain mappings,
+- defined RPO/RTO targets and disaster-recovery runbooks,
+- deployment health checks, canary rollout and automatic rollback,
+- publish-version rollback through an operator/customer workflow,
+- centralized structured logs, metrics, traces and alert routing,
+- domain DNS/TLS expiry monitoring and incident escalation,
+- storage/provider outage handling and customer status communication.
+
+Existing immutable published page snapshots and website versions are application recovery aids, not substitutes for database/object-store backups. A database restore without matching media objects (or vice versa) can leave broken content; recovery must coordinate both.
+
+GitHub Actions quality and acceptance workflows exist, including isolated PostgreSQL/RLS acceptance and browser evidence. Their presence is useful but does not establish production deployment approval, live backup coverage or successful restore drills. Workflow definitions and run history should be reviewed separately before claiming those controls operate successfully.
+
+### 16.9 Recommended target lifecycle architecture
+
+Define these independent but connected services:
+
+1. **Domain Registry:** Canonical hostname ownership, tenant/site binding, primary host, lifecycle status and audit history.
+2. **DNS Verification Service:** TXT ownership challenge plus expected A/AAAA/CNAME target checks; bounded retries and evidence timestamps.
+3. **Domain Provisioning Adapter:** Provider-neutral interface for supported hosting/DNS provider operations; idempotent add/remove/update and provider operation IDs.
+4. **TLS Lifecycle Service:** Certificate provisioning, readiness, renewal, expiry monitoring, failure retry and safe suspension.
+5. **Publishing/Deployment Service:** Validates and publishes a graph version, creates immutable deployment/publication records, exposes health/status and supports rollback.
+6. **Public Runtime Router:** Exact active host → tenant/site → published graph version → page route; never trusts host headers as tenant authorization by themselves.
+7. **Durable Job Runner:** Idempotent jobs with retries, leases, backoff, dead-letter state, bounded concurrency and audit trail.
+8. **Backup/Recovery Service:** Coordinated database and object storage backups, retention, restore drills, RPO/RTO and recovery validation.
+9. **Observability/Incident Service:** Structured logs, metrics, traces, uptime checks, alerting, provider status and customer-visible incident states.
+
+Do not bind core domain logic to Vercel or one DNS vendor. Provider adapters should be replaceable. Lucia's internal domain state machine remains authoritative; external provider state is observed evidence, not the canonical customer entitlement or website ownership record.
+
+### 16.10 Suggested domain/deployment state machines
+
+- Domain claim: requested → pending_dns → ownership_verified → target_verified → tls_pending → active; terminal/recovery states include verification_failed, provisioning_failed, suspended and removed.
+- Provider provisioning operation: queued → running → succeeded/failed; retryable failures retain bounded attempt count, next-attempt time and provider correlation ID.
+- Deployment: draft → validating → ready → publishing → live; failures preserve the prior live version; rollback creates a new deployment referencing a prior immutable graph version rather than mutating history.
+- TLS: not_requested → pending → issuing → ready → renewal_due → renewing → ready; failed/expired certificates must never be treated as HTTPS-ready.
+- Worker job: queued → leased → succeeded or retry_wait → queued; exhausted jobs enter dead_letter with operator-visible diagnostics.
+
+These are target-state proposals, not descriptions of current production statuses.
+
+### 16.11 Phase 1 acceptance requirements
+
+Before Phase 1 is complete, specify and verify:
+
+- Single consolidated domain API/service with explicit organisation/website authorization and subscription entitlement checks.
+- TXT ownership verification, DNS target verification and TLS provisioning/renewal for every supported custom-domain provider.
+- Domain activation only after all independent gates succeed; removal/suspension immediately stops public routing.
+- Exact host-to-tenant binding and cache isolation across active, pending, removed, reassigned and unknown domains.
+- Free Lucia subdomain rename behavior, collision handling, redirects/SEO policy and atomic publication behavior.
+- Provider-neutral DNS/hosting/TLS adapter contracts and idempotent provisioning reconciliation.
+- Immutable publication/deployment records, deployment health checks and rollback acceptance.
+- Durable job retries, duplicate execution, worker crashes, lease expiry and dead-letter tests.
+- S3 object storage backup/versioning/retention and database backup consistency.
+- Full restore drill for database, media objects, domains, website publication state and credentials/configuration.
+- Defined RPO/RTO, monitoring, alerting, operational runbooks and incident ownership.
+- Runtime limits, upload/video-processing limits, storage and bandwidth costs, CDN/cache policy and regional availability.
+- Production deployment and DNS/provider configuration inventory, verified by an authorised operator.
+
+### 16.12 Audit conclusion
+
+Lucia already has a credible foundation for free subdomain routing, exact active-domain lookup, published snapshot rendering, custom-domain TXT ownership challenges, S3-compatible media storage, stale-upload recovery and authenticated scheduled workers. The free subdomain publication path is substantially more complete than custom-domain activation.
+
+However, custom-domain activation and TLS provisioning are not connected end-to-end; Vercel/DNS deployment configuration cannot be certified from this repository; the scheduled worker is narrow rather than a general job platform; and coordinated database/object-store backup, restore, monitoring and disaster recovery are not evidenced.
+
+**Recommendation:** preserve the current exact-host routing and immutable publication snapshot protections. Consolidate domain claim/verification/activation into one state machine and provider adapter boundary. Treat DNS target checks, TLS, backups, restore drills and operational observability as launch-critical infrastructure—not optional polish.
+
+**Phase 1 remains IN PROGRESS.** This repository audit did not access or alter live DNS, hosting, Vercel, TLS, database, object storage, deployment or customer data. It does not certify production availability, domain activation or disaster recovery.
