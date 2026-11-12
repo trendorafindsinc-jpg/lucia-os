@@ -10,7 +10,6 @@ vi.mock("@/lib/access/guards", () => ({
 }));
 
 import {
-  createWebsiteGraph,
   getWebsiteGraph,
   mutateWebsiteGraph,
   saveCanvasPosition,
@@ -87,10 +86,24 @@ describe.sequential("Graph Persistence Service (PostgreSQL)", () => {
       (${ids.siteB}, ${ids.orgB}, 'Graph Service Site B', 'graph-service-site-b', 'draft')
       ON CONFLICT (id) DO NOTHING`;
     auth.userId = ids.userA;
-    const initial = await createWebsiteGraph(ids.orgA, ids.siteA);
-    graphId = initial.id;
-    rootId = initial.nodes.find((node) => node.type === "website")!.id;
-    currentRevision = initial.revision;
+    graphId = "60000000-0000-4000-8000-000000000010";
+    rootId = "70000000-0000-4000-8000-000000000010";
+    const snapshot = {
+      id: graphId, schemaVersion: 1, revision: 0,
+      nodes: [{
+        id: rootId, graphId, type: "website", schemaVersion: 1,
+        properties: { name: "Graph Service Site A" }, lifecycleStatus: "active",
+      }],
+      edges: [],
+    };
+    await owner`INSERT INTO website_graphs (id, organization_id, website_id, schema_version, draft_revision)
+      VALUES (${graphId}, ${ids.orgA}, ${ids.siteA}, 1, 0)`;
+    await owner`INSERT INTO website_nodes (id, organization_id, website_id, graph_id, node_type, schema_version, properties, lifecycle_status)
+      VALUES (${rootId}, ${ids.orgA}, ${ids.siteA}, ${graphId}, 'website', 1, '{"name":"Graph Service Site A"}'::jsonb, 'active')`;
+    await owner`INSERT INTO website_graph_versions
+      (organization_id, website_id, graph_id, revision, schema_version, snapshot, content_hash, created_by_user_id)
+      VALUES (${ids.orgA}, ${ids.siteA}, ${graphId}, 0, 1, ${JSON.stringify(snapshot)}::jsonb, ${"a".repeat(64)}, ${ids.userA})`;
+    currentRevision = 0;
   });
 
   afterAll(async () => {

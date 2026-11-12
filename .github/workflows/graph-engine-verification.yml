@@ -81,6 +81,9 @@ jobs:
         run: npx vitest run src/lib/graph/graph.test.ts
       - name: Run full unit test suite
         run: npm test
+        env:
+          DATABASE_URL_RUNTIME: postgres://lucia_os_runtime:lucia-graph-runtime-ci@localhost:5432/lucia_graph_ci
+          GRAPH_TEST_OWNER_DATABASE_URL: postgres://postgres:lucia-graph-ci-only@localhost:5432/lucia_graph_ci
       - name: Run TypeScript typecheck
         run: npm run typecheck
       - name: Run lint
