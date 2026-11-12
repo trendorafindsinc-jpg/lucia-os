@@ -1,0 +1,46 @@
+name: Graph Engine verification
+
+on:
+  push:
+    branches:
+      - development
+    paths:
+      - ".github/workflows/graph-engine-verification.yml"
+      - "src/lib/graph/**"
+      - "tsconfig.json"
+      - "package.json"
+  pull_request:
+    paths:
+      - ".github/workflows/graph-engine-verification.yml"
+      - "src/lib/graph/**"
+      - "tsconfig.json"
+      - "package.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: graph-engine-verification-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  graph-engine:
+    name: Graph tests and TypeScript typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Run focused Graph Engine tests
+        run: npx vitest run src/lib/graph/graph.test.ts
+      - name: Run full unit test suite
+        run: npm test
+      - name: Run TypeScript typecheck
+        run: npm run typecheck
