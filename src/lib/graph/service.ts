@@ -13,7 +13,7 @@ import {
   websiteNodes,
   websites,
 } from "@/lib/db/schema";
-import { canvasPositionMutationSchema, graphMutationBatchSchema, graphDocumentSchema, GRAPH_SCHEMA_VERSION, type GraphDocument, type GraphEdge, type GraphMutationBatch, type GraphNode, type GraphOperation } from "./contracts";
+import { canvasPositionMutationSchema, graphMutationBatchSchema, graphDocumentSchema, GRAPH_SCHEMA_VERSION, type GraphDocument, type GraphMutationBatch, type GraphNode, type GraphOperation } from "./contracts";
 import { edgeRules } from "./registry";
 import { canonicalGraphStringify, validateGraphDocument } from "./validate";
 
@@ -98,7 +98,12 @@ async function loadDocument(
 ): Promise<GraphDocument> {
   const nodes = await tx.select().from(websiteNodes).where(eq(websiteNodes.graphId, graph.id));
   const edges = await tx.select().from(websiteEdges).where(eq(websiteEdges.graphId, graph.id));
-  return rowToDocument(graph, nodes, edges);
+  const document = rowToDocument(graph, nodes, edges);
+  const diagnostics = validateGraphDocument(document);
+  if (diagnostics.length) {
+    throw new GraphServiceError("Persisted graph failed integrity validation: " + diagnostics.map((item) => item.code).join(", "), "VALIDATION");
+  }
+  return document;
 }
 
 function applyOperations(
