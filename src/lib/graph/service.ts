@@ -111,7 +111,7 @@ function applyOperations(
   operations: GraphOperation[],
   nextRevision: number,
 ): GraphDocument {
-  let nodes = [...initial.nodes];
+  const nodes = [...initial.nodes];
   let edges = [...initial.edges];
 
   for (const operation of operations) {
