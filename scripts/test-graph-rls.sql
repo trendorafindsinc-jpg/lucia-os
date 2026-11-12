@@ -42,8 +42,9 @@ SET ROLE lucia_os_runtime;
 SELECT set_config('app.current_user_id', '10000000-0000-4000-8000-000000000001', false);
 SELECT set_config('app.current_organization_id', '30000000-0000-4000-8000-000000000001', false);
 DO $$
-DECLARE visible_count integer;
-DECLARE changed_count integer;
+DECLARE
+  visible_count integer;
+  changed_count integer;
 BEGIN
   SELECT count(*) INTO visible_count FROM website_graphs;
   IF visible_count <> 1 THEN RAISE EXCEPTION 'Tenant A graph visibility failed: %', visible_count; END IF;
