@@ -1,0 +1,54 @@
+name: Design Intelligence verification
+
+on:
+  push:
+    branches:
+      - development
+    paths:
+      - ".github/workflows/design-intelligence-verification.yml"
+      - "src/lib/design-intelligence/**"
+      - "src/lib/graph/contracts.ts"
+      - "tsconfig.json"
+      - "package.json"
+  pull_request:
+    paths:
+      - ".github/workflows/design-intelligence-verification.yml"
+      - "src/lib/design-intelligence/**"
+      - "src/lib/graph/contracts.ts"
+      - "tsconfig.json"
+      - "package.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: design-intelligence-verification-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  design-intelligence:
+    name: Design Intelligence tests and application checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Run focused Design Intelligence tests
+        run: npx vitest run src/lib/design-intelligence/registry.test.ts
+      - name: Run full unit test suite
+        run: npm test
+      - name: Run TypeScript typecheck
+        run: npm run typecheck
+      - name: Run lint
+        run: npm run lint
+      - name: Production build
+        run: npm run build
+      - name: Compiled host-routing HTTP checks
+        run: npm run test:routing:http
