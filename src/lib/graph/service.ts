@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createHash, randomUUID } from "node:crypto";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, ne, sql } from "drizzle-orm";
 import { getCurrentOrganizationAccess } from "@/lib/access/guards";
 import { getDb } from "@/lib/db/client";
 import {
@@ -214,7 +214,7 @@ export async function getWebsiteGraph(organizationId: string, websiteId: string)
 
   return inTenantTransaction(access.user.id, organizationId, async (tx) => {
     const [website] = await tx.select({ id: websites.id }).from(websites)
-      .where(and(eq(websites.id, websiteId), eq(websites.organizationId, organizationId))).for("update").limit(1);
+      .where(and(eq(websites.id, websiteId), eq(websites.organizationId, organizationId), ne(websites.status, "deleted"))).for("update").limit(1);
     if (!website) throw new GraphServiceError("Website not found.", "NOT_FOUND");
     const [graph] = await tx.select().from(websiteGraphs)
       .where(and(eq(websiteGraphs.websiteId, websiteId), eq(websiteGraphs.organizationId, organizationId))).limit(1);
@@ -239,7 +239,7 @@ export async function createWebsiteGraph(organizationId: string, websiteId: stri
 
   return inTenantTransaction(access.user.id, organizationId, async (tx) => {
     const [website] = await tx.select({ id: websites.id, name: websites.name }).from(websites)
-      .where(and(eq(websites.id, websiteId), eq(websites.organizationId, organizationId))).limit(1);
+      .where(and(eq(websites.id, websiteId), eq(websites.organizationId, organizationId), ne(websites.status, "deleted"))).limit(1);
     if (!website) throw new GraphServiceError("Website not found.", "NOT_FOUND");
 
     const [existing] = await tx.select().from(websiteGraphs)
@@ -374,5 +374,26 @@ export async function saveCanvasPosition(organizationId: string, websiteId: stri
       set: { x: position.x, y: position.y, locked: position.locked ?? false, updatedAt: new Date() },
     });
     return { saved: true, graphRevision: graph.draftRevision };
+  });
+}
+
+
+export async function listWebsiteGraphVersions(organizationId: string, websiteId: string) {
+  const access = await getCurrentOrganizationAccess(organizationId, "website.read");
+  if (!access) throw new GraphServiceError("Organization access denied.", "FORBIDDEN");
+  return inTenantTransaction(access.user.id, organizationId, async (tx) => {
+    const [graph] = await tx.select({ id: websiteGraphs.id }).from(websiteGraphs).where(and(
+      eq(websiteGraphs.websiteId, websiteId),
+      eq(websiteGraphs.organizationId, organizationId),
+    )).limit(1);
+    if (!graph) throw new GraphServiceError("Website graph has not been created.", "NOT_FOUND");
+    return tx.select({
+      id: websiteGraphVersions.id,
+      revision: websiteGraphVersions.revision,
+      contentHash: websiteGraphVersions.contentHash,
+      createdByUserId: websiteGraphVersions.createdByUserId,
+      createdAt: websiteGraphVersions.createdAt,
+    }).from(websiteGraphVersions).where(eq(websiteGraphVersions.graphId, graph.id))
+      .orderBy(websiteGraphVersions.revision);
   });
 }
