@@ -77,17 +77,18 @@ export const graphOperationSchema = z.discriminatedUnion("type", [
     orderedEdgeIds: z.array(z.string().uuid()).min(1),
   }).strict(),
   z.object({
-    type: z.literal("MOVE_CANVAS_NODE"),
-    nodeId: z.string().uuid(),
-    x: z.number().finite(),
-    y: z.number().finite(),
-    locked: z.boolean().optional(),
-  }).strict(),
-  z.object({
     type: z.literal("RESTORE_VERSION"),
     versionId: z.string().uuid(),
   }).strict(),
 ]);
+
+/** Canvas state is deliberately outside graph-content revision batches. */
+export const canvasPositionMutationSchema = z.object({
+  nodeId: z.string().uuid(),
+  x: z.number().finite().min(-1_000_000).max(1_000_000),
+  y: z.number().finite().min(-1_000_000).max(1_000_000),
+  locked: z.boolean().optional(),
+}).strict();
 
 export const graphMutationBatchSchema = z.object({
   websiteId: z.string().uuid(),
@@ -113,4 +114,5 @@ export type GraphEdge = z.infer<typeof graphEdgeSchema>;
 export type GraphDocument = z.infer<typeof graphDocumentSchema>;
 export type GraphOperation = z.infer<typeof graphOperationSchema>;
 export type GraphMutationBatch = z.infer<typeof graphMutationBatchSchema>;
+export type CanvasPositionMutation = z.infer<typeof canvasPositionMutationSchema>;
 export type GraphDiagnostic = z.infer<typeof graphDiagnosticSchema>;
