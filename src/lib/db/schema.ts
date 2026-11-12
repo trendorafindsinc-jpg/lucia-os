@@ -1,6 +1,8 @@
 import { sql } from "drizzle-orm";
 import {
   bigint,
+  check,
+  doublePrecision,
   integer,
   jsonb,
   boolean,
@@ -518,4 +520,173 @@ export const websitePostRevisions = pgTable("website_post_revisions", {
 }, (table) => [
  foreignKey({ name: "website_post_revisions_website_org_fk", columns: [table.organizationId,table.websiteId], foreignColumns: [websites.organizationId,websites.id] }).onDelete("cascade"),
  uniqueIndex("website_post_revisions_unique").on(table.postId,table.revision),
+]);
+
+
+/**
+ * Graph Engine persistence is additive. The existing website draft and
+ * publishing tables remain intact until a separately approved import/cutover.
+ */
+export const websiteGraphs = pgTable("website_graphs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull(),
+  websiteId: uuid("website_id").notNull(),
+  schemaVersion: integer("schema_version").notNull().default(1),
+  draftRevision: integer("draft_revision").notNull().default(0),
+  // The matching graph-version FK is installed by migration 0032 after both
+  // sides of the circular graph/version relationship have been created.
+  publishedVersionId: uuid("published_version_id"),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+}, (table) => [
+  foreignKey({
+    name: "website_graphs_website_org_fk",
+    columns: [table.organizationId, table.websiteId],
+    foreignColumns: [websites.organizationId, websites.id],
+  }).onDelete("cascade"),
+  uniqueIndex("website_graphs_org_website_uq").on(table.organizationId, table.websiteId),
+  uniqueIndex("website_graphs_org_website_id_uq").on(table.organizationId, table.websiteId, table.id),
+  check("website_graphs_version_revision_check", sql`${table.schemaVersion} > 0 AND ${table.draftRevision} >= 0`),
+]);
+
+export const websiteNodes = pgTable("website_nodes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull(),
+  websiteId: uuid("website_id").notNull(),
+  graphId: uuid("graph_id").notNull(),
+  nodeType: text("node_type").notNull(),
+  schemaVersion: integer("schema_version").notNull().default(1),
+  properties: jsonb("properties").$type<Record<string, unknown>>().notNull().default({}),
+  lifecycleStatus: text("lifecycle_status").notNull().default("active"),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+}, (table) => [
+  foreignKey({
+    name: "website_nodes_graph_scope_fk",
+    columns: [table.organizationId, table.websiteId, table.graphId],
+    foreignColumns: [websiteGraphs.organizationId, websiteGraphs.websiteId, websiteGraphs.id],
+  }).onDelete("cascade"),
+  uniqueIndex("website_nodes_graph_id_id_uq").on(table.graphId, table.id),
+  index("website_nodes_graph_type_idx").on(table.graphId, table.nodeType),
+  check("website_nodes_type_check", sql`${table.nodeType} IN ('website','page','section','component','design_token','shared_data','interaction','responsive_config','media_reference')`),
+  check("website_nodes_version_status_check", sql`${table.schemaVersion} > 0 AND ${table.lifecycleStatus} IN ('active','deleted')`),
+  check("website_nodes_properties_object_check", sql`jsonb_typeof(${table.properties}) = 'object'`),
+]);
+
+export const websiteEdges = pgTable("website_edges", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull(),
+  websiteId: uuid("website_id").notNull(),
+  graphId: uuid("graph_id").notNull(),
+  sourceNodeId: uuid("source_node_id").notNull(),
+  targetNodeId: uuid("target_node_id").notNull(),
+  edgeType: text("edge_type").notNull(),
+  schemaVersion: integer("schema_version").notNull().default(1),
+  sortOrder: integer("sort_order"),
+  properties: jsonb("properties").$type<Record<string, unknown>>().notNull().default({}),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+}, (table) => [
+  foreignKey({
+    name: "website_edges_graph_scope_fk",
+    columns: [table.organizationId, table.websiteId, table.graphId],
+    foreignColumns: [websiteGraphs.organizationId, websiteGraphs.websiteId, websiteGraphs.id],
+  }).onDelete("cascade"),
+  foreignKey({
+    name: "website_edges_source_graph_fk",
+    columns: [table.graphId, table.sourceNodeId],
+    foreignColumns: [websiteNodes.graphId, websiteNodes.id],
+  }).onDelete("cascade"),
+  foreignKey({
+    name: "website_edges_target_graph_fk",
+    columns: [table.graphId, table.targetNodeId],
+    foreignColumns: [websiteNodes.graphId, websiteNodes.id],
+  }).onDelete("cascade"),
+  uniqueIndex("website_edges_graph_id_id_uq").on(table.graphId, table.id),
+  uniqueIndex("website_edges_unique_relationship_uq").on(table.graphId, table.edgeType, table.sourceNodeId, table.targetNodeId),
+  index("website_edges_source_order_idx").on(table.graphId, table.sourceNodeId, table.edgeType, table.sortOrder),
+  index("website_edges_target_idx").on(table.graphId, table.targetNodeId),
+  check("website_edges_type_check", sql`${table.edgeType} IN ('contains_page','contains_section','contains_component','uses_design_token','binds_shared_data','references_media','configures_interaction','has_responsive_config')`),
+  check("website_edges_version_order_check", sql`${table.schemaVersion} > 0 AND (${table.sortOrder} IS NULL OR ${table.sortOrder} >= 0) AND (${table.edgeType} NOT IN ('contains_page','contains_section','contains_component') OR ${table.sortOrder} IS NOT NULL)`),
+  check("website_edges_properties_object_check", sql`jsonb_typeof(${table.properties}) = 'object'`),
+]);
+
+export const websiteGraphVersions = pgTable("website_graph_versions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull(),
+  websiteId: uuid("website_id").notNull(),
+  graphId: uuid("graph_id").notNull(),
+  revision: integer("revision").notNull(),
+  schemaVersion: integer("schema_version").notNull().default(1),
+  snapshot: jsonb("snapshot").$type<Record<string, unknown>>().notNull(),
+  contentHash: text("content_hash").notNull(),
+  createdByUserId: uuid("created_by_user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
+  createdAt: createdAt(),
+}, (table) => [
+  foreignKey({
+    name: "website_graph_versions_graph_scope_fk",
+    columns: [table.organizationId, table.websiteId, table.graphId],
+    foreignColumns: [websiteGraphs.organizationId, websiteGraphs.websiteId, websiteGraphs.id],
+  }).onDelete("cascade"),
+  uniqueIndex("website_graph_versions_graph_revision_uq").on(table.graphId, table.revision),
+  uniqueIndex("website_graph_versions_graph_id_id_uq").on(table.graphId, table.id),
+  index("website_graph_versions_graph_created_idx").on(table.graphId, table.createdAt),
+  check("website_graph_versions_revision_check", sql`${table.revision} >= 0 AND ${table.schemaVersion} > 0`),
+  check("website_graph_versions_snapshot_object_check", sql`jsonb_typeof(${table.snapshot}) = 'object'`),
+  check("website_graph_versions_hash_check", sql`${table.contentHash} ~ '^[a-f0-9]{64}$'`),
+]);
+
+export const websiteGraphOperations = pgTable("website_graph_operations", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull(),
+  websiteId: uuid("website_id").notNull(),
+  graphId: uuid("graph_id").notNull(),
+  actorUserId: uuid("actor_user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
+  idempotencyKey: text("idempotency_key").notNull(),
+  requestHash: text("request_hash").notNull(),
+  baseRevision: integer("base_revision").notNull(),
+  resultRevision: integer("result_revision").notNull(),
+  operations: jsonb("operations").$type<unknown[]>().notNull(),
+  result: jsonb("result").$type<Record<string, unknown>>().notNull(),
+  createdAt: createdAt(),
+}, (table) => [
+  foreignKey({
+    name: "website_graph_operations_graph_scope_fk",
+    columns: [table.organizationId, table.websiteId, table.graphId],
+    foreignColumns: [websiteGraphs.organizationId, websiteGraphs.websiteId, websiteGraphs.id],
+  }).onDelete("cascade"),
+  uniqueIndex("website_graph_operations_idempotency_uq").on(table.graphId, table.actorUserId, table.idempotencyKey),
+  uniqueIndex("website_graph_operations_graph_id_id_uq").on(table.graphId, table.id),
+  index("website_graph_operations_graph_created_idx").on(table.graphId, table.createdAt),
+  check("website_graph_operations_revision_check", sql`${table.baseRevision} >= 0 AND ${table.resultRevision} = ${table.baseRevision} + 1`),
+  check("website_graph_operations_idempotency_check", sql`length(btrim(${table.idempotencyKey})) BETWEEN 8 AND 200`),
+  check("website_graph_operations_hash_check", sql`${table.requestHash} ~ '^[a-f0-9]{64}$'`),
+  check("website_graph_operations_payload_check", sql`jsonb_typeof(${table.operations}) = 'array' AND jsonb_typeof(${table.result}) = 'object'`),
+]);
+
+export const websiteCanvasPositions = pgTable("website_canvas_positions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull(),
+  websiteId: uuid("website_id").notNull(),
+  graphId: uuid("graph_id").notNull(),
+  userId: uuid("user_id").notNull().references(() => appUsers.id, { onDelete: "cascade" }),
+  nodeId: uuid("node_id").notNull(),
+  x: doublePrecision("x").notNull(),
+  y: doublePrecision("y").notNull(),
+  locked: boolean("locked").notNull().default(false),
+  updatedAt: updatedAt(),
+}, (table) => [
+  foreignKey({
+    name: "website_canvas_positions_graph_scope_fk",
+    columns: [table.organizationId, table.websiteId, table.graphId],
+    foreignColumns: [websiteGraphs.organizationId, websiteGraphs.websiteId, websiteGraphs.id],
+  }).onDelete("cascade"),
+  foreignKey({
+    name: "website_canvas_positions_node_graph_fk",
+    columns: [table.graphId, table.nodeId],
+    foreignColumns: [websiteNodes.graphId, websiteNodes.id],
+  }).onDelete("cascade"),
+  uniqueIndex("website_canvas_positions_graph_user_node_uq").on(table.graphId, table.userId, table.nodeId),
+  index("website_canvas_positions_graph_user_idx").on(table.graphId, table.userId),
+  check("website_canvas_positions_bounds_check", sql`${table.x} BETWEEN -1000000 AND 1000000 AND ${table.y} BETWEEN -1000000 AND 1000000`),
 ]);

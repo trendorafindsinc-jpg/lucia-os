@@ -2,7 +2,7 @@
 
 > **Document ID:** LUCIA-PHASE-2-GRAPH-001  
 > **Version:** 0.1  
-> **Status:** Initial technical contract proposal — review required before schema implementation  
+> **Status:** Phase 2 implementation specification — Graph Engine persistence increment in progress  
 > **Date:** 2026-11-12  
 > **Branch:** `development`  
 > **Parent:** `docs/LUCIA-OS-MASTER-ARCHITECTURE.md`  
@@ -604,9 +604,9 @@ A follow-up source review separated canvas state from graph operations and corre
 **No existing website draft, publishing route, legacy table, production database, customer website or live infrastructure was modified.**
 
 
-## 17. Additive database migration design — review draft
+## 17. Additive database migration — implementation increment 1
 
-**Status: logical migration design only. No Drizzle schema changes, SQL migration, snapshot, journal entry or database change has been created.**
+**Status: six-table Drizzle schema and forward-only SQL migration authored on `development`; not applied to any shared or production database. The existing website data model remains intact.**
 
 The first persistence increment should add six Graph Engine tables and leave all existing website tables and data intact. The graph is introduced alongside the existing draft and publishing model; it is not populated from legacy content and is not made authoritative until a later import/parity/cutover task is separately approved.
 
@@ -652,12 +652,11 @@ A repeated idempotency key with the same actor and request hash returns the stor
 
 ### 17.5 Rollout and migration sequence
 
-1. Resolve the Drizzle metadata discrepancy before generation. The journal currently records migrations 0000–0031, while the inspected metadata directory exposes 0016_snapshot.json and no 0031_snapshot.json. Do not fabricate a snapshot or regenerate migration history.
-2. Reproduce `npm run db:check` and schema generation in a real isolated checkout with the exact lockfile/toolchain. Confirm whether this repository intentionally maintains a sparse snapshot history and follow the verified project convention.
-3. Add six table definitions to the existing Drizzle schema and generate a forward-only migration (expected next tag 0032, subject to confirming the actual journal and filesystem). Review the generated SQL and metadata diff manually.
-4. Add explicit RLS enable/force, membership-based policies, runtime grants and constraints in the migration, following the repository's established policy style.
-5. Validate the migration against a disposable PostgreSQL database with the same PostgreSQL major version and runtime role model. Test tenant A vs tenant B, viewer vs editor, graph/node/edge cross-scope FK rejection, append-only history, and canvas isolation.
-6. Deploy schema only after the disposable-database suite passes. Do not backfill customer sites, dual-write, change draft reads, change publishing, or remove legacy tables in this migration.
+1. The full `drizzle/meta` directory and Git history were inspected. It contains `0016_snapshot.json` and `_journal.json`; migrations `0017`–`0031` are SQL-first journal entries without later snapshots. Preserve this established sparse-snapshot history: do not fabricate `0031_snapshot.json` or regenerate historical migrations.
+2. Append the forward-only `0032_website_graph_engine` SQL migration and journal entry. The Drizzle schema is updated in parallel; the existing `0016_snapshot.json` remains untouched.
+3. Run the migration workflow against a fresh PostgreSQL 16 service, creating `lucia_os_runtime` as a non-owner `NOBYPASSRLS` role before applying migrations so conditional grants are actually exercised.
+4. Run `npm run db:check` after migration application and execute `scripts/test-graph-rls.sql` under the least-privilege runtime role. Cover tenant A/B isolation, viewer/editor permissions, cross-graph endpoint FK rejection, append-only history and per-user canvas isolation.
+5. Apply schema only after the disposable-database workflow passes. Do not backfill customer sites, dual-write, change draft reads, change publishing, or remove legacy tables in this migration.
 
 ### 17.6 Migration acceptance criteria
 
@@ -682,4 +681,4 @@ A source review also identified pre-persistence hardening items:
 - Add tests for deleted-node references, unsupported graph/edge schema versions, duplicate edge IDs/relationships, multiple roots, disconnected cycles and root/parent invariants.
 - Review the Zod 4 registry type annotations under the actual TypeScript compiler; source inspection cannot establish type correctness.
 
-**Gate:** do not implement or generate the database migration until the focused tests and full typecheck have been executed in the repository's CI or a real checkout, and the above contract gaps have been resolved or explicitly accepted.
+**Verification record:** the Graph Engine hardening increment passed the focused Graph Engine test file, the full unit suite (90 files / 1,138 tests), and TypeScript typecheck in GitHub Actions run `43280383040` (attempt 2). Persistence migration verification is separate and must pass before any database deployment.
