@@ -602,3 +602,84 @@ The files were committed individually on `development`:
 A follow-up source review separated canvas state from graph operations and corrected reference-node and cycle validation behavior. The next task is to check out the latest branch in an executable environment, run the focused Vitest file, full typecheck and lint, fix any failures, and then design the additive relational schema migration after the Drizzle metadata workflow is verified.
 
 **No existing website draft, publishing route, legacy table, production database, customer website or live infrastructure was modified.**
+
+
+## 17. Additive database migration design — review draft
+
+**Status: logical migration design only. No Drizzle schema changes, SQL migration, snapshot, journal entry or database change has been created.**
+
+The first persistence increment should add six Graph Engine tables and leave all existing website tables and data intact. The graph is introduced alongside the existing draft and publishing model; it is not populated from legacy content and is not made authoritative until a later import/parity/cutover task is separately approved.
+
+### 17.1 Table set and responsibilities
+
+| Table | Key fields | Rules |
+|---|---|---|
+| `website_graphs` | `id`, `organization_id`, `website_id`, `schema_version`, `draft_revision`, `published_version_id`, timestamps | One graph per website; unique (organization_id, website_id); composite FK to websites(organization_id,id); revision starts at 0 |
+| `website_nodes` | `id`, `organization_id`, `website_id`, `graph_id`, `node_type`, `schema_version`, `properties jsonb`, `lifecycle_status`, timestamps | Stable node IDs; composite graph FK; unique (graph_id,id); JSONB must be an object; registered property validation remains in the application |
+| `website_edges` | `id`, tenant/site/graph IDs, `source_node_id`, `target_node_id`, `edge_type`, `schema_version`, nullable `sort_order`, `properties jsonb`, timestamps | Both endpoint FKs include graph_id, preventing cross-graph edges; unique (graph_id,id); indexes for source and target traversal |
+| `website_graph_versions` | `id`, tenant/site/graph IDs, `revision`, `schema_version`, `snapshot jsonb`, `content_hash`, `created_by_user_id`, `created_at` | Immutable snapshots; unique (graph_id,revision) and (graph_id,id); creator FK to app_users |
+| `website_graph_operations` | `id`, tenant/site/graph IDs, `actor_user_id`, `idempotency_key`, `request_hash`, `base_revision`, `result_revision`, `operations jsonb`, `result jsonb`, `created_at` | Append-only audit/replay record; unique (graph_id,actor_user_id,idempotency_key); actor FK; request hash detects key reuse with different payload |
+| `website_canvas_positions` | tenant/site/graph IDs, `user_id`, `node_id`, `x`, `y`, `locked`, `updated_at` | Editor-only state; primary/unique key (graph_id,user_id,node_id); node and user FKs; never increments graph draft_revision |
+
+The graph aggregate is unique per website, not per user. Nodes and edges are shared website content. Canvas positions are per user so each collaborator can arrange their own workspace without changing another user's canvas or the website itself.
+
+### 17.2 Referential integrity and indexes
+
+- Every child table carries `organization_id`, `website_id` and `graph_id`; do not rely on a bare UUID to establish tenant ownership.
+- `website_graphs(organization_id, website_id)` references `websites(organization_id, id)` with the existing website deletion semantics.
+- Each child references `website_graphs(organization_id, website_id, id)` through a composite unique key.
+- Each node exposes `UNIQUE(graph_id,id)`. Each edge's source and target use composite `(graph_id,node_id)` foreign keys to nodes, so an edge cannot cross graphs even if an application check is missed.
+- Graph-owned records cascade only with deletion of their graph/website aggregate. User/actor references use RESTRICT where preserving audit history matters. Node endpoint deletion should cascade its live edges; the operation/version history remains.
+- Add indexes for graph node type, graph edge source/type/order, graph edge target, versions by graph/revision, operations by graph/created_at, and canvas positions by graph/user.
+- Use CHECK constraints for supported lifecycle values, positive schema versions, nonnegative revisions/order/coordinates bounds, JSONB object/array shape, and nonblank idempotency/hash fields. Do not encode the full node/edge compatibility matrix as SQL; the versioned registry and transaction validator own that rule.
+
+### 17.3 RLS and authorization
+
+Enable and FORCE row-level security on all six tables. Policies must use the existing transaction-local `app.current_user_id` and `app.current_organization_id` settings and verify active organization membership. A tenant setting by itself is not authorization.
+
+- Read policies: active organization membership with an allowed role (owner, admin, editor, viewer) and matching organization context.
+- Write policies: active organization membership with owner/admin/editor role and matching organization context.
+- Canvas policies: additionally require `user_id = app.current_user_id`; a user may only read or change their own canvas arrangement.
+- Operation/version insertion: actor_user_id must equal the authenticated transaction user. Existing operation/version rows are immutable to application roles; no UPDATE/DELETE policy should be granted for append-only history.
+- Graph mutation API still checks the session and `website.read` / `website.edit` permission before opening the tenant-scoped transaction. RLS is defence in depth, not a substitute for server authorization.
+- Grant the least-privilege runtime role only the required SELECT/INSERT/UPDATE privileges. Do not grant broad table mutation on append-only history tables.
+
+### 17.4 Transaction boundary
+
+A single graph mutation transaction should: lock/read the graph row; compare expected revision; verify request idempotency; load the required graph state; apply the complete operation batch in memory; validate the resulting graph; write node/edge changes; insert the immutable version snapshot and operation record; increment draft_revision exactly once; then commit. Any failed step rolls back the entire batch.
+
+A repeated idempotency key with the same actor and request hash returns the stored result. The same key with a different hash is a conflict. Canvas position writes use a separate transaction and do not touch graph revisions, versions or operation history.
+
+### 17.5 Rollout and migration sequence
+
+1. Resolve the Drizzle metadata discrepancy before generation. The journal currently records migrations 0000–0031, while the inspected metadata directory exposes 0016_snapshot.json and no 0031_snapshot.json. Do not fabricate a snapshot or regenerate migration history.
+2. Reproduce `npm run db:check` and schema generation in a real isolated checkout with the exact lockfile/toolchain. Confirm whether this repository intentionally maintains a sparse snapshot history and follow the verified project convention.
+3. Add six table definitions to the existing Drizzle schema and generate a forward-only migration (expected next tag 0032, subject to confirming the actual journal and filesystem). Review the generated SQL and metadata diff manually.
+4. Add explicit RLS enable/force, membership-based policies, runtime grants and constraints in the migration, following the repository's established policy style.
+5. Validate the migration against a disposable PostgreSQL database with the same PostgreSQL major version and runtime role model. Test tenant A vs tenant B, viewer vs editor, graph/node/edge cross-scope FK rejection, append-only history, and canvas isolation.
+6. Deploy schema only after the disposable-database suite passes. Do not backfill customer sites, dual-write, change draft reads, change publishing, or remove legacy tables in this migration.
+
+### 17.6 Migration acceptance criteria
+
+- Migration is forward-only and additive; no existing table, column, row, draft, published snapshot or legacy data is deleted or rewritten.
+- All graph-owned records are tenant/site/graph constrained by composite foreign keys.
+- Cross-graph and cross-tenant node references are rejected by PostgreSQL.
+- RLS is enabled and forced for every graph table and verified using the least-privilege runtime role.
+- Operation and version history is append-only for the runtime role.
+- Canvas positions are user-scoped and independent of graph revision.
+- Migration applies cleanly to a disposable database and Drizzle consistency checks pass.
+- No production/shared database migration or website cutover is part of this task.
+
+## 18. Verification and code-review gate before persistence implementation
+
+The GitHub repository's existing `.github/workflows/quality.yml` runs lint, TypeScript typecheck, Drizzle consistency check, all Vitest tests, production build and routing HTTP checks. It currently has `pull_request` and `workflow_dispatch` triggers. At the time of this review, the Actions API returned zero workflow runs for `development`; therefore no passing CI evidence exists for the Graph Engine commit.
+
+The current execution environment did not provide a repository checkout or a way to dispatch the workflow. A network clone attempt failed because GitHub DNS/network access is unavailable. Accordingly, the following remain **not executed**: focused Graph Engine Vitest file, full `npm test`, `npm run typecheck`, `npm run lint`, `npm run db:check`, and build. Do not infer success from source inspection.
+
+A source review also identified pre-persistence hardening items:
+- Compare graph, node and edge schema versions against named supported-version constants/registry entries rather than hardcoding a node-only literal.
+- Reject edges whose source or target node is lifecycle-deleted, or define and test an explicit tombstone edge policy.
+- Add tests for deleted-node references, unsupported graph/edge schema versions, duplicate edge IDs/relationships, multiple roots, disconnected cycles and root/parent invariants.
+- Review the Zod 4 registry type annotations under the actual TypeScript compiler; source inspection cannot establish type correctness.
+
+**Gate:** do not implement or generate the database migration until the focused tests and full typecheck have been executed in the repository's CI or a real checkout, and the above contract gaps have been resolved or explicitly accepted.
