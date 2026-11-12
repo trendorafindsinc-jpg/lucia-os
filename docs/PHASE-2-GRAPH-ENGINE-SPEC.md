@@ -563,3 +563,42 @@ The following still require a full tree/history pass before schema implementatio
 - Whether current tests provide an isolated PostgreSQL instance suitable for graph/RLS integration tests.
 
 **Status:** initial compatibility pass completed; Graph Engine remains in design/review. No application code, schema, migration, database or customer data was changed.
+
+
+## 16. Implementation task 1 — foundational contracts and pure validation
+
+**Status: source files committed; execution tests not yet run in a checked-out environment.**
+
+The first additive code increment now exists under `src/lib/graph/`:
+
+- `contracts.ts` — schema version constants; node and edge type identifiers; Zod contracts for graph nodes, edges, graph documents, operation batches, diagnostics and a separate canvas-position mutation contract.
+- `registry.ts` — initial node property validators and typed edge compatibility rules.
+- `validate.ts` — pure graph document validation, endpoint/type checks, duplicate checks, structural parent checks, containment cycle detection and deterministic canonical JSON serialization.
+- `graph.test.ts` — Vitest coverage for valid graph documents, invalid node properties, invalid edge endpoints, containment cycles, deterministic serialization, duplicate node IDs, detached reusable reference nodes and canvas/content-operation separation.
+
+### Design corrections made during implementation
+
+1. Canvas movement was removed from the graph-content operation union and given its own schema. It must not increment the website graph content revision.
+2. Structural containment-parent requirements apply to page, section and component nodes. Reusable references such as media, design tokens, shared data, interactions and responsive configuration are allowed to exist without a containment parent.
+3. Containment cycle detection traverses all active nodes, not only the website root, so disconnected cycles cannot escape detection.
+4. The initial edge registry is deliberately narrow and version 1. Recipe-specific composition and richer node properties remain Phase 3/4 work.
+
+### Current limitations
+
+- These are pure contracts and validation helpers only. There is no database persistence, graph service, API route, mutation transaction, idempotency store, snapshot persistence, RLS policy or UI yet.
+- The current test file has been authored but has not been executed in this remote documentation/code-editing workflow. Do not report tests, typecheck or lint as passing until run in a real checkout.
+- The registry is an initial baseline and needs review against final Phase 3 recipe ownership and Phase 4 renderer contracts.
+- The validator is not yet a complete publishability/accessibility validator and does not replace database foreign keys or server authorization.
+- A production or shared-database migration has not been created or applied.
+
+### Verification record
+
+The files were committed individually on `development`:
+- `contracts.ts`
+- `registry.ts`
+- `validate.ts`
+- `graph.test.ts`
+
+A follow-up source review separated canvas state from graph operations and corrected reference-node and cycle validation behavior. The next task is to check out the latest branch in an executable environment, run the focused Vitest file, full typecheck and lint, fix any failures, and then design the additive relational schema migration after the Drizzle metadata workflow is verified.
+
+**No existing website draft, publishing route, legacy table, production database, customer website or live infrastructure was modified.**
