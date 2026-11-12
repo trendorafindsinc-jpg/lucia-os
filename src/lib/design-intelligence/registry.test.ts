@@ -73,4 +73,15 @@ describe("Design Intelligence foundations and recipe registry", () => {
       "Duplicate recipe version: lucia.design.component.button@1",
     ]);
   });
+
+  it("rejects executable and external-reference keys nested in recipe defaults", () => {
+    const recipe = structuredClone(designRecipeRegistry[0]) as unknown as Record<string, any>;
+    recipe.defaults = { layout: { nested: { href: "https://example.com" } } };
+    expect(designRecipeSchema.safeParse(recipe).success).toBe(false);
+  });
+
+  it("rejects non-JSON values in recipe defaults", () => {
+    const recipe = { ...designRecipeRegistry[0], defaults: { callback: () => "unsafe" } };
+    expect(designRecipeSchema.safeParse(recipe).success).toBe(false);
+  });
 });
