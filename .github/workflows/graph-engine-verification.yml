@@ -30,7 +30,21 @@ jobs:
   graph-engine:
     name: Graph tests and TypeScript typecheck
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: lucia-graph-ci-only
+          POSTGRES_DB: lucia_graph_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d lucia_graph_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -40,7 +54,30 @@ jobs:
           node-version: 22
       - name: Install dependencies
         run: npm install --no-audit --no-fund
-      - name: Run focused Graph Engine tests
+      - name: Create least-privilege runtime role
+        run: >-
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1
+          -c "CREATE ROLE lucia_os_runtime LOGIN PASSWORD 'lucia-graph-runtime-ci'
+          NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS"
+        env:
+          DATABASE_URL: postgres://postgres:lucia-graph-ci-only@localhost:5432/lucia_graph_ci
+      - name: Apply migrations to disposable PostgreSQL
+        run: npm run db:migrate
+        env:
+          DATABASE_URL: postgres://postgres:lucia-graph-ci-only@localhost:5432/lucia_graph_ci
+      - name: Grant base-table reads required by tenant policies
+        run: >-
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1
+          -c "GRANT USAGE ON SCHEMA public TO lucia_os_runtime;
+          GRANT SELECT ON app_users, organizations, organization_memberships, websites TO lucia_os_runtime"
+        env:
+          DATABASE_URL: postgres://postgres:lucia-graph-ci-only@localhost:5432/lucia_graph_ci
+      - name: Run database-backed Graph Persistence Service tests
+        run: npx vitest run src/lib/graph/service.integration.test.ts
+        env:
+          DATABASE_URL_RUNTIME: postgres://lucia_os_runtime:lucia-graph-runtime-ci@localhost:5432/lucia_graph_ci
+          GRAPH_TEST_OWNER_DATABASE_URL: postgres://postgres:lucia-graph-ci-only@localhost:5432/lucia_graph_ci
+      - name: Run focused Graph Engine unit tests
         run: npx vitest run src/lib/graph/graph.test.ts
       - name: Run full unit test suite
         run: npm test
