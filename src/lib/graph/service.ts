@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createHash, randomUUID } from "node:crypto";
-import { and, eq, ne, sql } from "drizzle-orm";
+import { and, eq, ne, notInArray, sql } from "drizzle-orm";
 import { getCurrentOrganizationAccess } from "@/lib/access/guards";
 import { getDb } from "@/lib/db/client";
 import {
@@ -167,6 +167,12 @@ function applyOperations(
 }
 
 async function persistDocument(tx: Transaction, organizationId: string, websiteId: string, graphId: string, document: GraphDocument) {
+  // Reconcile the full node set when restoring an older immutable snapshot.
+  await tx.delete(websiteEdges).where(eq(websiteEdges.graphId, graphId));
+  await tx.delete(websiteNodes).where(and(
+    eq(websiteNodes.graphId, graphId),
+    notInArray(websiteNodes.id, document.nodes.map((node) => node.id)),
+  ));
   for (const node of document.nodes) {
     await tx.insert(websiteNodes).values({
       id: node.id,
@@ -189,9 +195,7 @@ async function persistDocument(tx: Transaction, organizationId: string, websiteI
     });
   }
 
-  // Edge IDs and ordering are part of the graph snapshot. Replacing this
-  // graph's edge set is atomic and leaves node-bound canvas state untouched.
-  await tx.delete(websiteEdges).where(eq(websiteEdges.graphId, graphId));
+  // Edge IDs and ordering are part of the graph snapshot.
   if (document.edges.length) {
     await tx.insert(websiteEdges).values(document.edges.map((edge) => ({
       id: edge.id,
@@ -365,6 +369,16 @@ export async function saveCanvasPosition(organizationId: string, websiteId: stri
       eq(websiteNodes.lifecycleStatus, "active"),
     )).limit(1);
     if (!node) throw new GraphServiceError("Canvas node not found.", "NOT_FOUND");
+    const [existingPosition] = await tx.select().from(websiteCanvasPositions).where(and(
+      eq(websiteCanvasPositions.graphId, graph.id),
+      eq(websiteCanvasPositions.userId, access.user.id),
+      eq(websiteCanvasPositions.nodeId, position.nodeId),
+    )).limit(1);
+    if (existingPosition?.locked &&
+        (existingPosition.x !== position.x || existingPosition.y !== position.y) &&
+        position.locked !== false) {
+      throw new GraphServiceError("Unlock this canvas node before moving it.", "CONFLICT");
+    }
 
     await tx.insert(websiteCanvasPositions).values({
       organizationId, websiteId, graphId: graph.id, userId: access.user.id,
