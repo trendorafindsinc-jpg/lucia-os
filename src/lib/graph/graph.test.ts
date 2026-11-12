@@ -53,7 +53,7 @@ describe("Graph Engine contracts", () => {
     expect(validateGraphDocument(invalid).some((item) => item.code === "GRAPH_EDGE_TYPE_INVALID")).toBe(true);
   });
 
-  it("detects containment cycles between valid component nodes", () => {
+  it("detects containment cycles even when the cycle is disconnected from the website root", () => {
     const componentA = "00000000-0000-4000-8000-000000000008";
     const componentB = "00000000-0000-4000-8000-000000000009";
     const invalid = {
@@ -65,7 +65,6 @@ describe("Graph Engine contracts", () => {
       ],
       edges: [
         ...validGraph.edges,
-        { id: "00000000-0000-4000-8000-000000000010", graphId, sourceNodeId: sectionId, targetNodeId: componentA, type: "contains_component" as const, schemaVersion: 1, order: 0, properties: {} },
         { id: "00000000-0000-4000-8000-000000000011", graphId, sourceNodeId: componentA, targetNodeId: componentB, type: "contains_component" as const, schemaVersion: 1, order: 0, properties: {} },
         { id: "00000000-0000-4000-8000-000000000012", graphId, sourceNodeId: componentB, targetNodeId: componentA, type: "contains_component" as const, schemaVersion: 1, order: 0, properties: {} },
       ],
@@ -89,6 +88,45 @@ describe("Graph Engine contracts", () => {
       ],
     };
     expect(validateGraphDocument(withMedia)).toEqual([]);
+  });
+
+
+  it("rejects unsupported graph, node and edge schema versions", () => {
+    const unsupportedGraph = { ...validGraph, schemaVersion: 2 };
+    const unsupportedNode = { ...validGraph, nodes: [{ ...root, schemaVersion: 2 }, page, section] };
+    const unsupportedEdge = { ...validGraph, edges: [{ ...validGraph.edges[0], schemaVersion: 2 }, validGraph.edges[1]] };
+    expect(validateGraphDocument(unsupportedGraph).some((item) => item.code === "GRAPH_VERSION_UNSUPPORTED")).toBe(true);
+    expect(validateGraphDocument(unsupportedNode).some((item) => item.code === "GRAPH_NODE_VERSION_UNSUPPORTED")).toBe(true);
+    expect(validateGraphDocument(unsupportedEdge).some((item) => item.code === "GRAPH_EDGE_VERSION_UNSUPPORTED")).toBe(true);
+  });
+
+  it("rejects edges that reference lifecycle-deleted nodes", () => {
+    const deletedTarget = { ...validGraph, nodes: [root, page, { ...section, lifecycleStatus: "deleted" as const }] };
+    expect(validateGraphDocument(deletedTarget).some((item) => item.code === "GRAPH_EDGE_ENDPOINT_DELETED")).toBe(true);
+  });
+
+  it("rejects duplicate edge IDs and duplicate typed relationships", () => {
+    const first = validGraph.edges[0];
+    const duplicateId = { ...validGraph, edges: [first, { ...validGraph.edges[1], id: first.id }] };
+    const duplicateRelationship = {
+      ...validGraph,
+      edges: [...validGraph.edges, { ...first, id: "00000000-0000-4000-8000-000000000015" }],
+    };
+    expect(validateGraphDocument(duplicateId).some((item) => item.code === "GRAPH_DUPLICATE_EDGE")).toBe(true);
+    expect(validateGraphDocument(duplicateRelationship).some((item) => item.code === "GRAPH_DUPLICATE_RELATIONSHIP")).toBe(true);
+  });
+
+  it("requires exactly one active website root", () => {
+    const secondRoot = {
+      id: "00000000-0000-4000-8000-000000000016",
+      graphId,
+      type: "website" as const,
+      schemaVersion: 1,
+      properties: { name: "Second root" },
+      lifecycleStatus: "active" as const,
+    };
+    const invalid = { ...validGraph, nodes: [...validGraph.nodes, secondRoot] };
+    expect(validateGraphDocument(invalid).some((item) => item.code === "GRAPH_ROOT_COUNT_INVALID")).toBe(true);
   });
 
   it("keeps canvas movement outside graph content operations", () => {
