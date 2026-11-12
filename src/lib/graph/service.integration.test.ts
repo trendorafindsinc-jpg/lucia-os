@@ -102,11 +102,12 @@ describe.sequential("Graph Persistence Service (PostgreSQL)", () => {
       VALUES (${rootId}, ${ids.orgA}, ${ids.siteA}, ${graphId}, 'website', 1, '{"name":"Graph Service Site A"}'::jsonb, 'active')`;
     await owner`INSERT INTO website_graph_versions
       (organization_id, website_id, graph_id, revision, schema_version, snapshot, content_hash, created_by_user_id)
-      VALUES (${ids.orgA}, ${ids.siteA}, ${graphId}, 0, 1, ${JSON.stringify(snapshot)}::jsonb, ${"a".repeat(64)}, ${ids.userA})`;
+      VALUES (${ids.orgA}, ${ids.siteA}, ${graphId}, 0, 1, ${snapshot}::jsonb, ${"a".repeat(64)}, ${ids.userA})`;
     currentRevision = 0;
   });
 
   afterAll(async () => {
+    await owner`DELETE FROM websites WHERE id IN (${ids.siteA}, ${ids.siteB})`;
     await owner`DELETE FROM organizations WHERE id IN (${ids.orgA}, ${ids.orgB})`;
     await owner.end();
   });
