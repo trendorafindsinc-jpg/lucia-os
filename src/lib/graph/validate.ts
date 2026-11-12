@@ -1,4 +1,11 @@
-import { graphDocumentSchema, type GraphDiagnostic, type GraphDocument } from "./contracts";
+import {
+  GRAPH_EDGE_SCHEMA_VERSION,
+  GRAPH_NODE_SCHEMA_VERSION,
+  GRAPH_SCHEMA_VERSION,
+  graphDocumentSchema,
+  type GraphDiagnostic,
+  type GraphDocument,
+} from "./contracts";
 import { edgeRules, validateNodeProperties } from "./registry";
 
 function diagnostic(
@@ -46,6 +53,9 @@ export function validateGraphDocument(input: unknown): GraphDiagnostic[] {
 
   const graph = parsed.data;
   const diagnostics: GraphDiagnostic[] = [];
+  if (graph.schemaVersion !== GRAPH_SCHEMA_VERSION) {
+    diagnostics.push(diagnostic("GRAPH_VERSION_UNSUPPORTED", "Graph schema version is not supported."));
+  }
   const nodesById = new Map(graph.nodes.map((node) => [node.id, node]));
   const edgeIds = new Set<string>();
   const nodeIds = new Set<string>();
@@ -54,7 +64,7 @@ export function validateGraphDocument(input: unknown): GraphDiagnostic[] {
     if (nodeIds.has(node.id)) diagnostics.push(diagnostic("GRAPH_DUPLICATE_NODE", "Node IDs must be unique.", { nodeId: node.id }));
     nodeIds.add(node.id);
     if (node.graphId !== graph.id) diagnostics.push(diagnostic("GRAPH_NODE_SCOPE_MISMATCH", "Node belongs to a different graph.", { nodeId: node.id }));
-    if (node.schemaVersion !== 1) diagnostics.push(diagnostic("GRAPH_NODE_VERSION_UNSUPPORTED", "Node schema version is not supported by this registry.", { nodeId: node.id }));
+    if (node.schemaVersion !== GRAPH_NODE_SCHEMA_VERSION) diagnostics.push(diagnostic("GRAPH_NODE_VERSION_UNSUPPORTED", "Node schema version is not supported by this registry.", { nodeId: node.id }));
     const propertiesResult = validateNodeProperties(node.type, node.properties);
     if (!propertiesResult.success) diagnostics.push(diagnostic("GRAPH_NODE_PROPERTIES_INVALID", "Node properties do not match the registered schema.", { nodeId: node.id }));
   }
@@ -70,11 +80,18 @@ export function validateGraphDocument(input: unknown): GraphDiagnostic[] {
     if (edgeIds.has(edge.id)) diagnostics.push(diagnostic("GRAPH_DUPLICATE_EDGE", "Edge IDs must be unique.", { edgeId: edge.id }));
     edgeIds.add(edge.id);
     if (edge.graphId !== graph.id) diagnostics.push(diagnostic("GRAPH_EDGE_SCOPE_MISMATCH", "Edge belongs to a different graph.", { edgeId: edge.id }));
+    if (edge.schemaVersion !== GRAPH_EDGE_SCHEMA_VERSION) {
+      diagnostics.push(diagnostic("GRAPH_EDGE_VERSION_UNSUPPORTED", "Edge schema version is not supported by this registry.", { edgeId: edge.id }));
+    }
 
     const source = nodesById.get(edge.sourceNodeId);
     const target = nodesById.get(edge.targetNodeId);
     if (!source || !target) {
       diagnostics.push(diagnostic("GRAPH_EDGE_ENDPOINT_MISSING", "Both edge endpoints must exist in this graph.", { edgeId: edge.id }));
+      continue;
+    }
+    if (source.lifecycleStatus !== "active" || target.lifecycleStatus !== "active") {
+      diagnostics.push(diagnostic("GRAPH_EDGE_ENDPOINT_DELETED", "Edges may only reference active nodes.", { edgeId: edge.id }));
       continue;
     }
     const rule = edgeRules[edge.type];
