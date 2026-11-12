@@ -218,7 +218,7 @@ export async function getWebsiteGraph(organizationId: string, websiteId: string)
 
   return inTenantTransaction(access.user.id, organizationId, async (tx) => {
     const [website] = await tx.select({ id: websites.id }).from(websites)
-      .where(and(eq(websites.id, websiteId), eq(websites.organizationId, organizationId), ne(websites.status, "deleted"))).for("update").limit(1);
+      .where(and(eq(websites.id, websiteId), eq(websites.organizationId, organizationId), ne(websites.status, "deleted"))).limit(1);
     if (!website) throw new GraphServiceError("Website not found.", "NOT_FOUND");
     const [graph] = await tx.select().from(websiteGraphs)
       .where(and(eq(websiteGraphs.websiteId, websiteId), eq(websiteGraphs.organizationId, organizationId))).limit(1);
@@ -243,7 +243,7 @@ export async function createWebsiteGraph(organizationId: string, websiteId: stri
 
   return inTenantTransaction(access.user.id, organizationId, async (tx) => {
     const [website] = await tx.select({ id: websites.id, name: websites.name }).from(websites)
-      .where(and(eq(websites.id, websiteId), eq(websites.organizationId, organizationId), ne(websites.status, "deleted"))).limit(1);
+      .where(and(eq(websites.id, websiteId), eq(websites.organizationId, organizationId), ne(websites.status, "deleted"))).for("update").limit(1);
     if (!website) throw new GraphServiceError("Website not found.", "NOT_FOUND");
 
     const [existing] = await tx.select().from(websiteGraphs)
