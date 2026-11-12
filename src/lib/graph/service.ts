@@ -382,10 +382,10 @@ export async function saveCanvasPosition(organizationId: string, websiteId: stri
 
     await tx.insert(websiteCanvasPositions).values({
       organizationId, websiteId, graphId: graph.id, userId: access.user.id,
-      nodeId: position.nodeId, x: position.x, y: position.y, locked: position.locked ?? false,
+      nodeId: position.nodeId, x: position.x, y: position.y, locked: position.locked ?? existingPosition?.locked ?? false,
     }).onConflictDoUpdate({
       target: [websiteCanvasPositions.graphId, websiteCanvasPositions.userId, websiteCanvasPositions.nodeId],
-      set: { x: position.x, y: position.y, locked: position.locked ?? false, updatedAt: new Date() },
+      set: { x: position.x, y: position.y, locked: position.locked ?? existingPosition?.locked ?? false, updatedAt: new Date() },
     });
     return { saved: true, graphRevision: graph.draftRevision };
   });
