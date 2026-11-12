@@ -98,7 +98,8 @@ export function validateGraphDocument(input: unknown): GraphDiagnostic[] {
   }
 
   for (const node of graph.nodes) {
-    if (node.type !== "website" && node.lifecycleStatus === "active" && (incomingContainment.get(node.id) ?? 0) !== 1) {
+    const requiresContainmentParent = ["page", "section", "component"].includes(node.type);
+    if (requiresContainmentParent && node.lifecycleStatus === "active" && (incomingContainment.get(node.id) ?? 0) !== 1) {
       diagnostics.push(diagnostic("GRAPH_CONTAINMENT_PARENT_COUNT_INVALID", "Every active non-root node must have exactly one containment parent.", { nodeId: node.id }));
     }
   }
@@ -117,7 +118,7 @@ export function validateGraphDocument(input: unknown): GraphDiagnostic[] {
     return false;
   };
   for (const node of graph.nodes) {
-    if (node.type === "website" && visit(node.id)) {
+    if (node.lifecycleStatus === "active" && visit(node.id)) {
       diagnostics.push(diagnostic("GRAPH_CONTAINMENT_CYCLE", "Containment relationships must be acyclic.", { nodeId: node.id }));
       break;
     }
