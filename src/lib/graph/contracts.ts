@@ -2,6 +2,8 @@ import { z } from "zod";
 
 /** Stable identifiers for the first Graph Engine contract version. */
 export const GRAPH_SCHEMA_VERSION = 1 as const;
+export const GRAPH_NODE_SCHEMA_VERSION = 1 as const;
+export const GRAPH_EDGE_SCHEMA_VERSION = 1 as const;
 export const GRAPH_OPERATION_SCHEMA_VERSION = 1 as const;
 
 export const graphNodeTypes = [
