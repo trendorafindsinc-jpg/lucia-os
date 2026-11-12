@@ -473,3 +473,93 @@ After that review, propose the first additive migration and service implementati
 
 **Phase 2 status: IN PROGRESS — Graph Engine contract draft created.**  
 **No application code, database schema, production infrastructure, customer content or live websites were changed by this document task.**
+
+
+## 15. Repository compatibility pass — initial findings
+
+This addendum records the first focused compatibility pass on the `development` branch. It supplements the contract above; it does not certify the entire repository tree or live database state.
+
+### 15.1 Reusable technology and repository conventions
+
+Verified from `package.json` and `drizzle.config.ts`:
+- PostgreSQL + Drizzle ORM are the existing persistence stack.
+- Zod 4 is already available for runtime request and node-schema validation.
+- Vitest is the existing unit/integration test runner.
+- Scripts include `db:generate`, `db:migrate`, `db:check`, `test`, `typecheck`, and `lint`.
+- Drizzle Kit reads `src/lib/db/schema.ts`, writes to `drizzle/`, and uses `DATABASE_URL` only for migration application; schema generation has a local development URL fallback.
+
+**Implementation implication:** keep Graph Engine schema definitions in the existing Drizzle schema module unless a reviewed repository refactor establishes a different convention. Use Zod schemas as the runtime validation boundary and Vitest for tests. Never run `db:migrate` against a production URL as part of local implementation or test generation.
+
+### 15.2 Current authorization and tenant context
+
+Verified from:
+- `src/lib/db/tenant-scope.ts`
+- `src/lib/access/guards.ts`
+- `src/lib/access/policy.ts`
+- `src/app/api/websites/[websiteId]/draft/route.ts`
+
+Existing organization permissions include:
+- `website.read`
+- `website.edit`
+- `website.publish`
+
+The current roles map owner/admin/editor to website edit, while viewer has read-only access. Platform staff privileges are separate and are not implied by organization membership.
+
+The tenant helper exposes transaction-local `app.current_user_id` and `app.current_organization_id` contexts. Its comments explicitly require callers to authenticate the session, verify active membership and action permission before using organization scope. Context setting itself is not authorization.
+
+The draft route currently resolves the current session, loads active organization memberships, checks the requested permission, rechecks membership in a transaction, sets user and organization context, verifies the organization and website, and returns a non-cacheable draft with an ETag/revision. The mutation path uses origin validation, bounded request size, Zod validation and optimistic revision checks.
+
+**Graph service requirement:** preserve this order of operations. Do not accept actor or organization IDs as trusted request fields. A Graph Engine transaction helper may need to set both user and organization context together after authorization, rather than nesting separate helpers that each create their own transaction. Keep every graph query on the authorized transaction handle.
+
+**Permission proposal:** use existing `website.read`, `website.edit` and `website.publish` permissions for the first Graph Engine release. Introduce narrower permissions only if a real role/use case requires them; do not invent an incompatible permission vocabulary prematurely.
+
+### 15.3 Existing draft contract and coexistence boundary
+
+The existing draft route:
+- Reads the root page's serialized `content`.
+- Parses and validates it with `websiteDefinitionSchema`.
+- Computes a draft revision and returns it as both a response field and ETag.
+- Uses an optimistic revision check for mutations.
+- Validates media ownership as part of draft updates.
+
+This is a useful reference for HTTP safeguards, but it is not the graph contract. The Graph Engine must not mutate the existing page JSON as a hidden side effect. During the additive phase:
+- Existing editor routes continue using their current draft contract.
+- New graph tables/services are isolated behind new contracts.
+- No dual-write is introduced without an explicit consistency design.
+- No website is switched to graph reads until importer, parity checks, rollback and a separate cutover approval are complete.
+
+### 15.4 Drizzle migration metadata caution
+
+The migration journal contains ordered entries 0000 through 0031. The inspected `drizzle/meta` directory previously exposed `0016_snapshot.json` and `_journal.json`, but no later snapshot files. The current `drizzle.config.ts` points generation at the existing `drizzle/` directory.
+
+Before generating the first Graph Engine migration:
+1. Inspect the full current `drizzle/meta` directory and Git history.
+2. Confirm the exact installed Drizzle Kit version's snapshot requirements and repository workflow.
+3. Run `db:check` and a non-production schema-generation experiment in an isolated working copy/branch.
+4. Confirm the generated SQL is additive and does not rewrite or reorder migration history.
+5. Review generated snapshot/journal diffs and the SQL manually.
+6. Do not apply any migration to a shared or production database without explicit approval.
+
+Do not create a fabricated snapshot or regenerate migration history merely to satisfy the tool. If metadata needs repair, document the safe recovery procedure first.
+
+### 15.5 First implementation boundary
+
+The first code increment, after this specification is reviewed, should be limited to:
+- Versioned Graph Engine Zod contracts and registries.
+- Pure graph validation primitives that do not require database changes.
+- Unit tests for node schemas, edge compatibility, containment cycles, ordering and deterministic snapshot serialization.
+- A focused service/API contract design using the current session and permission conventions.
+
+Only after those tests and the schema review should an additive migration be proposed. Do not add production routes or switch any existing editor/publication flow in the same change.
+
+### 15.6 Findings not yet verified
+
+The following still require a full tree/history pass before schema implementation:
+- Complete repository-wide search for graph-like types or services.
+- Full list of existing RLS policies and their exact predicates for all graph-adjacent tables.
+- Current database role ownership, attributes and grants in a controlled database environment.
+- Drizzle snapshot/generation behavior against the exact installed toolchain.
+- Full draft mutation transaction and every caller's compatibility requirements.
+- Whether current tests provide an isolated PostgreSQL instance suitable for graph/RLS integration tests.
+
+**Status:** initial compatibility pass completed; Graph Engine remains in design/review. No application code, schema, migration, database or customer data was changed.
