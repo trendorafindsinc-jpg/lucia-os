@@ -1059,3 +1059,212 @@ However, custom-domain activation and TLS provisioning are not connected end-to-
 **Recommendation:** preserve the current exact-host routing and immutable publication snapshot protections. Consolidate domain claim/verification/activation into one state machine and provider adapter boundary. Treat DNS target checks, TLS, backups, restore drills and operational observability as launch-critical infrastructure—not optional polish.
 
 **Phase 1 remains IN PROGRESS.** This repository audit did not access or alter live DNS, hosting, Vercel, TLS, database, object storage, deployment or customer data. It does not certify production availability, domain activation or disaster recovery.
+
+
+---
+
+## 17. Phase 1 consolidation — architecture decisions, contracts and readiness register
+
+**Status:** Consolidated architecture baseline. Repository investigations 1–6 are recorded above. This section supersedes earlier preliminary notes wherever it makes a more explicit decision. It does not claim that target systems have been implemented or that live infrastructure has been verified.
+
+### 17.1 Authority and decision vocabulary
+
+Use these labels throughout future work:
+
+- **AGREED:** a product/architecture decision already established by the product owner or master blueprint. Codex must preserve it unless the owner explicitly changes it.
+- **SPECIFIED:** a recommended technical contract adopted as the Phase 1 design baseline. Implementation must still validate it against current repository conventions and tests.
+- **PROPOSED — OWNER APPROVAL:** a material product or operational choice that must not be silently decided by an engineer or Codex.
+- **VERIFY LIVE:** requires authorised inspection of deployed infrastructure, provider accounts, production database configuration or operational evidence; repository source alone is insufficient.
+- **DEFERRED:** intentionally not required to complete the architecture specification; resolve before the dependent implementation or launch gate.
+
+### 17.2 Canonical decisions
+
+| Area | Decision | Status |
+|---|---|---|
+| User experience | Permanently replace the old editor interface with the new Lucia Studio; do not use the old editor as its foundation. | AGREED |
+| Existing systems | Preserve compatible backend capabilities and customer data; adapt or replace incompatible interfaces and persistence paths through controlled transitions. | AGREED |
+| Website authority | One canonical persistent graph per website is the long-term authority for website structure and composition. | AGREED |
+| Core operation | Creation, composition, editing, validation and rendering work deterministically without AI. | AGREED |
+| Deployment shape | Begin as a modular monolith with explicit module/service boundaries; do not split into microservices prematurely. | AGREED |
+| Canvas | Canvas coordinates and graph organisation are separate from website layout and rendering properties. | AGREED |
+| Preview | Preview and published output use the same graph and rendering contracts; preview is interactive website output, not a canvas screenshot. | AGREED |
+| Graph persistence | Relational PostgreSQL identities, tenant ownership, typed edges, revisions and constraints; schema-validated JSONB for extensible node properties. No giant unvalidated JSON document as permanent authority. | SPECIFIED |
+| Blog | Blog posts and revisions remain a first-class editorial domain; graph nodes describe their placement and presentation, not duplicate editorial records. | SPECIFIED |
+| Media | Central organisation-scoped media library with stable asset IDs; binary originals/derivatives in object storage and metadata/references in PostgreSQL. | AGREED |
+| Commerce | Optional store capability integrated into the existing website; product and inventory records remain independent of presentation and graph layout. | AGREED |
+| Subscription | Lucia platform subscriptions and entitlements are separate from payments made by shoppers to a customer's store. Entitlements are enforced server-side. | AGREED |
+| Domains | Domain ownership, DNS target, TLS readiness and entitlement are separate gates; a hostname or TXT proof alone never authorises public routing. | SPECIFIED |
+| Publishing | Publish immutable, validated website versions; a failed publish must preserve the prior live version. Rollback creates a new deployment/publication pointing to a prior immutable version. | SPECIFIED |
+| Migration | Import legacy content through repeatable adapters, preserve unknown source data, report unsupported features, validate before cutover, and retain a tested recovery path. | AGREED |
+| Data lifecycle | Subscription lapse, migration or feature removal must not silently delete customer content, media, products, orders or records. | AGREED |
+
+### 17.3 Target module boundaries and ownership
+
+The following ownership rules prevent duplicate sources of truth. These are logical modules inside the initial modular monolith.
+
+| Module | Owns | Must not own |
+|---|---|---|
+| Identity and Access | Authenticated identity mapping, organisation membership, roles, permissions and authorization decisions. | Website content or product entitlements. |
+| Website Registry | Website identity, tenant ownership, lifecycle and stable website-level settings. | Canonical page/section/component composition. |
+| Graph Engine | Draft graph, node/edge schemas, graph constraints, graph operations, revisioning and immutable graph versions. | Blog post bodies, product inventory, payment ledger or binary media. |
+| Design Intelligence | Versioned tokens, component/section recipes, page compositions, industry recipes and compatibility rules. | Per-customer graph state. |
+| Composition Engine | Deterministic requirements-to-graph pipeline and recipe selection. | Independent website persistence. |
+| Rendering Engine | Graph resolution, token/data/media binding, responsive output and supported interactions. | Editing or publishing authority. |
+| Validation Engine | Deterministic findings, issue codes, severity and affected resource references. | Silent mutation of customer content. |
+| Media Engine | Organisation-owned asset identity, metadata, processing, storage references, usage tracking and lifecycle. | Copies of blog/product/graph content as separate asset authorities. |
+| Blog Engine | Posts, drafts, revisions, authors, taxonomy, scheduling and editorial SEO data. | Website section composition or binary asset storage. |
+| Commerce Engine | Products, variants, SKU, price, stock, cart, checkout, customer/order and fulfilment records. | Product presentation or Lucia platform subscriptions. |
+| Billing Ledger and Provider Adapters | Invoices, payment attempts, provider references/events, verified settlements and financial audit. | Entitlement policy or website graph. |
+| Subscription and Entitlement Engine | Plans, subscriptions, lifecycle state, capability grants, limits and entitlement decisions. | Customer store shopper orders. |
+| Domain Engine | Hostname claims, verification evidence, DNS target state, TLS state, activation and domain audit. | Authentication or billing settlement. |
+| Publishing Engine | Validated publication/deployment records, activation, health and rollback orchestration. | A second editable website source of truth. |
+| Migration Engine | Source inspection, import mappings, validation reports, cutover and recovery orchestration. | Long-term parallel legacy content authority. |
+| Job Runner | Durable jobs, leases, idempotency, retries, backoff and dead-letter diagnostics. | Domain-specific business policy. |
+| Operations and Recovery | Backup policy, restore evidence, monitoring, alerting, incident/runbook and operational audit. | Customer-facing product content. |
+
+Cross-module calls must use explicit internal service contracts. Modules must not reach into another module's private tables or bypass its authorization and lifecycle rules merely because they share a database.
+
+### 17.4 Canonical data ownership and transition rules
+
+1. **Website structure:** Graph Engine becomes the sole writer/authority after a website's graph cutover. Existing `website_pages`, `website_structures`, `website_versions` and serialized draft/published payloads may serve as import sources or explicitly defined compatibility projections during transition. Do not permit indefinite dual-write.
+2. **Routes and public URL identity:** Website Registry/Domain Engine own website and hostname identity. A route projection may be retained for efficient public resolution, but it must be derived from and validated against the canonical published graph/version.
+3. **Published state:** Publishing Engine records which immutable graph version is live for a site/host. The public runtime resolves only the exact active hostname and its authorised published version/path.
+4. **Editorial content:** Blog Engine owns normalized post/revision content. Graph references post identity and presentation placement. Do not copy full post content into graph nodes as a competing authority.
+5. **Products and orders:** Commerce Engine owns product, price, inventory and order records. Graph references product/collection identities and presentation configuration only.
+6. **Media:** Media Engine owns stable asset IDs and binary-object lifecycle. Blog, commerce and graph store references and usage metadata, not duplicate originals.
+7. **Billing:** Billing ledger owns financial events and settlements. Subscription Engine derives entitlement state from verified financial/lifecycle events; client UI state is never proof of payment.
+8. **Canvas:** Canvas positions are user/workspace presentation state and cannot be interpreted as website layout instructions.
+9. **Unknown legacy content:** Preserve original source payload and import diagnostics until the owner accepts the converted result and the retention/rollback window is complete.
+10. **Deletion:** Every destructive lifecycle action must first check ownership, references, retention, dependencies and recovery policy; provide soft-delete/quarantine where appropriate.
+
+### 17.5 Contract baseline
+
+These are logical contract shapes and responsibilities, not a demand to implement every endpoint in one change. Exact route naming may follow established repository conventions after implementation inspection.
+
+#### Graph Engine
+
+- Read graph: website scope, authorised actor, draft revision, schema version and requested expansion.
+- Apply operation batch: website ID, actor, base revision, idempotency key, ordered typed operations and validated payloads.
+- Return: accepted/rejected result, resulting revision, affected node IDs, validation findings and operation/version reference.
+- Read/restore version: immutable version ID, actor, permission check and explicit restore operation.
+- Canvas state: independently read/write positions, lock state and viewport metadata; never modifies graph layout properties.
+- Invariants: tenant/site consistency, edge type/cardinality/cycle constraints, schema validation, permission checks, transactional atomicity, optimistic concurrency and idempotent retries.
+
+#### Composition and Design Intelligence
+
+- Input: structured requirements, explicit user-provided facts, selected industry/design direction and deterministic defaults.
+- Output: proposed graph plus recipe/version provenance, unresolved questions, assumptions and validation findings.
+- Must never fabricate business facts, testimonials, addresses, contact details, credentials or licensing rights.
+- Recomposition must be scoped and reviewable; it must not silently overwrite unrelated user edits.
+
+#### Rendering and Validation
+
+- Rendering input: graph/version ID, route, viewport, environment configuration and authorised data/media resolvers.
+- Rendering output: deterministic accessible website representation and diagnostics.
+- Validation output: stable issue code, severity, explanation, affected node/resource ID, rule version and actionable remediation.
+- Preview must be interactive and use the same renderer/graph contract as publication.
+
+#### Media
+
+- Upload initiation: organisation, actor, declared metadata, expected size/type and idempotency key.
+- Upload completion: asset ID, storage upload reference and server-verified object metadata/checksum.
+- Asset read/update: tenant-authorised metadata and processing state.
+- Usage operations: attach/detach stable asset ID to an authorised graph/blog/product resource.
+- Delete: reject or quarantine when references, retention or published usage prevent safe deletion.
+- Large uploads: bounded resumable/multipart workflow with short-lived signed parts and reconciliable state.
+
+#### Blog and Commerce
+
+- Blog operations use stable post IDs and revision preconditions; publishing/scheduling is server-authoritative.
+- Commerce product and inventory mutations are transactional and auditable; cart/checkout/order state is independent from graph presentation.
+- Product media is a reference to Media Engine asset ID.
+- Price, currency, stock and availability are resolved from Commerce Engine at render/checkout time, not copied into static graph content as authoritative values.
+
+#### Billing and Entitlements
+
+- Checkout initiation creates a local invoice/payment attempt before redirecting to a provider.
+- Webhook handling verifies raw-body signatures, resolves the local attempt, verifies transaction status/amount/currency server-to-server, and settles idempotently.
+- Provider events are persisted with unique event identity and replay/reconciliation support.
+- Entitlements are granted only from verified state transitions; every protected API and worker checks them server-side.
+- Platform billing must be isolated from customer store sales and their payment credentials/ledgers.
+
+#### Domain and Publishing
+
+- Domain activation requires verified ownership, expected DNS target, TLS readiness, website/tenant authorization and applicable entitlement.
+- Provider provisioning is idempotent and asynchronous; provider response is evidence, while Lucia's domain state machine is authoritative.
+- Publishing validates the selected immutable graph version and dependencies before activation.
+- Failed publication leaves the previous live version untouched.
+- Public resolution requires exact active host → tenant/site binding → live immutable version → valid published path. Cache keys and request context must not cross tenant/host boundaries.
+
+#### Migration
+
+- Each adapter declares source type/version, supported mappings, unsupported features, stable identity strategy and source-retention policy.
+- Imports are idempotent and restartable; each batch records source identity, destination identity, checksum/status and diagnostics.
+- Cutover requires counts/checksums, route/content/media/SEO validation, user acceptance and tested rollback.
+- No legacy writer is disabled until the corresponding graph-backed read/write path has passed acceptance.
+
+### 17.6 Required security and operational invariants
+
+These are non-negotiable acceptance properties:
+
+- Authentication and authorization precede tenant-scoped data access; RLS context is defence in depth, not proof of identity or permission.
+- Every tenant-owned graph node, edge, media asset, post, product, order, domain and billing record is checked against organisation/site ownership.
+- Runtime database credentials must be least-privilege and non-BYPASSRLS; table ownership and FORCE RLS requirements must be explicitly verified for the deployed role.
+- SECURITY DEFINER functions require fixed search path, narrow owner privileges, explicit grants and security tests.
+- Anonymous public reads expose only published content for the exact active host/path and approved public media.
+- Payment events are authenticated, idempotent, replay-safe and verified with the provider; client redirects never settle payments.
+- Uploads are content-inspected, size/type-limited, tenant-authorised and protected from object-key/path injection.
+- Signed upload/download URLs are short-lived and scoped.
+- Secrets never enter source control, client bundles, logs or public responses.
+- Destructive operations require dependency checks, audit records and recoverability.
+- Backups include both database metadata and referenced binary objects; a restore drill validates the combined system.
+- Job execution is idempotent and bounded; duplicate delivery, crash recovery and poison jobs are observable.
+- Logs and diagnostics must avoid secrets and unnecessary personal data.
+
+### 17.7 Decision register — owner approvals and deferred choices
+
+The architecture should not invent the following commercial or operational values. Record the eventual choice in a product/operations decision record before implementing the dependent feature.
+
+| Decision | Recommended approach | Status / when required |
+|---|---|---|
+| Custom-domain provider and hosting integration | Keep provider-neutral adapter boundary; choose the first supported provider after reviewing existing production hosting and cost. | PROPOSED — OWNER APPROVAL before custom-domain provisioning implementation. |
+| Custom-domain subscription price, billing interval and included limits | Define explicit plan catalogue and server-authoritative prices; do not hardcode UI prices. | PROPOSED — OWNER APPROVAL before Lucia Store checkout launch. |
+| Subscription grace period and post-expiry access | Preserve customer data; define which operations remain read-only, which are blocked, notification timing and reinstatement. | PROPOSED — OWNER APPROVAL before subscription enforcement launch. |
+| Supported payment providers and settlement currencies | Reuse existing Paystack/Flutterwave foundations only after end-to-end provider verification; define currency-specific minor-unit rules. | PROPOSED — OWNER APPROVAL and provider verification before live billing. |
+| Commerce payment, shipping and tax providers/markets | Select based on launch geography, legal obligations, provider availability and fees; keep adapters replaceable. | DEFERRED until Commerce implementation scope is approved. |
+| Media storage/bandwidth quotas and overage policy | Transparent usage limits and pricing; avoid arbitrary item-count caps as the primary commercial limit. | PROPOSED — OWNER APPROVAL before central Media Library launch. |
+| Supported media formats, maximum sizes and video processing profiles | Start with a documented safe allowlist and bounded processing profiles; expand only with scanning and cost controls. | SPECIFY during Media implementation; exact limits require owner approval. |
+| Backup RPO/RTO, retention and recovery regions | Set measurable objectives based on customer impact, provider capability and budget; prove them with restore drills. | PROPOSED — OWNER APPROVAL before production launch. |
+| Initial supported industries and recipe catalogue | Launch with a deliberately bounded catalogue and versioned recipes; expand from observed customer demand. | PROPOSED — OWNER APPROVAL before Design Intelligence content production. |
+| Legacy migration coverage | Publish a supported-source matrix; unknown features must be reported and preserved, not silently dropped. | PROPOSED — OWNER APPROVAL before migration promises/cutover. |
+| Public hosting regions, CDN and bandwidth policy | Verify current deployment topology and choose explicit availability/cost targets. | VERIFY LIVE; operational policy before launch. |
+
+These decisions do not justify guessing during Phase 1. Provider-neutral interfaces and state machines can be specified now; provider-specific implementation must wait for the relevant decision.
+
+### 17.8 Phase 1 completion checklist
+
+| Deliverable | Result |
+|---|---|
+| Agreed product direction and eight-phase sequence | COMPLETE — captured in the master blueprint. |
+| Current repository baseline and evidence inventory | COMPLETE for the reviewed areas; findings are source-level and branch-specific. |
+| Editor, draft-save, preview and publishing call-path audit | COMPLETE — Section 13. |
+| Database, migrations, tenant isolation and graph transition audit | COMPLETE — Section 14. |
+| Billing, subscriptions, entitlements and commerce audit | COMPLETE — Section 15. |
+| Domains, hosting, object storage, workers and operational gaps audit | COMPLETE at repository level — Section 16. |
+| Target module boundaries and canonical data ownership | SPECIFIED — Section 17.3–17.4. |
+| Graph, composition, rendering, media, blog, commerce, billing, domain, publishing and migration contract baseline | SPECIFIED — Section 17.5. |
+| Security and operational invariants | SPECIFIED — Section 17.6. |
+| Product-owner and live-infrastructure decision register | RECORDED — Section 17.7; choices remain open where identified. |
+| Exact implementation schema, endpoint payload schemas and event catalog | NEXT IMPLEMENTATION-DESIGN DETAIL — refine per phase/module against current code before coding; do not infer these as already implemented. |
+| Production database role, live provider settings, DNS/TLS, backup and restore evidence | VERIFY LIVE — not accessible or certified by repository audit. |
+| Product-owner approval of this consolidated architecture and outstanding commercial/operational decisions | PENDING. |
+
+### 17.9 Phase 1 exit interpretation
+
+Phase 1 has produced a consolidated, implementation-guiding architecture baseline. It is suitable to guide the next detailed implementation specifications, but it is **not a production-readiness certification** and it does not authorise broad implementation or destructive migration.
+
+Phase 1 may be marked **CLOSED — ARCHITECTURE BASELINE APPROVED** only after the product owner reviews and approves the agreed decisions and module boundaries in this document, or records explicit amendments. Items labelled VERIFY LIVE remain launch-readiness work and must not be represented as completed merely to close the architecture phase.
+
+Phase 2 must begin with a focused Graph Engine implementation specification: final node/edge discriminated unions, schema versions, constraints/cardinality/cycle rules, relational schema and RLS policies, operation-batch contract, concurrency/idempotency, immutable version model, canvas-state contract, migration adapter boundary and executable acceptance tests. Inspect the current branch and code again immediately before implementation.
+
+**Scope and safety:** This consolidation changes documentation only. It does not change application code, database schema/data, customer websites, payment configuration, subscriptions, domains, DNS, TLS, object storage, hosting or deployments. No live infrastructure or backup/restore drill has been verified.
