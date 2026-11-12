@@ -264,3 +264,137 @@ No implementation phase should rely on unresolved foundational assumptions.
 Continue repository discovery before freezing the schema or API contracts. Prioritize tracing the existing website persistence and publishing paths, then identity/tenant authorization and media storage. Update this document with verified findings, file references, diagrams and proposed contracts.
 
 **Phase status remains: IN PROGRESS.**
+
+
+## 11. Repository investigation — website persistence, publishing, identity and media
+
+This section records additional verified implementation details from the next repository investigation pass. It does not claim that all website routes and call sites have been traced.
+
+### 11.1 Website persistence and publishing evidence
+
+Verified from `src/lib/db/schema.ts` and migrations:
+
+- `website_pages` stores tenant-owned page rows with `title`, `path`, draft `content`, status and a separate `published_content` field.
+- `website_structures` stores one serialized `structure` text value per organization/website pair. Migration `0010_website_structures.sql` explicitly describes it as separate from page content, drafts and published snapshots.
+- `website_versions` stores durable labeled text snapshots. Migration `0007_website_versions.sql` states that existing drafts and published content are untouched.
+- Migration `0004_website_publishing.sql` introduced a published timestamp, page-level published content and public-read policies for published websites/pages.
+- Migration `0008_website_page_tenant_integrity.sql` adds a composite foreign key ensuring a page belongs to the same organization as its website. Its preflight deliberately fails rather than silently reassigning/deleting mismatched data.
+- Migration `0009_tenant_rls_hardening.sql` and subsequent migrations add database row-level security protections.
+
+**Architecture implication:** the new graph must not be treated as a simple rename of `website_structures`. We still need to inspect the actual serialization formats and all writers/readers. The migration design should map existing page content, structure, versions and published content into a graph-backed working version and a graph-backed immutable published version while retaining recoverable legacy records until acceptance.
+
+### 11.2 Public website request routing
+
+Verified from:
+
+- `src/middleware.ts`
+- `src/lib/publishing/host.ts`
+- `src/lib/publishing/platform-hosts.ts`
+- `src/app/tenant-site-internal/page.tsx`
+- `src/app/api/public/v1/content/route.ts`
+
+The middleware distinguishes platform hosts, Lucia subdomains and custom domains. Lucia subdomains are parsed with reserved-slug and hostname validation; platform hosts bypass customer-site rewriting. Customer-domain requests are rewritten to an internal tenant-site route, while private/API/internal paths are blocked from customer domains. The internal root page delegates rendering to `PublicWebsite` from `@/lib/domains/public-site`.
+
+The public content endpoint resolves the Lucia subdomain from the request host and calls `readPublishedContentContract`. It uses a host-varying cache policy.
+
+**Important boundary:** host resolution is routing, not authorization. The middleware comment explicitly says host selection does not grant resource authorization. Public rendering and data access must independently bind the requested hostname to an active domain/site and only expose approved published data.
+
+The implementation of the imported `PublicWebsite` and `readPublishedContentContract` symbols was not located at the first guessed file paths; their actual module paths and complete data access must be traced before the publishing contract is frozen.
+
+### 11.3 Identity, tenant authorization and database scope
+
+Verified from:
+
+- `src/lib/auth/session.ts`
+- `src/lib/access/guards.ts`
+- `src/lib/access/policy.ts`
+- `src/lib/db/tenant-scope.ts`
+- `src/lib/tenancy/tenant-context.ts`
+- `src/lib/db/client.ts`
+- `drizzle/0001_product_sessions.sql`
+- `drizzle/0009_tenant_rls_hardening.sql`
+- `drizzle/0014_runtime_identity_session_rls.sql`
+
+Findings:
+
+- The local session cookie is HttpOnly-read through the server cookie API; the raw token is SHA-256 hashed before lookup.
+- Lucia Core is documented as the identity authority. Lucia OS maintains a local user reference and product-local session after its Core identity exchange.
+- Organization membership and product permissions are resolved from Lucia OS database records, not trusted from request payloads.
+- Organization roles currently include owner, admin, editor and viewer, with explicit permission sets.
+- Platform staff privileges are separately granted and do not derive from organization roles.
+- Database helpers set transaction-local user/organization context for RLS. Their comments explicitly warn that context setup is not authentication or authorization by itself.
+- The production DB client selects `DATABASE_URL_RUNTIME` and documents the requirement for a dedicated non-BYPASSRLS runtime role.
+- Migrations enable and, for selected tables, force row-level security.
+
+**Target requirement:** every graph, media and module operation must resolve a verified actor and active tenant membership, apply the specific permission, and execute all tenant queries in the correctly scoped transaction. New graph tables must receive RLS policies and least-privilege grants as part of their migrations. Public reads need separately designed host/site/published-state policies; tenant RLS must not be bypassed casually.
+
+### 11.4 Existing media implementation
+
+Verified from:
+
+- `src/lib/db/schema.ts`
+- `src/lib/media/service.ts`
+- `src/lib/media/storage.ts`
+- `src/lib/media/multipart-storage.ts`
+- `src/lib/media/references.ts`
+- `src/app/api/media/[id]/route.ts`
+- migrations `0016_customer_media.sql`, `0024_typed_customer_media.sql`, `0025_media_upload_reconciliation.sql`
+
+Findings:
+
+- The current media registry is scoped to an organization **and a website**, rather than a reusable organization-level library.
+- The current model supports image, video and PDF document assets.
+- Image uploads are compressed to WebP; large video/document uploads use S3-compatible multipart storage with signed part URLs.
+- Storage is configured through S3-compatible endpoint/bucket/region/credentials. Original binaries are stored outside PostgreSQL.
+- Media references use opaque `media:<uuid>` identifiers; object keys are not intended to be embedded in content.
+- Media operations resolve website membership and permissions server-side.
+- Existing implementation has a 200-image library item cap in the inspected image upload path, per-website byte quotas, product-level reserved-byte accounting and upload-rate limits. Do not mistake the target aspiration for large reusable libraries as already implemented.
+- Media deletion checks draft pages, published page content, website version snapshots, blog content and article revisions, and applies a 30-day published-media grace period.
+- Stale multipart uploads have a reconciliation path using database functions and storage cleanup.
+- Public media delivery checks publication/access conditions; private media responses use private no-store caching.
+
+**Architecture implication:** preserve the current safe upload/storage and reconciliation mechanisms where compatible, but evolve the ownership model. The target library should have organization-level asset identity, with website/blog/store references represented separately. A migration must retain current website-scoped assets and map them into the organization library without changing their public URLs or deleting binaries. The final design must also decide whether shared assets are organization-owned with optional website-level visibility, or whether a more granular permission model is required.
+
+### 11.5 Blog and content model evidence
+
+Verified from `src/lib/db/schema.ts`, `src/lib/content/article-model.ts`, `src/lib/content/content-library.ts`, and migrations `0017_website_articles.sql`, `0024_typed_customer_media.sql`, `0031_article_content_blocks.sql`.
+
+The schema has both an older serialized `website_content_libraries` record and normalized `website_posts` / `website_post_revisions` tables. The normalized post model supports blog/news kinds, structured content blocks, revision numbers, published snapshots, featured media references, taxonomy/SEO fields and scheduling metadata.
+
+Migration `0017` explicitly says legacy JSON drafts remain intact while normalized posts are introduced. Migration `0031` adds structured content blocks while preserving existing body and published snapshots.
+
+**Architecture implication:** blog content should remain a first-class domain module, not be converted wholesale into generic graph nodes. The website graph should represent where/how blog listings and article templates appear; normalized post records remain the source of truth for editorial content. Existing legacy libraries require a controlled import/compatibility plan.
+
+### 11.6 Migration chain reviewed
+
+The Drizzle journal lists migrations from `0000_tenant_foundation` through `0031_article_content_blocks`. Key reviewed migrations are referenced above. The migration history confirms that the existing product has evolved incrementally and has explicit tenant-integrity, RLS, publication, versioning, media and content compatibility concerns.
+
+The full migration chain and generated SQL still need a systematic audit before any schema migration is proposed. Do not edit historical migrations to retrofit the graph. New schema changes should use forward-only migrations with preflight checks, explicit backfills, validation queries and a documented recovery plan.
+
+### 11.7 Schema observation requiring verification
+
+The current `website_posts` table declaration in `src/lib/db/schema.ts` appears to register `website_posts_legacy_source_uq` twice with the same columns and predicate. This is a source-level duplication observation only. Check generated schema/migration state and database reality before proposing a correction; do not assume a production index is duplicated or remove anything without verification.
+
+### 11.8 Remaining investigation gaps
+
+The following are still not verified:
+
+- Complete writer/reader call graph for `website_pages.content`, `published_content`, `website_structures.structure` and `website_versions.snapshot`.
+- Actual current editor UI routes and save/publish request contracts.
+- Implementation and all dependencies of `PublicWebsite` and `readPublishedContentContract`.
+- Custom-domain ownership verification, DNS/SSL provisioning and operational renewal flow.
+- Exact publication/build/release records and rollback mechanics.
+- Payment provider adapters, webhook signature verification and subscription entitlement lifecycle.
+- Current commerce/product/order implementation, if any.
+- Complete migration SQL audit, RLS policy audit and CI/test coverage mapping.
+
+## 12. Updated investigation conclusions
+
+1. The existing backend has substantial reusable foundations: tenancy, session security, RLS, website routing, page publication, version snapshots, object storage, media reconciliation and normalized blog records.
+2. The current website editing/persistence model is not yet the agreed canonical graph architecture.
+3. The existing media implementation is website-scoped and quota-limited; the agreed target is a centrally managed reusable organization media library.
+4. The existing public website delivery path can potentially be adapted to resolve an approved published graph version, but this must be designed only after tracing its complete data access.
+5. Existing page, structure, snapshot, media and blog records must be migrated or adapted with explicit validation and recovery. No silent data loss.
+6. No application implementation or production operation has been performed as part of this investigation.
+
+**Phase 1 remains IN PROGRESS.**
