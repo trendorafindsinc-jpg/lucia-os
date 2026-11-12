@@ -31,6 +31,38 @@ export const designFoundationSchema = z.object({
 }).strict();
 
 export const recipeLayerSchema = z.enum(["component", "section", "page", "industry"]);
+const jsonValueSchema: z.ZodType<unknown> = z.lazy(() => z.union([
+  z.string().max(2000),
+  z.number().finite(),
+  z.boolean(),
+  z.null(),
+  z.array(jsonValueSchema).max(100),
+  z.record(z.string().max(120), jsonValueSchema),
+]));
+
+const prohibitedDefaultKeys = new Set([
+  "html", "rawhtml", "css", "stylesheet", "script", "javascript",
+  "jsx", "component", "componentname", "module", "modulepath",
+  "import", "imports", "url", "src", "href", "onclick", "onload",
+  "eventhandler",
+]);
+
+function findProhibitedDefaultKey(value: unknown): string | undefined {
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const key = findProhibitedDefaultKey(item);
+      if (key) return key;
+    }
+  } else if (value && typeof value === "object") {
+    for (const [key, child] of Object.entries(value)) {
+      if (prohibitedDefaultKeys.has(key.toLowerCase().replace(/[-_]/g, ""))) return key;
+      const nested = findProhibitedDefaultKey(child);
+      if (nested) return nested;
+    }
+  }
+  return undefined;
+}
+
 export const designRecipeSchema = z.object({
   id: recipeId,
   version: z.number().int().positive(),
@@ -51,13 +83,21 @@ export const designRecipeSchema = z.object({
     contrastTarget: z.enum(["AA", "AAA"]),
     reducedMotionAware: z.literal(true),
   }).strict(),
-  defaults: z.record(z.string(), z.unknown()).default({}),
+  defaults: z.record(z.string().max(120), jsonValueSchema).default({}),
 }).strict().superRefine((recipe, ctx) => {
   if (!recipe.id.startsWith(`lucia.design.${recipe.layer}.`)) {
     ctx.addIssue({ code: "custom", path: ["id"], message: "Recipe ID prefix must match its layer." });
   }
   if (new Set(recipe.supportedNodeTypes).size !== recipe.supportedNodeTypes.length) {
     ctx.addIssue({ code: "custom", path: ["supportedNodeTypes"], message: "Node types must be unique." });
+  }
+  const prohibitedKey = findProhibitedDefaultKey(recipe.defaults);
+  if (prohibitedKey) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["defaults"],
+      message: `Recipe defaults contain a prohibited executable or external-reference field: ${prohibitedKey}.`,
+    });
   }
   if (new Set(recipe.requiredTokens).size !== recipe.requiredTokens.length) {
     ctx.addIssue({ code: "custom", path: ["requiredTokens"], message: "Required tokens must be unique." });
