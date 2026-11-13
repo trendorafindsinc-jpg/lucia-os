@@ -31,12 +31,39 @@ export const graphEdgeTypes = [
 export const graphNodeTypeSchema = z.enum(graphNodeTypes);
 export const graphEdgeTypeSchema = z.enum(graphEdgeTypes);
 
+const graphJsonValueSchema: z.ZodType<unknown> = z.lazy(() => z.union([
+  z.string().max(100_000),
+  z.number().finite(),
+  z.boolean(),
+  z.null(),
+  z.array(graphJsonValueSchema).max(1000),
+  z.record(z.string().max(120), graphJsonValueSchema).superRefine((value, ctx) => {
+    if (Object.keys(value).length > 500) ctx.addIssue({ code: "custom", message: "JSON objects may contain at most 500 keys." });
+  }),
+]));
+
+const unsafeJsonKeys = new Set(["__proto__", "prototype", "constructor"]);
+function validateJsonSafety(value: unknown, depth: number, ctx: z.RefinementCtx, path: (string | number)[] = []): void {
+  if (depth > 20) { ctx.addIssue({ code: "custom", path, message: "Graph JSON values may not exceed 20 nested levels." }); return; }
+  if (Array.isArray(value)) { value.forEach((item, index) => validateJsonSafety(item, depth + 1, ctx, [...path, index])); return; }
+  if (value && typeof value === "object") {
+    for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
+      if (unsafeJsonKeys.has(key)) ctx.addIssue({ code: "custom", path: [...path, key], message: "Unsafe JSON object key." });
+      validateJsonSafety(child, depth + 1, ctx, [...path, key]);
+    }
+  }
+}
+
+export const graphPropertiesSchema = z.record(z.string().max(120), graphJsonValueSchema).superRefine((value, ctx) => {
+  if (Object.keys(value).length > 500) ctx.addIssue({ code: "custom", message: "Graph properties may contain at most 500 keys." });
+  validateJsonSafety(value, 0, ctx);
+});
 export const graphNodeSchema = z.object({
   id: z.string().uuid(),
   graphId: z.string().uuid(),
   type: graphNodeTypeSchema,
   schemaVersion: z.number().int().positive(),
-  properties: z.record(z.string(), z.unknown()),
+  properties: graphPropertiesSchema,
   lifecycleStatus: z.enum(["active", "deleted"]).default("active"),
 }).strict();
 
@@ -48,7 +75,7 @@ export const graphEdgeSchema = z.object({
   type: graphEdgeTypeSchema,
   schemaVersion: z.number().int().positive(),
   order: z.number().int().nonnegative().optional(),
-  properties: z.record(z.string(), z.unknown()).default({}),
+  properties: graphPropertiesSchema.default({}),
 }).strict();
 
 export const graphDocumentSchema = z.object({
@@ -64,7 +91,7 @@ export const graphOperationSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("UPDATE_NODE"),
     nodeId: z.string().uuid(),
-    properties: z.record(z.string(), z.unknown()),
+    properties: graphPropertiesSchema,
   }).strict(),
   z.object({ type: z.literal("DELETE_NODE"), nodeId: z.string().uuid() }).strict(),
   z.object({
