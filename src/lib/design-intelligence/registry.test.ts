@@ -103,8 +103,8 @@ describe("Design Intelligence foundations and recipe registry", () => {
   it("resolves exact recipe versions and fails closed with typed diagnostics", () => {
     const id = "lucia.design.section.hero";
     expect(lookupDesignRecipe(id, 1).recipe?.id).toBe(id);
-    expect(lookupDesignRecipe(id, 2).diagnostics[0].code).toBe("RECIPE_VERSION_UNSUPPORTED");
-    expect(lookupDesignRecipe("lucia.design.section.unknown", 1).diagnostics[0].code).toBe("RECIPE_NOT_FOUND");
+    expect(lookupDesignRecipe(id, 2).diagnostics[0]?.code).toBe("RECIPE_VERSION_UNSUPPORTED");
+    expect(lookupDesignRecipe("lucia.design.section.unknown", 1).diagnostics[0]?.code).toBe("RECIPE_NOT_FOUND");
   });
 
   it("deep-freezes manifests and nested defaults", () => {
