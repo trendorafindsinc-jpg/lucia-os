@@ -9,7 +9,7 @@ import { graphPropertiesSchema, type GraphEdgeType, type GraphNodeType } from ".
 const properties = graphPropertiesSchema;
 
 export const nodePropertySchemas: Record<GraphNodeType, z.ZodType> = {
-  website: z.object({ name: z.string().trim().min(1).max(120) }).strict(),
+  website: z.object({\n    name: z.string().trim().min(1).max(120),\n    recipeId: z.string().trim().min(1).max(160).optional(),\n    recipeVersion: z.number().int().positive().optional(),\n  }).strict().refine((value) => (value.recipeId === undefined) === (value.recipeVersion === undefined), { message: "Recipe ID and version must be provided together." }),
   page: z.object({
     title: z.string().trim().min(1).max(120),
     path: z.string().trim().min(1).max(240),
