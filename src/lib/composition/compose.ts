@@ -80,14 +80,15 @@ function recipeFor(
     nodeType,
     availableTokens,
   });
-  if (!selection.matches[0]) {
+  const categoryMatch = selection.matches.find((match) => match.recipe.category === category);
+  if (!categoryMatch) {
     const missingCapability = selection.rejected.some((item) => item.reasons.some((reason) => reason.startsWith("Missing capability:")));
     return {
       recipe: null,
-      diagnostics: [failure(missingCapability ? "MISSING_CAPABILITY" : "RECIPE_INCOMPATIBLE", "No registered recipe satisfies the requested layer, category, capabilities and foundation tokens.")],
+      diagnostics: [failure(missingCapability ? "MISSING_CAPABILITY" : "RECIPE_INCOMPATIBLE", "No registered recipe exactly matches the requested category and satisfies its hard constraints.")],
     };
   }
-  return { recipe: selection.matches[0].recipe, diagnostics: [] };
+  return { recipe: categoryMatch.recipe, diagnostics: [] };
 }
 
 /**
