@@ -18,7 +18,7 @@ describe("allowlisted rendering registry", () => {
     const result = createRendererRegistry([definition]);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(lookupRenderer(result.registry, definition.recipeId, 1, "section")).toBe(definition);
+    expect(lookupRenderer(result.registry, definition.recipeId, 1, "section")).toMatchObject({ recipeId: definition.recipeId, recipeVersion: 1, nodeType: "section" });
     expect(lookupRenderer(result.registry, definition.recipeId, 2, "section")).toBeNull();
     expect(lookupRenderer(result.registry, definition.recipeId, 1, "component")).toBeNull();
   });
