@@ -129,6 +129,7 @@ describe("Design Intelligence foundations and recipe registry", () => {
       { id: "00000000-0000-4000-8000-000000000102", graphId: "00000000-0000-4000-8000-000000000001", type: "page", schemaVersion: 1, properties: { recipeId: "lucia.design.component.button", recipeVersion: 1 }, lifecycleStatus: "active" },
       { id: "00000000-0000-4000-8000-000000000103", graphId: "00000000-0000-4000-8000-000000000001", type: "section", schemaVersion: 1, properties: { recipeId: "lucia.design.section.hero" }, lifecycleStatus: "active" },
       { id: "00000000-0000-4000-8000-000000000104", graphId: "00000000-0000-4000-8000-000000000001", type: "section", schemaVersion: 1, properties: { recipeId: "lucia.design.section.hero", recipeVersion: 9 }, lifecycleStatus: "active" },
+      { id: "00000000-0000-4000-8000-000000000105", graphId: "00000000-0000-4000-8000-000000000001", type: "section", schemaVersion: 1, properties: { recipeId: "unknown" }, lifecycleStatus: "deleted" },
     ] } as unknown as Pick<GraphDocument, "nodes">;
     const diagnostics = resolveGraphRecipeReferences(graph);
     expect(diagnostics.map((item) => item.code)).toEqual(["RECIPE_NODE_TYPE_INCOMPATIBLE", "RECIPE_REFERENCE_INVALID", "RECIPE_VERSION_UNSUPPORTED"]);
