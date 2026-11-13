@@ -19,19 +19,19 @@ export const nodePropertySchemas: Record<GraphNodeType, z.ZodType> = {
   design_token: z.object({
     namespace: z.string().trim().min(1).max(80),
     key: z.string().trim().min(1).max(120),
-  }).passthrough(),
+  }).strict(),
   shared_data: z.object({
     dataSchemaId: z.string().trim().min(1).max(160),
     dataSchemaVersion: z.number().int().positive(),
-  }).passthrough(),
+  }).strict(),
   interaction: z.object({
     trigger: z.string().trim().min(1).max(80),
     action: z.string().trim().min(1).max(80),
-  }).passthrough(),
+  }).strict(),
   responsive_config: properties,
   media_reference: z.object({
     assetId: z.string().uuid(),
-  }).passthrough(),
+  }).strict(),
 };
 
 export interface GraphEdgeRule {
