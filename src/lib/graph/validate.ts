@@ -121,25 +121,32 @@ export function validateGraphDocument(input: unknown): GraphDiagnostic[] {
     }
   }
 
-  const visiting = new Set<string>();
-  const visited = new Set<string>();
-  const visit = (nodeId: string): boolean => {
-    if (visiting.has(nodeId)) return true;
-    if (visited.has(nodeId)) return false;
-    visiting.add(nodeId);
-    for (const childId of containment.get(nodeId) ?? []) {
-      if (visit(childId)) return true;
-    }
-    visiting.delete(nodeId);
-    visited.add(nodeId);
-    return false;
-  };
+  // Iterative DFS avoids call-stack exhaustion on deeply nested, user-authored graphs.
+  const visitState = new Map<string, 0 | 1 | 2>();
+  let cycleNodeId: string | undefined;
   for (const node of graph.nodes) {
-    if (node.lifecycleStatus === "active" && visit(node.id)) {
-      diagnostics.push(diagnostic("GRAPH_CONTAINMENT_CYCLE", "Containment relationships must be acyclic.", { nodeId: node.id }));
-      break;
+    if (node.lifecycleStatus !== "active" || visitState.get(node.id) === 2) continue;
+    const stack: { nodeId: string; nextChildIndex: number }[] = [{ nodeId: node.id, nextChildIndex: 0 }];
+    visitState.set(node.id, 1);
+    while (stack.length > 0) {
+      const frame = stack[stack.length - 1];
+      const children = containment.get(frame.nodeId) ?? [];
+      if (frame.nextChildIndex >= children.length) {
+        visitState.set(frame.nodeId, 2);
+        stack.pop();
+        continue;
+      }
+      const childId = children[frame.nextChildIndex++];
+      const childState = visitState.get(childId) ?? 0;
+      if (childState === 1) { cycleNodeId = childId; break; }
+      if (childState === 0) {
+        visitState.set(childId, 1);
+        stack.push({ nodeId: childId, nextChildIndex: 0 });
+      }
     }
+    if (cycleNodeId) break;
   }
+  if (cycleNodeId) diagnostics.push(diagnostic("GRAPH_CONTAINMENT_CYCLE", "Containment relationships must be acyclic.", { nodeId: cycleNodeId }));
 
   return diagnostics;
 }
