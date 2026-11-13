@@ -148,6 +148,29 @@ describe("Graph Engine contracts", () => {
     expect(graphDocumentSchema.safeParse(withUndefined).success).toBe(false);
   });
 
+  it("rejects cyclic, class-instance, sparse-array and BigInt graph properties without throwing", () => {
+    const cyclic: Record<string, unknown> = {};
+    cyclic.self = cyclic;
+    class CustomValue { value = "not plain JSON"; }
+    const invalidValues = [
+      { cycle: cyclic },
+      { date: new Date("2026-01-01T00:00:00.000Z") },
+      { instance: new CustomValue() },
+      { large: 1n },
+      { sparse: Object.assign([], { 2: "value" }) },
+    ];
+    for (const properties of invalidValues) {
+      expect(() => graphDocumentSchema.safeParse({
+        ...validGraph,
+        nodes: [{ ...root, properties: { name: "Example", ...properties } }, page, section],
+      })).not.toThrow();
+      expect(graphDocumentSchema.safeParse({
+        ...validGraph,
+        nodes: [{ ...root, properties: { name: "Example", ...properties } }, page, section],
+      }).success).toBe(false);
+    }
+  });
+
   it("rejects unsafe object keys and excessively deep graph properties", () => {
     const unsafe = JSON.parse('{"name":"Example","constructor":{"prototype":{"polluted":true}}}');
     const deep: Record<string, unknown> = { value: "leaf" };
