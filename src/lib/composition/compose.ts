@@ -14,8 +14,8 @@ import {
   lookupDesignRecipe,
   resolveGraphRecipeReferences,
   selectDesignRecipes,
-  type DesignRecipe,
 } from "@/lib/design-intelligence/registry";
+import type { DesignRecipe } from "@/lib/design-intelligence/contracts";
 import {
   compositionDiagnosticSchema,
   type CompositionDiagnostic,
