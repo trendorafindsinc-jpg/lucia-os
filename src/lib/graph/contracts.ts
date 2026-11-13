@@ -31,7 +31,7 @@ export const graphEdgeTypes = [
 export const graphNodeTypeSchema = z.enum(graphNodeTypes);
 export const graphEdgeTypeSchema = z.enum(graphEdgeTypes);
 
-/** Strict JSONB-safe value guard shared by every persisted graph property payload. */
+/** Strict JSONB-safe guard for persisted graph properties; see regression cases in graph.test.ts. */
 function isGraphJsonValue(value: unknown, depth = 0, ancestors = new WeakSet<object>()): boolean {
   if (depth > 20) return false;
   if (value === null || typeof value === "boolean") return true;
