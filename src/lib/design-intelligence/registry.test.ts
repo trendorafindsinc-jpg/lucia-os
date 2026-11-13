@@ -68,6 +68,7 @@ describe("Design Intelligence foundations and recipe registry", () => {
     expect(first.matches.map((item) => item.recipe.id)).toEqual([
       "lucia.design.component.button",
       "lucia.design.component.card",
+      "lucia.design.component.navigation",
     ]);
   });
 
