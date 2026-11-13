@@ -174,4 +174,25 @@ describe("Graph Engine contracts", () => {
     expect(graphDocumentSchema.safeParse({ ...validGraph, nodes: [] }).success).toBe(true);
     expect(validateGraphDocument({ ...validGraph, nodes: [] }).some((item) => item.code === "GRAPH_ROOT_COUNT_INVALID")).toBe(true);
   });
+
+  it("rejects unregistered keys on fixed-contract node types", () => {
+    const invalidWebsite = { ...validGraph, nodes: [{ ...root, properties: { name: "Example", executable: "run()" } }, page, section] };
+    const invalidPage = { ...validGraph, nodes: [root, { ...page, properties: { title: "Home", path: "/", renderer: "custom" } }, section] };
+    expect(validateGraphDocument(invalidWebsite).some((item) => item.code === "GRAPH_NODE_PROPERTIES_INVALID")).toBe(true);
+    expect(validateGraphDocument(invalidPage).some((item) => item.code === "GRAPH_NODE_PROPERTIES_INVALID")).toBe(true);
+  });
+
+  it("allows extensible section data only when values are bounded JSON", () => {
+    const extendedSection = {
+      ...validGraph,
+      nodes: [root, page, { ...section, properties: { layout: { columns: 3, gap: 24 }, visible: true, tags: ["hero", "intro"] } }],
+    };
+    const unsafeSection = {
+      ...validGraph,
+      nodes: [root, page, { ...section, properties: { layout: { render: () => null } } }],
+    };
+    expect(validateGraphDocument(extendedSection)).toEqual([]);
+    expect(graphDocumentSchema.safeParse(unsafeSection).success).toBe(false);
+  });
+
 });
