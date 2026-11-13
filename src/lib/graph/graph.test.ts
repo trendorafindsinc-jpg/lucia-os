@@ -156,4 +156,16 @@ describe("Graph Engine contracts", () => {
     expect(graphDocumentSchema.safeParse({ ...validGraph, nodes: [{ ...root, properties: unsafe }, page, section] }).success).toBe(false);
     expect(graphDocumentSchema.safeParse({ ...validGraph, nodes: [{ ...root, properties: { name: "Example", nested: deep } }, page, section] }).success).toBe(false);
   });
+  it("validates deeply nested containment without recursive call-stack traversal", () => {
+    const makeId = (value: number) => "00000000-0000-4000-8000-" + value.toString().padStart(12, "0");
+    const components = Array.from({ length: 1500 }, (_, index) => ({
+      id: makeId(100 + index), graphId, type: "component" as const, schemaVersion: 1, properties: {}, lifecycleStatus: "active" as const,
+    }));
+    const componentEdges = components.map((node, index) => ({
+      id: makeId(3000 + index), graphId, sourceNodeId: index === 0 ? sectionId : components[index - 1].id,
+      targetNodeId: node.id, type: "contains_component" as const, schemaVersion: 1, order: 0, properties: {},
+    }));
+    const graph = { ...validGraph, nodes: [...validGraph.nodes, ...components], edges: [...validGraph.edges, ...componentEdges] };
+    expect(validateGraphDocument(graph)).toEqual([]);
+  });
 });
