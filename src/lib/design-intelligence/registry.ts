@@ -30,6 +30,7 @@ export const coreFoundation = designFoundationSchema.parse({
   shadows: { none: "none", subtle: "0 1px 3px rgba(0,0,0,0.08)" },
   breakpoints: { mobile: 640, tablet: 900, desktop: 1200 },
   motion: { durationFastMs: 120, durationNormalMs: 220, reducedMotionByDefault: false },
+  contentWidth: { narrow: 680, standard: 960, wide: 1200, full: 1600 },
 });
 
 const recipes: DesignRecipeInput[] = [
@@ -83,8 +84,31 @@ const recipes: DesignRecipeInput[] = [
   },
 ];
 
-export const designRecipeRegistry: readonly DesignRecipe[] = Object.freeze(
-  recipes.map((recipe) => designRecipeSchema.parse(recipe)),
+function createRecipe(id: string, layer: RecipeLayer, category: string, nodeType: DesignRecipe["supportedNodeTypes"][number], requiredTokens: string[], capabilities: string[], tags: string[], defaults: Record<string, unknown> = {}, semanticRole = "region"): DesignRecipeInput {
+  return { id: "lucia.design." + layer + "." + id, version: 1, layer, category, supportedNodeTypes: [nodeType], requiredTokens, capabilities, tags, responsive: { mobileFirst: true, breakpoints: ["mobile", "tablet", "desktop"], behavior: "reflow" }, accessibility: { semanticRole, keyboardOperable: true, contrastTarget: "AA", reducedMotionAware: true }, defaults };
+}
+const catalogueAdditions: DesignRecipeInput[] = [
+  createRecipe("link", "component", "navigation", "component", ["color.primary", "typography.bodyFont", "spacing.sm"], ["navigation", "keyboard-navigation"], ["interactive", "navigation"], { emphasis: "inline" }, "link"),
+  createRecipe("navigation", "component", "navigation", "component", ["color.surface", "color.text", "spacing.md"], ["navigation", "keyboard-navigation"], ["header", "navigation"], { placement: "header", collapsibleOnMobile: true }, "navigation"),
+  createRecipe("form-field", "component", "form", "component", ["color.text", "color.border", "color.focus", "radius.sm", "spacing.sm"], ["form-input", "labelled-control", "validation-state"], ["form", "input"], { labelPosition: "above" }, "group"),
+  createRecipe("feature-grid", "section", "features", "section", ["color.canvas", "color.text", "spacing.lg", "contentWidth.standard"], ["feature-list", "content-container"], ["features", "marketing"], { columns: 3 }),
+  createRecipe("services", "section", "services", "section", ["color.surface", "color.text", "spacing.lg", "contentWidth.wide"], ["service-list", "content-container"], ["services", "business"], { presentation: "cards" }),
+  createRecipe("testimonials", "section", "testimonials", "section", ["color.canvas", "color.text", "spacing.lg"], ["social-proof", "quote-content"], ["trust", "reviews"], { presentation: "quotes" }),
+  createRecipe("pricing", "section", "pricing", "section", ["color.surface", "color.text", "color.primary", "spacing.lg"], ["pricing-options", "comparison"], ["pricing", "conversion"], { presentation: "tiers" }),
+  createRecipe("gallery", "section", "gallery", "section", ["color.canvas", "spacing.md", "radius.md"], ["media-gallery", "responsive-images"], ["media", "portfolio"], { columns: 3 }),
+  createRecipe("faq", "section", "faq", "section", ["color.surface", "color.text", "spacing.md"], ["questions-and-answers", "keyboard-navigation"], ["support", "content"], { presentation: "accordion" }),
+  createRecipe("about", "page", "about", "page", ["color.canvas", "typography.headingFont", "contentWidth.standard"], ["navigation", "story-content"], ["about", "company"], { sectionOrder: ["introduction", "story", "team", "contact"] }, "main"),
+  createRecipe("services", "page", "services", "page", ["color.canvas", "typography.headingFont", "contentWidth.wide"], ["navigation", "service-list"], ["services", "business"], { sectionOrder: ["hero", "services", "process", "contact"] }, "main"),
+  createRecipe("contact", "page", "contact", "page", ["color.canvas", "typography.headingFont", "spacing.lg"], ["navigation", "contact-details", "enquiry-action"], ["contact", "conversion"], { sectionOrder: ["introduction", "contact-details", "form"] }, "main"),
+  createRecipe("blog-index", "page", "blog", "page", ["color.canvas", "color.text", "contentWidth.wide"], ["navigation", "article-list"], ["blog", "content"], { presentation: "article-list" }, "main"),
+  createRecipe("product-listing", "page", "commerce", "page", ["color.canvas", "color.text", "spacing.md"], ["product-list", "filtering"], ["commerce", "catalogue"], { presentation: "product-grid" }, "main"),
+  createRecipe("landing", "page", "landing", "page", ["color.canvas", "color.primary", "typography.headingFont", "contentWidth.standard"], ["primary-message", "conversion"], ["campaign", "landing"], { sectionOrder: ["hero", "benefits", "proof", "conversion"] }, "main"),
+  createRecipe("retail", "industry", "retail", "website", ["color.primary", "typography.bodyFont", "spacing.lg"], ["product-catalogue", "storefront", "contact"], ["retail", "commerce"], { tone: "welcoming", contentPriority: ["catalogue", "trust", "contact"] }, "document"),
+  createRecipe("hospitality", "industry", "hospitality", "website", ["color.primary", "typography.headingFont", "contentWidth.wide"], ["booking-information", "gallery", "contact"], ["hospitality", "local-business"], { tone: "welcoming", contentPriority: ["experience", "gallery", "booking"] }, "document"),
+];
+function deepFreeze<T>(value: T): T { if (value && typeof value === "object" && !Object.isFrozen(value)) { Object.freeze(value); for (const child of Object.values(value as Record<string, unknown>)) deepFreeze(child); } return value; }
+export const designRecipeRegistry: readonly DesignRecipe[] = deepFreeze(
+  [...recipes, ...catalogueAdditions].map((recipe) => designRecipeSchema.parse(recipe)),
 );
 
 export interface RecipeSelectionRequest {
@@ -108,13 +132,30 @@ export interface RecipeRejection {
   reasons: string[];
 }
 
+export function foundationTokenPaths(foundation: typeof coreFoundation = coreFoundation): readonly string[] {
+  const paths = [...Object.keys(foundation.colors).map((key) => "color." + key), "typography.bodyFont", "typography.headingFont", ...Object.keys(foundation.typography.scale).map((key) => "typography.scale." + key), ...Object.keys(foundation.typography.lineHeight).map((key) => "typography.lineHeight." + key), ...Object.keys(foundation.spacing).map((key) => "spacing." + key), ...Object.keys(foundation.radius).map((key) => "radius." + key), ...Object.keys(foundation.shadows).map((key) => "shadow." + key), ...Object.keys(foundation.breakpoints).map((key) => "breakpoint." + key), ...Object.keys(foundation.motion).map((key) => "motion." + key), ...Object.keys(foundation.contentWidth).map((key) => "contentWidth." + key)];
+  return Object.freeze(paths.sort());
+}
+export type RecipeDiagnostic = { code: "RECIPE_NOT_FOUND" | "RECIPE_VERSION_UNSUPPORTED"; recipeId: string; requestedVersion: number; availableVersions: number[]; message: string };
+export type RecipeLookupResult = { recipe: DesignRecipe; diagnostics: [] } | { recipe: null; diagnostics: [RecipeDiagnostic] };
+export function lookupDesignRecipe(recipeId: string, version: number, registry: readonly DesignRecipe[] = designRecipeRegistry): RecipeLookupResult {
+  const matching = registry.filter((item) => item.id === recipeId); const exact = matching.find((item) => item.version === version);
+  if (exact) return { recipe: exact, diagnostics: [] };
+  const availableVersions = matching.map((item) => item.version).sort((a, b) => a - b);
+  return { recipe: null, diagnostics: [{ code: matching.length ? "RECIPE_VERSION_UNSUPPORTED" : "RECIPE_NOT_FOUND", recipeId, requestedVersion: version, availableVersions, message: matching.length ? "Requested version is unavailable; supported versions: " + availableVersions.join(", ") : "Recipe is not registered." }] };
+}
 export function validateRecipeRegistry(input: readonly DesignRecipe[]): string[] {
   const issues: string[] = [];
   const seen = new Set<string>();
-  for (const recipe of input) {
-    const key = `${recipe.id}@${recipe.version}`;
-    if (seen.has(key)) issues.push(`Duplicate recipe version: ${key}`);
+  const knownTokens = new Set(foundationTokenPaths());
+  for (const candidate of input) {
+    const parsed = designRecipeSchema.safeParse(candidate);
+    if (!parsed.success) { issues.push("Invalid recipe manifest."); continue; }
+    const recipe = parsed.data;
+    const key = recipe.id + "@" + recipe.version;
+    if (seen.has(key)) issues.push("Duplicate recipe version: " + key);
     seen.add(key);
+    for (const token of recipe.requiredTokens) if (!knownTokens.has(token)) issues.push("Unknown foundation token: " + key + " requires " + token);
   }
   return issues;
 }
