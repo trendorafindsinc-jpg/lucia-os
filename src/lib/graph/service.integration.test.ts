@@ -216,4 +216,17 @@ describe.sequential("Graph Persistence Service (PostgreSQL)", () => {
     expect(viewer?.canvasPositions).toHaveLength(1);
     expect(viewer?.canvasPositions[0]).toMatchObject({ x: -20, y: 30 });
   });
+  it("rejects graph and canvas writes after a website is soft-deleted", async () => {
+    auth.userId = ids.userA;
+    await owner`UPDATE websites SET status = 'deleted' WHERE id = ${ids.siteA}`;
+    try {
+      await expect(mutateWebsiteGraph(ids.orgA, batch(currentRevision, "graph-service-deleted-site-0001", [
+        { type: "UPDATE_NODE", nodeId: pageId, properties: { title: "Must not write", path: "/" } },
+      ]))).rejects.toMatchObject({ code: "NOT_FOUND" });
+      await expect(saveCanvasPosition(ids.orgA, ids.siteA, { nodeId: rootId, x: 1, y: 1 }))
+        .rejects.toMatchObject({ code: "NOT_FOUND" });
+    } finally {
+      await owner`UPDATE websites SET status = 'draft' WHERE id = ${ids.siteA}`;
+    }
+  });
 });
