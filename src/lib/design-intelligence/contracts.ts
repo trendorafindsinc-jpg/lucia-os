@@ -3,7 +3,7 @@ import { graphNodeTypes } from "@/lib/graph/contracts";
 
 const slug = z.string().regex(/^[a-z][a-zA-Z0-9-]{1,62}$/);
 const recipeId = z.string().regex(/^lucia\.design\.(?:component|section|page|industry)\.[a-z][a-z0-9-]{1,62}$/);
-const tokenPath = z.string().regex(/^(?:color|typography|spacing|radius|shadow|breakpoint|motion)\.[a-z][a-zA-Z0-9-]{0,62}$/);
+const tokenPath = z.string().regex(/^(?:color|typography|spacing|radius|shadow|breakpoint|motion|contentWidth)\.[a-z][a-zA-Z0-9-]{0,62}$/);
 
 export const designFoundationSchema = z.object({
   id: z.string().regex(/^lucia\.foundation\.[a-z][a-z0-9-]{1,62}$/),
@@ -18,6 +18,7 @@ export const designFoundationSchema = z.object({
   spacing: z.record(slug, z.number().positive().max(512)),
   radius: z.record(slug, z.number().min(0).max(1000)),
   shadows: z.record(slug, z.string().max(160)),
+  contentWidth: z.record(slug, z.number().positive().max(2400)),
   breakpoints: z.object({
     mobile: z.number().int().positive(),
     tablet: z.number().int().positive(),
