@@ -20,10 +20,10 @@ export function normalizePagePath(input: string): string | null {
     /%(?:2f|5c)/i.test(path)
   ) return null;
 
-  const rawSegments = path.split("/").slice(1);
-  if (rawSegments.some((segment) => segment.length === 0 && rawSegments.length > 1)) {
-    if (path !== "/") return null;
-  }
+  if (path === "/") return "/";
+  const rawSegments = path.slice(1).split("/");
+  if (rawSegments.at(-1) === "") rawSegments.pop();
+  if (rawSegments.some((segment) => segment.length === 0)) return null;
 
   for (const segment of rawSegments) {
     if (!segment) continue;
