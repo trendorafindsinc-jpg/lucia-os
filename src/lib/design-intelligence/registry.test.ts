@@ -5,6 +5,8 @@ import {
   designRecipeRegistry,
   selectDesignRecipes,
   validateRecipeRegistry,
+  foundationTokenPaths,
+  lookupDesignRecipe,
 } from "./registry";
 
 describe("Design Intelligence foundations and recipe registry", () => {
@@ -83,5 +85,36 @@ describe("Design Intelligence foundations and recipe registry", () => {
   it("rejects non-JSON values in recipe defaults", () => {
     const recipe = { ...designRecipeRegistry[0], defaults: { callback: () => "unsafe" } };
     expect(designRecipeSchema.safeParse(recipe).success).toBe(false);
+  });
+  it("resolves only tokens present in the actual foundation catalogue", () => {
+    const tokens = foundationTokenPaths();
+    expect(tokens).toContain("contentWidth.standard");
+    expect(tokens).toContain("typography.bodyFont");
+    expect(tokens).not.toContain("color.not-real");
+    const invalid = { ...designRecipeRegistry[0], requiredTokens: ["color.not-real"] };
+    expect(validateRecipeRegistry([invalid])).toContain("Unknown foundation token: " + invalid.id + "@1 requires color.not-real");
+  });
+
+  it("resolves exact recipe versions and fails closed with typed diagnostics", () => {
+    const id = "lucia.design.section.hero";
+    expect(lookupDesignRecipe(id, 1).recipe?.id).toBe(id);
+    expect(lookupDesignRecipe(id, 2).diagnostics[0].code).toBe("RECIPE_VERSION_UNSUPPORTED");
+    expect(lookupDesignRecipe("lucia.design.section.unknown", 1).diagnostics[0].code).toBe("RECIPE_NOT_FOUND");
+  });
+
+  it("deep-freezes manifests and nested defaults", () => {
+    const recipe = designRecipeRegistry.find((item) => item.id === "lucia.design.page.home");
+    expect(Object.isFrozen(designRecipeRegistry)).toBe(true);
+    expect(Object.isFrozen(recipe)).toBe(true);
+    expect(Object.isFrozen(recipe?.defaults)).toBe(true);
+    expect(Object.isFrozen(recipe?.defaults.sectionOrder)).toBe(true);
+  });
+
+  it("covers all four recipe layers with the reviewed initial catalogue", () => {
+    expect(new Set(designRecipeRegistry.map((item) => item.layer))).toEqual(new Set(["component", "section", "page", "industry"]));
+    for (const layer of ["component", "section", "page", "industry"] as const) {
+      expect(designRecipeRegistry.some((item) => item.layer === layer)).toBe(true);
+    }
+    expect(designRecipeRegistry.length).toBeGreaterThanOrEqual(20);
   });
 });
