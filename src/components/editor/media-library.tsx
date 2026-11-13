@@ -2,9 +2,10 @@
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 export type MediaLibraryItem = { id: string; ref: string; bytes: number; width: number; height: number; alt: string; status: string; kind:"image"|"video"|"document";mime:string;original_name?:string|null;caption?:string|null;created_at?:string };
-export function MediaLibrary({ websiteId, accountId, onChange, protectedIds, onSelect, onInsert, selectedRef, insertLabel, defaultOpen = false }: { websiteId: string; accountId: string; onChange: (items: { ref: string; label: string }[]) => void; protectedIds: string[]; onSelect?: (item: MediaLibraryItem) => void; onInsert?: (item:MediaLibraryItem)=>void; selectedRef?: string | null; insertLabel?: string; defaultOpen?: boolean }) {
+export function MediaLibrary({ websiteId, accountId, onChange, protectedIds, onSelect, onInsert, onInsertGallery, selectedRef, insertLabel, defaultOpen = false }: { websiteId: string; accountId: string; onChange: (items: { ref: string; label: string }[]) => void; protectedIds: string[]; onSelect?: (item: MediaLibraryItem) => void; onInsert?: (item:MediaLibraryItem)=>void; onInsertGallery?: (items:MediaLibraryItem[])=>void; selectedRef?: string | null; insertLabel?: string; defaultOpen?: boolean }) {
   const [library, setLibrary] = useState<{ items: MediaLibraryItem[]; enabled: boolean; usedBytes: number; quotaBytes: number; imageUsedBytes:number;videoUsedBytes:number;videoQuotaBytes:number;documentUsedBytes:number;documentQuotaBytes:number } | null>(null);
   const [notice, setNotice] = useState("Loading your media library…"), [busy, setBusy] = useState(false);
+  const [gallerySelection,setGallerySelection]=useState<string[]>([]);
   const endpoint = `/api/websites/${websiteId}/media`;
   const load = useCallback(async () => {
     const response = await fetch(endpoint, { cache: "no-store", headers: { "x-lucia-workspace-account": accountId } });
@@ -59,12 +60,15 @@ export function MediaLibrary({ websiteId, accountId, onChange, protectedIds, onS
     <form onSubmit={upload} className="composition-controls">
       <label>Customer image (JPEG, PNG or WebP, up to 4 MB)<input name="file" type="file" accept="image/jpeg,image/png,image/webp" required disabled={busy || !library?.enabled} /></label>
       <label>Describe the image<input name="alt" maxLength={200} required disabled={busy || !library?.enabled} /></label>
+       <label>Image caption (optional)<input name="caption" maxLength={200} disabled={busy || !library?.enabled} /></label>
       <button disabled={busy || !library?.enabled}>Upload and compress</button>
       <button type="button" disabled={busy} onClick={() => { load().then(() => setNotice("Library refreshed.")).catch((error) => setNotice(error.message)); }}>Refresh library</button>
     </form>
     <form onSubmit={uploadAsset} className="composition-controls"><label>Video (MP4/WebM up to 100 MB) or PDF (up to 25 MB)<input name="asset" type="file" accept="video/mp4,video/webm,application/pdf" required disabled={busy||!library?.enabled}/></label><label>Accessible description<input name="assetAlt" maxLength={200} required disabled={busy||!library?.enabled}/></label><label>Caption (optional)<input name="assetCaption" maxLength={200} disabled={busy||!library?.enabled}/></label><button disabled={busy||!library?.enabled}>Upload video or PDF in parts</button></form>
+    {onInsertGallery&&<div className="studio-gallery-selection"><span>{gallerySelection.length} of 12 gallery images selected</span><button type="button" disabled={busy||gallerySelection.length<2} onClick={()=>{const selected=gallerySelection.map(id=>library?.items.find(item=>item.id===id)).filter((item):item is MediaLibraryItem=>Boolean(item&&item.status==="ready"&&item.kind==="image"));if(selected.length<2){setNotice("Choose at least two ready images for a gallery.");return;}onInsertGallery(selected);setGallerySelection([]);}}>Insert selected gallery</button></div>}
     <ul>{library?.items.map((item) => <li key={item.id}>
       {item.status === "ready" && item.kind==="image" && <Image unoptimized src={"/_media/" + item.id} alt={item.alt} width={120} height={80} style={{ objectFit: "contain" }} />}
+      {onInsertGallery&&item.status==="ready"&&item.kind==="image"&&<label className="studio-media-gallery-select"><input type="checkbox" checked={gallerySelection.includes(item.id)} disabled={busy||(!gallerySelection.includes(item.id)&&gallerySelection.length>=12)} onChange={event=>setGallerySelection(previous=>event.target.checked?(previous.length>=12?previous:[...previous,item.id]):previous.filter(id=>id!==item.id))}/>Add to gallery</label>}
       {item.status === "ready" && item.kind!=="image" && <span>{item.kind==="video"?"Video asset":"PDF document"}</span>}
       {protectedIds.includes(item.id) && <span>In use in this editor. Save a replacement before removing this asset.</span>}
       {onSelect && item.status === "ready" && item.kind==="image" && <button type="button" aria-pressed={selectedRef === item.ref} disabled={busy} onClick={() => onSelect(item)}>{selectedRef === item.ref ? "Selected for article" : "Use as featured image"}</button>}

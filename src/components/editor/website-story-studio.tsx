@@ -4,8 +4,8 @@ import { legacyBodyBlocks, type ArticleContentBlock, type ArticleKind } from "@/
 import Image from "next/image";
 import { MediaLibrary, type MediaLibraryItem } from "./media-library";
 import { ArticleBlockEditor, articleBlocksPlainText } from "./article-block-editor";
-import { articleRoute, newArticleSlug } from "@/lib/content/article-model";
-import { createArticleEmbedHtml, renderArticleMarkdown, renderArticleBlocks } from "@/lib/content/rich-content";
+import { articlePublicUrl, newArticleSlug } from "@/lib/content/article-model";
+import { createArticleEmbedHtml, createArticleGalleryHtml, createArticleImageHtml, createArticleVideoHtml, renderArticleMarkdown, renderArticleBlocks } from "@/lib/content/rich-content";
 import "./website-story-studio.css";
 type Story = {
  id:string;kind:ArticleKind;title:string;slug:string;excerpt:string;body:string;contentBlocks:ArticleContentBlock[];category:string;authorName?:string|null;eventAt:string|null;isFeatured:boolean;correctionNote:string|null;correctsSlug:string|null;tags:string[];seoTitle:string|null;seoDescription:string|null;
@@ -20,7 +20,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArtic
  const [mounted,setMounted]=useState(false);
  const [localTimeZone,setLocalTimeZone]=useState("your local timezone");
  const [articles,setArticles]=useState<Story[]>([]);
- const [siteSlug,setSiteSlug]=useState("");
+ const [publicHostname,setPublicHostname]=useState("");
  const [selected,setSelected]=useState<string|null>(initialArticleId);
  const [draft,setDraft]=useState<Story|null>(null);
  const [newTitle,setNewTitle]=useState("");
@@ -42,13 +42,13 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArtic
  const onMediaChange=useCallback((items:{ref:string;label:string}[])=>setAvailableMediaCount(items.length),[]);
  const headers = useMemo<Record<string,string>>(()=>{ const value:Record<string,string>={}; if(accountId)value["x-lucia-workspace-account"]=accountId; return value; },[accountId]);
  const load = useCallback(async () => {
-  setLoading(true);setMessage("");
+  setLoading(true);setMessage("");setPublicHostname("");
   try {
    const response=await fetch("/api/websites/"+encodeURIComponent(websiteId)+"/articles",{cache:"no-store",headers});
    const payload=await response.json();
    if(!response.ok)throw Error(payload.error || "Could not load content.");
    setArticles((payload.articles as Story[]).map(article=>({...article,contentBlocks:article.contentBlocks?.length?article.contentBlocks:legacyBodyBlocks(article.body)})));
-   setSiteSlug(payload.siteSlug || "");
+   setPublicHostname(payload.publicHostname || "");
    setSelected(current=>current && payload.articles.some((a:Story)=>a.id===current)?current:(startNew?null:(initialArticleId && payload.articles.some((a:Story)=>a.id===initialArticleId)?initialArticleId:(payload.articles[0]?.id||null))));
    setDirty(false);
   } catch(error){setMessage(error instanceof Error?error.message:"Could not load articles.");}
@@ -138,6 +138,12 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArtic
    const payload=await response.json();
    if(!response.ok)throw Error(payload.error || "Article could not be saved.");
    const saved=payload.article as Story;
+   if(action==="publish"&&(saved.status!=="published"||!saved.publishedSlug||!saved.publishedAt||!saved.publishedSnapshot)){
+    setArticles(prev=>prev.map(a=>a.id===saved.id?saved:a));
+    setDraft(saved);setDirty(false);
+    setMessage("The server saved the article but did not confirm a public publication. Check its status before sharing a URL.");
+    return;
+   }
    setArticles(prev=>prev.map(a=>a.id===saved.id?saved:a));
    setDraft(saved);setDirty(false);
    setMessage(action==="publish"?"Published to your live website.":action==="unpublish"?"Article unpublished.":action==="schedule"?"Scheduled. The website will publish this article at the selected time.":"Draft saved. Live content was not changed.");
@@ -220,7 +226,7 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArtic
         <label>SEO description (160 characters maximum)<textarea value={draft.seoDescription??""} maxLength={160} rows={2} onChange={e=>change("seoDescription",e.target.value||"")}/></label>
        </details>
        <details open className="story-seo-fields"><summary>Publication schedule</summary><label>Schedule publication (local time · {localTimeZone})<input type="datetime-local" value={mounted&&draft.scheduledAt?toLocalDateTime(draft.scheduledAt):""} onChange={e=>{setDraft(previous=>previous?{...previous,scheduledAt:e.target.value?new Date(e.target.value).toISOString():null}:previous);setDirty(true);}}/><small>Choose a time at least two minutes ahead.</small></label></details>
-       <div className="story-studio-featured"><div><strong>Featured image</strong><p>Choose an image already stored for this website, or upload one to the same secure image library.</p>{availableMediaCount!==null&&<small>{availableMediaCount} ready image{availableMediaCount===1?"":"s"} in this website library.</small>}</div>{draft.featuredMediaRef&&<Image unoptimized className="story-studio-featured-preview" src={"/_media/"+draft.featuredMediaRef.slice(6)} alt={draft.featuredMediaAlt||""} width={900} height={560}/>}{draft.featuredMediaRef&&<button type="button" disabled={busy} onClick={()=>{setDraft(previous=>previous?{...previous,featuredMediaRef:null,featuredMediaAlt:null}:previous);setDirty(true);}}>Remove featured image</button>}<MediaLibrary websiteId={websiteId} accountId={accountId??""} onChange={onMediaChange} onSelect={(item:MediaLibraryItem)=>{setDraft(previous=>previous?{...previous,featuredMediaRef:item.ref,featuredMediaAlt:item.alt}:previous);setDirty(true);setMessage("");}} onInsert={(item:MediaLibraryItem)=>{const block=item.kind==="video"?`<video controls preload="metadata" playsinline><source src="/_media/${item.id}" type="${item.mime==="video/webm"?"video/webm":"video/mp4"}"></video>`:item.kind==="image"?`<img src="/_media/${item.id}" alt=${JSON.stringify(item.alt)} loading="lazy">`:`[Download PDF](media:${item.id})`;setDraft(previous=>previous?{...previous,body:previous.body+"\n\n"+block,contentBlocks:[...previous.contentBlocks,...legacyBodyBlocks(block).map(item=>({...item,id:"media-"+globalThis.crypto.randomUUID().replace(/-/g,"")}))]}:previous);setRichSync(v=>v+1);setDirty(true);setMessage(item.kind==="video"?"An inline video player was added. Save and publish to stream it on your website.":"A secure PDF download link was added. Save and publish to make it available.");}} insertLabel="Insert in article" selectedRef={draft.featuredMediaRef} protectedIds={Array.from(new Set([...articles.flatMap(article=>[article.featuredMediaRef,article.publishedSnapshot?.featuredMediaRef]),draft.featuredMediaRef,draft.publishedSnapshot?.featuredMediaRef].filter((ref):ref is string=>Boolean(ref)).map(ref=>ref.slice(6))) )}/></div>
+       <div className="story-studio-featured"><div><strong>Featured image</strong><p>Choose an image already stored for this website, or upload one to the same secure image library.</p>{availableMediaCount!==null&&<small>{availableMediaCount} ready image{availableMediaCount===1?"":"s"} in this website library.</small>}</div>{draft.featuredMediaRef&&<Image unoptimized className="story-studio-featured-preview" src={"/_media/"+draft.featuredMediaRef.slice(6)} alt={draft.featuredMediaAlt||""} width={900} height={560}/>}{draft.featuredMediaRef&&<button type="button" disabled={busy} onClick={()=>{setDraft(previous=>previous?{...previous,featuredMediaRef:null,featuredMediaAlt:null}:previous);setDirty(true);}}>Remove featured image</button>}<MediaLibrary websiteId={websiteId} accountId={accountId??""} onChange={onMediaChange} onSelect={(item:MediaLibraryItem)=>{setDraft(previous=>previous?{...previous,featuredMediaRef:item.ref,featuredMediaAlt:item.alt}:previous);setDirty(true);setMessage("");}} onInsert={(item:MediaLibraryItem)=>{const block=item.kind==="video"?createArticleVideoHtml(item):item.kind==="image"?createArticleImageHtml(item):`[Download PDF](media:${item.id})`;if(!block){setMessage("This media item could not be inserted. Refresh the library and try again.");return;}if(draft.contentBlocks.length>=200||draft.body.length+block.length+2>50000){setMessage("The article has reached its content limit. Remove some content before inserting more media.");return;}setDraft(previous=>previous?{...previous,body:previous.body+"\n\n"+block,contentBlocks:[...previous.contentBlocks,...legacyBodyBlocks(block).map(item=>({...item,id:"media-"+globalThis.crypto.randomUUID().replace(/-/g,"")}))]}:previous);setRichSync(v=>v+1);setDirty(true);setMessage(item.kind==="video"?"Video inserted with its caption. Save and publish to make it public.":item.kind==="image"?"Image inserted with its alternative text and caption. Save and publish to make it public.":"A secure PDF download link was added. Save and publish to make it available.");}} onInsertGallery={(items:MediaLibraryItem[])=>{const block=createArticleGalleryHtml(items);if(!block){setMessage("Choose between two and twelve ready images with alternative text to create a gallery.");return;}if(draft.contentBlocks.length>=200||draft.body.length+block.length+2>50000){setMessage("The article has reached its content limit. Remove some content before inserting a gallery.");return;}setDraft(previous=>previous?{...previous,body:previous.body+"\n\n"+block,contentBlocks:[...previous.contentBlocks,...legacyBodyBlocks(block).map(item=>({...item,id:"gallery-"+globalThis.crypto.randomUUID().replace(/-/g,"")}))]}:previous);setRichSync(v=>v+1);setDirty(true);setMessage("Responsive image gallery inserted in the selected order. Preview, save and publish when ready.");}} insertLabel="Insert in article" selectedRef={draft.featuredMediaRef} protectedIds={Array.from(new Set([...articles.flatMap(article=>[article.featuredMediaRef,article.publishedSnapshot?.featuredMediaRef]),draft.featuredMediaRef,draft.publishedSnapshot?.featuredMediaRef].filter((ref):ref is string=>Boolean(ref)).map(ref=>ref.slice(6))) )}/></div>
 </aside></div>}
      <div className="story-studio-actions">
       <button type="button" onClick={()=>setPreview(p=>!p)}>{preview?"Edit article":"Preview draft"}</button>
@@ -232,8 +238,8 @@ export function WebsiteStoryStudio({websiteId,accountId,initialKind,initialArtic
       {draft.status==="scheduled"&&<button type="button" disabled={busy} onClick={()=>void save("save")}>Keep as draft</button>}
      </div>
      {showHistory&&<section className="story-revision-history" aria-label="Article revision history"><div><strong>Revision history</strong><button type="button" onClick={()=>setShowHistory(false)}>Close</button></div>{history.length?history.map(item=><article key={item.revision}><span>Revision {item.revision} · {item.event}</span><time dateTime={item.createdAt}>{new Date(item.createdAt).toLocaleString()}</time><button type="button" disabled={historyBusy||item.revision===draft.revision||item.event==="legacy_import"} onClick={()=>void restoreRevision(item.revision)}>Restore as draft</button></article>):<p>No earlier revisions are available yet.</p>}</section>}
-     {draft.status==="published"&&draft.publishedSlug&&siteSlug&&
-       <p><a target="_blank" rel="noopener noreferrer" href={"https://"+siteSlug+".lucia.name.ng"+articleRoute(draft.kind,draft.publishedSlug)}>View live article ↗</a></p>}
+     {draft.status==="published"&&draft.publishedSlug&&articlePublicUrl(publicHostname,draft.kind,draft.publishedSlug)&&
+       <p><a target="_blank" rel="noopener noreferrer" href={articlePublicUrl(publicHostname,draft.kind,draft.publishedSlug)!}>View live article ↗</a></p>}
     </>:<p>Choose an article or create your first draft.</p>}
    </div>
   </div>

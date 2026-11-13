@@ -56,7 +56,8 @@ describe("media authorization and capacity invariants", () => {
   it("returns a durable reference only after provider write and readiness confirmation", async () => {
     uploadReservation(0, 1000);
     mocks.execute.mockResolvedValueOnce([]).mockResolvedValueOnce(member).mockResolvedValueOnce([{ id: "confirmed" }]);
-    const image = await uploadMedia(user, website, Buffer.from("x"), "image/png", "Alt");
+    const image = await uploadMedia(user, website, Buffer.from("x"), "image/png", "Alt", "Shop front");
+    expect(image.caption).toBe("Shop front");
     expect(image.ref).toMatch(/^media:[0-9a-f-]{36}$/);
     expect(image.bytes).toBe(200);
     expect(mocks.put).toHaveBeenCalledOnce();
