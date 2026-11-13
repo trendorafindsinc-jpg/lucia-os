@@ -1,9 +1,9 @@
 # Lucia OS — Phase 2 Graph Engine Specification
 
 > **Document ID:** LUCIA-PHASE-2-GRAPH-001  
-> **Version:** 0.1  
+> **Version:** 0.2  
 > **Status:** Completed — implementation and full CI verification passed  
-> **Date:** 2026-11-12  
+> **Date:** 2026-11-13  
 > **Branch:** `development`  
 > **Parent:** `docs/LUCIA-OS-MASTER-ARCHITECTURE.md`  
 > **Phase 1 authority:** Approved Phase 1 architecture baseline
