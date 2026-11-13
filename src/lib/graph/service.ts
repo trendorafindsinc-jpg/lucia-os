@@ -328,6 +328,10 @@ export async function mutateWebsiteGraph(organizationId: string, input: unknown)
       )).limit(1);
       if (!version) throw new GraphServiceError("Graph version not found.", "NOT_FOUND");
       const restored = graphDocumentSchema.parse(version.snapshot);
+      const restoredCanonical = canonicalGraphStringify(restored);
+      if (sha256(restoredCanonical) !== version.contentHash) {
+        throw new GraphServiceError("Stored graph version failed its content hash integrity check.", "VALIDATION");
+      }
       current = { ...restored, revision: graph.draftRevision + 1 };
     } else {
       current = applyOperations(current, batch.operations, graph.draftRevision + 1);
