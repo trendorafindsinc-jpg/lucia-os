@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { designRecipeSchema } from "./contracts";
+import { designRecipeSchema, type GraphDocument } from "./contracts";
 import {
   coreFoundation,
   designRecipeRegistry,
@@ -7,6 +7,7 @@ import {
   validateRecipeRegistry,
   foundationTokenPaths,
   lookupDesignRecipe,
+  resolveGraphRecipeReferences,
 } from "./registry";
 
 describe("Design Intelligence foundations and recipe registry", () => {
@@ -120,5 +121,16 @@ describe("Design Intelligence foundations and recipe registry", () => {
       expect(designRecipeRegistry.some((item) => item.layer === layer)).toBe(true);
     }
     expect(designRecipeRegistry.length).toBeGreaterThanOrEqual(20);
+  });
+  it("resolves graph recipe references and reports invalid, missing, version and node-type diagnostics", () => {
+    const graph = { nodes: [
+      { id: "00000000-0000-4000-8000-000000000101", graphId: "00000000-0000-4000-8000-000000000001", type: "section", schemaVersion: 1, properties: { recipeId: "lucia.design.section.hero", recipeVersion: 1 }, lifecycleStatus: "active" },
+      { id: "00000000-0000-4000-8000-000000000102", graphId: "00000000-0000-4000-8000-000000000001", type: "page", schemaVersion: 1, properties: { recipeId: "lucia.design.component.button", recipeVersion: 1 }, lifecycleStatus: "active" },
+      { id: "00000000-0000-4000-8000-000000000103", graphId: "00000000-0000-4000-8000-000000000001", type: "section", schemaVersion: 1, properties: { recipeId: "lucia.design.section.hero" }, lifecycleStatus: "active" },
+      { id: "00000000-0000-4000-8000-000000000104", graphId: "00000000-0000-4000-8000-000000000001", type: "section", schemaVersion: 1, properties: { recipeId: "lucia.design.section.hero", recipeVersion: 9 }, lifecycleStatus: "active" },
+    ] } as unknown as Pick<GraphDocument, "nodes">;
+    const diagnostics = resolveGraphRecipeReferences(graph);
+    expect(diagnostics.map((item) => item.code)).toEqual(["RECIPE_NODE_TYPE_INCOMPATIBLE", "RECIPE_REFERENCE_INVALID", "RECIPE_VERSION_UNSUPPORTED"]);
+    expect(resolveGraphRecipeReferences({ nodes: [graph.nodes[0]] })).toEqual([]);
   });
 });
