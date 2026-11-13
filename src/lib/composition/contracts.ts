@@ -3,6 +3,11 @@ import { z } from "zod";
 const requestKeySchema = z.string().trim().min(1).max(80).regex(/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/);
 const categorySchema = z.string().trim().min(2).max(63).regex(/^[a-z][a-z0-9-]*$/);
 
+export const compositionContentItemSchema = z.object({
+  heading: z.string().trim().min(1).max(160),
+  description: z.string().trim().max(1000).optional(),
+}).strict();
+
 export const COMPOSITION_REQUEST_SCHEMA_VERSION = 1 as const;
 
 export const compositionSectionRequestSchema = z.object({
@@ -17,6 +22,7 @@ export const compositionSectionRequestSchema = z.object({
     heading: z.string().trim().max(240).optional(),
     description: z.string().trim().max(4000).optional(),
     actionLabel: z.string().trim().max(100).optional(),
+    items: z.array(compositionContentItemSchema).max(24).optional(),
   }).strict().default({}),
 }).strict();
 
