@@ -31,33 +31,52 @@ export const graphEdgeTypes = [
 export const graphNodeTypeSchema = z.enum(graphNodeTypes);
 export const graphEdgeTypeSchema = z.enum(graphEdgeTypes);
 
-const graphJsonScalarSchema = z.union([z.string().max(100_000), z.number().finite(), z.boolean(), z.null()]);
-function createGraphJsonValueSchema(depth: number): z.ZodType<unknown> {
-  if (depth >= 20) return graphJsonScalarSchema;
-  const child = createGraphJsonValueSchema(depth + 1);
-  const object = z.record(z.string().max(120), child).superRefine((value, ctx) => {
-    if (Object.keys(value).length > 500) ctx.addIssue({ code: "custom", message: "JSON objects may contain at most 500 keys." });
-  });
-  return z.union([graphJsonScalarSchema, z.array(child).max(1000), object]);
-}
-const graphJsonValueSchema = createGraphJsonValueSchema(0);
-
-const unsafeJsonKeys = new Set(["__proto__", "prototype", "constructor"]);
-function validateJsonSafety(value: unknown, depth: number, ctx: z.RefinementCtx, path: (string | number)[] = []): void {
-  if (depth > 20) { ctx.addIssue({ code: "custom", path, message: "Graph JSON values may not exceed 20 nested levels." }); return; }
-  if (Array.isArray(value)) { value.forEach((item, index) => validateJsonSafety(item, depth + 1, ctx, [...path, index])); return; }
-  if (value && typeof value === "object") {
-    for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
-      if (unsafeJsonKeys.has(key)) ctx.addIssue({ code: "custom", path: [...path, key], message: "Unsafe JSON object key." });
-      validateJsonSafety(child, depth + 1, ctx, [...path, key]);
+function isGraphJsonValue(value: unknown, depth = 0, ancestors = new WeakSet<object>()): boolean {
+  if (depth > 20) return false;
+  if (value === null || typeof value === "boolean") return true;
+  if (typeof value === "string") return value.length <= 100_000;
+  if (typeof value === "number") return Number.isFinite(value);
+  if (typeof value !== "object") return false;
+  if (ancestors.has(value)) return false;
+  ancestors.add(value);
+  try {
+    if (Object.getOwnPropertySymbols(value).length > 0) return false;
+    const descriptors = Object.getOwnPropertyDescriptors(value);
+    if (Array.isArray(value)) {
+      if (value.length > 1000) return false;
+      const keys = Object.keys(descriptors).filter((key) => key !== "length");
+      if (keys.length !== value.length) return false;
+      for (let index = 0; index < value.length; index += 1) {
+        const descriptor = descriptors[String(index)];
+        if (!descriptor || !("value" in descriptor) || !isGraphJsonValue(descriptor.value, depth + 1, ancestors)) return false;
+      }
+      return true;
     }
+    const prototype = Object.getPrototypeOf(value);
+    if (prototype !== Object.prototype && prototype !== null) return false;
+    const keys = Object.keys(descriptors);
+    if (keys.length > 500) return false;
+    for (const key of keys) {
+      const descriptor = descriptors[key];
+      if (key.length > 120 || key === "__proto__" || key === "prototype" || key === "constructor") return false;
+      if (!("value" in descriptor) || !isGraphJsonValue(descriptor.value, depth + 1, ancestors)) return false;
+    }
+    return true;
+  } catch {
+    return false;
+  } finally {
+    ancestors.delete(value);
   }
 }
 
-export const graphPropertiesSchema = z.record(z.string().max(120), graphJsonValueSchema).superRefine((value, ctx) => {
-  if (Object.keys(value).length > 500) ctx.addIssue({ code: "custom", message: "Graph properties may contain at most 500 keys." });
-  validateJsonSafety(value, 0, ctx);
-});
+function isGraphJsonObject(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value) && isGraphJsonValue(value);
+}
+
+export const graphPropertiesSchema = z.custom<Record<string, unknown>>(
+  isGraphJsonObject,
+  { message: "Graph properties must be a plain object containing bounded, acyclic JSON data." },
+);
 export const graphNodeSchema = z.object({
   id: z.string().uuid(),
   graphId: z.string().uuid(),
