@@ -93,6 +93,26 @@ describe("responsive semantic website renderer", () => {
     if (!result.ok) expect(result.diagnostics[0].code).toBe("RENDERER_NOT_REGISTERED");
   });
 
+  it("rejects unsafe local navigation destinations in other pages", async () => {
+    const document = graph();
+    const unsafePageId = "00000000-0000-4000-8000-000000000099";
+    const changed = {
+      ...document,
+      nodes: [...document.nodes, {
+        id: unsafePageId, graphId: websiteId, type: "page" as const, schemaVersion: 1,
+        properties: { title: "Unsafe", path: "javascript:alert(1)" }, lifecycleStatus: "active" as const,
+      }],
+      edges: [...document.edges, {
+        id: "00000000-0000-4000-8000-000000000098", graphId: websiteId,
+        sourceNodeId: "00000000-0000-4000-8000-000000000002", targetNodeId: unsafePageId,
+        type: "contains_page" as const, schemaVersion: 1, order: 1, properties: {},
+      }],
+    };
+    const result = await renderWebsite({ graph: changed, pageNodeId: pageId, route: "/", viewport: "desktop" });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.diagnostics[0].code).toBe("PAGE_ROUTE_MISMATCH");
+  });
+
   it("rejects invalid graph documents before rendering", async () => {
     const result = await renderWebsite({ graph: { ...graph(), nodes: [] }, pageNodeId: pageId, route: "/", viewport: "desktop" });
     expect(result.ok).toBe(false);
