@@ -82,8 +82,8 @@ export const graphDocumentSchema = z.object({
   id: z.string().uuid(),
   schemaVersion: z.number().int().positive(),
   revision: z.number().int().nonnegative(),
-  nodes: z.array(graphNodeSchema),
-  edges: z.array(graphEdgeSchema),
+  nodes: z.array(graphNodeSchema).max(10_000),
+  edges: z.array(graphEdgeSchema).max(20_000),
 }).strict();
 
 export const graphOperationSchema = z.discriminatedUnion("type", [
