@@ -1,0 +1,95 @@
+name: Phase 4 Composition and Rendering verification
+
+on:
+  push:
+    branches:
+      - development
+    paths:
+      - ".github/workflows/phase-4-verification.yml"
+      - "src/lib/composition/**"
+      - "src/lib/rendering/**"
+      - "src/lib/graph/**"
+      - "src/lib/design-intelligence/**"
+      - "tsconfig.json"
+      - "package.json"
+  pull_request:
+    paths:
+      - ".github/workflows/phase-4-verification.yml"
+      - "src/lib/composition/**"
+      - "src/lib/rendering/**"
+      - "src/lib/graph/**"
+      - "src/lib/design-intelligence/**"
+      - "tsconfig.json"
+      - "package.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phase-4-verification-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  phase-4:
+    name: Composition, rendering and application checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: lucia-graph-ci-only
+          POSTGRES_DB: lucia_graph_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d lucia_graph_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Create least-privilege runtime role
+        run: >-
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1
+          -c "CREATE ROLE lucia_os_runtime LOGIN PASSWORD 'lucia-graph-runtime-ci'
+          NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS"
+        env:
+          DATABASE_URL: postgres://postgres:lucia-graph-ci-only@localhost:5432/lucia_graph_ci
+      - name: Apply migrations to disposable PostgreSQL
+        run: npm run db:migrate
+        env:
+          DATABASE_URL: postgres://postgres:lucia-graph-ci-only@localhost:5432/lucia_graph_ci
+      - name: Grant base-table reads required by tenant policies
+        run: >-
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1
+          -c "GRANT USAGE ON SCHEMA public TO lucia_os_runtime;
+          GRANT SELECT ON app_users, organizations, organization_memberships, websites TO lucia_os_runtime"
+        env:
+          DATABASE_URL: postgres://postgres:lucia-graph-ci-only@localhost:5432/lucia_graph_ci
+      - name: Run focused Composition tests
+        run: npx vitest run src/lib/composition
+      - name: Run focused Graph and Design Intelligence tests
+        run: npx vitest run src/lib/graph/graph.test.ts src/lib/design-intelligence/registry.test.ts
+      - name: Run full unit test suite
+        run: npm test
+        env:
+          DATABASE_URL_RUNTIME: postgres://lucia_os_runtime:lucia-graph-runtime-ci@localhost:5432/lucia_graph_ci
+          GRAPH_TEST_OWNER_DATABASE_URL: postgres://postgres:lucia-graph-ci-only@localhost:5432/lucia_graph_ci
+      - name: Run TypeScript typecheck
+        run: npm run typecheck
+      - name: Run lint
+        run: npm run lint
+      - name: Production build
+        run: npm run build
+      - name: Compiled host-routing HTTP checks
+        run: npm run test:routing:http
