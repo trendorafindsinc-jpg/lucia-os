@@ -196,6 +196,16 @@ describe.sequential("Graph Persistence Service (PostgreSQL)", () => {
     expect(history.map((row) => Number(row.revision))).toEqual([0, 1, 2, 3, 4]);
   });
 
+
+  it("only creates active nodes and reserves tombstones for DELETE_NODE", async () => {
+    auth.userId = ids.userA;
+    await expect(mutateWebsiteGraph(ids.orgA, batch(currentRevision, "graph-service-create-tombstone-0001", [
+      { type: "CREATE_NODE", node: { id: "70000000-0000-4000-8000-000000000099", graphId, type: "component", schemaVersion: 1, properties: {}, lifecycleStatus: "deleted" } },
+    ]))).rejects.toMatchObject({ code: "VALIDATION" });
+    const graph = await getWebsiteGraph(ids.orgA, ids.siteA);
+    expect(graph?.document.revision).toBe(currentRevision);
+  });
+
   it("keeps canvas positions user-scoped, lock-aware, and outside content revisions", async () => {
     auth.userId = ids.userA;
     const saved = await saveCanvasPosition(ids.orgA, ids.siteA, { nodeId: rootId, x: 100, y: 200, locked: true });
