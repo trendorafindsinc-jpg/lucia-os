@@ -139,4 +139,21 @@ describe("Graph Engine contracts", () => {
     const invalid = { ...validGraph, nodes: [root, page, { ...section, id: pageId }] };
     expect(validateGraphDocument(invalid).some((item) => item.code === "GRAPH_DUPLICATE_NODE")).toBe(true);
   });
+  it("rejects non-JSON graph properties before persistence", () => {
+    const withFunction = { ...validGraph, nodes: [{ ...root, properties: { name: "Example", callback: () => true } }, page, section] };
+    const withNonFinite = { ...validGraph, nodes: [{ ...root, properties: { name: "Example", score: Number.NaN } }, page, section] };
+    const withUndefined = { ...validGraph, nodes: [{ ...root, properties: { name: "Example", optional: undefined } }, page, section] };
+    expect(graphDocumentSchema.safeParse(withFunction).success).toBe(false);
+    expect(graphDocumentSchema.safeParse(withNonFinite).success).toBe(false);
+    expect(graphDocumentSchema.safeParse(withUndefined).success).toBe(false);
+  });
+
+  it("rejects unsafe object keys and excessively deep graph properties", () => {
+    const unsafe = JSON.parse('{"name":"Example","constructor":{"prototype":{"polluted":true}}}');
+    const deep: Record<string, unknown> = { value: "leaf" };
+    let cursor = deep;
+    for (let index = 0; index < 22; index += 1) { cursor.child = {}; cursor = cursor.child as Record<string, unknown>; }
+    expect(graphDocumentSchema.safeParse({ ...validGraph, nodes: [{ ...root, properties: unsafe }, page, section] }).success).toBe(false);
+    expect(graphDocumentSchema.safeParse({ ...validGraph, nodes: [{ ...root, properties: { name: "Example", nested: deep } }, page, section] }).success).toBe(false);
+  });
 });
