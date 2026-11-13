@@ -117,6 +117,9 @@ function applyOperations(
   for (const operation of operations) {
     switch (operation.type) {
       case "CREATE_NODE": {
+        if (operation.node.lifecycleStatus !== "active") {
+          throw new GraphServiceError("New graph nodes must be created active; use DELETE_NODE to create tombstones.", "VALIDATION");
+        }
         if (operation.node.graphId !== initial.id || nodes.some((node) => node.id === operation.node.id)) {
           throw new GraphServiceError("New node has an invalid graph scope or duplicate ID.", "VALIDATION");
         }
