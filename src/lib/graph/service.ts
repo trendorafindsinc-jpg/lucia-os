@@ -292,7 +292,7 @@ export async function mutateWebsiteGraph(organizationId: string, input: unknown)
 
   return inTenantTransaction(access.user.id, organizationId, async (tx) => {
     const [website] = await tx.select({ id: websites.id }).from(websites)
-      .where(and(eq(websites.id, batch.websiteId), eq(websites.organizationId, organizationId))).limit(1);
+      .where(and(eq(websites.id, batch.websiteId), eq(websites.organizationId, organizationId), ne(websites.status, "deleted"))).limit(1);
     if (!website) throw new GraphServiceError("Website not found.", "NOT_FOUND");
 
     const [graph] = await tx.select().from(websiteGraphs)
@@ -367,7 +367,7 @@ export async function saveCanvasPosition(organizationId: string, websiteId: stri
 
   return inTenantTransaction(access.user.id, organizationId, async (tx) => {
     const [website] = await tx.select({ id: websites.id }).from(websites)
-      .where(and(eq(websites.id, websiteId), eq(websites.organizationId, organizationId))).limit(1);
+      .where(and(eq(websites.id, websiteId), eq(websites.organizationId, organizationId), ne(websites.status, "deleted"))).limit(1);
     if (!website) throw new GraphServiceError("Website not found.", "NOT_FOUND");
     const [graph] = await tx.select().from(websiteGraphs).where(and(
       eq(websiteGraphs.websiteId, websiteId), eq(websiteGraphs.organizationId, organizationId),
