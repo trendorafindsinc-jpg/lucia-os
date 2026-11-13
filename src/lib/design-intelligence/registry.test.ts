@@ -134,4 +134,11 @@ describe("Design Intelligence foundations and recipe registry", () => {
     expect(diagnostics.map((item) => item.code)).toEqual(["RECIPE_NODE_TYPE_INCOMPATIBLE", "RECIPE_REFERENCE_INVALID", "RECIPE_VERSION_UNSUPPORTED"]);
     expect(resolveGraphRecipeReferences({ nodes: [graph.nodes[0]] })).toEqual([]);
   });
+  it("rejects executable content and external URLs even when hidden in plain string defaults", () => {
+    const base = designRecipeRegistry[0];
+    expect(designRecipeSchema.safeParse({ ...base, defaults: { content: "<img src=x onerror=alert(1)>" } }).success).toBe(false);
+    expect(designRecipeSchema.safeParse({ ...base, defaults: { asset: "https://cdn.example.com/image.png" } }).success).toBe(false);
+    expect(designRecipeSchema.safeParse({ ...base, defaults: { onerror: "alert(1)" } }).success).toBe(false);
+    expect(designRecipeSchema.safeParse({ ...base, defaults: { css: "body { color: red }" } }).success).toBe(false);
+  });
 });
