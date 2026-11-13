@@ -89,6 +89,9 @@ describe.sequential("Graph Persistence Service (PostgreSQL)", () => {
       (${ids.siteA}, ${ids.orgA}, 'Graph Service Site A', 'graph-service-site-a', 'draft'),
       (${ids.siteB}, ${ids.orgB}, 'Graph Service Site B', 'graph-service-site-b', 'draft')
       ON CONFLICT (id) DO NOTHING`;
+    await owner`INSERT INTO website_graphs (id, organization_id, website_id, schema_version, draft_revision)
+      VALUES ('60000000-0000-4000-8000-000000000020', ${ids.orgB}, ${ids.siteB}, 1, 0)
+      ON CONFLICT (id) DO NOTHING`;
     auth.userId = ids.userA;
     graphId = "60000000-0000-4000-8000-000000000010";
     rootId = "70000000-0000-4000-8000-000000000010";
@@ -122,8 +125,9 @@ describe.sequential("Graph Persistence Service (PostgreSQL)", () => {
       await tx`select
         set_config('app.current_user_id', ${ids.userA}, true),
         set_config('app.current_organization_id', ${ids.orgA}, true)`;
-      const hiddenTenantRows = await tx`SELECT id FROM website_graphs WHERE organization_id = ${ids.orgB}`;
-      expect(hiddenTenantRows).toHaveLength(0);
+      const visibleRows = await tx`SELECT id FROM website_graphs`;
+      expect(visibleRows).toHaveLength(1);
+      expect(visibleRows[0].id).toBe(graphId);
     });
 
     await expect(runtime.begin(async (tx) => {
