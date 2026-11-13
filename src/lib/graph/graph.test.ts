@@ -179,6 +179,14 @@ describe("Graph Engine contracts", () => {
     expect(executed).toBe(false);
   });
 
+  it("rejects non-enumerable and symbol-keyed values that JSON serialization would omit", () => {
+    const hidden = { name: "Example" } as Record<string, unknown>;
+    Object.defineProperty(hidden, "hidden", { value: "not serialized", enumerable: false });
+    const symbolKeyed = { name: "Example", [Symbol("private")]: "not serialized" };
+    expect(graphDocumentSchema.safeParse({ ...validGraph, nodes: [{ ...root, properties: hidden }, page, section] }).success).toBe(false);
+    expect(graphDocumentSchema.safeParse({ ...validGraph, nodes: [{ ...root, properties: symbolKeyed }, page, section] }).success).toBe(false);
+  });
+
   it("rejects unsafe object keys and excessively deep graph properties", () => {
     const unsafe = JSON.parse('{"name":"Example","constructor":{"prototype":{"polluted":true}}}');
     const deep: Record<string, unknown> = { value: "leaf" };
