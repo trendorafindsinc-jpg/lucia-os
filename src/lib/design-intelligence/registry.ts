@@ -175,6 +175,7 @@ export type GraphRecipeReferenceDiagnostic = {
 export function resolveGraphRecipeReferences(graph: Pick<GraphDocument, "nodes">, registry: readonly DesignRecipe[] = designRecipeRegistry): GraphRecipeReferenceDiagnostic[] {
   const diagnostics: GraphRecipeReferenceDiagnostic[] = [];
   for (const node of graph.nodes) {
+    if (node.lifecycleStatus === "deleted") continue;
     const recipeId = node.properties.recipeId;
     const recipeVersion = node.properties.recipeVersion;
     if (recipeId === undefined && recipeVersion === undefined) continue;
