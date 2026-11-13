@@ -48,7 +48,7 @@ function isGraphJsonValue(value: unknown, depth = 0, ancestors = new WeakSet<obj
       if (keys.length !== value.length) return false;
       for (let index = 0; index < value.length; index += 1) {
         const descriptor = descriptors[String(index)];
-        if (!descriptor || !("value" in descriptor) || !isGraphJsonValue(descriptor.value, depth + 1, ancestors)) return false;
+        if (!descriptor || descriptor.enumerable !== true || !("value" in descriptor) || !isGraphJsonValue(descriptor.value, depth + 1, ancestors)) return false;
       }
       return true;
     }
@@ -59,7 +59,7 @@ function isGraphJsonValue(value: unknown, depth = 0, ancestors = new WeakSet<obj
     for (const key of keys) {
       const descriptor = descriptors[key];
       if (key.length > 120 || key === "__proto__" || key === "prototype" || key === "constructor") return false;
-      if (!("value" in descriptor) || !isGraphJsonValue(descriptor.value, depth + 1, ancestors)) return false;
+      if (descriptor.enumerable !== true || !("value" in descriptor) || !isGraphJsonValue(descriptor.value, depth + 1, ancestors)) return false;
     }
     return true;
   } catch {
