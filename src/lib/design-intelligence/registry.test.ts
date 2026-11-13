@@ -26,6 +26,15 @@ describe("Design Intelligence foundations and recipe registry", () => {
     }
   });
 
+  it("rejects malformed recipe identifiers, versions, node types and token paths", () => {
+    const base = designRecipeRegistry[0];
+    expect(designRecipeSchema.safeParse({ ...base, id: "lucia.design.page.button" }).success).toBe(false);
+    expect(designRecipeSchema.safeParse({ ...base, version: 0 }).success).toBe(false);
+    expect(designRecipeSchema.safeParse({ ...base, supportedNodeTypes: ["unknown"] }).success).toBe(false);
+    expect(designRecipeSchema.safeParse({ ...base, requiredTokens: ["color..primary"] }).success).toBe(false);
+    expect(designRecipeSchema.safeParse({ ...base, defaults: { nested: { modulePath: "@/unsafe/module" } } }).success).toBe(false);
+  });
+
   it("rejects executable or unknown manifest fields", () => {
     const recipe = structuredClone(designRecipeRegistry[0]) as unknown as Record<string, unknown>;
     recipe.script = "alert(1)";
