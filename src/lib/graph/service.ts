@@ -409,6 +409,12 @@ export async function listWebsiteGraphVersions(organizationId: string, websiteId
   const access = await getCurrentOrganizationAccess(organizationId, "website.read");
   if (!access) throw new GraphServiceError("Organization access denied.", "FORBIDDEN");
   return inTenantTransaction(access.user.id, organizationId, async (tx) => {
+    const [website] = await tx.select({ id: websites.id }).from(websites).where(and(
+      eq(websites.id, websiteId),
+      eq(websites.organizationId, organizationId),
+      ne(websites.status, "deleted"),
+    )).limit(1);
+    if (!website) throw new GraphServiceError("Website not found.", "NOT_FOUND");
     const [graph] = await tx.select({ id: websiteGraphs.id }).from(websiteGraphs).where(and(
       eq(websiteGraphs.websiteId, websiteId),
       eq(websiteGraphs.organizationId, organizationId),
