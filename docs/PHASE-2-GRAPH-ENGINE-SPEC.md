@@ -2,7 +2,7 @@
 
 > **Document ID:** LUCIA-PHASE-2-GRAPH-001  
 > **Version:** 0.1  
-> **Status:** Phase 2 implementation specification — Graph Engine persistence increment in progress  
+> **Status:** Implementation delivered; final hardening verification pending  
 > **Date:** 2026-11-12  
 > **Branch:** `development`  
 > **Parent:** `docs/LUCIA-OS-MASTER-ARCHITECTURE.md`  
@@ -728,3 +728,16 @@ The routes require the existing session, origin protection for writes, account-c
 ### 19.4 Remaining verification gate
 
 The current implementation must pass focused Graph Engine tests, full unit tests and TypeScript typecheck. A separate review/test increment is still required for database-backed service scenarios: transaction rollback, simultaneous revision conflicts, exact idempotent replay, hash mismatch, tenant isolation through service calls, immutable revision preservation, restore reconciliation, and canvas revision independence. Do not mark Phase 2 complete until those scenarios and the full repository quality checks (lint/build/routing) have passing evidence.
+
+## 11. Post-implementation hardening review
+
+The implementation review added the following safeguards without changing the additive migration or touching existing website content:
+
+- Graph node, edge and mutation properties are bounded JSON-only values; non-finite numbers, functions, `undefined`, unsafe object keys, excessive nesting and oversized objects/arrays are rejected before persistence.
+- Graph document collections have explicit maximum sizes, and containment-cycle detection uses iterative traversal to avoid recursive call-stack exhaustion.
+- Snapshot restore recomputes and checks the canonical content hash before accepting an immutable historical snapshot.
+- Graph reads, writes, canvas updates and version-history access reject websites in the soft-deleted state.
+- New nodes must be created active; tombstones are created only through the explicit delete operation.
+- Integration tests cover soft-deleted website rejection, snapshot tampering, active-only creation, RLS/tenant isolation, concurrency, idempotency, rollback, restore and per-user canvas isolation.
+
+These changes preserve the Phase 2 boundaries: canvas state remains separate from website content, graph history remains append-only for the runtime role, and no production cutover or destructive website operation is introduced. Final Phase 2 closure remains subject to the latest Graph Engine verification workflow passing.
