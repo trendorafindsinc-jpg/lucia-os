@@ -5,6 +5,7 @@ import {
   type DesignRecipeInput,
   type RecipeLayer,
 } from "./contracts";
+import type { GraphDocument, GraphNode } from "@/lib/graph/contracts";
 
 export const coreFoundation = deepFreeze(designFoundationSchema.parse({
   id: "lucia.foundation.core",
@@ -160,6 +161,39 @@ export function validateRecipeRegistry(input: readonly DesignRecipe[]): string[]
   return issues;
 }
 
+
+export type GraphRecipeReferenceDiagnostic = {
+  code: "RECIPE_REFERENCE_INVALID" | "RECIPE_NOT_FOUND" | "RECIPE_VERSION_UNSUPPORTED" | "RECIPE_NODE_TYPE_INCOMPATIBLE";
+  nodeId: string;
+  recipeId?: string;
+  requestedVersion?: number;
+  availableVersions?: number[];
+  message: string;
+};
+
+/** Resolve graph recipe references without coupling graph persistence to this catalogue. */
+export function resolveGraphRecipeReferences(graph: Pick<GraphDocument, "nodes">, registry: readonly DesignRecipe[] = designRecipeRegistry): GraphRecipeReferenceDiagnostic[] {
+  const diagnostics: GraphRecipeReferenceDiagnostic[] = [];
+  for (const node of graph.nodes) {
+    const recipeId = node.properties.recipeId;
+    const recipeVersion = node.properties.recipeVersion;
+    if (recipeId === undefined && recipeVersion === undefined) continue;
+    if (typeof recipeId !== "string" || typeof recipeVersion !== "number" || !Number.isInteger(recipeVersion) || recipeVersion < 1) {
+      diagnostics.push({ code: "RECIPE_REFERENCE_INVALID", nodeId: node.id, ...(typeof recipeId === "string" ? { recipeId } : {}), ...(typeof recipeVersion === "number" ? { requestedVersion: recipeVersion } : {}), message: "Recipe references require a valid recipeId and positive integer recipeVersion." });
+      continue;
+    }
+    const result = lookupDesignRecipe(recipeId, recipeVersion, registry);
+    if (!result.recipe) {
+      const failure = result.diagnostics[0];
+      diagnostics.push({ code: failure.code, nodeId: node.id, recipeId, requestedVersion: recipeVersion, availableVersions: failure.availableVersions, message: failure.message });
+      continue;
+    }
+    if (!(result.recipe.supportedNodeTypes as readonly GraphNode["type"][]).includes(node.type)) {
+      diagnostics.push({ code: "RECIPE_NODE_TYPE_INCOMPATIBLE", nodeId: node.id, recipeId, requestedVersion: recipeVersion, message: "The selected recipe does not support graph node type " + node.type + "." });
+    }
+  }
+  return diagnostics;
+}
 export function selectDesignRecipes(
   request: RecipeSelectionRequest,
   registry: readonly DesignRecipe[] = designRecipeRegistry,
