@@ -6,7 +6,7 @@ import {
   type RecipeLayer,
 } from "./contracts";
 
-export const coreFoundation = designFoundationSchema.parse({
+export const coreFoundation = deepFreeze(designFoundationSchema.parse({
   id: "lucia.foundation.core",
   version: 1,
   colors: {
@@ -31,7 +31,7 @@ export const coreFoundation = designFoundationSchema.parse({
   breakpoints: { mobile: 640, tablet: 900, desktop: 1200 },
   motion: { durationFastMs: 120, durationNormalMs: 220, reducedMotionByDefault: false },
   contentWidth: { narrow: 680, standard: 960, wide: 1200, full: 1600 },
-});
+}));
 
 const recipes: DesignRecipeInput[] = [
   {
