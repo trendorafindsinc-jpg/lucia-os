@@ -229,4 +229,14 @@ describe.sequential("Graph Persistence Service (PostgreSQL)", () => {
       await owner`UPDATE websites SET status = 'draft' WHERE id = ${ids.siteA}`;
     }
   });
+  it("refuses to restore a snapshot whose immutable content hash no longer matches", async () => {
+    auth.userId = ids.userA;
+    const versions = await owner`SELECT id FROM website_graph_versions WHERE graph_id = ${graphId} AND revision = 1`;
+    await owner`UPDATE website_graph_versions SET snapshot = jsonb_set(snapshot, '{nodes,0,properties,title}', '"tampered"'::jsonb, false) WHERE id = ${versions[0].id}`;
+    await expect(mutateWebsiteGraph(ids.orgA, batch(currentRevision, "graph-service-corrupt-snapshot-0001", [
+      { type: "RESTORE_VERSION", versionId: versions[0].id },
+    ]))).rejects.toMatchObject({ code: "VALIDATION" });
+    const graph = await getWebsiteGraph(ids.orgA, ids.siteA);
+    expect(graph?.document.revision).toBe(currentRevision);
+  });
 });
