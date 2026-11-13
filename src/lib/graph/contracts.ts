@@ -31,16 +31,16 @@ export const graphEdgeTypes = [
 export const graphNodeTypeSchema = z.enum(graphNodeTypes);
 export const graphEdgeTypeSchema = z.enum(graphEdgeTypes);
 
-const graphJsonValueSchema: z.ZodType<unknown> = z.lazy(() => z.union([
-  z.string().max(100_000),
-  z.number().finite(),
-  z.boolean(),
-  z.null(),
-  z.array(graphJsonValueSchema).max(1000),
-  z.record(z.string().max(120), graphJsonValueSchema).superRefine((value, ctx) => {
+const graphJsonScalarSchema = z.union([z.string().max(100_000), z.number().finite(), z.boolean(), z.null()]);
+function createGraphJsonValueSchema(depth: number): z.ZodType<unknown> {
+  if (depth >= 20) return graphJsonScalarSchema;
+  const child = createGraphJsonValueSchema(depth + 1);
+  const object = z.record(z.string().max(120), child).superRefine((value, ctx) => {
     if (Object.keys(value).length > 500) ctx.addIssue({ code: "custom", message: "JSON objects may contain at most 500 keys." });
-  }),
-]));
+  });
+  return z.union([graphJsonScalarSchema, z.array(child).max(1000), object]);
+}
+const graphJsonValueSchema = createGraphJsonValueSchema(0);
 
 const unsafeJsonKeys = new Set(["__proto__", "prototype", "constructor"]);
 function validateJsonSafety(value: unknown, depth: number, ctx: z.RefinementCtx, path: (string | number)[] = []): void {
