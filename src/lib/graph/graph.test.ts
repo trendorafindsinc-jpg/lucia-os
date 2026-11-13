@@ -168,4 +168,8 @@ describe("Graph Engine contracts", () => {
     const graph = { ...validGraph, nodes: [...validGraph.nodes, ...components], edges: [...validGraph.edges, ...componentEdges] };
     expect(validateGraphDocument(graph)).toEqual([]);
   });
+  it("rejects graph documents that exceed bounded node and edge counts", () => {
+    expect(graphDocumentSchema.safeParse({ ...validGraph, nodes: Array.from({ length: 10_001 }, () => root) }).success).toBe(false);
+    expect(graphDocumentSchema.safeParse({ ...validGraph, edges: Array.from({ length: 20_001 }, () => validGraph.edges[0]) }).success).toBe(false);
+  });
 });
