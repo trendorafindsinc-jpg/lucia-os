@@ -37,7 +37,7 @@ describe("responsive semantic website renderer", () => {
     if (!result.ok) return;
     expect(result.html.startsWith("<!doctype html><html lang=\"en\">")).toBe(true);
     expect(result.html).toContain("<header");
-    expect(result.html).toContain("<nav aria-label=\"Main navigation\">");
+    expect(result.html).toContain("<nav class=\"lucia-nav\" aria-label=\"Main navigation\">");
     expect(result.html).toContain("<main id=\"main-content\"");
     expect(result.html).toContain("Skip to main content");
     expect(result.html).toContain("aria-current=\"page\"");
