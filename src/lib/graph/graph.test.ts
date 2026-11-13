@@ -171,5 +171,7 @@ describe("Graph Engine contracts", () => {
   it("rejects graph documents that exceed bounded node and edge counts", () => {
     expect(graphDocumentSchema.safeParse({ ...validGraph, nodes: Array.from({ length: 10_001 }, () => root) }).success).toBe(false);
     expect(graphDocumentSchema.safeParse({ ...validGraph, edges: Array.from({ length: 20_001 }, () => validGraph.edges[0]) }).success).toBe(false);
+    expect(graphDocumentSchema.safeParse({ ...validGraph, nodes: [] }).success).toBe(true);
+    expect(validateGraphDocument({ ...validGraph, nodes: [] }).some((item) => item.code === "GRAPH_ROOT_COUNT_INVALID")).toBe(true);
   });
 });
