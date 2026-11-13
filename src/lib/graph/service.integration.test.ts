@@ -134,7 +134,7 @@ describe.sequential("Graph Persistence Service (PostgreSQL)", () => {
         (id, organization_id, website_id, graph_id, node_type, schema_version, properties, lifecycle_status)
         VALUES
         ('70000000-0000-4000-8000-000000000099', ${ids.orgA}, ${ids.siteA}, ${graphId},
-         'component', 1, '${"{}"}'::jsonb, 'active')`;
+         'component', 1, ${tx.json({})}::jsonb, 'active')`;
     })).rejects.toBeDefined();
   });
 
