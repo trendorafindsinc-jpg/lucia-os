@@ -13,6 +13,7 @@ import {
   getWebsiteGraph,
   mutateWebsiteGraph,
   saveCanvasPosition,
+  listWebsiteGraphVersions,
 } from "./service";
 import { GraphServiceError } from "./service";
 
@@ -224,6 +225,8 @@ describe.sequential("Graph Persistence Service (PostgreSQL)", () => {
         { type: "UPDATE_NODE", nodeId: pageId, properties: { title: "Must not write", path: "/" } },
       ]))).rejects.toMatchObject({ code: "NOT_FOUND" });
       await expect(saveCanvasPosition(ids.orgA, ids.siteA, { nodeId: rootId, x: 1, y: 1 }))
+        .rejects.toMatchObject({ code: "NOT_FOUND" });
+      await expect(listWebsiteGraphVersions(ids.orgA, ids.siteA))
         .rejects.toMatchObject({ code: "NOT_FOUND" });
     } finally {
       await owner`UPDATE websites SET status = 'draft' WHERE id = ${ids.siteA}`;
