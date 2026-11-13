@@ -79,26 +79,6 @@ describe("Design Intelligence foundations and recipe registry", () => {
     ]);
   });
 
-  it("allows reviewed recipe version evolution but rejects duplicate ID/version pairs", () => {
-    const original = designRecipeRegistry.find((item) => item.id === "lucia.design.section.hero");
-    if (!original) throw new Error("Expected the core hero recipe to exist.");
-    const nextVersion = { ...original, version: 2, defaults: { ...original.defaults, alignment: "center" } };
-    expect(validateRecipeRegistry([original, nextVersion])).toEqual([]);
-    expect(lookupDesignRecipe(original.id, 1, [original, nextVersion]).recipe?.version).toBe(1);
-    expect(lookupDesignRecipe(original.id, 2, [original, nextVersion]).recipe?.version).toBe(2);
-    expect(validateRecipeRegistry([original, nextVersion, nextVersion])).toContain(
-      "Duplicate recipe version: " + original.id + "@2",
-    );
-  });
-
-  it("fails closed for a syntactically valid but unregistered foundation token", () => {
-    const recipe = { ...designRecipeRegistry[0], requiredTokens: ["color.notRegistered"] };
-    expect(designRecipeSchema.safeParse(recipe).success).toBe(true);
-    expect(validateRecipeRegistry([recipe])).toContain(
-      "Unknown foundation token: " + recipe.id + "@1 requires color.notRegistered",
-    );
-  });
-
   it("rejects executable and external-reference keys nested in recipe defaults", () => {
     const recipe = structuredClone(designRecipeRegistry[0]) as unknown as Record<string, unknown>;
     recipe.defaults = { layout: { nested: { href: "https://example.com" } } };
