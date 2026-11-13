@@ -129,6 +129,19 @@ describe("Design Intelligence foundations and recipe registry", () => {
     expect(validateRecipeRegistry([invalid])).toContain("Unknown foundation token: " + invalid.id + "@1 requires color.not-real");
   });
 
+  it("enumerates tokens from a supplied foundation rather than a hard-coded catalogue", () => {
+    const extended = {
+      ...coreFoundation,
+      colors: { ...coreFoundation.colors, brand: "#123456" },
+      spacing: { ...coreFoundation.spacing, mega: 96 },
+      contentWidth: { ...coreFoundation.contentWidth, ultra: 2000 },
+    };
+    const paths = foundationTokenPaths(extended);
+    expect(paths).toContain("color.brand");
+    expect(paths).toContain("spacing.mega");
+    expect(paths).toContain("contentWidth.ultra");
+  });
+
   it("resolves exact recipe versions and fails closed with typed diagnostics", () => {
     const id = "lucia.design.section.hero";
     expect(lookupDesignRecipe(id, 1).recipe?.id).toBe(id);
