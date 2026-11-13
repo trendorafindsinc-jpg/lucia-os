@@ -1,3 +1,4 @@
+# Re-run verification after TypeScript compatibility fix.
 # Revalidated against the current development source tree.
 name: Design Intelligence verification
 

@@ -156,7 +156,7 @@ describe("Graph Engine contracts", () => {
       { cycle: cyclic },
       { date: new Date("2026-01-01T00:00:00.000Z") },
       { instance: new CustomValue() },
-      { large: 1n },
+      { large: BigInt("1") },
       { sparse: Object.assign([], { 2: "value" }) },
     ];
     for (const properties of invalidValues) {
