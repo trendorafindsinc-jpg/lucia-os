@@ -1,19 +1,19 @@
 import { z } from "zod";
-import type { GraphEdgeType, GraphNodeType } from "./contracts";
+import { graphPropertiesSchema, type GraphEdgeType, type GraphNodeType } from "./contracts";
 
 /**
  * Initial versioned registry. These schemas deliberately validate the minimum
  * stable contract; recipe-specific and renderer-specific detail belongs to
  * later Design Intelligence and Rendering contracts.
  */
-const properties = z.record(z.string(), z.unknown());
+const properties = graphPropertiesSchema;
 
 export const nodePropertySchemas: Record<GraphNodeType, z.ZodType> = {
-  website: z.object({ name: z.string().trim().min(1).max(120) }).passthrough(),
+  website: z.object({ name: z.string().trim().min(1).max(120) }).strict(),
   page: z.object({
     title: z.string().trim().min(1).max(120),
     path: z.string().trim().min(1).max(240),
-  }).passthrough(),
+  }).strict(),
   section: properties,
   component: properties,
   design_token: z.object({
