@@ -44,10 +44,23 @@ const jsonValueSchema: z.ZodType<unknown> = z.lazy(() => z.union([
 const prohibitedDefaultKeys = new Set([
   "html", "rawhtml", "css", "stylesheet", "script", "javascript",
   "jsx", "component", "componentname", "module", "modulepath",
-  "import", "imports", "url", "src", "href", "onclick", "onload",
-  "eventhandler",
+  "import", "imports", "url", "src", "srcset", "srcdoc", "href",
+  "imageurl", "asseturl", "externalurl", "dataurl", "style", "styles",
+  "function", "callback", "handler", "eventhandler", "expression", "eval",
+  "code", "markup", "raw",
 ]);
 
+function findUnsafeDefaultString(value: unknown): string | undefined {
+  if (typeof value === "string") {
+    return /<\s*\/?\s*[a-z][^>]*>|javascript\s*:|data\s*:\s*text\/html|https?:\/\/|@import\b|url\s*\(|expression\s*\(/i.test(value) ? value : undefined;
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) { const unsafe = findUnsafeDefaultString(item); if (unsafe) return unsafe; }
+  } else if (value && typeof value === "object") {
+    for (const child of Object.values(value as Record<string, unknown>)) { const unsafe = findUnsafeDefaultString(child); if (unsafe) return unsafe; }
+  }
+  return undefined;
+}
 function findProhibitedDefaultKey(value: unknown): string | undefined {
   if (Array.isArray(value)) {
     for (const item of value) {
@@ -56,7 +69,8 @@ function findProhibitedDefaultKey(value: unknown): string | undefined {
     }
   } else if (value && typeof value === "object") {
     for (const [key, child] of Object.entries(value)) {
-      if (prohibitedDefaultKeys.has(key.toLowerCase().replace(/[-_]/g, ""))) return key;
+      const normalizedKey = key.toLowerCase().replace(/[-_]/g, "");
+      if (prohibitedDefaultKeys.has(normalizedKey) || /^on[a-z]/.test(normalizedKey)) return key;
       const nested = findProhibitedDefaultKey(child);
       if (nested) return nested;
     }
@@ -93,12 +107,16 @@ export const designRecipeSchema = z.object({
     ctx.addIssue({ code: "custom", path: ["supportedNodeTypes"], message: "Node types must be unique." });
   }
   const prohibitedKey = findProhibitedDefaultKey(recipe.defaults);
+  const unsafeString = findUnsafeDefaultString(recipe.defaults);
   if (prohibitedKey) {
     ctx.addIssue({
       code: "custom",
       path: ["defaults"],
       message: `Recipe defaults contain a prohibited executable or external-reference field: ${prohibitedKey}.`,
     });
+  }
+  if (unsafeString) {
+    ctx.addIssue({ code: "custom", path: ["defaults"], message: "Recipe defaults must not contain HTML, executable protocols, CSS imports or external URLs." });
   }
   if (new Set(recipe.requiredTokens).size !== recipe.requiredTokens.length) {
     ctx.addIssue({ code: "custom", path: ["requiredTokens"], message: "Required tokens must be unique." });
