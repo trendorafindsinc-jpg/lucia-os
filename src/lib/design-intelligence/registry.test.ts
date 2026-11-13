@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { designRecipeSchema, type GraphDocument } from "./contracts";
+import { designRecipeSchema } from "./contracts";
+import type { GraphDocument } from "@/lib/graph/contracts";
 import {
   coreFoundation,
   designRecipeRegistry,
