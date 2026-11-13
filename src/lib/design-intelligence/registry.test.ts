@@ -90,6 +90,8 @@ describe("Design Intelligence foundations and recipe registry", () => {
     const tokens = foundationTokenPaths();
     expect(tokens).toContain("contentWidth.standard");
     expect(tokens).toContain("typography.bodyFont");
+    expect(tokens).toContain("typography.scale.md");
+    expect(designRecipeSchema.safeParse({ ...designRecipeRegistry[0], requiredTokens: ["typography.scale.md"] }).success).toBe(true);
     expect(tokens).not.toContain("color.not-real");
     const invalid = { ...designRecipeRegistry[0], requiredTokens: ["color.not-real"] };
     expect(validateRecipeRegistry([invalid])).toContain("Unknown foundation token: " + invalid.id + "@1 requires color.not-real");
@@ -104,6 +106,8 @@ describe("Design Intelligence foundations and recipe registry", () => {
 
   it("deep-freezes manifests and nested defaults", () => {
     const recipe = designRecipeRegistry.find((item) => item.id === "lucia.design.page.home");
+    expect(Object.isFrozen(coreFoundation)).toBe(true);
+    expect(Object.isFrozen(coreFoundation.contentWidth)).toBe(true);
     expect(Object.isFrozen(designRecipeRegistry)).toBe(true);
     expect(Object.isFrozen(recipe)).toBe(true);
     expect(Object.isFrozen(recipe?.defaults)).toBe(true);
