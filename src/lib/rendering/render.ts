@@ -135,9 +135,12 @@ function pathOf(node: GraphNode): string | null {
   return node.type === "page" ? textValue(node.properties.path, 240) : null;
 }
 function normalizeRoute(route: string): string | null {
-  if (!route.startsWith("/") || route.startsWith("//") || /[?#\\\\\u0000-\u001f]/.test(route) || /%(?:2f|5c)/i.test(route)) return null;
-  try { if (decodeURIComponent(route).split("/").some((part) => part === "." || part === "..")) return null; }
-  catch { return null; }
+  if (!route.startsWith("/") || route.startsWith("//") || route.includes("//") ||
+      /[?#\\\\\u0000-\u001f]/.test(route) || /%(?:2f|5c)/i.test(route)) return null;
+  try {
+    const decoded = decodeURIComponent(route);
+    if (decoded.split("/").some((part) => part === "." || part === "..")) return null;
+  } catch { return null; }
   return route.length > 1 ? route.replace(/\/$/, "") : "/";
 }
 function childSections(graph: GraphDocument, pageId: string): GraphNode[] {
@@ -178,6 +181,15 @@ export async function renderWebsite(input: unknown, options: RenderOptions = {})
   const route = normalizeRoute(request.data.route);
   const expectedRoute = normalizeRoute(pathOf(page) ?? "");
   if (!route || !expectedRoute || route !== expectedRoute) return fail([issue("PAGE_ROUTE_MISMATCH", "The requested route does not match the selected page.", page.id)]);
+
+  const normalizedPageRoutes = new Set<string>();
+  for (const candidate of pages) {
+    const candidatePath = normalizeRoute(pathOf(candidate) ?? "");
+    if (!candidatePath || normalizedPageRoutes.has(candidatePath)) {
+      return fail([issue("PAGE_ROUTE_MISMATCH", "Every navigation page must have a unique, safe local route.", candidate.id)]);
+    }
+    normalizedPageRoutes.add(candidatePath);
+  }
 
   const website = graph.nodes.find((node) => node.type === "website" && node.lifecycleStatus === "active");
   if (!website) return fail([issue("GRAPH_INVALID", "The graph has no active website root.")]);
