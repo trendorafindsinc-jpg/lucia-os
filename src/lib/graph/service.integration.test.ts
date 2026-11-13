@@ -29,6 +29,9 @@ const ids = {
 const ownerUrl = process.env.GRAPH_TEST_OWNER_DATABASE_URL;
 if (!ownerUrl) throw new Error("GRAPH_TEST_OWNER_DATABASE_URL is required for graph persistence integration tests.");
 const owner = postgres(ownerUrl, { max: 1, prepare: false });
+const runtimeUrl = process.env.DATABASE_URL_RUNTIME;
+if (!runtimeUrl) throw new Error("DATABASE_URL_RUNTIME is required for graph RLS integration tests.");
+const runtime = postgres(runtimeUrl, { max: 1, prepare: false });
 
 let rootId = "";
 let pageId = "";
@@ -111,6 +114,28 @@ describe.sequential("Graph Persistence Service (PostgreSQL)", () => {
     await owner`DELETE FROM websites WHERE id IN (${ids.siteA}, ${ids.siteB})`;
     await owner`DELETE FROM organizations WHERE id IN (${ids.orgA}, ${ids.orgB})`;
     await owner.end();
+    await runtime.end();
+  });
+
+  it("enforces tenant and editor write boundaries in PostgreSQL RLS", async () => {
+    await runtime.begin(async (tx) => {
+      await tx`select
+        set_config('app.current_user_id', ${ids.userA}, true),
+        set_config('app.current_organization_id', ${ids.orgA}, true)`;
+      const hiddenTenantRows = await tx`SELECT id FROM website_graphs WHERE organization_id = ${ids.orgB}`;
+      expect(hiddenTenantRows).toHaveLength(0);
+    });
+
+    await expect(runtime.begin(async (tx) => {
+      await tx`select
+        set_config('app.current_user_id', ${ids.userB}, true),
+        set_config('app.current_organization_id', ${ids.orgA}, true)`;
+      await tx`INSERT INTO website_nodes
+        (id, organization_id, website_id, graph_id, node_type, schema_version, properties, lifecycle_status)
+        VALUES
+        ('70000000-0000-4000-8000-000000000099', ${ids.orgA}, ${ids.siteA}, ${graphId},
+         'component', 1, '${"{}"}'::jsonb, 'active')`;
+    })).rejects.toBeDefined();
   });
 
   it("creates the initial graph and rejects cross-tenant service reads", async () => {
