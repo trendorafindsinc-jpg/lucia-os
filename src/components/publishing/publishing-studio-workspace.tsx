@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { WebsiteStoryStudio } from "@/components/editor/website-story-studio";
 import { MediaLibrary, type MediaLibraryItem } from "@/components/editor/media-library";
-import { articleRoute, type ArticleKind } from "@/lib/content/article-model";
+import { articlePublicUrl, type ArticleKind } from "@/lib/content/article-model";
 
 type Article = {
  id:string;kind:ArticleKind;title:string;slug:string;excerpt:string;category:string;authorName?:string|null;tags:string[];
@@ -26,6 +26,7 @@ export function PublishingStudioWorkspace({accountId}:{accountId:string}) {
  const [view,setView]=useState<View>("overview");
  const [articles,setArticles]=useState<Article[]>([]);
  const [siteSlug,setSiteSlug]=useState("");
+ const [publicHostname,setPublicHostname]=useState("");
  const [siteName,setSiteName]=useState("Your website");
  const [loading,setLoading]=useState(true);
  const [error,setError]=useState("");
@@ -44,7 +45,7 @@ export function PublishingStudioWorkspace({accountId}:{accountId:string}) {
    const response=await fetch("/api/websites/"+encodeURIComponent(websiteId)+"/articles",{cache:"no-store",headers});
    const payload=await response.json();
    if(!response.ok)throw Error(payload.error||"Your website content could not be loaded.");
-   setArticles(payload.articles||[]);setSiteSlug(payload.siteSlug||"");
+   setArticles(payload.articles||[]);setSiteSlug(payload.siteSlug||"");setPublicHostname(payload.publicHostname||"");
    setSiteName(payload.siteName||payload.siteSlug||"Your website");
   }catch(e){setError(e instanceof Error?e.message:"Publishing data is unavailable.");}
   finally{setLoading(false);}
@@ -76,7 +77,7 @@ export function PublishingStudioWorkspace({accountId}:{accountId:string}) {
   <header className="publishing-topbar"><div className="publishing-brand">LUCIA OS <span aria-hidden="true">/</span> PUBLISHING STUDIO</div>
    <nav className="publishing-toplinks" aria-label="Website shortcuts">
     <Link href={{pathname:"/editor",query:{websiteId}}} onClick={event=>{if(editorDirty&&!window.confirm("You have unsaved article changes. Leave the editor and keep only the last saved draft?"))event.preventDefault();}}>Edit Website</Link>
-    {siteSlug&&<a href={"https://"+siteSlug+".lucia.name.ng"} target="_blank" rel="noopener noreferrer">View Website ↗</a>}
+    {publicHostname&&<a href={"https://"+publicHostname} target="_blank" rel="noopener noreferrer">View Website ↗</a>}
     <Link href="/workspace/websites" onClick={event=>{if(editorDirty&&!window.confirm("You have unsaved article changes. Leave the editor and keep only the last saved draft?"))event.preventDefault();}}>All websites</Link>
    </nav>
   </header>
@@ -105,7 +106,7 @@ export function PublishingStudioWorkspace({accountId}:{accountId:string}) {
         <div className="publishing-stat"><small>Drafts</small><strong>{counts.drafts}</strong></div>
         <div className="publishing-stat"><small>Scheduled</small><strong>{counts.scheduled}</strong></div>
        </div>
-       <section className="publishing-panel"><h2>Recent activity</h2>{articles.length?<ArticleList articles={[...articles].sort((a,b)=>(b.updatedAt instanceof Date?b.updatedAt:new Date(b.updatedAt)).getTime()-(a.updatedAt instanceof Date?a.updatedAt:new Date(a.updatedAt)).getTime()).slice(0,6)} siteSlug={siteSlug} onEdit={openEditor}/>:<EmptyState onBlog={()=>create("blog")} onNews={()=>create("news")}/>}</section>
+       <section className="publishing-panel"><h2>Recent activity</h2>{articles.length?<ArticleList articles={[...articles].sort((a,b)=>(b.updatedAt instanceof Date?b.updatedAt:new Date(b.updatedAt)).getTime()-(a.updatedAt instanceof Date?a.updatedAt:new Date(a.updatedAt)).getTime()).slice(0,6)} publicHostname={publicHostname} onEdit={openEditor}/>:<EmptyState onBlog={()=>create("blog")} onNews={()=>create("news")}/>}</section>
        <section className="publishing-panel"><h2>Quick access</h2><div className="publishing-row-actions"><button className="publishing-secondary" type="button" onClick={()=>setView("blog")}>Blog · {counts.blog}</button><button className="publishing-secondary" type="button" onClick={()=>setView("news")}>Newsroom · {counts.news}</button><button className="publishing-secondary" type="button" onClick={()=>setView("scheduled")}>Scheduled · {counts.scheduled}</button></div></section>
       </>}
       {["all","blog","news","scheduled"].includes(view)&&<section className="publishing-panel">
@@ -113,7 +114,7 @@ export function PublishingStudioWorkspace({accountId}:{accountId:string}) {
         {view==="all"&&<select aria-label="Filter by content type" value={kind} onChange={e=>setKind(e.target.value)}><option value="all">All types</option><option value="blog">Blog</option><option value="news">News</option></select>}
         {view!=="scheduled"&&<select aria-label="Filter by publication status" value={status} onChange={e=>setStatus(e.target.value)}><option value="all">All statuses</option><option value="draft">Draft</option><option value="scheduled">Scheduled</option><option value="published">Published</option></select>}
        </div>
-       {filtered.length?<ArticleList articles={filtered} siteSlug={siteSlug} onEdit={openEditor}/>:<div className="publishing-empty"><strong>{search?"No matching articles":"Nothing here yet"}</strong><p>{search?"Try a different search or clear your filters.":"Create your first story to start building this website’s publishing library."}</p><div className="publishing-row-actions"><button className="publishing-secondary" type="button" onClick={()=>create("blog")}>New Post</button><button className="publishing-secondary" type="button" onClick={()=>create("news")}>New News Story</button></div></div>}
+       {filtered.length?<ArticleList articles={filtered} publicHostname={publicHostname} onEdit={openEditor}/>:<div className="publishing-empty"><strong>{search?"No matching articles":"Nothing here yet"}</strong><p>{search?"Try a different search or clear your filters.":"Create your first story to start building this website’s publishing library."}</p><div className="publishing-row-actions"><button className="publishing-secondary" type="button" onClick={()=>create("blog")}>New Post</button><button className="publishing-secondary" type="button" onClick={()=>create("news")}>New News Story</button></div></div>}
       </section>}
       {view==="taxonomy"&&<section className="publishing-panel"><div className="publishing-taxonomy"><div><h2>Categories</h2><p className="publishing-muted">Categories are stored on each article. Edit a story to assign or change its category.</p>{categories.length?categories.map(category=><button type="button" className="publishing-taxonomy-item" key={category} onClick={()=>{setView("all");setSearch(category);setStatus("all");setKind("all");}}><strong>{category}</strong><span>{articles.filter(a=>a.category===category).length} articles · View</span></button>):<p className="publishing-muted">No categories have been used yet.</p>}</div><div><h2>Tags</h2><p className="publishing-muted">Tags are stored on each article. Edit a story to assign or change its tags.</p>{tags.length?tags.map(tag=><button type="button" className="publishing-taxonomy-item" key={tag} onClick={()=>{setView("all");setSearch(tag);setStatus("all");setKind("all");}}><strong>{tag}</strong><span>{articles.filter(a=>a.tags.includes(tag)).length} articles · View</span></button>):<p className="publishing-muted">No tags have been used yet.</p>}</div></div></section>}
       {view==="media"&&<section className="publishing-panel publishing-media-panel"><h2>Website media</h2><p className="publishing-muted">Files are stored through the existing secure media service for this website. Upload acceptance depends on the configured external storage provider.</p><MediaLibrary websiteId={websiteId} accountId={accountId} onChange={()=>{}} protectedIds={articles.map(a=>a.featuredMediaRef).filter((ref):ref is string=>Boolean(ref)).map(ref=>ref.slice(6))} onSelect={(item:MediaLibraryItem)=>setNotice("Selected "+(item.original_name||item.alt)+". Open an article to use it as featured or inline media.")} defaultOpen/></section>}
@@ -124,4 +125,4 @@ export function PublishingStudioWorkspace({accountId}:{accountId:string}) {
  </main>;
 }
 function EmptyState({onBlog,onNews}:{onBlog:()=>void;onNews:()=>void}){return <div className="publishing-empty"><strong>Your publishing workspace is ready.</strong><p>Create a Blog post or News story. Drafts remain private until you publish.</p><div className="publishing-row-actions"><button className="publishing-secondary" type="button" onClick={onBlog}>Create first Blog post</button><button className="publishing-secondary" type="button" onClick={onNews}>Create first News story</button></div></div>}
-function ArticleList({articles,siteSlug,onEdit}:{articles:Article[];siteSlug:string;onEdit:(article:Article)=>void}){return <div className="publishing-article-list">{articles.map(article=><article className="publishing-article-row" key={article.id}><div><h3>{article.title||"Untitled story"}</h3><p>{article.kind==="blog"?"Blog":"News"} · {article.category||"Uncategorised"} · By {article.authorName||"you"} · Updated {dateLabel(article.updatedAt)} · Revision {article.revision}{article.status==="scheduled"?" · Scheduled for "+dateLabel(article.scheduledAt):""}</p></div><div className="publishing-row-actions"><span className="publishing-status" data-status={article.status}>{statusLabel(article.status)}</span><button type="button" onClick={()=>onEdit(article)}>Edit</button>{article.status==="published"&&article.publishedSlug&&siteSlug&&<a href={"https://"+siteSlug+".lucia.name.ng"+articleRoute(article.kind,article.publishedSlug)} target="_blank" rel="noopener noreferrer">View ↗</a>}</div></article>)}</div>}
+function ArticleList({articles,publicHostname,onEdit}:{articles:Article[];publicHostname:string;onEdit:(article:Article)=>void}){return <div className="publishing-article-list">{articles.map(article=>{const publicUrl=article.status==="published"&&article.publishedSlug?articlePublicUrl(publicHostname,article.kind,article.publishedSlug):null;return <article className="publishing-article-row" key={article.id}><div><h3>{article.title||"Untitled story"}</h3><p>{article.kind==="blog"?"Blog":"News"} · {article.category||"Uncategorised"} · By {article.authorName||"you"} · Updated {dateLabel(article.updatedAt)} · Revision {article.revision}{article.status==="scheduled"?" · Scheduled for "+dateLabel(article.scheduledAt):""}</p></div><div className="publishing-row-actions"><span className="publishing-status" data-status={article.status}>{statusLabel(article.status)}</span><button type="button" onClick={()=>onEdit(article)}>Edit</button>{publicUrl&&<a href={publicUrl} target="_blank" rel="noopener noreferrer">View ↗</a>}</div></article>})}</div>}

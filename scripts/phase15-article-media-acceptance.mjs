@@ -15,9 +15,10 @@ export async function checkPhase15ArticleMediaAcceptance({
   let articleId = null, newsId = null, correctedNewsId = null, scheduledNewsId = null, reservedBytes = 0;
   async function seedMedia(id, orgId, websiteId, userId, alt) {
     const objectKey = "os/" + orgId + "/" + websiteId + "/" + id + ".webp";
+    const caption = "Caption: " + alt;
     await admin`INSERT INTO website_media
-      (id,organization_id,website_id,created_by_user_id,object_key,bytes,width,height,alt,status)
-      VALUES (${id},${orgId},${websiteId},${userId},${objectKey},200,10,10,${alt},'ready')`;
+      (id,organization_id,website_id,created_by_user_id,object_key,bytes,width,height,alt,caption,status)
+      VALUES (${id},${orgId},${websiteId},${userId},${objectKey},200,10,10,${alt},${caption},'ready')`;
     await admin`UPDATE media_storage_budget SET reserved_bytes=reserved_bytes+200 WHERE product='lucia-os'`;
     reservedBytes += 200;
   }
@@ -241,11 +242,18 @@ export async function checkPhase15ArticleMediaAcceptance({
       assert(roundTripHtml.includes("Rich text editor acceptance") && roundTripHtml.includes("youtube-nocookie.com/embed/abcdefghijk"), "Switching from visual editing to HTML source must preserve content and embeds");
       const htmlBody = '<h2>HTML source mode acceptance</h2><p>Semantic HTML is supported.</p><img src="/_media/'+inlineImage+'" alt="Inline media"><video autoplay><source src="/_media/'+videoAsset+'" type="video/mp4"></video><a href="/_media/'+pdfAsset+'">Download report</a><iframe src="https://www.youtube-nocookie.com/embed/abcdefghijk" title="YouTube video"></iframe><iframe src="https://evil.example/embed/unsafe"></iframe><script>alert(1)</script><p onclick="alert(1)">Safe HTML text</p>';
       await page.getByRole("textbox", { name: "HTML source" }).fill(htmlBody);
+      const galleryFirst = page.locator(".studio-media-library li").filter({ hasText: alts[0] });
+      const gallerySecond = page.locator(".studio-media-library li").filter({ hasText: alts[3] });
+      await galleryFirst.getByRole("checkbox", { name: "Add to gallery", exact: true }).check();
+      await gallerySecond.getByRole("checkbox", { name: "Add to gallery", exact: true }).check();
+      await page.getByRole("button", { name: "Insert selected gallery", exact: true }).click();
       await page.getByRole("button", { name: "Preview draft" }).click();
       const draftPreview = page.locator(".story-studio-preview");
       await draftPreview.waitFor();
       const previewHtml = await draftPreview.innerHTML();
       assert(previewHtml.includes("<h2>HTML source mode acceptance</h2>"));
+      assert(previewHtml.includes('class="article-gallery"'), "The article editor must render an inserted responsive gallery in preview");
+      assert(previewHtml.includes("Caption: " + alts[0]) && previewHtml.includes("Caption: " + alts[3]), "Gallery captions must survive preview rendering");
       assert(previewHtml.includes("youtube-nocookie.com/embed/abcdefghijk"));
       assert(previewHtml.includes('sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"'), "Published embeds must use the restricted sandbox");
       assert(!previewHtml.includes("<script") && !previewHtml.includes("onclick") && !previewHtml.includes("evil.example"), "HTML source preview must sanitize unsafe markup and unapproved embeds");
@@ -272,6 +280,8 @@ export async function checkPhase15ArticleMediaAcceptance({
     assert(detailHtml.includes(title));
     assert(detailHtml.includes("/_media/" + blogImage));
     assert(detailHtml.includes("/_media/" + inlineImage), "Published HTML/Markdown inline media path must render");
+    assert(detailHtml.includes('class="article-gallery"'), "Published article must render its inserted gallery");
+    assert(detailHtml.includes("Caption: " + alts[0]) && detailHtml.includes("Caption: " + alts[3]), "Published gallery captions must render");
     assert(detailHtml.includes(alts[0]));
     assert(detailHtml.includes("HTML source mode acceptance"), "Published HTML source must render semantic content");
     assert(detailHtml.includes("youtube-nocookie.com/embed/abcdefghijk"), "Published article must retain an approved responsive YouTube embed");
@@ -289,6 +299,8 @@ export async function checkPhase15ArticleMediaAcceptance({
       await sanitizerProbe.close();
     }
     assert(renderedArticleBody, "Published article body must be present in the rendered document");
+    assert(renderedArticleBody.includes('class="article-gallery"'), "The rendered public article body must contain the gallery");
+    const galleryStart=renderedArticleBody.indexOf('class="article-gallery"');const galleryEnd=renderedArticleBody.indexOf("</div>",galleryStart);const galleryHtml=renderedArticleBody.slice(galleryStart,galleryEnd);assert(galleryHtml.indexOf("/_media/"+blogImage) < galleryHtml.indexOf("/_media/"+inlineImage), "Gallery images must retain selection order");
     assert(!renderedArticleBody.includes("evil.example") && !/<script\\b/i.test(renderedArticleBody)
       && !/\\sonclick\\s*=/i.test(renderedArticleBody), "Published article DOM must remain sanitized");
     assert(detailHtml.includes("<video controls") && detailHtml.includes('href="/_media/'+pdfAsset+'"'), "Published HTML must support inline video and secure PDF downloads");

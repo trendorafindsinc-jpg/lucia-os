@@ -1,6 +1,6 @@
 # LUCIA OS — Publishing Studio Upgrade
 
-**Status:** Approved baseline  
+**Status:** Approved baseline · Phase 3 implementation in progress  
 **Scope:** Five implementation phases  
 **Repository:** `trendorafindsinc-jpg/lucia-os`  
 **Staging:** `https://dev-os.lucia.name.ng`  
@@ -65,6 +65,10 @@ Acceptance outcomes:
 ### Phase 3 — Media and rich content
 
 Connect rich content to the existing LUCIA media/storage system.
+
+Priority Zero release gate: published Blog and News content must be discoverable on the exact active public hostname registered to the website. The publishing workspace must never derive a public hostname by appending a production-only suffix to a website slug. A successful publish response must confirm a published status, snapshot, slug, and publication timestamp before the editor reports success.
+
+Phase 3 must verify the entire journey against the same staging database used by the development deployment: create/save, publish, public listing, public detail route, and media delivery. Drafts remain private and tenant-scoped.
 
 Scope:
 - Upload and insert images, galleries, video, and audio where supported.
