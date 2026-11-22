@@ -110,7 +110,7 @@ export const builtinRendererRegistry: RendererRegistry = builtins.registry;
 function cssFor(tokens: ReadonlyMap<string, import("./tokens").ResolvedDesignToken>): string {
   const token = (path: string): string | number => {
     const resolved = tokens.get(path);
-    if (!resolved) throw new Error("Unresolved CSS token: " + path);
+    if (!resolved || typeof resolved.value === "boolean") throw new Error("Unresolved CSS token: " + path);
     return resolved.value;
   };
   const tablet = token("breakpoint.tablet");
