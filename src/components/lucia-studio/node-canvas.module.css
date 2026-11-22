@@ -101,3 +101,26 @@
   .node, .inspector, .canvasPanel { border: 1px solid CanvasText; }
   .nodeSelected { outline: 2px solid Highlight; }
 }
+
+.inspectorForm { margin: 0; }
+.field { display: grid; gap: 6px; margin: 0 0 12px; color: #586780; font-size: 10px; font-weight: 700; }
+.field input, .field select, .field textarea { width: 100%; min-width: 0; border: 1px solid #dce3ef; border-radius: 8px; padding: 9px 10px; background: #fff; color: #263753; font: inherit; font-size: 12px; font-weight: 500; }
+.field textarea { resize: vertical; line-height: 1.5; }
+.field input:focus-visible, .field select:focus-visible, .field textarea:focus-visible { outline: 3px solid #8797ed; outline-offset: 2px; }
+.formActions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.formActions button, .secondaryAction, .removeCard { min-height: 34px; border: 1px solid #4359bd; border-radius: 8px; padding: 7px 11px; background: #4359bd; color: #fff; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; }
+.formActions button:disabled, .secondaryAction:disabled { opacity: .5; cursor: not-allowed; }
+.formActions .secondaryAction, .secondaryAction { border-color: #dce3ef; background: #f8f9fd; color: #34445f; }
+.cardEditor { margin-top: 16px; }
+.cardEditorHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; color: #34435e; font-size: 11px; }
+.cardEditorHeader span { color: #8490a4; font-size: 10px; }
+.cardFieldset { min-width: 0; margin: 0 0 10px; border: 1px solid #e1e6ef; border-radius: 10px; padding: 10px; }
+.cardFieldset legend { padding: 0 5px; color: #66758e; font-size: 10px; font-weight: 800; }
+.removeCard { min-height: 28px; border-color: #f0d6d2; padding: 5px 8px; background: #fff6f4; color: #963d32; font-size: 10px; }
+.fieldErrors, .inspectorError { margin: 10px 0; border-radius: 8px; padding: 9px 11px; background: #fff0ed; color: #9d3527; font-size: 11px; line-height: 1.5; }
+.fieldErrors { padding-left: 27px; }
+.conflictPanel { margin-top: 13px; border: 1px solid #e6c98e; border-radius: 10px; padding: 11px; background: #fffaf0; color: #6e5120; }
+.conflictPanel strong { font-size: 11px; }
+.conflictPanel p { margin: 7px 0; font-size: 10px; line-height: 1.6; }
+.dirtyNotice { margin: 10px 0 0; color: #94651d; font-size: 10px; }
+.savedRevision { margin: 10px 0 0; color: #286548; font-size: 10px; }
