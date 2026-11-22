@@ -6,6 +6,7 @@ import {
   coreFoundation, lookupDesignRecipe, resolveGraphRecipeReferences,
 } from "@/lib/design-intelligence/registry";
 import type { DesignFoundation } from "@/lib/design-intelligence/contracts";
+import { resolveRequiredDesignTokens } from "./tokens";
 import {
   renderDiagnosticSchema, renderRequestSchema, type RenderContext,
   type RenderDiagnostic, type RenderResult, type RendererDefinition,
@@ -150,7 +151,7 @@ function childSections(graph: GraphDocument, pageId: string): GraphNode[] {
 }
 function fail(diagnostics: RenderDiagnostic[]): RenderResult { return { ok: false, html: null, diagnostics }; }
 
-export interface RenderOptions { foundation?: DesignFoundation; registry?: RendererRegistry; }
+export interface RenderOptions { foundation?: DesignFoundation; registry?: RendererRegistry; mediaResolver?: MediaResolver; sharedDataResolver?: SharedDataResolver; }
 
 export async function renderWebsite(input: unknown, options: RenderOptions = {}): Promise<RenderResult> {
   if (!input || typeof input !== "object" || Array.isArray(input)) return fail([issue("GRAPH_INVALID", "Render input must be an object.")]);
