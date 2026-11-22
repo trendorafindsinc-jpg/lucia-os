@@ -184,7 +184,7 @@ function pathOf(node: GraphNode): string | null {
 }
 function normalizeRoute(route: string): string | null {
   if (!route.startsWith("/") || route.startsWith("//") || route.includes("//") ||
-      /[?#\\\\\u0000-\u001f]/.test(route) || /%(?:2f|5c)/i.test(route)) return null;
+      /[?#\\\\\u0000-\u001f]/.test(route) || /%(?:2f|5c)/i.test(route) || /%25(?:25)*(?:2e|2f|5c)/i.test(route)) return null;
   try {
     const decoded = decodeURIComponent(route);
     if (decoded.split("/").some((part) => part === "." || part === "..")) return null;
