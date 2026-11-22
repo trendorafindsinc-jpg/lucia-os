@@ -59,11 +59,13 @@ export async function resolveRenderReferences(
     if (edge.type === "references_media") {
       if (!reference || reference.type !== "media_reference") return { ok: false, code: "MEDIA_NOT_FOUND", nodeId: edge.sourceNodeId, message: "Media reference node is missing." };
       if (!mediaResolver) return { ok: false, code: "MEDIA_NOT_FOUND", nodeId: reference.id, message: "No authorized media resolver is configured." };
+      const assetId = reference.properties.assetId;
+      if (typeof assetId !== "string") return { ok: false, code: "MEDIA_NOT_FOUND", nodeId: reference.id, message: "Media reference has no valid asset identifier." };
       let asset: ResolvedMediaAsset | null;
-      try { asset = await mediaResolver.resolve(reference.properties.assetId, graph.id); }
+      try { asset = await mediaResolver.resolve(assetId, graph.id); }
       catch { return { ok: false, code: "MEDIA_FORBIDDEN", nodeId: reference.id, message: "Media access was denied or could not be verified." }; }
       if (!asset) return { ok: false, code: "MEDIA_NOT_FOUND", nodeId: reference.id, message: "Referenced media asset is unavailable." };
-      if (!safeMedia(asset, reference.properties.assetId)) return { ok: false, code: "MEDIA_FORBIDDEN", nodeId: reference.id, message: "Media resolver returned invalid or unsafe metadata." };
+      if (!safeMedia(asset, assetId)) return { ok: false, code: "MEDIA_FORBIDDEN", nodeId: reference.id, message: "Media resolver returned invalid or unsafe metadata." };
       media.set(asset.assetId, asset);
     }
     if (edge.type === "binds_shared_data") {
