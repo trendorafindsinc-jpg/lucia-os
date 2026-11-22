@@ -15,6 +15,32 @@ describe("exact design token resolution", () => {
     expect(resolveDesignToken(unsafe, "shadow.subtle")).toBeNull();
   });
 
+  it("rejects token values with wrong types, unsafe numbers and unsupported shadow values", () => {
+    const invalidColor = {
+      ...coreFoundation,
+      colors: { ...coreFoundation.colors, primary: "red;body{display:none}" },
+    };
+    expect(resolveDesignToken(invalidColor, "color.primary")).toBeNull();
+
+    const invalidSpacing = {
+      ...coreFoundation,
+      spacing: { ...coreFoundation.spacing, md: -1 },
+    };
+    expect(resolveDesignToken(invalidSpacing, "spacing.md")).toBeNull();
+
+    const oversizedBreakpoint = {
+      ...coreFoundation,
+      breakpoints: { ...coreFoundation.breakpoints, tablet: 2401 },
+    };
+    expect(resolveDesignToken(oversizedBreakpoint, "breakpoint.tablet")).toBeNull();
+
+    const invalidShadow = {
+      ...coreFoundation,
+      shadows: { ...coreFoundation.shadows, subtle: "0 0 0 red" },
+    };
+    expect(resolveDesignToken(invalidShadow, "shadow.subtle")).toBeNull();
+  });
+
   it("returns stable diagnostics for missing required paths", () => {
     const result = resolveRequiredDesignTokens(coreFoundation, ["color.unknown", "spacing.md"]);
     expect(result.ok).toBe(false);
