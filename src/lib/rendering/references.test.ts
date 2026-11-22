@@ -90,7 +90,7 @@ describe("secure render reference resolution", () => {
         schemaVersion: 1, properties: {},
       }],
     };
-    const result = await resolveRenderReferences(repeated, [section], mediaResolver);
+    const result = await resolveRenderReferences(repeated, [section], mediaResolver, { resolve: async () => ({ displayName: "Lucia" }) });
     expect(result.ok).toBe(true);
     expect(mediaResolver.resolve).toHaveBeenCalledTimes(1);
   });
@@ -108,7 +108,7 @@ describe("secure render reference resolution", () => {
       enumerable: true,
       get() { getterCalls += 1; return "should not execute"; },
     });
-    const shared = await resolveRenderReferences(graph, [section], undefined, {
+    const shared = await resolveRenderReferences(graph, [section], { resolve: async (assetId) => ({ assetId, url: "/media/team.webp", altText: "Team", decorative: false }) }, {
       resolve: async () => unsafe as Readonly<Record<string, unknown>>,
     });
     expect(shared.ok).toBe(false);
