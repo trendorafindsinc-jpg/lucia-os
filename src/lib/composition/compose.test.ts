@@ -49,6 +49,25 @@ describe("deterministic website composition", () => {
     expect(first).toEqual(second);
   });
 
+  it("preserves an explicit hero call-to-action without inventing its destination", () => {
+    const result = composeWebsite(request({
+      pages: [{
+        key: "home", title: "Home", path: "/",
+        sections: [{
+          key: "hero", category: "introduction",
+          content: { heading: "Welcome", actionLabel: "Contact us", actionHref: "/contact" },
+        }],
+      }],
+    }), { idFactory: ids() });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const hero = result.graph.nodes.find((node) => node.type === "section");
+      expect(hero?.properties.content).toEqual({
+        heading: "Welcome", actionLabel: "Contact us", actionHref: "/contact",
+      });
+    }
+  });
+
   it("fails closed for unknown industry recipes", () => {
     const result = composeWebsite(request({
       website: { id: websiteId, name: "Example Studio", industryCategory: "unknown-sector" },
