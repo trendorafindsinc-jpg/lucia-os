@@ -8,6 +8,13 @@ import styles from "./studio-panels.module.css";
 type Version = { id: string; revision: number; contentHash: string; createdAt: string | Date };
 type HistoryPayload = { versions?: Version[]; error?: string };
 type SnapshotPayload = { version?: { snapshot: GraphDocument }; error?: string };
+function displayValue(value: unknown): string {
+  try {
+    const result = JSON.stringify(value);
+    if (result === undefined) return "undefined";
+    return result.length > 240 ? result.slice(0, 237) + "…" : result;
+  } catch { return "[unavailable]"; }
+}
 
 export function LuciaStudioHistoryPanel({ websiteId, document, headers, onRestored }: {
   websiteId: string; document: GraphDocument; headers: Record<string, string>; onRestored: () => Promise<void>;
@@ -78,7 +85,7 @@ export function LuciaStudioHistoryPanel({ websiteId, document, headers, onRestor
       <div className={styles.diffSummary}>
         <span>{diff.addedNodes.length} nodes added</span><span>{diff.removedNodes.length} removed</span><span>{diff.changedNodes.length} changed</span><span>{diff.addedEdges} relationships added</span><span>{diff.removedEdges} removed</span>
       </div>
-      {diff.changedNodes.map((change) => <article className={styles.diffItem} key={change.after.id}><strong>{change.after.type} · {String(change.after.properties.title ?? change.after.properties.name ?? change.after.id.slice(0, 8))}</strong><small>Changed node {change.after.id.slice(0, 8)}</small></article>)}
+      {diff.changedNodes.map((change) => <article className={styles.diffItem} key={change.after.id}><strong>{change.after.type} · {String(change.after.properties.title ?? change.after.properties.name ?? change.after.id.slice(0, 8))}</strong><small>Changed node {change.after.id.slice(0, 8)}</small>{[...new Set([...Object.keys(change.before.properties), ...Object.keys(change.after.properties)])].filter((key) => displayValue(change.before.properties[key]) !== displayValue(change.after.properties[key])).map((key) => <p key={key}><code>{key}</code><small>Before: {displayValue(change.before.properties[key])}</small><small>After: {displayValue(change.after.properties[key])}</small></p>)}</article>)}
       {diff.addedNodes.map((node) => <article className={styles.diffItem} key={node.id}><strong>Added · {node.type}</strong><small>{node.id.slice(0, 8)}</small></article>)}
       {diff.removedNodes.map((node) => <article className={styles.diffItem} key={node.id}><strong>Removed · {node.type}</strong><small>{node.id.slice(0, 8)}</small></article>)}
       <button type="button" onClick={() => void restore()} disabled={restoring || selected.revision === document.revision}>{restoring ? "Restoring…" : `Restore revision ${selected.revision} as new revision`}</button>
