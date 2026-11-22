@@ -110,6 +110,22 @@ export function normalizeCompositionRequest(input: unknown): NormalizeCompositio
         });
       }
       requestKeys.add(section.key);
+      const actionHref = section.content.actionHref;
+      if (actionHref !== undefined) {
+        const normalizedActionHref = normalizePagePath(actionHref);
+        if (normalizedActionHref === null) {
+          diagnostics.push({
+            code: "INVALID_PAGE_PATH",
+            severity: "error",
+            message: "Hero call-to-action destinations must be safe absolute local paths.",
+            requestKey: section.key,
+            pageKey: page.key,
+            sectionKey: section.key,
+          });
+          return section;
+        }
+        return { ...section, content: { ...section.content, actionHref: normalizedActionHref } };
+      }
       return section;
     });
 
