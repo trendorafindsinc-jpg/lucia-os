@@ -57,7 +57,8 @@ export default async function WorkspaceWebsitesPage() {
                 <h3>{site.name}</h3><span className={site.status === "published" ? "studio-picker-live" : "studio-picker-draft"}>
                   {site.status === "published" ? "Published" : "Draft"}</span></div>
                 <p className="studio-picker-address">{address}</p><p className="studio-picker-updated">Updated {site.updatedAt.toLocaleDateString()}</p>
-                <div className="studio-picker-actions"><Link className="studio-picker-primary" href={{ pathname: "/editor", query: { websiteId: site.id } }}>Edit Website</Link>
+                <div className="studio-picker-actions"><Link className="studio-picker-primary" href={{ pathname: "/studio", query: { websiteId: site.id, organizationId: group.id } }}>Open Lucia Studio</Link>
+                  <Link href={{ pathname: "/editor", query: { websiteId: site.id } }}>Legacy editor (temporary)</Link>
                   {site.status === "published" ? <a href={"https://" + address} target="_blank" rel="noopener noreferrer">View live website</a> : null}
                   <Link href={{ pathname: "/publishing", query: { websiteId: site.id } }}>Publishing Studio</Link>\n                  <Link href={{ pathname: "/editor", query: { websiteId: site.id, content: "blog" } }}>Write Blog</Link>
                   <Link href={{ pathname: "/editor", query: { websiteId: site.id, content: "news" } }}>Publish News</Link>
