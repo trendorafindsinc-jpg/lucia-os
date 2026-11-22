@@ -101,6 +101,39 @@ describe("Composition request contracts", () => {
     expect(result.diagnostics.map((item) => item.code)).toContain("DUPLICATE_REQUEST_KEY");
   });
 
+  it("requires call-to-action labels and destinations together", () => {
+    expect(compositionRequestSchema.safeParse(request({
+      pages: [{ key: "home", title: "Home", path: "/", sections: [{
+        key: "hero", category: "introduction", content: { actionLabel: "Contact us" },
+      }] }],
+    })).success).toBe(false);
+    expect(compositionRequestSchema.safeParse(request({
+      pages: [{ key: "home", title: "Home", path: "/", sections: [{
+        key: "hero", category: "introduction", content: { actionHref: "/contact" },
+      }] }],
+    })).success).toBe(false);
+  });
+
+  it("normalizes only safe local call-to-action destinations", () => {
+    const valid = normalizeCompositionRequest(request({
+      pages: [{ key: "home", title: "Home", path: "/", sections: [{
+        key: "hero", category: "introduction",
+        content: { actionLabel: "Contact us", actionHref: "/contact/" },
+      }] }],
+    }));
+    expect(valid.ok).toBe(true);
+    if (valid.ok) expect(valid.request.pages[0].sections[0].content.actionHref).toBe("/contact");
+
+    const unsafe = normalizeCompositionRequest(request({
+      pages: [{ key: "home", title: "Home", path: "/", sections: [{
+        key: "hero", category: "introduction",
+        content: { actionLabel: "Contact us", actionHref: "https://example.test" },
+      }] }],
+    }));
+    expect(unsafe.ok).toBe(false);
+    if (!unsafe.ok) expect(unsafe.diagnostics.map((item) => item.code)).toContain("INVALID_PAGE_PATH");
+  });
+
   it("fails closed with structured diagnostics for malformed requests", () => {
     const result = normalizeCompositionRequest({ schemaVersion: 99 });
     expect(result.ok).toBe(false);
