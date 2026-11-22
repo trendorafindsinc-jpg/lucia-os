@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createElement as h } from "react";
+import { coreFoundation } from "@/lib/design-intelligence/registry";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { RenderResult } from "./contracts";
 import { renderWebsiteElement, type RenderOptions } from "./render-core";
@@ -17,7 +18,7 @@ export async function renderWebsite(input: unknown, options: RenderOptions = {})
       h("meta", { name: "viewport", content: "width=device-width, initial-scale=1" }),
       h("meta", { name: "color-scheme", content: "light" }),
       h("title", null, result.title),
-      h("style", { "data-lucia-foundation": "core@1" }, result.css),
+      h("style", { "data-lucia-foundation": coreFoundation.id + "@" + coreFoundation.version }, result.css),
     ),
     h("body", null, result.body),
   );
