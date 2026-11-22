@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { GraphDocument, GraphNode } from "@/lib/graph/contracts";
 import {
   pageInspectorSchema,
@@ -74,7 +74,7 @@ export function LuciaStudioNodeInspector({
   const [error, setError] = useState("");
   const [conflictRevision, setConflictRevision] = useState<number | null>(null);
   const [fieldErrors, setFieldErrors] = useState<string[]>([]);
-  const [savedRevision, setSavedRevision] = useState<number | null>(null);\n  const preserveDraftRef = useMemo(() => ({ current: false }), []);
+  const [savedRevision, setSavedRevision] = useState<number | null>(null);\n  const preserveDraftRef = useRef(false);
 
   useEffect(() => {\n    if (preserveDraftRef.current) { preserveDraftRef.current = false; return; }\n    setDraft(initialDraft(node));
     setDirty(false);
@@ -217,8 +217,7 @@ export function LuciaStudioNodeInspector({
     }
   };
 
-  const cardEditor = useMemo(() => node.type === "section" &&
-    draft.recipeId !== "lucia.design.section.hero", [node.type, draft.recipeId]);
+  const cardEditor = node.type === "section" && draft.recipeId !== "lucia.design.section.hero";
 
   return (
     <aside className={styles.inspector} aria-label="Node inspector">
