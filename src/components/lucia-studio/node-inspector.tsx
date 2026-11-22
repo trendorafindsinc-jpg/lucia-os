@@ -33,6 +33,7 @@ type Props = {
   position?: { x: number; y: number; locked: boolean };
   onToggleLock?: () => void;
   onSelectNode: (nodeId: string) => void;
+  onRegisterActions: (actions: { save: () => Promise<boolean>; discard: () => void; canSuspend: () => boolean }) => void;
 };
 
 function initialDraft(node: GraphNode): Draft {
@@ -66,7 +67,7 @@ function initialDraft(node: GraphNode): Draft {
 }
 
 export function LuciaStudioNodeInspector({
-  node, document, websiteId, headers, onDirtyChange, onGraphUpdated, relationships, position, onToggleLock, onSelectNode,
+  node, document, websiteId, headers, onDirtyChange, onGraphUpdated, relationships, position, onToggleLock, onSelectNode, onRegisterActions,
 }: Props) {
   const [draft, setDraft] = useState<Draft>(() => initialDraft(node));
   const [dirty, setDirty] = useState(false);
@@ -163,9 +164,9 @@ export function LuciaStudioNodeInspector({
     return payload.graph.document;
   };
 
-  const submit = async (expectedRevision: number) => {
+  const submit = async (expectedRevision: number): Promise<boolean> => {
     const properties = makeProperties();
-    if (!properties) return;
+    if (!properties) return false;
     setSaving(true);
     setError("");
     setFieldErrors([]);
@@ -188,7 +189,7 @@ export function LuciaStudioNodeInspector({
         onGraphUpdated(latest);
         setConflictRevision(latest.revision);
         setError("Another editor saved a newer graph revision. Your local draft is preserved; choose whether to reapply it or reload the latest values.");
-        return;
+        return false;
       }
       if (!response.ok) throw new Error(result.error || "The graph mutation could not be saved.");
       const latest = await fetchLatest();
@@ -199,8 +200,10 @@ export function LuciaStudioNodeInspector({
       setConflictRevision(null);
       setSavedRevision(latest.revision);
       setError("");
+      return true;
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "The graph mutation could not be saved.");
+      return false;
     } finally {
       setSaving(false);
     }
@@ -225,6 +228,23 @@ export function LuciaStudioNodeInspector({
   };
 
   const cardEditor = node.type === "section" && draft.recipeId !== "lucia.design.section.hero";
+
+  const discardDraft = () => {
+    setDraft(initialDraft(node));
+    setDirty(false);
+    onDirtyChange(false);
+    setFieldErrors([]);
+    setError("");
+    setConflictRevision(null);
+  };
+
+  useEffect(() => {
+    onRegisterActions({
+      save: () => submit(conflictRevision ?? document.revision),
+      discard: discardDraft,
+      canSuspend: () => !dirty,
+    });
+  }, [dirty, document.revision, conflictRevision, node.id, onRegisterActions]);
 
   return (
     <aside className={styles.inspector} aria-label="Node inspector">
@@ -322,7 +342,7 @@ export function LuciaStudioNodeInspector({
             ) : (
               <div className={styles.formActions}>
                 <button type="submit" disabled={!dirty || saving}>{saving ? "Saving…" : "Save changes"}</button>
-                <button type="button" className={styles.secondaryAction} disabled={!dirty || saving} onClick={() => { setDraft(initialDraft(node)); setDirty(false); onDirtyChange(false); setFieldErrors([]); setError(""); }}>Discard</button>
+                <button type="button" className={styles.secondaryAction} disabled={!dirty || saving} onClick={discardDraft}>Discard</button>
               </div>
             )}
             {savedRevision !== null ? <p className={styles.savedRevision} role="status">Saved as graph revision {savedRevision}.</p> : null}
