@@ -163,6 +163,17 @@ export function LuciaStudioNodeCanvas({
     if (!response.ok) throw new Error(result.error || "Canvas position could not be saved.");
   }, [websiteId, headers]);
 
+  const savePositionsBatch = useCallback(async (entries: { nodeId: string; x: number; y: number; locked: boolean }[]) => {
+    if (!entries.length) return;
+    const response = await fetch(`/api/websites/${encodeURIComponent(websiteId)}/graph/canvas`, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify({ positions: entries }),
+    });
+    const result = await response.json() as { error?: string; saved?: number };
+    if (!response.ok) throw new Error(result.error || "Canvas positions could not be saved.");
+  }, [websiteId, headers]);
+
   const selectedNode = document?.nodes.find((node) => node.id === selectedId && node.lifecycleStatus === "active") ?? null;
   const activeNodes = document?.nodes.filter((node) => node.lifecycleStatus === "active") ?? [];
   const activeEdges = document?.edges.filter((edge) =>
@@ -274,11 +285,11 @@ export function LuciaStudioNodeCanvas({
     setError("");
     setNotice("Organizing unlocked nodes and saving canvas positions…");
     try {
-      for (const [nodeId, position] of Object.entries(next)) {
-        if (position.locked) continue;
-        await savePosition(nodeId, position);
-      }
-      setNotice("Canvas organized. Locked nodes stayed in place; website content revision unchanged.");
+      const movable = Object.entries(next)
+        .filter(([, position]) => !position.locked)
+        .map(([nodeId, position]) => ({ nodeId, ...position }));
+      await savePositionsBatch(movable);
+      setNotice(`Canvas organized. ${Object.keys(next).length - movable.length} locked nodes stayed in place; website content revision unchanged.`);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Some canvas positions could not be saved. Reload to reconcile.");
       await loadGraph();
