@@ -57,7 +57,7 @@ describe("secure render reference resolution", () => {
     const resolver = { resolve: vi.fn(async (assetId: string) => ({
       assetId, url: "/_media/" + assetId, altText: "Owned image", decorative: false,
     })) };
-    const result = await resolveRenderReferences(graph, [section], resolver, undefined, websiteScope);
+    const result = await resolveRenderReferences(graph, [section], resolver, { resolve: async () => ({ displayName: "Lucia" }) }, websiteScope);
     expect(result.ok).toBe(true);
     expect(resolver.resolve).toHaveBeenCalledWith("00000000-0000-4000-8000-000000000097", websiteScope);
   });
