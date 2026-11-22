@@ -273,6 +273,7 @@ Implemented on the `development` branch:
 
 - New authenticated `/studio` route and website-library entry point.
 - Real website graph nodes and typed relationship edges rendered in a spatial canvas.
+- Existing websites with no graph show an explicit initialization choice; opening Studio never silently creates or imports customer content.
 - Node selection, contextual inspector, connected-relationship navigation and registered-property inspection.
 - Pointer dragging, keyboard arrow-key movement, background panning, wheel zoom, zoom controls and view reset.
 - Personal canvas positions loaded and saved through the existing user-scoped canvas service.
