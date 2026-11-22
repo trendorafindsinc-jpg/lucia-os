@@ -124,4 +124,23 @@ describe("deterministic Studio canvas auto-layout", () => {
     expect(oversized.ok).toBe(false);
     if (!oversized.ok) expect(oversized.diagnostics[0].code).toBe("STUDIO_LAYOUT_LIMIT_EXCEEDED");
   });
+  it("preserves locked saved positions and recomputes unlocked positions", async () => {
+    const { applyStudioAutoLayout } = await import("./auto-layout");
+    const document = fixture();
+    const base = computeStudioAutoLayout(document);
+    expect(base.ok).toBe(true);
+    if (!base.ok) return;
+    const saved = [
+      { nodeId: id(3), x: 77, y: 88, locked: true },
+      { nodeId: id(4), x: 999, y: 888, locked: false },
+    ];
+    const arranged = applyStudioAutoLayout(document, saved);
+    expect(arranged.ok).toBe(true);
+    if (!arranged.ok) return;
+    const positions = new Map(arranged.positions.map((position) => [position.nodeId, position]));
+    expect(positions.get(id(3))).toEqual({ nodeId: id(3), x: 77, y: 88 });
+    expect(positions.get(id(4))).toEqual(base.positions.find((position) => position.nodeId === id(4)));
+    expect(JSON.stringify(document)).toBe(JSON.stringify(fixture()));
+  });
+
 });
