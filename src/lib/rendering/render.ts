@@ -55,13 +55,19 @@ const heroRenderer: RendererDefinition = {
     const heading = headingOf(node);
     if (!heading) return null;
     const description = descriptionOf(node);
+    const actionLabel = textValue(contentOf(node)?.actionLabel, 100);
+    const actionHref = textValue(contentOf(node)?.actionHref, 240);
+    if (Boolean(actionLabel) !== Boolean(actionHref) || (actionHref && !normalizeRoute(actionHref))) return null;
     return h("section", { className: "lucia-section lucia-hero", "aria-labelledby": "hero-" + node.id },
       h("div", { className: "lucia-container lucia-hero__inner" },
         h("div", { className: "lucia-hero__copy" },
           h("h2", { id: "hero-" + node.id }, heading),
           description ? h("p", { className: "lucia-lead" }, description) : null,
+          actionLabel && actionHref ? h("a", { className: "lucia-cta", href: actionHref }, actionLabel) : null,
         ),
-        ...context.graph.edges.filter((edge) => edge.type === "references_media" && edge.sourceNodeId === node.id).map((edge) => {
+        ...context.graph.edges.filter((edge) => edge.type === "references_media" && edge.sourceNodeId === node.id)
+          .sort((a, b) => a.targetNodeId.localeCompare(b.targetNodeId))
+          .map((edge) => {
           const reference = context.graph.nodes.find((candidate) => candidate.id === edge.targetNodeId);
           const assetId = reference?.type === "media_reference" ? reference.properties.assetId : null;
           const asset = typeof assetId === "string" ? context.resolvedMedia.get(assetId) : undefined;
@@ -126,6 +132,8 @@ a{color:var(--lucia-primary);text-underline-offset:.18em}a:focus-visible{outline
 .lucia-container{width:min(calc(100% - 2rem),var(--lucia-content-width));margin-inline:auto}
 .lucia-header__inner{min-height:4.5rem;display:flex;align-items:center;justify-content:space-between;gap:var(--lucia-space-md);padding-block:var(--lucia-space-sm)}
 .lucia-brand{font-weight:700;color:var(--lucia-text);text-decoration:none}
+.lucia-cta{display:inline-flex;align-items:center;justify-content:center;margin-top:var(--lucia-space-md);min-height:2.75rem;padding:.65rem 1rem;border-radius:var(--lucia-radius-md);background:var(--lucia-primary);color:var(--lucia-on-primary);font-weight:650;text-decoration:none}
+.lucia-cta:hover{text-decoration:underline;text-underline-offset:.2em}
 .lucia-nav ul{display:flex;flex-wrap:wrap;gap:var(--lucia-space-md);list-style:none;margin:0;padding:0}
 .lucia-nav a{display:inline-block;padding:.5rem 0}.lucia-nav a[aria-current=page]{font-weight:700;text-decoration-thickness:2px}
 .lucia-main{min-height:60vh}.lucia-page-title{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
