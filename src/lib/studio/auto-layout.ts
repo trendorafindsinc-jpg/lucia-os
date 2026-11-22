@@ -207,12 +207,47 @@ export function applyStudioAutoLayout(
 ): StudioAutoLayoutResult {
   const computed = computeStudioAutoLayout(input);
   if (!computed.ok) return computed;
-  const savedById = new Map(saved.map((position) => [position.nodeId, position]));
-  const positions = computed.positions.map((position) => {
+  const savedById = new Map<string, SavedStudioCanvasPosition>();
+  for (const position of saved) {
+    if (!Number.isFinite(position.x) || !Number.isFinite(position.y) ||
+        Math.abs(position.x) > MAX_CANVAS_COORDINATE ||
+        Math.abs(position.y) > MAX_CANVAS_COORDINATE ||
+        savedById.has(position.nodeId)) {
+      return failure("STUDIO_CANVAS_POSITION_INVALID", "Saved canvas positions contain invalid or duplicate coordinates.", position.nodeId);
+    }
+    savedById.set(position.nodeId, position);
+  }
+
+  const locked = computed.positions
+    .map((position) => savedById.get(position.nodeId))
+    .filter((position): position is SavedStudioCanvasPosition => Boolean(position?.locked));
+  const occupied: { x: number; y: number }[] = locked.map((position) => ({ x: position.x, y: position.y }));
+  const result: StudioCanvasPosition[] = [];
+
+  const overlaps = (candidate: StudioCanvasPosition) => occupied.some((other) =>
+    candidate.x < other.x + 232 + 32 &&
+    candidate.x + 232 + 32 > other.x &&
+    candidate.y < other.y + 104 + 32 &&
+    candidate.y + 104 + 32 > other.y,
+  );
+
+  for (const position of computed.positions) {
     const existing = savedById.get(position.nodeId);
-    return existing?.locked
-      ? { nodeId: position.nodeId, x: existing.x, y: existing.y }
-      : position;
-  });
-  return { ok: true, positions, diagnostics: [] };
+    if (existing?.locked) {
+      result.push({ nodeId: position.nodeId, x: existing.x, y: existing.y });
+      continue;
+    }
+    const candidate = { ...position };
+    let attempts = 0;
+    while (overlaps(candidate) && attempts < 7_000) {
+      candidate.y += 140;
+      attempts += 1;
+    }
+    if (attempts >= 7_000 || Math.abs(candidate.y) > MAX_CANVAS_COORDINATE) {
+      return failure("STUDIO_LAYOUT_LIMIT_EXCEEDED", "Locked nodes leave insufficient free canvas space for automatic organization.", candidate.nodeId);
+    }
+    occupied.push({ x: candidate.x, y: candidate.y });
+    result.push(candidate);
+  }
+  return { ok: true, positions: result.sort((left, right) => left.nodeId.localeCompare(right.nodeId)), diagnostics: [] };
 }
