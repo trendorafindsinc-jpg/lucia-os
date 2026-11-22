@@ -23,7 +23,7 @@ function safeMedia(value: ResolvedMediaAsset, assetId: string): boolean {
     if (item.decorative ? item.altText !== null : typeof item.altText !== "string" || !item.altText.trim() || item.altText.length > 500) return false;
     if (typeof item.url !== "string" || item.url.length > 2048 || /[\u0000-\u0020\u007f]/.test(item.url)) return false;
     if (item.url.startsWith("/")) {
-      if (item.url.startsWith("//") || item.url.includes("\\\\") || /%(?:2f|5c)/i.test(item.url)) return false;
+      if (item.url.startsWith("//") || item.url.includes("\\") || /%(?:2f|5c)/i.test(item.url) || /%25(?:2e|2f|5c)/i.test(item.url)) return false;
       const pathname = item.url.split(/[?#]/, 1)[0];
       let decoded: string;
       try { decoded = decodeURIComponent(pathname); } catch { return false; }
