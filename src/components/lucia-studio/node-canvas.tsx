@@ -18,6 +18,7 @@ type DragState = { nodeId: string; pointerId: number; startX: number; startY: nu
 type PanState = { pointerId: number; startX: number; startY: number; originX: number; originY: number };
 
 const NODE_SIZE = { width: 232, height: 104 };
+const MAX_STUDIO_CANVAS_EDGES = 4_000;
 const EDGE_LABELS: Record<GraphEdge["type"], string> = {
   contains_page: "page",
   contains_section: "section",
@@ -95,6 +96,7 @@ export function LuciaStudioNodeCanvas({
   const dragRef = useRef<DragState | null>(null);
   const panRef = useRef<PanState | null>(null);
   const positionsRef = useRef(positions);
+  const didInitialFit = useRef(false);
   positionsRef.current = positions;
   const headers = useMemo(() => ({
     "Content-Type": "application/json",
@@ -124,6 +126,11 @@ export function LuciaStudioNodeCanvas({
         if (!response.ok || !payload.graph) throw new Error(payload.error || "The new graph could not be loaded.");
       }
       const graph = payload.graph.document;
+      const activeIds = new Set(graph.nodes.filter((node) => node.lifecycleStatus === "active").map((node) => node.id));
+      const activeEdgeCount = graph.edges.filter((edge) => activeIds.has(edge.sourceNodeId) && activeIds.has(edge.targetNodeId)).length;
+      if (activeEdgeCount > MAX_STUDIO_CANVAS_EDGES) {
+        throw new Error(`This canvas currently supports up to ${MAX_STUDIO_CANVAS_EDGES.toLocaleString()} active relationships. The graph itself remains unchanged.`);
+      }
       const automatic = computeStudioAutoLayout(graph);
       if (!automatic.ok) throw new Error(automatic.diagnostics[0]?.message || "The graph cannot be laid out.");
       const saved = payload.graph.canvasPositions ?? [];
@@ -174,12 +181,12 @@ export function LuciaStudioNodeCanvas({
     if (!response.ok) throw new Error(result.error || "Canvas positions could not be saved.");
   }, [websiteId, headers]);
 
-  const selectedNode = document?.nodes.find((node) => node.id === selectedId && node.lifecycleStatus === "active") ?? null;
-  const activeNodes = document?.nodes.filter((node) => node.lifecycleStatus === "active") ?? [];
-  const activeEdges = document?.edges.filter((edge) =>
-    activeNodes.some((node) => node.id === edge.sourceNodeId) &&
-    activeNodes.some((node) => node.id === edge.targetNodeId),
-  ) ?? [];
+  const activeNodes = useMemo(() => document?.nodes.filter((node) => node.lifecycleStatus === "active") ?? [], [document]);
+  const activeNodeIds = useMemo(() => new Set(activeNodes.map((node) => node.id)), [activeNodes]);
+  const activeEdges = useMemo(() => document?.edges.filter((edge) =>
+    activeNodeIds.has(edge.sourceNodeId) && activeNodeIds.has(edge.targetNodeId),
+  ) ?? [], [document, activeNodeIds]);
+  const selectedNode = activeNodes.find((node) => node.id === selectedId) ?? null;
 
   const canvasExtent = useMemo(() => {
     const values = Object.values(positions);
@@ -188,6 +195,38 @@ export function LuciaStudioNodeCanvas({
       height: Math.max(1500, ...values.map((p) => p.y + NODE_SIZE.height + 240)),
     };
   }, [positions]);
+
+  const fitView = useCallback(() => {
+    const viewport = canvasRef.current;
+    const values = Object.values(positionsRef.current);
+    if (!viewport || !values.length) {
+      setZoom(0.82);
+      setPan({ x: 48, y: 42 });
+      return;
+    }
+    const minX = Math.min(...values.map((position) => position.x));
+    const minY = Math.min(...values.map((position) => position.y));
+    const maxX = Math.max(...values.map((position) => position.x + NODE_SIZE.width));
+    const maxY = Math.max(...values.map((position) => position.y + NODE_SIZE.height));
+    const width = Math.max(1, maxX - minX);
+    const height = Math.max(1, maxY - minY);
+    const scale = Math.min(1.5, Math.max(0.35, Math.min(
+      (viewport.clientWidth - 100) / width,
+      (viewport.clientHeight - 100) / height,
+    )));
+    setZoom(scale);
+    setPan({
+      x: viewport.clientWidth / 2 - ((minX + maxX) / 2) * scale,
+      y: viewport.clientHeight / 2 - ((minY + maxY) / 2) * scale,
+    });
+  }, []);
+
+  useEffect(() => {
+    if (document && Object.keys(positions).length && !didInitialFit.current) {
+      didInitialFit.current = true;
+      fitView();
+    }
+  }, [document, positions, fitView]);
 
   const updateNodePosition = (nodeId: string, x: number, y: number) => {
     setPositions((current) => ({
@@ -354,7 +393,7 @@ export function LuciaStudioNodeCanvas({
         <div className={styles.actions}>
           <span className={styles.saveState} role="status">{saving ? "Saving canvas…" : "Canvas synced"}</span>
           <button type="button" onClick={() => void arrange()} disabled={saving}>Auto-organize</button>
-          <button type="button" onClick={() => { setZoom(0.82); setPan({ x: 48, y: 42 }); }}>Reset view</button>
+          <button type="button" onClick={fitView}>Fit to view</button>
           <a href="/workspace/websites">All websites</a>
         </div>
       </header>
