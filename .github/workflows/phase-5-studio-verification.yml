@@ -90,6 +90,9 @@ jobs:
         run: npx vitest run src/lib/studio
       - name: Run focused Graph, Composition, Rendering and workspace tests
         run: npx vitest run src/lib/graph src/lib/composition src/lib/rendering src/lib/workspace
+        env:
+          DATABASE_URL_RUNTIME: postgres://lucia_os_runtime:lucia-studio-runtime-ci@localhost:5432/lucia_studio_ci
+          GRAPH_TEST_OWNER_DATABASE_URL: postgres://postgres:lucia-studio-ci-only@localhost:5432/lucia_studio_ci
       - name: Run full unit test suite
         run: npm test
         env:
