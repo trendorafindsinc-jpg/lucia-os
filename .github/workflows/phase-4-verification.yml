@@ -78,6 +78,8 @@ jobs:
           DATABASE_URL: postgres://postgres:lucia-graph-ci-only@localhost:5432/lucia_graph_ci
       - name: Run focused Composition tests
         run: npx vitest run src/lib/composition
+      - name: Run focused Rendering and reference-resolution tests
+        run: npx vitest run src/lib/rendering
       - name: Run focused Graph and Design Intelligence tests
         run: npx vitest run src/lib/graph/graph.test.ts src/lib/design-intelligence/registry.test.ts
       - name: Run full unit test suite
