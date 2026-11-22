@@ -249,21 +249,21 @@ describe.sequential("Graph Persistence Service (PostgreSQL)", () => {
        'image', 'image/webp', 512, 32, 32, 'Graph-owned image', 'ready'),
       (${foreignWebsiteAssetId}, ${ids.orgA}, ${ids.siteOther}, ${ids.userA}, ${"os/"+ids.orgA+"/"+ids.siteOther+"/"+foreignWebsiteAssetId+".webp"},
        'image', 'image/webp', 512, 32, 32, 'Other website image', 'ready')`;
-    const committed = await mutateWebsiteGraph(ids.orgA, batch(currentRevision, "graph-service-media-attach-0001", [
+    await mutateWebsiteGraph(ids.orgA, batch(currentRevision, "graph-service-media-attach-0001", [
       { type: "CREATE_NODE", node: { id: sectionId, graphId, type: "section", schemaVersion: 1, properties: {}, lifecycleStatus: "active" } },
       { type: "CONNECT_NODES", edge: { id: sectionEdgeId, graphId, sourceNodeId: pageId, targetNodeId: sectionId, type: "contains_section", schemaVersion: 1, order: 0, properties: {} } },
       { type: "CREATE_NODE", node: { id: referenceNodeId, graphId, type: "media_reference", schemaVersion: 1, properties: { assetId }, lifecycleStatus: "active" } },
       { type: "CONNECT_NODES", edge: { id: referenceEdgeId, graphId, sourceNodeId: sectionId, targetNodeId: referenceNodeId, type: "references_media", schemaVersion: 1, properties: {} } },
     ]));
-    currentRevision = committed.revision;
+    currentRevision += 1;
     const graph = await getWebsiteGraph(ids.orgA, ids.siteA);
     expect(graph?.document.nodes.find((node) => node.id === referenceNodeId)?.properties.assetId).toBe(assetId);
     await expect(removeMedia(ids.userA, ids.siteA, assetId)).rejects.toMatchObject({ status: 409 });
 
-    const detached = await mutateWebsiteGraph(ids.orgA, batch(currentRevision, "graph-service-media-detach-0001", [
+    await mutateWebsiteGraph(ids.orgA, batch(currentRevision, "graph-service-media-detach-0001", [
       { type: "DELETE_NODE", nodeId: referenceNodeId },
     ]));
-    currentRevision = detached.revision;
+    currentRevision += 1;
     // An older immutable graph snapshot can still be restored, so its asset remains protected.
     await expect(removeMedia(ids.userA, ids.siteA, assetId)).rejects.toMatchObject({ status: 409 });
 
