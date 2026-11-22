@@ -10,6 +10,22 @@ export const compositionContentItemSchema = z.object({
 
 export const COMPOSITION_REQUEST_SCHEMA_VERSION = 1 as const;
 
+const compositionSectionContentSchema = z.object({
+  heading: z.string().trim().max(240).optional(),
+  description: z.string().trim().max(4000).optional(),
+  actionLabel: z.string().trim().min(1).max(100).optional(),
+  actionHref: z.string().trim().min(1).max(240).optional(),
+  items: z.array(compositionContentItemSchema).max(24).optional(),
+}).strict().superRefine((content, context) => {
+  if (Boolean(content.actionLabel) !== Boolean(content.actionHref)) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "A call to action requires both an action label and a local destination.",
+      path: ["actionHref"],
+    });
+  }
+});
+
 export const compositionSectionRequestSchema = z.object({
   key: requestKeySchema,
   category: categorySchema,
@@ -18,12 +34,7 @@ export const compositionSectionRequestSchema = z.object({
     id: z.string().trim().min(1).max(160),
     version: z.number().int().positive(),
   }).strict().optional(),
-  content: z.object({
-    heading: z.string().trim().max(240).optional(),
-    description: z.string().trim().max(4000).optional(),
-    actionLabel: z.string().trim().max(100).optional(),
-    items: z.array(compositionContentItemSchema).max(24).optional(),
-  }).strict().default({}),
+  content: compositionSectionContentSchema.default({}),
 }).strict();
 
 export const compositionPageRequestSchema = z.object({
