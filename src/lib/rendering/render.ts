@@ -6,6 +6,7 @@ import {
   coreFoundation, lookupDesignRecipe, resolveGraphRecipeReferences,
 } from "@/lib/design-intelligence/registry";
 import type { DesignFoundation } from "@/lib/design-intelligence/contracts";
+import { resolveRequiredDesignTokens } from "./tokens";
 import {
   renderDiagnosticSchema, renderRequestSchema, type RenderContext,
   type MediaResolver, type SharedDataResolver,
