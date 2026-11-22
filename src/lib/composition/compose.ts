@@ -165,6 +165,28 @@ export function composeWebsite(input: unknown, options: ComposeOptions): Composi
         }));
         return { ok: false, graph: null, diagnostics };
       }
+      const missingFacts: string[] = [];
+      if (selected.recipe.capabilities.includes("primary-message") && !section.content.heading?.trim()) {
+        missingFacts.push("a customer-approved primary heading");
+      }
+      if ((selected.recipe.capabilities.includes("feature-list") || selected.recipe.capabilities.includes("service-list")) &&
+          (!section.content.heading?.trim() || !section.content.items?.length)) {
+        missingFacts.push("a section heading and at least one customer-provided list item");
+      }
+      if (missingFacts.length) {
+        return {
+          ok: false,
+          graph: null,
+          diagnostics: [compositionDiagnosticSchema.parse({
+            code: "MISSING_CUSTOMER_FACT",
+            severity: "error",
+            message: "Provide " + missingFacts.join(" and ") + "; Lucia will not invent this content.",
+            requestKey: section.key,
+            pageKey: page.key,
+            sectionKey: section.key,
+          })],
+        };
+      }
       const sectionNode = makeNode("section", {
         recipeId: selected.recipe.id,
         recipeVersion: selected.recipe.version,
