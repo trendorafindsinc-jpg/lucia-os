@@ -7,7 +7,7 @@ import {
   type SavedStudioCanvasPosition,
 } from "@/lib/studio/auto-layout";
 import type { GraphDocument, GraphEdge, GraphNode } from "@/lib/graph/contracts";
-import { useWorkspaceTab } from "@/components/workspace/workspace-tab-shell";
+import { useWorkspaceAdapter, useWorkspaceTab } from "@/components/workspace/workspace-tab-shell";
 import { LuciaStudioNodeInspector } from "./node-inspector";
 import styles from "./node-canvas.module.css";
 
@@ -83,7 +83,11 @@ export function LuciaStudioNodeCanvas({
   websiteId: string;
   organizationId: string;
 }) {
-  const { accountId } = useWorkspaceTab();
+  const { accountId, setActiveTabDirty } = useWorkspaceTab();
+  const studioActionsRef = useRef<{ save: () => Promise<boolean>; discard: () => void; canSuspend: () => boolean }>({ save: async () => false, discard: () => {}, canSuspend: () => true });
+  const registerInspectorActions = useCallback((actions: { save: () => Promise<boolean>; discard: () => void; canSuspend: () => boolean }) => { studioActionsRef.current = actions; }, []);
+  const workspaceAdapter = useMemo(() => ({ save: () => studioActionsRef.current.save(), discard: () => studioActionsRef.current.discard(), canSuspend: () => studioActionsRef.current.canSuspend() }), []);
+  useWorkspaceAdapter(workspaceAdapter);
   const [document, setDocument] = useState<GraphDocument | null>(null);
   const [positions, setPositions] = useState<Record<string, Position>>({});
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -203,7 +207,8 @@ export function LuciaStudioNodeCanvas({
   const selectedNode = activeNodes.find((node) => node.id === selectedId) ?? null;
   const onInspectorDirtyChange = useCallback((dirty: boolean) => {
     inspectorDirtyRef.current = dirty;
-  }, []);
+    setActiveTabDirty(dirty);
+  }, [setActiveTabDirty]);
   const requestSelectNode = (nodeId: string) => {
     if (nodeId === selectedId) return;
     if (inspectorDirtyRef.current && !window.confirm("You have unsaved inspector changes. Discard them and switch nodes?")) return;
@@ -520,6 +525,7 @@ export function LuciaStudioNodeCanvas({
           position={positions[selectedNode.id]}
           onToggleLock={() => void toggleLock()}
           onSelectNode={requestSelectNode}
+          onRegisterActions={registerInspectorActions}
         /> : <aside className={styles.inspector}>Select a node to inspect it.</aside>}
       </div>
     </main>
