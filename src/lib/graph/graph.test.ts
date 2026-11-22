@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canvasPositionMutationSchema, graphDocumentSchema, graphOperationSchema } from "./contracts";
+import { canvasPositionBatchSchema, canvasPositionMutationSchema, graphDocumentSchema, graphOperationSchema } from "./contracts";
 import { canonicalGraphStringify, validateGraphDocument } from "./validate";
 
 const graphId = "00000000-0000-4000-8000-000000000001";
@@ -28,6 +28,32 @@ const validGraph = {
 };
 
 describe("Graph Engine contracts", () => {
+  it("accepts bounded unique canvas-position batches without graph revision fields", () => {
+    const batch = canvasPositionBatchSchema.safeParse({
+      positions: [
+        { nodeId: websiteId, x: 10, y: 20 },
+        { nodeId: pageId, x: -30, y: 40, locked: true },
+      ],
+    });
+    expect(batch.success).toBe(true);
+    if (batch.success) expect(batch.data.positions).toHaveLength(2);
+  });
+
+  it("rejects duplicate node IDs and oversized canvas-position batches", () => {
+    expect(canvasPositionBatchSchema.safeParse({
+      positions: [
+        { nodeId: websiteId, x: 0, y: 0 },
+        { nodeId: websiteId, x: 10, y: 10 },
+      ],
+    }).success).toBe(false);
+    expect(canvasPositionBatchSchema.safeParse({
+      positions: Array.from({ length: 2_001 }, (_, index) => ({
+        nodeId: `00000000-0000-4000-8000-${String(index + 100).padStart(12, "0")}`,
+        x: 0, y: 0,
+      })),
+    }).success).toBe(false);
+  });
+
   it("accepts the initial graph document contract", () => {
     expect(graphDocumentSchema.safeParse(validGraph).success).toBe(true);
     expect(validateGraphDocument(validGraph)).toEqual([]);
