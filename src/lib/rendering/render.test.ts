@@ -174,7 +174,7 @@ describe("responsive semantic website renderer", () => {
     const result = await renderWebsite({ graph: graph(), pageNodeId: pageId, route: "/", viewport: "desktop" });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect([...result.html.matchAll(/<h1\\b/g)]).toHaveLength(1);
+    expect([...result.html.matchAll(/<h1\b/g)]).toHaveLength(1);
     expect(result.html).toContain('<main id="main-content"');
     expect(result.html).toContain('<nav class="lucia-nav" aria-label="Main navigation">');
     expect(result.html).toContain('aria-labelledby="hero-');
@@ -182,7 +182,7 @@ describe("responsive semantic website renderer", () => {
     expect(result.html).toContain("a:focus-visible");
     expect(result.html).toContain("@media(forced-colors:active)");
     expect(result.html).toContain("@media(prefers-reduced-motion:reduce)");
-    const css = result.html.match(/<style[^>]*>([\\s\\S]*?)<\\/style>/)?.[1] ?? "";
+    const css = result.html.match(/<style[^>]*>([\s\S]*?)<\/style>/)?.[1] ?? "";
     const value = (name: string) => css.match(new RegExp("--lucia-" + name + ":(#[0-9a-f]{6})", "i"))?.[1];
     const canvas = value("canvas");
     expect(canvas).toBeTruthy();
