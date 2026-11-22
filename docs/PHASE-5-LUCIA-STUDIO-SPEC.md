@@ -258,6 +258,30 @@ Each increment must be committed to `development` and verified before the next d
 - Accessibility, security, responsive and regression tests pass on the exact final Phase 5 implementation commit.
 - No production data, existing websites, published output, legacy editor route, billing, domains or live infrastructure is modified or deleted.
 
-## 14. Phase status
+## 14. Implementation progress
 
-Phase 5 has started. This specification is the implementation boundary. Work proceeds incrementally from the pure deterministic auto-layout foundation. Phase 5 remains open until all acceptance criteria and full verification pass.
+### Increment 1 — deterministic layout foundation
+
+- Pure graph-to-canvas layout with stable page and containment ordering.
+- Stable placement for reusable reference nodes.
+- Bounded active-node count and coordinate limits.
+- Regression tests for insertion-order determinism, invalid graphs, deleted nodes and graph immutability.
+
+### Increment 2 — interactive graph canvas
+
+Implemented on the `development` branch:
+
+- New authenticated `/studio` route and website-library entry point.
+- Real website graph nodes and typed relationship edges rendered in a spatial canvas.
+- Node selection, contextual inspector, connected-relationship navigation and registered-property inspection.
+- Pointer dragging, keyboard arrow-key movement, background panning, wheel zoom, zoom controls and view reset.
+- Personal canvas positions loaded and saved through the existing user-scoped canvas service.
+- Lock/unlock controls and deterministic auto-organization that preserves locked positions and routes movable nodes around locked-node collision zones.
+- Bounded batch canvas persistence in one tenant-scoped transaction, with row locking and user isolation.
+- Canvas writes remain separate from graph content revisions; no website content or published layout is mutated by canvas interactions.
+- Workspace route continuity and safe website/organization scope validation.
+- Legacy editor route and existing websites remain intact.
+
+## 15. Phase status
+
+Phase 5 is in progress. The visual node-canvas increment is implemented and awaiting the complete focused and full verification workflow. The inspector is currently an inspection surface; typed content editing, interactive website preview, validation navigation and revision history remain subsequent increments. Phase 5 remains open until all acceptance criteria and full verification pass.
