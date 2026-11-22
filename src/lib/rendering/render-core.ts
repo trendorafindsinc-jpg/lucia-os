@@ -1,0 +1,331 @@
+import { createElement as h, type ReactNode } from "react";
+import { graphDocumentSchema, type GraphDocument, type GraphNode } from "@/lib/graph/contracts";
+import { validateGraphDocument } from "@/lib/graph/validate";
+import {
+  coreFoundation, lookupDesignRecipe, resolveGraphRecipeReferences,
+} from "@/lib/design-intelligence/registry";
+import type { DesignFoundation } from "@/lib/design-intelligence/contracts";
+import { resolveRequiredDesignTokens } from "./tokens";
+import {
+  renderDiagnosticSchema, renderRequestSchema, type RenderContext,
+  type MediaResolver, type SharedDataResolver,
+  type RenderDiagnostic, type RenderResult, type RendererDefinition,
+} from "./contracts";
+import { createRendererRegistry, lookupRenderer, type RendererRegistry } from "./registry";
+import { resolveRenderReferences } from "./references";
+
+const HERO = "lucia.design.section.hero";
+const FEATURES = "lucia.design.section.feature-grid";
+const SERVICES = "lucia.design.section.services";
+
+function issue(code: RenderDiagnostic["code"], message: string, nodeId?: string): RenderDiagnostic {
+  return renderDiagnosticSchema.parse({ code, severity: "error", message, ...(nodeId ? { nodeId } : {}) });
+}
+function textValue(value: unknown, max: number): string | null {
+  return typeof value === "string" && value.length <= max ? value : null;
+}
+function contentOf(node: GraphNode): Record<string, unknown> | null {
+  const value = node.properties.content;
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
+}
+function headingOf(node: GraphNode): string | null {
+  return textValue(contentOf(node)?.heading, 240);
+}
+function descriptionOf(node: GraphNode): string | null {
+  return textValue(contentOf(node)?.description, 4000);
+}
+function hasOnlyKeys(value: Record<string, unknown>, allowed: readonly string[]): boolean {
+  const accepted = new Set(allowed);
+  return Object.keys(value).every((key) => accepted.has(key));
+}
+function validSectionContent(node: GraphNode): boolean {
+  if (!hasOnlyKeys(node.properties, ["recipeId", "recipeVersion", "category", "defaults", "content"])) return false;
+  const content = contentOf(node);
+  if (!content || !hasOnlyKeys(content, ["heading", "description", "actionLabel", "actionHref", "items"])) return false;
+  if (content.heading !== undefined && (typeof content.heading !== "string" || !content.heading.trim() || content.heading.length > 240)) return false;
+  if (content.description !== undefined && (typeof content.description !== "string" || content.description.length > 4000)) return false;
+  if (content.actionLabel !== undefined && (typeof content.actionLabel !== "string" || !content.actionLabel.trim() || content.actionLabel.length > 100)) return false;
+  if (content.actionHref !== undefined && (typeof content.actionHref !== "string" || !content.actionHref.trim() || content.actionHref.length > 240)) return false;
+  if (Boolean(content.actionLabel) !== Boolean(content.actionHref)) return false;
+  if (content.items !== undefined) {
+    if (!Array.isArray(content.items) || content.items.length < 1 || content.items.length > 24) return false;
+    for (const item of content.items) {
+      if (!item || typeof item !== "object" || Array.isArray(item)) return false;
+      const value = item as Record<string, unknown>;
+      if (!hasOnlyKeys(value, ["heading", "description"])) return false;
+      if (typeof value.heading !== "string" || !value.heading.trim() || value.heading.length > 160) return false;
+      if (value.description !== undefined && (typeof value.description !== "string" || value.description.length > 1000)) return false;
+    }
+  }
+  return true;
+}
+
+function itemsOf(node: GraphNode): Array<{ heading: string; description?: string }> | null {
+  const items = contentOf(node)?.items;
+  if (!Array.isArray(items) || items.length < 1 || items.length > 24) return null;
+  const result: Array<{ heading: string; description?: string }> = [];
+  for (const item of items) {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return null;
+    const value = item as Record<string, unknown>;
+    if (typeof value.heading !== "string" || !value.heading.trim() || value.heading.length > 160) return null;
+    if (value.description !== undefined && (typeof value.description !== "string" || value.description.length > 1000)) return null;
+    result.push({ heading: value.heading, ...(typeof value.description === "string" ? { description: value.description } : {}) });
+  }
+  return result;
+}
+
+const heroRenderer: RendererDefinition = {
+  recipeId: HERO, recipeVersion: 1, nodeType: "section",
+  render(node, context) {
+    const heading = headingOf(node);
+    if (!heading) return null;
+    const description = descriptionOf(node);
+    const actionLabel = textValue(contentOf(node)?.actionLabel, 100);
+    const actionHref = textValue(contentOf(node)?.actionHref, 240);
+    if (Boolean(actionLabel) !== Boolean(actionHref) || (actionHref && !normalizeRoute(actionHref))) return null;
+    return h("section", { className: "lucia-section lucia-hero", "aria-labelledby": "hero-" + node.id },
+      h("div", { className: "lucia-container lucia-hero__inner" },
+        h("div", { className: "lucia-hero__copy" },
+          h("h2", { id: "hero-" + node.id }, heading),
+          description ? h("p", { className: "lucia-lead" }, description) : null,
+          actionLabel && actionHref ? h("a", { className: "lucia-cta", href: actionHref }, actionLabel) : null,
+        ),
+        ...context.graph.edges.filter((edge) => edge.type === "references_media" && edge.sourceNodeId === node.id)
+          .sort((a, b) => a.targetNodeId.localeCompare(b.targetNodeId))
+          .map((edge) => {
+          const reference = context.graph.nodes.find((candidate) => candidate.id === edge.targetNodeId);
+          const assetId = reference?.type === "media_reference" ? reference.properties.assetId : null;
+          const asset = typeof assetId === "string" ? context.resolvedMedia.get(assetId) : undefined;
+          if (!asset) return null;
+          return asset.decorative
+            ? h("img", { src: asset.url, alt: "", "aria-hidden": true, ...(asset.width ? { width: asset.width } : {}), ...(asset.height ? { height: asset.height } : {}) })
+            : h("img", { src: asset.url, alt: asset.altText ?? "", ...(asset.width ? { width: asset.width } : {}), ...(asset.height ? { height: asset.height } : {}) });
+        }),
+      ),
+    );
+  },
+};
+function cardsRenderer(recipeId: string, className: string): RendererDefinition {
+  return {
+    recipeId, recipeVersion: 1, nodeType: "section",
+    render(node) {
+      const heading = headingOf(node);
+      const description = descriptionOf(node);
+      const items = itemsOf(node);
+      if (!heading || !items) return null;
+      return h("section", { className: "lucia-section " + className, "aria-labelledby": "cards-" + node.id },
+        h("div", { className: "lucia-container" },
+          h("div", { className: "lucia-section__intro" },
+            h("h2", { id: "cards-" + node.id }, heading),
+            description ? h("p", { className: "lucia-lead" }, description) : null,
+          ),
+          h("ul", { className: "lucia-card-grid" },
+            ...items.map((item, index) => h("li", { className: "lucia-card", key: index },
+              h("article", null,
+                h("h3", null, item.heading),
+                item.description ? h("p", null, item.description) : null,
+              ),
+            )),
+          ),
+        ),
+      );
+    },
+  };
+}
+const builtins = createRendererRegistry([
+  heroRenderer, cardsRenderer(FEATURES, "lucia-features"), cardsRenderer(SERVICES, "lucia-services"),
+]);
+if (!builtins.ok) throw new Error("Built-in renderer registry invalid: " + builtins.issues.map((x) => x.message).join(" "));
+export const builtinRendererRegistry: RendererRegistry = builtins.registry;
+
+function cssFor(tokens: ReadonlyMap<string, import("./tokens").ResolvedDesignToken>): string {
+  const token = (path: string): string | number => {
+    const resolved = tokens.get(path);
+    if (!resolved || typeof resolved.value === "boolean") throw new Error("Unresolved CSS token: " + path);
+    return resolved.value;
+  };
+  const tablet = token("breakpoint.tablet");
+  const desktop = token("breakpoint.desktop");
+  return `
+:root{color-scheme:light;--lucia-canvas:${token("color.canvas")};--lucia-surface:${token("color.surface")};--lucia-text:${token("color.text")};--lucia-muted:${token("color.muted")};--lucia-primary:${token("color.primary")};--lucia-on-primary:${token("color.onPrimary")};--lucia-border:${token("color.border")};--lucia-focus:${token("color.focus")};--lucia-space-sm:${token("spacing.sm")}px;--lucia-space-md:${token("spacing.md")}px;--lucia-space-lg:${token("spacing.lg")}px;--lucia-space-xl:${token("spacing.xl")}px;--lucia-radius-md:${token("radius.md")}px;--lucia-content-width:${token("contentWidth.standard")}px}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--lucia-canvas);color:var(--lucia-text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.5}
+a{color:var(--lucia-primary);text-underline-offset:.18em}a:focus-visible{outline:3px solid var(--lucia-focus);outline-offset:3px;border-radius:2px}
+.lucia-skip-link{position:absolute;left:var(--lucia-space-md);top:-5rem;background:var(--lucia-primary);color:var(--lucia-on-primary);padding:var(--lucia-space-sm) var(--lucia-space-md);z-index:10}
+.lucia-skip-link:focus{top:var(--lucia-space-md)}
+.lucia-header{border-bottom:1px solid var(--lucia-border);background:var(--lucia-canvas)}
+.lucia-container{width:min(calc(100% - 2rem),var(--lucia-content-width));margin-inline:auto}
+.lucia-header__inner{min-height:4.5rem;display:flex;align-items:center;justify-content:space-between;gap:var(--lucia-space-md);padding-block:var(--lucia-space-sm)}
+.lucia-brand{font-weight:700;color:var(--lucia-text);text-decoration:none}
+.lucia-cta{display:inline-flex;align-items:center;justify-content:center;margin-top:var(--lucia-space-md);min-height:2.75rem;padding:.65rem 1rem;border-radius:var(--lucia-radius-md);background:var(--lucia-primary);color:var(--lucia-on-primary);font-weight:650;text-decoration:none}
+.lucia-cta:hover{text-decoration:underline;text-underline-offset:.2em}
+.lucia-nav ul{display:flex;flex-wrap:wrap;gap:var(--lucia-space-md);list-style:none;margin:0;padding:0}
+.lucia-nav a{display:inline-block;padding:.5rem 0}.lucia-nav a[aria-current=page]{font-weight:700;text-decoration-thickness:2px}
+.lucia-main{min-height:60vh}.lucia-page-title{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.lucia-section{padding-block:var(--lucia-space-xl)}.lucia-hero{padding-block:clamp(3.5rem,10vw,7rem)}
+.lucia-hero__inner{display:grid;gap:var(--lucia-space-lg)}.lucia-hero__copy{max-width:52rem}
+.lucia-hero h2{font-size:clamp(2.25rem,7vw,4.5rem);line-height:1.08;letter-spacing:-.035em;margin:0 0 var(--lucia-space-md)}
+.lucia-lead{font-size:clamp(1.05rem,2vw,1.25rem);color:var(--lucia-muted);max-width:65ch;margin:0}
+.lucia-section__intro{max-width:48rem;margin-bottom:var(--lucia-space-lg)}
+.lucia-section__intro h2{font-size:clamp(1.65rem,4vw,2.5rem);line-height:1.15;margin:0 0 var(--lucia-space-sm)}
+.lucia-card-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--lucia-space-md);list-style:none;margin:0;padding:0}
+.lucia-card{min-width:0;border:1px solid var(--lucia-border);border-radius:var(--lucia-radius-md);background:var(--lucia-surface);padding:var(--lucia-space-lg)}
+.lucia-card h3{font-size:1.15rem;margin:0 0 var(--lucia-space-sm)}.lucia-card p{margin:0;color:var(--lucia-muted)}
+.lucia-footer{border-top:1px solid var(--lucia-border);padding-block:var(--lucia-space-lg);color:var(--lucia-muted)}
+@media(min-width:${tablet}px){.lucia-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.lucia-header__inner{min-height:5rem}}
+@media(min-width:${desktop}px){.lucia-card-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+@media(forced-colors:active){.lucia-card{border:1px solid CanvasText}}
+`;
+}
+function pathOf(node: GraphNode): string | null {
+  return node.type === "page" ? textValue(node.properties.path, 240) : null;
+}
+function normalizeRoute(route: string): string | null {
+  if (!route.startsWith("/") || route.startsWith("//") || route.includes("//") ||
+      /[?#\\\\\u0000-\u001f]/.test(route) || /%(?:2f|5c)/i.test(route) || /%25(?:25)*(?:2e|2f|5c)/i.test(route)) return null;
+  try {
+    const decoded = decodeURIComponent(route);
+    if (decoded.split("/").some((part) => part === "." || part === "..")) return null;
+  } catch { return null; }
+  return route.length > 1 ? route.replace(/\/$/, "") : "/";
+}
+function childSections(graph: GraphDocument, pageId: string): GraphNode[] {
+  const order = new Map(graph.edges.filter((edge) => edge.type === "contains_section" && edge.sourceNodeId === pageId).map((edge) => [edge.targetNodeId, edge.order ?? 0]));
+  return graph.nodes.filter((node) => node.type === "section" && node.lifecycleStatus === "active" && order.has(node.id))
+    .sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0) || a.id.localeCompare(b.id));
+}
+type RenderElementResult =
+  | { ok: true; body: ReactNode; css: string; title: string; diagnostics: [] }
+  | { ok: false; body: null; css: null; title: null; diagnostics: RenderDiagnostic[] };
+
+function fail(diagnostics: RenderDiagnostic[]): RenderElementResult { return { ok: false, body: null, css: null, title: null, diagnostics }; }
+
+export interface RenderOptions { foundation?: DesignFoundation; registry?: RendererRegistry; mediaResolver?: MediaResolver; sharedDataResolver?: SharedDataResolver; }
+
+export async function renderWebsiteElement(input: unknown, options: RenderOptions = {}): Promise<RenderElementResult> {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return fail([issue("GRAPH_INVALID", "Render input must be an object.")]);
+  const raw = input as Record<string, unknown>;
+  const request = renderRequestSchema.safeParse({ route: raw.route, viewport: raw.viewport, pageNodeId: raw.pageNodeId });
+  if (!request.success) return fail([issue("GRAPH_INVALID", "Render request is invalid.")]);
+
+  const foundation = options.foundation ?? coreFoundation;
+  if (JSON.stringify(foundation) !== JSON.stringify(coreFoundation)) {
+    return fail([issue("TOKEN_NOT_FOUND", "Only the exact registered design foundation version can be rendered.")]);
+  }
+  const parsed = graphDocumentSchema.safeParse(raw.graph);
+  if (!parsed.success) return fail([issue("GRAPH_INVALID", "Graph document does not match the supported schema.")]);
+  const graph = parsed.data;
+  if (graph.nodes.length > 2000 || graph.edges.length > 4000) {
+    return fail([issue("RENDER_LIMIT_EXCEEDED", "Rendering is limited to 2,000 nodes and 4,000 edges per graph.")]);
+  }
+  const graphIssues = validateGraphDocument(graph);
+  if (graphIssues.length) return fail(graphIssues.map((item) => issue("GRAPH_INVALID", item.message, item.nodeId)));
+  const recipeIssues = resolveGraphRecipeReferences(graph);
+  if (recipeIssues.length) return fail(recipeIssues.map((item) => issue(
+    item.code === "RECIPE_NOT_FOUND" ? "RECIPE_NOT_FOUND" :
+      item.code === "RECIPE_VERSION_UNSUPPORTED" ? "RECIPE_VERSION_UNSUPPORTED" :
+        item.code === "RECIPE_NODE_TYPE_INCOMPATIBLE" ? "RECIPE_NODE_TYPE_INCOMPATIBLE" : "RECIPE_REFERENCE_INVALID",
+    item.message, item.nodeId,
+  )));
+
+  const pages = graph.nodes.filter((node) => node.type === "page" && node.lifecycleStatus === "active");
+  const page = pages.find((node) => node.id === request.data.pageNodeId);
+  if (!page) return fail([issue("PAGE_NOT_FOUND", "The requested page does not exist in this graph.", request.data.pageNodeId)]);
+  const route = normalizeRoute(request.data.route);
+  const expectedRoute = normalizeRoute(pathOf(page) ?? "");
+  if (!route || !expectedRoute || route !== expectedRoute) return fail([issue("PAGE_ROUTE_MISMATCH", "The requested route does not match the selected page.", page.id)]);
+
+  const normalizedPageRoutes = new Set<string>();
+  for (const candidate of pages) {
+    const candidatePath = normalizeRoute(pathOf(candidate) ?? "");
+    if (!candidatePath || normalizedPageRoutes.has(candidatePath)) {
+      return fail([issue("PAGE_ROUTE_MISMATCH", "Every navigation page must have a unique, safe local route.", candidate.id)]);
+    }
+    normalizedPageRoutes.add(candidatePath);
+  }
+
+  const website = graph.nodes.find((node) => node.type === "website" && node.lifecycleStatus === "active");
+  if (!website) return fail([issue("GRAPH_INVALID", "The graph has no active website root.")]);
+  const websiteName = textValue(website.properties.name, 120);
+  const websiteRecipeId = textValue(website.properties.recipeId, 160);
+  const websiteRecipeVersion = website.properties.recipeVersion;
+  if (!websiteName || !websiteRecipeId || typeof websiteRecipeVersion !== "number") {
+    return fail([issue("RECIPE_REFERENCE_INVALID", "Website name and exact industry recipe reference are required.", website.id)]);
+  }
+  const websiteRecipe = lookupDesignRecipe(websiteRecipeId, websiteRecipeVersion);
+  if (!websiteRecipe.recipe || websiteRecipe.recipe.layer !== "industry") {
+    return fail([issue(websiteRecipe.recipe ? "RECIPE_NODE_TYPE_INCOMPATIBLE" : websiteRecipe.diagnostics[0].code, "Website industry recipe is unavailable or incompatible.", website.id)]);
+  }
+
+  const sections = childSections(graph, page.id);
+  const requiredTokenPaths = [...websiteRecipe.recipe.requiredTokens,
+    "color.canvas", "color.surface", "color.text", "color.muted", "color.primary", "color.onPrimary", "color.border", "color.focus",
+    "spacing.sm", "spacing.md", "spacing.lg", "spacing.xl", "radius.md", "contentWidth.standard",
+    "breakpoint.tablet", "breakpoint.desktop",
+  ];
+  for (const section of sections) {
+    const recipeId = textValue(section.properties.recipeId, 160);
+    const version = section.properties.recipeVersion;
+    if (recipeId && typeof version === "number") {
+      const recipe = lookupDesignRecipe(recipeId, version);
+      if (recipe.recipe) requiredTokenPaths.push(...recipe.recipe.requiredTokens);
+    }
+  }
+  const tokens = resolveRequiredDesignTokens(foundation, requiredTokenPaths);
+  if (!tokens.ok) return fail(tokens.missing.map((path) => issue("TOKEN_NOT_FOUND", "Required design token is unavailable or has an unsupported value: " + path)));
+  for (const edge of graph.edges.filter((item) => item.type === "uses_design_token" && sections.some((section) => section.id === item.sourceNodeId))) {
+    const tokenNode = graph.nodes.find((node) => node.id === edge.targetNodeId);
+    if (!tokenNode || tokenNode.type !== "design_token" ||
+        !resolveRequiredDesignTokens(foundation, [String(tokenNode.properties.namespace) + "." + String(tokenNode.properties.key)]).ok) {
+      return fail([issue("TOKEN_NOT_FOUND", "Design-token reference does not resolve against the exact foundation.", tokenNode?.id ?? edge.sourceNodeId)]);
+    }
+  }
+  const references = await resolveRenderReferences(graph, sections, options.mediaResolver, options.sharedDataResolver);
+  if (!references.ok) return fail([issue(references.code, references.message, references.nodeId)]);
+  const context: RenderContext = {
+    graph, websiteId: graph.id, pageNodeId: page.id, route,
+    viewport: request.data.viewport, foundation,
+    mediaResolver: options.mediaResolver ?? { resolve: async () => null },
+    sharedDataResolver: options.sharedDataResolver ?? { resolve: async () => null },
+    resolvedMedia: references.media,
+    resolvedSharedData: references.sharedData,
+  };
+  const registry = options.registry ?? builtinRendererRegistry;
+  const rendered: ReturnType<RendererDefinition["render"]>[] = [];
+  for (const section of sections) {
+    const recipeId = textValue(section.properties.recipeId, 160);
+    const version = section.properties.recipeVersion;
+    if (!recipeId || typeof version !== "number") return fail([issue("RECIPE_REFERENCE_INVALID", "Section requires an exact recipe reference.", section.id)]);
+    const renderer = lookupRenderer(registry, recipeId, version, "section");
+    if (!renderer) return fail([issue("RENDERER_NOT_REGISTERED", "No reviewed renderer is registered for this section recipe.", section.id)]);
+    if (!validSectionContent(section)) {
+      return fail([issue("UNSUPPORTED_FEATURE", "Section properties or content contain unknown or invalid fields.", section.id)]);
+    }
+    const element = renderer.render(section, context);
+    if (element === null) return fail([issue("UNSUPPORTED_FEATURE", "Section content is incomplete or unsupported by its renderer.", section.id)]);
+    rendered.push(element);
+  }
+
+  const nav = h("nav", { className: "lucia-nav", "aria-label": "Main navigation" },
+    h("ul", null, ...[...pages].sort((a, b) => (pathOf(a) ?? "").localeCompare(pathOf(b) ?? "")).map((item) => {
+      const path = pathOf(item) ?? "/";
+      const title = textValue(item.properties.title, 120) ?? "Page";
+      return h("li", { key: item.id }, h("a", { href: path, ...(item.id === page.id ? { "aria-current": "page" as const } : {}) }, title));
+    })),
+  );
+  const title = (textValue(page.properties.title, 120) ?? "Page") + " | " + websiteName;
+  const body = h("div", { className: "lucia-preview-document" },
+    h("a", { className: "lucia-skip-link", href: "#main-content" }, "Skip to main content"),
+    h("header", { className: "lucia-header" },
+      h("div", { className: "lucia-container lucia-header__inner" },
+        h("a", { className: "lucia-brand", href: pages.find((item) => pathOf(item) === "/") ? "/" : route }, websiteName), nav,
+      ),
+    ),
+    h("main", { id: "main-content", className: "lucia-main" },
+      h("h1", { className: "lucia-page-title" }, textValue(page.properties.title, 120)), ...rendered,
+    ),
+    h("footer", { className: "lucia-footer" }, h("div", { className: "lucia-container" }, websiteName)),
+  );
+  return { ok: true, body, css: cssFor(tokens.values), title, diagnostics: [] };
+}
