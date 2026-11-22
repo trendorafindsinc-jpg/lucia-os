@@ -280,7 +280,8 @@ describe.sequential("Graph Persistence Service (PostgreSQL)", () => {
     auth.userId = ids.userB;
     const other = await getWebsiteGraph(ids.orgA, ids.siteA);
     expect(other?.document.revision).toBe(currentRevision);
-    expect(other?.canvasPositions).toHaveLength(0);
+    expect(other?.canvasPositions).toHaveLength(1);
+    expect(other?.canvasPositions[0]).toMatchObject({ nodeId: rootId, x: -20, y: 30 });
   });
 
   it("rejects graph and canvas writes after a website is soft-deleted", async () => {
