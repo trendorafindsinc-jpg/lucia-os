@@ -51,7 +51,7 @@ function itemsOf(node: GraphNode): Array<{ heading: string; description?: string
 
 const heroRenderer: RendererDefinition = {
   recipeId: HERO, recipeVersion: 1, nodeType: "section",
-  render(node) {
+  render(node, context) {
     const heading = headingOf(node);
     if (!heading) return null;
     const description = descriptionOf(node);
@@ -61,6 +61,15 @@ const heroRenderer: RendererDefinition = {
           h("h2", { id: "hero-" + node.id }, heading),
           description ? h("p", { className: "lucia-lead" }, description) : null,
         ),
+        ...context.graph.edges.filter((edge) => edge.type === "references_media" && edge.sourceNodeId === node.id).map((edge) => {
+          const reference = context.graph.nodes.find((candidate) => candidate.id === edge.targetNodeId);
+          const assetId = reference?.type === "media_reference" ? reference.properties.assetId : null;
+          const asset = typeof assetId === "string" ? context.resolvedMedia.get(assetId) : undefined;
+          if (!asset) return null;
+          return asset.decorative
+            ? h("img", { src: asset.url, alt: "", "aria-hidden": true, ...(asset.width ? { width: asset.width } : {}), ...(asset.height ? { height: asset.height } : {}) })
+            : h("img", { src: asset.url, alt: asset.altText, ...(asset.width ? { width: asset.width } : {}), ...(asset.height ? { height: asset.height } : {}) });
+        }),
       ),
     );
   },
