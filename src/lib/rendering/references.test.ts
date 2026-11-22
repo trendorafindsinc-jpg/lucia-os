@@ -76,4 +76,75 @@ describe("secure render reference resolution", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.code).toBe("UNSUPPORTED_FEATURE");
   });
+
+  it("deduplicates repeated stable references within one render", async () => {
+    const { graph, section } = graphWithReferences();
+    const mediaResolver = { resolve: vi.fn(async (assetId: string) => ({
+      assetId, url: "/media/team.webp", altText: "Team", decorative: false,
+    })) };
+    const repeated = {
+      ...graph,
+      edges: [...graph.edges, {
+        id: "00000000-0000-4000-8000-000000000094", graphId: websiteId,
+        sourceNodeId: section.id, targetNodeId: mediaId, type: "references_media" as const,
+        schemaVersion: 1, properties: {},
+      }],
+    };
+    const result = await resolveRenderReferences(repeated, [section], mediaResolver);
+    expect(result.ok).toBe(true);
+    expect(mediaResolver.resolve).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejects traversal media paths and resolver objects with executable getters", async () => {
+    const { graph, section } = graphWithReferences();
+    const traversal = await resolveRenderReferences(graph, [section], {
+      resolve: async (assetId) => ({ assetId, url: "/media/%2e%2e/private.webp", altText: "Asset", decorative: false }),
+    });
+    expect(traversal.ok).toBe(false);
+    if (!traversal.ok) expect(traversal.code).toBe("MEDIA_FORBIDDEN");
+
+    let getterCalls = 0;
+    const unsafe = Object.defineProperty({}, "displayName", {
+      enumerable: true,
+      get() { getterCalls += 1; return "should not execute"; },
+    });
+    const shared = await resolveRenderReferences(graph, [section], undefined, {
+      resolve: async () => unsafe as Readonly<Record<string, unknown>>,
+    });
+    expect(shared.ok).toBe(false);
+    expect(getterCalls).toBe(0);
+    if (!shared.ok) expect(shared.code).toBe("UNSUPPORTED_FEATURE");
+  });
+
+  it("distinguishes shared-data authorization failure from missing data", async () => {
+    const { graph, section } = graphWithReferences();
+    const result = await resolveRenderReferences(graph, [section], undefined, {
+      resolve: async () => { throw new Error("denied"); },
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.code).toBe("SHARED_DATA_FORBIDDEN");
+  });
+
+  it("enforces the per-render unique reference budget before resolver calls", async () => {
+    const { graph, section } = graphWithReferences();
+    const extraNodes = Array.from({ length: 64 }, (_, index) => ({
+      id: "10000000-0000-4000-8000-" + String(index + 1).padStart(12, "0"),
+      graphId: websiteId, type: "media_reference" as const, schemaVersion: 1,
+      properties: { assetId: "20000000-0000-4000-8000-" + String(index + 1).padStart(12, "0") },
+      lifecycleStatus: "active" as const,
+    }));
+    const extraEdges = extraNodes.map((node, index) => ({
+      id: "30000000-0000-4000-8000-" + String(index + 1).padStart(12, "0"),
+      graphId: websiteId, sourceNodeId: section.id, targetNodeId: node.id,
+      type: "references_media" as const, schemaVersion: 1, properties: {},
+    }));
+    const resolver = { resolve: vi.fn(async () => null) };
+    const result = await resolveRenderReferences({
+      ...graph, nodes: [...graph.nodes, ...extraNodes], edges: [...graph.edges, ...extraEdges],
+    }, [section], resolver);
+    expect(result.ok).toBe(false);
+    expect(resolver.resolve).not.toHaveBeenCalled();
+    if (!result.ok) expect(result.code).toBe("RENDER_LIMIT_EXCEEDED");
+  });
+
 });
