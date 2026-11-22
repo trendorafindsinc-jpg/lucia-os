@@ -291,8 +291,9 @@ export function LuciaStudioNodeCanvas({
       await savePositionsBatch(movable);
       setNotice(`Canvas organized. ${Object.keys(next).length - movable.length} locked nodes stayed in place; website content revision unchanged.`);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Some canvas positions could not be saved. Reload to reconcile.");
+      const message = cause instanceof Error ? cause.message : "Some canvas positions could not be saved. Reload to reconcile.";
       await loadGraph();
+      setError(message);
     } finally {
       setSaving(false);
     }
