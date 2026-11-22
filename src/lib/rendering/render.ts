@@ -35,6 +35,32 @@ function headingOf(node: GraphNode): string | null {
 function descriptionOf(node: GraphNode): string | null {
   return textValue(contentOf(node)?.description, 4000);
 }
+function hasOnlyKeys(value: Record<string, unknown>, allowed: readonly string[]): boolean {
+  const accepted = new Set(allowed);
+  return Object.keys(value).every((key) => accepted.has(key));
+}
+function validSectionContent(node: GraphNode): boolean {
+  if (!hasOnlyKeys(node.properties, ["recipeId", "recipeVersion", "category", "defaults", "content"])) return false;
+  const content = contentOf(node);
+  if (!content || !hasOnlyKeys(content, ["heading", "description", "actionLabel", "actionHref", "items"])) return false;
+  if (content.heading !== undefined && (typeof content.heading !== "string" || !content.heading.trim() || content.heading.length > 240)) return false;
+  if (content.description !== undefined && (typeof content.description !== "string" || content.description.length > 4000)) return false;
+  if (content.actionLabel !== undefined && (typeof content.actionLabel !== "string" || !content.actionLabel.trim() || content.actionLabel.length > 100)) return false;
+  if (content.actionHref !== undefined && (typeof content.actionHref !== "string" || !content.actionHref.trim() || content.actionHref.length > 240)) return false;
+  if (Boolean(content.actionLabel) !== Boolean(content.actionHref)) return false;
+  if (content.items !== undefined) {
+    if (!Array.isArray(content.items) || content.items.length < 1 || content.items.length > 24) return false;
+    for (const item of content.items) {
+      if (!item || typeof item !== "object" || Array.isArray(item)) return false;
+      const value = item as Record<string, unknown>;
+      if (!hasOnlyKeys(value, ["heading", "description"])) return false;
+      if (typeof value.heading !== "string" || !value.heading.trim() || value.heading.length > 160) return false;
+      if (value.description !== undefined && (typeof value.description !== "string" || value.description.length > 1000)) return false;
+    }
+  }
+  return true;
+}
+
 function itemsOf(node: GraphNode): Array<{ heading: string; description?: string }> | null {
   const items = contentOf(node)?.items;
   if (!Array.isArray(items) || items.length < 1 || items.length > 24) return null;
@@ -270,6 +296,9 @@ export async function renderWebsite(input: unknown, options: RenderOptions = {})
     if (!recipeId || typeof version !== "number") return fail([issue("RECIPE_REFERENCE_INVALID", "Section requires an exact recipe reference.", section.id)]);
     const renderer = lookupRenderer(registry, recipeId, version, "section");
     if (!renderer) return fail([issue("RENDERER_NOT_REGISTERED", "No reviewed renderer is registered for this section recipe.", section.id)]);
+    if (!validSectionContent(section)) {
+      return fail([issue("UNSUPPORTED_FEATURE", "Section properties or content contain unknown or invalid fields.", section.id)]);
+    }
     const element = renderer.render(section, context);
     if (element === null) return fail([issue("UNSUPPORTED_FEATURE", "Section content is incomplete or unsupported by its renderer.", section.id)]);
     rendered.push(element);
