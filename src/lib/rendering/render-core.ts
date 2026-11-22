@@ -9,7 +9,7 @@ import { resolveRequiredDesignTokens } from "./tokens";
 import {
   renderDiagnosticSchema, renderRequestSchema, type RenderContext,
   type MediaResolver, type SharedDataResolver,
-  type RenderDiagnostic, type RenderResult, type RendererDefinition,
+  type RenderDiagnostic, type RendererDefinition,
 } from "./contracts";
 import { createRendererRegistry, lookupRenderer, type RendererRegistry } from "./registry";
 import { resolveRenderReferences } from "./references";
