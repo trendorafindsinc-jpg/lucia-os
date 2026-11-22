@@ -268,6 +268,21 @@ export function LuciaStudioNodeCanvas({
   }, []);
 
   useEffect(() => {
+    if (activePanel !== "canvas" || !selectedId) return;
+    const frame = window.requestAnimationFrame(() => {
+      const viewport = canvasRef.current;
+      const position = positionsRef.current[selectedId];
+      if (!viewport || !position) return;
+      setPan({
+        x: viewport.clientWidth / 2 - (position.x + NODE_SIZE.width / 2) * zoom,
+        y: viewport.clientHeight / 2 - (position.y + NODE_SIZE.height / 2) * zoom,
+      });
+      viewport.querySelector<HTMLButtonElement>(`[data-node-id="${selectedId}"]`)?.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [activePanel, selectedId, zoom]);
+
+  useEffect(() => {
     if (document && Object.keys(positions).length && !didInitialFit.current) {
       didInitialFit.current = true;
       fitView();
@@ -497,6 +512,7 @@ export function LuciaStudioNodeCanvas({
                 return <button
                   type="button"
                   key={node.id}
+                  data-node-id={node.id}
                   className={`${styles.node} ${styles["node_" + node.type]} ${selected ? styles.nodeSelected : ""} ${position.locked ? styles.nodeLocked : ""}`}
                   style={{ left: position.x, top: position.y } as CSSProperties}
                   aria-pressed={selected}
