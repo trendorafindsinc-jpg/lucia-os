@@ -46,6 +46,8 @@ export interface RenderContext {
   foundation: DesignFoundation;
   mediaResolver: MediaResolver;
   sharedDataResolver: SharedDataResolver;
+  resolvedMedia: ReadonlyMap<string, ResolvedMediaAsset>;
+  resolvedSharedData: ReadonlyMap<string, ResolvedSharedData>;
 }
 export interface RendererDefinition {
   recipeId: string;
