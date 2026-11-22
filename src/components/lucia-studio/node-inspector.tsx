@@ -244,7 +244,7 @@ export function LuciaStudioNodeInspector({
       discard: discardDraft,
       canSuspend: () => !dirty,
     });
-  }, [dirty, document.revision, conflictRevision, node.id, onRegisterActions]);
+  }, [dirty, document.revision, conflictRevision, node.id, onRegisterActions, submit, discardDraft]);
 
   return (
     <aside className={styles.inspector} aria-label="Node inspector">
