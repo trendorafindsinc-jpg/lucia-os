@@ -4,7 +4,7 @@ vi.mock("@/lib/access/guards", () => ({ getOrganizationMembershipsForUser: mocks
 vi.mock("@/lib/db/client", () => ({ getDb: () => ({ transaction: mocks.transaction, execute: mocks.execute }) }));
 vi.mock("./image", () => ({ compressImage: mocks.compress }));
 vi.mock("./storage", () => ({ storageConfigured: () => true, mediaStorage: () => ({ put: mocks.put, remove: mocks.remove }) }));
-import { uploadMedia, removeMedia, validateMediaOwnership, findReadableMedia } from "./service";
+import { uploadMedia, removeMedia, validateMediaOwnership, findReadableMedia, getWebsiteMediaForRender } from "./service";
 const website = "a660ce01-079a-4409-a9e0-c5eb30c699b9", org = "f1e4dbf7-12b6-4285-8c4c-42cdb0b4e1fa", user = "b8e95a60-fbde-4c37-93e6-a2916c7b13d4";
 beforeEach(() => {
   vi.resetAllMocks(); vi.stubEnv("MEDIA_UPLOADS_ENABLED", "1");
@@ -86,6 +86,23 @@ describe("media authorization and capacity invariants", () => {
     await expect(removeMedia(user, website, user)).rejects.toMatchObject({ status: 409 });
     expect(mocks.remove).not.toHaveBeenCalled();
   });
+  it("resolves only ready image metadata within the authorized website", async () => {
+    mocks.execute.mockResolvedValueOnce([]).mockResolvedValueOnce(member).mockResolvedValueOnce([{
+      id: user, kind: "image", width: 640, height: 480, alt: "A shop", status: "ready",
+    }]);
+    await expect(getWebsiteMediaForRender(user, website, user)).resolves.toEqual({
+      assetId: user, url: "/_media/" + user, altText: "A shop", decorative: false, width: 640, height: 480,
+    });
+    expect(mocks.transaction).toHaveBeenCalledOnce();
+  });
+
+  it("does not resolve video, pending or missing media as an image", async () => {
+    mocks.execute.mockResolvedValueOnce([]).mockResolvedValueOnce(member).mockResolvedValueOnce([{
+      id: user, kind: "video", width: 0, height: 0, alt: "A video", status: "ready",
+    }]);
+    await expect(getWebsiteMediaForRender(user, website, user)).resolves.toBeNull();
+  });
+
   it("does not resolve private media for a revoked account", async () => {
     mocks.memberships.mockResolvedValue([]); mocks.execute.mockResolvedValue([]);
     expect(await findReadableMedia(user, user)).toBeNull();
