@@ -492,3 +492,38 @@ export async function listWebsiteGraphVersions(organizationId: string, websiteId
       .orderBy(websiteGraphVersions.revision);
   });
 }
+
+export async function getWebsiteGraphVersionSnapshot(organizationId: string, websiteId: string, versionId: string) {
+  const access = await getCurrentOrganizationAccess(organizationId, "website.read");
+  if (!access) throw new GraphServiceError("Organization access denied.", "FORBIDDEN");
+  return inTenantTransaction(access.user.id, organizationId, async (tx) => {
+    const [website] = await tx.select({ id: websites.id }).from(websites).where(and(
+      eq(websites.id, websiteId),
+      eq(websites.organizationId, organizationId),
+      ne(websites.status, "deleted"),
+    )).limit(1);
+    if (!website) throw new GraphServiceError("Website not found.", "NOT_FOUND");
+    const [graph] = await tx.select({ id: websiteGraphs.id }).from(websiteGraphs).where(and(
+      eq(websiteGraphs.websiteId, websiteId),
+      eq(websiteGraphs.organizationId, organizationId),
+    )).limit(1);
+    if (!graph) throw new GraphServiceError("Website graph has not been created.", "NOT_FOUND");
+    const [version] = await tx.select({
+      id: websiteGraphVersions.id,
+      revision: websiteGraphVersions.revision,
+      contentHash: websiteGraphVersions.contentHash,
+      snapshot: websiteGraphVersions.snapshot,
+      createdAt: websiteGraphVersions.createdAt,
+    }).from(websiteGraphVersions).where(and(
+      eq(websiteGraphVersions.graphId, graph.id),
+      eq(websiteGraphVersions.id, versionId),
+    )).limit(1);
+    if (!version) throw new GraphServiceError("Graph version not found.", "NOT_FOUND");
+    const snapshot = graphDocumentSchema.parse(version.snapshot);
+    const canonical = canonicalGraphStringify(snapshot);
+    if (sha256(canonical) !== version.contentHash) {
+      throw new GraphServiceError("Stored graph version failed its content hash integrity check.", "VALIDATION");
+    }
+    return { id: version.id, revision: version.revision, contentHash: version.contentHash, createdAt: version.createdAt, snapshot };
+  });
+}
