@@ -87,7 +87,6 @@ export function LuciaStudioNodeCanvas({
   const [document, setDocument] = useState<GraphDocument | null>(null);
   const [positions, setPositions] = useState<Record<string, Position>>({});
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [inspectorDirty, setInspectorDirty] = useState(false);
   const inspectorDirtyRef = useRef(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -204,13 +203,11 @@ export function LuciaStudioNodeCanvas({
   const selectedNode = activeNodes.find((node) => node.id === selectedId) ?? null;
   const onInspectorDirtyChange = useCallback((dirty: boolean) => {
     inspectorDirtyRef.current = dirty;
-    setInspectorDirty(dirty);
   }, []);
   const requestSelectNode = (nodeId: string) => {
     if (nodeId === selectedId) return;
     if (inspectorDirtyRef.current && !window.confirm("You have unsaved inspector changes. Discard them and switch nodes?")) return;
     inspectorDirtyRef.current = false;
-    setInspectorDirty(false);
     setSelectedId(nodeId);
   };
   const acceptGraphUpdate = useCallback((next: GraphDocument) => setDocument(next), []);
