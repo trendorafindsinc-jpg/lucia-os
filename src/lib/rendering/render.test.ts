@@ -218,7 +218,20 @@ describe("responsive semantic website renderer", () => {
   });
 
   it("produces byte-identical HTML regardless of graph node and edge insertion order", async () => {
-    const document = graph();
+    const base = graph();
+    const aboutId = "00000000-0000-4000-8000-000000000099";
+    const document = {
+      ...base,
+      nodes: [...base.nodes, {
+        id: aboutId, graphId: websiteId, type: "page" as const, schemaVersion: 1,
+        properties: { title: "About", path: "/about" }, lifecycleStatus: "active" as const,
+      }],
+      edges: [...base.edges, {
+        id: "00000000-0000-4000-8000-000000000098", graphId: websiteId,
+        sourceNodeId: "00000000-0000-4000-8000-000000000002", targetNodeId: aboutId,
+        type: "contains_page" as const, schemaVersion: 1, order: 1, properties: {},
+      }],
+    };
     const first = await renderWebsite({ graph: document, pageNodeId: pageId, route: "/", viewport: "desktop" });
     const reordered = await renderWebsite({
       graph: { ...document, nodes: [...document.nodes].reverse(), edges: [...document.edges].reverse() },
