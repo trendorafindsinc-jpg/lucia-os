@@ -108,22 +108,17 @@ export function LuciaStudioNodeCanvas({
     setLoading(true);
     setError("");
     try {
-      let response = await fetch(`/api/websites/${encodeURIComponent(websiteId)}/graph`, {
+      const response = await fetch(`/api/websites/${encodeURIComponent(websiteId)}/graph`, {
         headers, cache: "no-store", signal,
       });
-      let payload = await response.json() as GraphPayload & { error?: string };
+      const payload = await response.json() as GraphPayload & { error?: string };
       if (!response.ok) throw new Error(payload.error || "The website graph could not be loaded.");
       if (!payload.graph) {
-        response = await fetch(`/api/websites/${encodeURIComponent(websiteId)}/graph`, {
-          method: "POST", headers, body: "{}", cache: "no-store", signal,
-        });
-        const created = await response.json() as { graph?: GraphDocument; error?: string };
-        if (!response.ok) throw new Error(created.error || "The website graph could not be initialized.");
-        response = await fetch(`/api/websites/${encodeURIComponent(websiteId)}/graph`, {
-          headers, cache: "no-store", signal,
-        });
-        payload = await response.json() as GraphPayload & { error?: string };
-        if (!response.ok || !payload.graph) throw new Error(payload.error || "The new graph could not be loaded.");
+        setDocument(null);
+        setPositions({});
+        setSelectedId(null);
+        setNotice("No website graph exists yet. Initialize a blank graph only when you are ready to begin graph-native authoring.");
+        return;
       }
       const graph = payload.graph.document;
       const activeIds = new Set(graph.nodes.filter((node) => node.lifecycleStatus === "active").map((node) => node.id));
@@ -159,6 +154,23 @@ export function LuciaStudioNodeCanvas({
     void loadGraph(controller.signal);
     return () => controller.abort();
   }, [loadGraph]);
+
+  const initializeGraph = useCallback(async () => {
+    setSaving(true);
+    setError("");
+    try {
+      const response = await fetch(`/api/websites/${encodeURIComponent(websiteId)}/graph`, {
+        method: "POST", headers, body: "{}",
+      });
+      const result = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(result.error || "The website graph could not be initialized.");
+      await loadGraph();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "The website graph could not be initialized.");
+    } finally {
+      setSaving(false);
+    }
+  }, [websiteId, headers, loadGraph]);
 
   const savePosition = useCallback(async (nodeId: string, position: Position) => {
     const response = await fetch(`/api/websites/${encodeURIComponent(websiteId)}/graph/canvas`, {
@@ -381,7 +393,13 @@ export function LuciaStudioNodeCanvas({
 
   if (loading) return <main className={styles.loading} aria-live="polite">Opening Lucia Studio graph…</main>;
   if (error && !document) return <main className={styles.failure}><h1>Studio could not open</h1><p role="alert">{error}</p><button type="button" onClick={() => void loadGraph()}>Try again</button></main>;
-  if (!document) return <main className={styles.failure}><h1>No website graph</h1><p role="alert">{error || "The graph is unavailable."}</p></main>;
+  if (!document) return <main className={styles.failure}>
+    <h1>Start with a website graph</h1>
+    <p>{error || notice || "No graph has been created for this website yet."}</p>
+    <p>Creating a blank graph adds the website root only. It does not import, overwrite, publish or change your existing website content.</p>
+    <button type="button" onClick={() => void initializeGraph()} disabled={saving}>{saving ? "Creating graph…" : "Initialize blank graph"}</button>
+    <a href={`/editor?websiteId=${encodeURIComponent(websiteId)}`}>Open the legacy editor instead</a>
+  </main>;
 
   return (
     <main className={styles.studio}>
