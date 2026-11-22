@@ -29,7 +29,6 @@ export type StudioAutoLayoutResult =
   | { ok: true; positions: StudioCanvasPosition[]; diagnostics: [] }
   | { ok: false; positions: []; diagnostics: { code: string; message: string; nodeId?: string }[] };
 
-type LayoutIssue = { code: string; message: string; nodeId?: string };
 
 function failure(code: string, message: string, nodeId?: string): StudioAutoLayoutResult {
   return { ok: false, positions: [], diagnostics: [{ code, message, ...(nodeId ? { nodeId } : {}) }] };
