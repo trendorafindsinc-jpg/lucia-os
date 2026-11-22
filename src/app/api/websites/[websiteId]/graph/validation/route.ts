@@ -3,7 +3,7 @@ import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getWebsiteGraph, GraphServiceError } from "@/lib/graph/service";
 import { validateGraphDocument } from "@/lib/graph/validate";
-import { renderWebsite } from "@/lib/rendering/render";
+import { renderWebsiteElement } from "@/lib/rendering/render-core";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,7 +30,7 @@ export async function GET(request: Request, context: Context) {
     for (const page of pages) {
       const route = page.properties.path;
       if (typeof route !== "string") continue;
-      const rendered = await renderWebsite({ graph, pageNodeId: page.id, route, viewport: "desktop" });
+      const rendered = await renderWebsiteElement({ graph, pageNodeId: page.id, route, viewport: "desktop" });
       if (!rendered.ok) diagnostics.push(...rendered.diagnostics.map((item) => ({ ...item, source: "rendering" as const })));
     }
     const unique = new Map<string, typeof diagnostics[number]>();
