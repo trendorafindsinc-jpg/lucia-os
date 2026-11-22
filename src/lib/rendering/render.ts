@@ -219,7 +219,11 @@ export async function renderWebsite(input: unknown, options: RenderOptions = {})
   }
 
   const sections = childSections(graph, page.id);
-  const requiredTokenPaths = [...websiteRecipe.recipe.requiredTokens];
+  const requiredTokenPaths = [...websiteRecipe.recipe.requiredTokens,
+    "color.canvas", "color.surface", "color.text", "color.muted", "color.primary", "color.onPrimary", "color.border", "color.focus",
+    "spacing.sm", "spacing.md", "spacing.lg", "spacing.xl", "radius.md", "contentWidth.standard",
+    "breakpoint.tablet", "breakpoint.desktop",
+  ];
   for (const section of sections) {
     const recipeId = textValue(section.properties.recipeId, 160);
     const version = section.properties.recipeVersion;
