@@ -14,7 +14,10 @@ function request(overrides: Record<string, unknown> = {}) {
       path: "/",
       sections: [
         { key: "hero", category: "introduction", content: { heading: "Welcome to our studio" } },
-        { key: "features", category: "features", content: { heading: "What we do" } },
+        { key: "features", category: "features", content: {
+          heading: "What we do",
+          items: [{ heading: "Planning", description: "Customer-provided service detail." }],
+        } },
       ],
     }],
     ...overrides,
