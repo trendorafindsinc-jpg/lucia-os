@@ -104,6 +104,38 @@ describe("responsive semantic website renderer", () => {
     if (!result.ok) expect(result.diagnostics[0].code).toBe("RENDERER_NOT_REGISTERED");
   });
 
+  it("fails closed for unsupported recipe versions and unresolved graph token references", async () => {
+    const document = graph();
+    const unsupported = {
+      ...document,
+      nodes: document.nodes.map((node) => node.type === "section"
+        ? { ...node, properties: { ...node.properties, recipeVersion: 99 } }
+        : node),
+    };
+    const versionResult = await renderWebsite({ graph: unsupported, pageNodeId: pageId, route: "/", viewport: "desktop" });
+    expect(versionResult.ok).toBe(false);
+    if (!versionResult.ok) expect(versionResult.diagnostics[0].code).toBe("RECIPE_VERSION_UNSUPPORTED");
+
+    const section = document.nodes.find((node) => node.type === "section")!;
+    const tokenNode = {
+      id: "00000000-0000-4000-8000-000000000099", graphId: websiteId,
+      type: "design_token" as const, schemaVersion: 1,
+      properties: { namespace: "color", key: "notRegistered" }, lifecycleStatus: "active" as const,
+    };
+    const tokenGraph = {
+      ...document,
+      nodes: [...document.nodes, tokenNode],
+      edges: [...document.edges, {
+        id: "00000000-0000-4000-8000-000000000098", graphId: websiteId,
+        sourceNodeId: section.id, targetNodeId: tokenNode.id, type: "uses_design_token" as const,
+        schemaVersion: 1, properties: {},
+      }],
+    };
+    const tokenResult = await renderWebsite({ graph: tokenGraph, pageNodeId: pageId, route: "/", viewport: "desktop" });
+    expect(tokenResult.ok).toBe(false);
+    if (!tokenResult.ok) expect(tokenResult.diagnostics[0].code).toBe("TOKEN_NOT_FOUND");
+  });
+
   it("rejects unsafe local navigation destinations in other pages", async () => {
     const document = graph();
     const unsafePageId = "00000000-0000-4000-8000-000000000099";
@@ -154,10 +186,14 @@ describe("responsive semantic website renderer", () => {
     const value = (name: string) => css.match(new RegExp("--lucia-" + name + ":(#[0-9a-f]{6})", "i"))?.[1];
     const canvas = value("canvas");
     expect(canvas).toBeTruthy();
+    const surface = value("surface");
+    expect(surface).toBeTruthy();
     for (const foreground of [value("text"), value("muted"), value("primary"), value("focus")]) {
       expect(foreground).toBeTruthy();
       expect(contrastRatio(foreground!, canvas!)).toBeGreaterThanOrEqual(4.5);
     }
+    expect(contrastRatio(value("text")!, surface!)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(value("muted")!, surface!)).toBeGreaterThanOrEqual(4.5);
     expect(contrastRatio(value("on-primary")!, value("primary")!)).toBeGreaterThanOrEqual(4.5);
   });
 
