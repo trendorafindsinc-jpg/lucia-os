@@ -74,9 +74,12 @@ export function LuciaStudioNodeInspector({
   const [error, setError] = useState("");
   const [conflictRevision, setConflictRevision] = useState<number | null>(null);
   const [fieldErrors, setFieldErrors] = useState<string[]>([]);
-  const [savedRevision, setSavedRevision] = useState<number | null>(null);\n  const preserveDraftRef = useRef(false);
+  const [savedRevision, setSavedRevision] = useState<number | null>(null);
+  const preserveDraftRef = useRef(false);
 
-  useEffect(() => {\n    if (preserveDraftRef.current) { preserveDraftRef.current = false; return; }\n    setDraft(initialDraft(node));
+  useEffect(() => {
+    if (preserveDraftRef.current) { preserveDraftRef.current = false; return; }
+    setDraft(initialDraft(node));
     setDirty(false);
     setError("");
     setFieldErrors([]);
