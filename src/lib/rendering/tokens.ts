@@ -5,7 +5,8 @@ export type ResolvedDesignToken =
   | { kind: "color"; value: string }
   | { kind: "font"; value: "system-sans" }
   | { kind: "number"; value: number }
-  | { kind: "shadow"; value: "none" | "subtle" };
+  | { kind: "shadow"; value: "none" | "subtle" }
+  | { kind: "boolean"; value: boolean };
 
 const SAFE_SHADOWS = new Set(["none", "0 1px 3px rgba(0,0,0,0.08)"]);
 const COLOR_PATHS = new Set(["color.canvas", "color.surface", "color.text", "color.muted", "color.primary", "color.onPrimary", "color.border", "color.focus"]);
@@ -30,6 +31,7 @@ export function resolveDesignToken(foundation: DesignFoundation, path: string): 
     const value = path.endsWith("bodyFont") ? foundation.typography.bodyFont : foundation.typography.headingFont;
     return value === "system-sans" ? { kind: "font", value } : null;
   }
+  if (path === "motion.reducedMotionByDefault") return { kind: "boolean", value: foundation.motion.reducedMotionByDefault };
   if (path.startsWith("shadow.")) {
     const value = foundation.shadows[path.slice("shadow.".length)];
     return SAFE_SHADOWS.has(value) ? { kind: "shadow", value: value === "none" ? "none" : "subtle" } : null;
