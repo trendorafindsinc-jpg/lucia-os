@@ -37,8 +37,11 @@ export function resolveDesignToken(foundation: DesignFoundation, path: string): 
   if (!NUMBER_PATHS.has(path)) return null;
   const [namespace, key, member] = path.split(".");
   let value: unknown;
-  if (namespace === "spacing" || namespace === "radius" || namespace === "contentWidth") value = foundation[namespace][key];
-  else if (namespace === "breakpoint" || namespace === "motion") value = foundation[namespace === "breakpoint" ? "breakpoints" : "motion"][key];
+  if (namespace === "spacing") value = foundation.spacing[key];
+  else if (namespace === "radius") value = foundation.radius[key];
+  else if (namespace === "contentWidth") value = foundation.contentWidth[key];
+  else if (namespace === "breakpoint") value = foundation.breakpoints[key as keyof DesignFoundation["breakpoints"]];
+  else if (namespace === "motion") value = foundation.motion[key as keyof DesignFoundation["motion"]];
   else if (namespace === "typography" && member) value = foundation.typography[key as "scale" | "lineHeight"]?.[member];
   if (typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 2400) return null;
   return { kind: "number", value };
