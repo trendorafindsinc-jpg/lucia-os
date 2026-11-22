@@ -7,6 +7,9 @@ vi.mock("@/lib/access/guards", () => ({
     user: { id: auth.userId },
     membership: { role: "editor", status: "active" },
   })),
+  getOrganizationMembershipsForUser: vi.fn(async () => [{
+    id: ids.orgA, role: "editor", membershipStatus: "active",
+  }]),
 }));
 
 import {
@@ -17,6 +20,7 @@ import {
   listWebsiteGraphVersions,
 } from "./service";
 import { GraphServiceError } from "./service";
+import { removeMedia } from "@/lib/media/service";
 
 const ids = {
   userA: "10000000-0000-4000-8000-000000000001",
@@ -254,6 +258,14 @@ describe.sequential("Graph Persistence Service (PostgreSQL)", () => {
     currentRevision = committed.revision;
     const graph = await getWebsiteGraph(ids.orgA, ids.siteA);
     expect(graph?.document.nodes.find((node) => node.id === referenceNodeId)?.properties.assetId).toBe(assetId);
+    await expect(removeMedia(ids.userA, ids.siteA, assetId)).rejects.toMatchObject({ status: 409 });
+
+    const detached = await mutateWebsiteGraph(ids.orgA, batch(currentRevision, "graph-service-media-detach-0001", [
+      { type: "DELETE_NODE", nodeId: referenceNodeId },
+    ]));
+    currentRevision = detached.revision;
+    // An older immutable graph snapshot can still be restored, so its asset remains protected.
+    await expect(removeMedia(ids.userA, ids.siteA, assetId)).rejects.toMatchObject({ status: 409 });
 
     await expect(mutateWebsiteGraph(ids.orgA, batch(currentRevision, "graph-service-media-cross-site-0001", [
       { type: "CREATE_NODE", node: { id: "70000000-0000-4000-8000-000000000033", graphId, type: "media_reference", schemaVersion: 1, properties: { assetId: foreignWebsiteAssetId }, lifecycleStatus: "active" } },
