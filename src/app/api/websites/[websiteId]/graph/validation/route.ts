@@ -23,7 +23,8 @@ export async function GET(request: Request, context: Context) {
     const result = await getWebsiteGraph(organizationId!, websiteId);
     if (!result) return json({ error: "Website graph has not been created." }, 404);
     const graph = result.document;
-    const diagnostics = validateGraphDocument(graph).map((item) => ({ ...item, source: "graph" as const }));
+    type StudioFinding = { code: string; severity: "error" | "warning" | "info"; message: string; nodeId?: string; edgeId?: string; propertyPath?: Array<string | number>; source: "graph" | "composition" | "rendering" };
+    const diagnostics: StudioFinding[] = validateGraphDocument(graph).map((item) => ({ ...item, source: "graph" }));
     const pages = graph.nodes.filter((node) => node.type === "page" && node.lifecycleStatus === "active");
     if (!pages.length) diagnostics.push({ code: "PAGE_REQUIRED", severity: "warning" as const, message: "Add a page to enable website preview and navigation.", nodeId: graph.nodes.find((node) => node.type === "website")?.id, source: "composition" as const });
     for (const page of pages) {
