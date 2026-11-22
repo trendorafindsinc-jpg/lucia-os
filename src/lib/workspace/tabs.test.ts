@@ -9,6 +9,15 @@ describe("workspace tab routing", () => {
     expect(getWorkspaceTabId(first!)).not.toBe(getWorkspaceTabId(second!));
   });
 
+  it("registers Lucia Studio only with explicit website and organization UUID scope", () => {
+    const href = "/studio?websiteId=00000000-0000-4000-8000-000000000001&organizationId=00000000-0000-4000-8000-000000000002";
+    const studio = describeWorkspaceRoute("/studio", "?websiteId=00000000-0000-4000-8000-000000000001&organizationId=00000000-0000-4000-8000-000000000002");
+    expect(studio).toMatchObject({ appKey: "website-engine", label: "Lucia Studio", context: "website:00000000-0000-4000-8000-000000000001" });
+    expect(isSafeWorkspaceTabHref(href)).toBe(true);
+    expect(describeWorkspaceRoute("/studio", "?websiteId=site-a&organizationId=org-a")).toBeNull();
+    expect(isSafeWorkspaceTabHref("/studio?websiteId=00000000-0000-4000-8000-000000000001")).toBe(false);
+  });
+
   it("restores the selected editor context from its route", () => {
     expect(describeWorkspaceRoute("/editor", "?websiteId=site-a")).toMatchObject({
       href: "/editor?websiteId=site-a",
