@@ -285,7 +285,7 @@ Implemented on the `development` branch:
 
 ## 15. Phase status
 
-Phase 5 is in progress. The visual node-canvas increment is implemented and awaiting the complete focused and full verification workflow. The inspector is currently an inspection surface; typed content editing, interactive website preview, validation navigation and revision history remain subsequent increments. Phase 5 remains open until all acceptance criteria and full verification pass.
+Phase 5 is in progress. The visual node-canvas and typed inspector editing increments are implemented and verified. Interactive website preview, validation navigation and revision history remain subsequent increments. Phase 5 remains open until all acceptance criteria and final full verification pass.
 
 
 ### Increment 3 — typed inspector editing and revision-safe saves
@@ -307,4 +307,8 @@ Implemented on the `development` branch:
 - Unsupported node types remain read-only; no arbitrary JSON, raw HTML, CSS, scripts or dynamic component selection are exposed.
 - Added focused contract tests for route safety, form bounds, CTA pairing and renderer-compatible section property construction.
 
-The implementation is committed but the Phase 5 verification workflow must pass on the exact final commit before this increment is accepted. Interactive preview, validation navigation and revision history remain subsequent increments.
+- Registered the inspector's real save/discard/can-suspend callbacks with workspace continuity. Dirty state is reflected in the Studio workspace tab, and the workspace's Save and continue / Discard changes flow operates on the actual inspector draft.
+- Verified on commit `dc9b35e3d9b43cbfe3a60ad930ad074f0af039b1` with Phase 5 workflow run [`45045936318`](https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/45045936318): completed successfully.
+- Verification results: disposable PostgreSQL migrations passed; focused Studio tests passed (18 tests); focused Graph/Composition/Rendering/workspace tests passed (218 tests); full suite passed (100 test files, 1,252 tests); TypeScript typecheck, lint, production build and compiled host-routing/security checks all passed.
+
+The typed inspector editing increment is accepted. Interactive preview, validation navigation and revision history remain subsequent increments.
