@@ -136,8 +136,8 @@ export function LuciaStudioNodeInspector({
     if (node.type === "page") {
       const parsed = pageInspectorSchema.safeParse({ title: draft.title, path: draft.path });
       if (!parsed.success) { setFieldErrors(parsed.error.issues.map((issue) => issue.message)); return null; }
-      const normalizedPath = parsed.data.path.length > 1 ? parsed.data.path.replace(/\\/$/, "") : "/";
-      const duplicate = document.nodes.some((candidate) => candidate.type === "page" && candidate.id !== node.id && candidate.lifecycleStatus === "active" && typeof candidate.properties.path === "string" && (candidate.properties.path.length > 1 ? candidate.properties.path.replace(/\\/$/, "") : "/") === normalizedPath);
+      const normalizedPath = parsed.data.path.length > 1 ? parsed.data.path.replace(/\/$/, "") : "/";
+      const duplicate = document.nodes.some((candidate) => candidate.type === "page" && candidate.id !== node.id && candidate.lifecycleStatus === "active" && typeof candidate.properties.path === "string" && (candidate.properties.path.length > 1 ? candidate.properties.path.replace(/\/$/, "") : "/") === normalizedPath);
       if (duplicate) { setFieldErrors(["Another page already uses this route. Choose a unique local path."]); return null; }
       return { ...node.properties, ...parsed.data };
     }
