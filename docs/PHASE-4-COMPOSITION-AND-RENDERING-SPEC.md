@@ -2,7 +2,7 @@
 
 > **Document ID:** LUCIA-PHASE-4-COMPOSITION-RENDERING-001  
 > **Version:** 0.1  
-> **Status:** Initial technical specification — implementation in progress  
+> **Status:** Completed — acceptance verified  
 > **Date:** 2026-11-13  
 > **Branch:** `development`  
 > **Depends on:** Phase 1 architecture, Phase 2 Graph Engine, Phase 3 Design Intelligence
@@ -235,4 +235,30 @@ Each increment must be small, committed to `development`, and verified before th
 
 ## 10. Phase status
 
-The Phase 4 specification is the initial approved implementation boundary. Implementation and verification are in progress. Acceptance remains open until all criteria above are met.
+<badge>Completed — acceptance verified</badge>
+
+Phase 4 acceptance is closed. The implementation and all acceptance criteria were verified on:
+
+- **Verified source commit:** `839a643444d4cc2734b3caef9d4306452e6693ca`
+- **Verification workflow:** [Phase 4 verification run #45041987585](https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/45041987585)
+- **Workflow result:** completed / success; every job step passed.
+
+### Acceptance evidence
+
+| Area | Verified evidence |
+|---|---|
+| Composition contracts and deterministic planning | Strict request validation, paired call-to-action label/destination, normalized local paths, deterministic IDs, duplicate-key/path rejection and explicit missing-customer-fact diagnostics |
+| Graph construction and recipe constraints | Valid graph construction, exact recipe/foundation resolution, hard capability constraints and no invented business facts |
+| Semantic and accessible rendering | Document landmarks, one page-level H1, section heading relationships, skip link, native keyboard-operable links and accessible image alternatives |
+| Responsive output | Mobile-first CSS and mobile/tablet/desktop viewport profiles; reduced-motion and forced-colours rules |
+| Visual accessibility | Focus-visible treatment and automated contrast assertions for text, muted text, links, focus and CTA foreground/background pairs |
+| Deterministic output | Byte-identical HTML for equivalent graphs with reordered node/edge insertion |
+| Token and reference safety | Exact foundation tokens, invalid token-type rejection, website-scoped media/shared-data resolution and typed missing/forbidden diagnostics |
+| Renderer failure behaviour | Unknown renderer/recipe versions, unresolved token references, unknown or malformed section properties and unsafe destinations fail closed |
+| Security and resource bounds | XSS escaping, encoded traversal rejection including multiply encoded paths, graph limits and per-render reference limits |
+| Regression coverage | Composition: 19 focused tests; Rendering/references: 35 focused tests; Graph/Design Intelligence: 40 focused tests; full suite: 1,230 tests passed |
+| Application verification | Disposable PostgreSQL migrations, TypeScript typecheck, lint, production build and compiled host-routing HTTP checks all passed |
+
+No production database, customer website, published route, deployment, legacy editor, billing or domain behaviour was changed. The workflow used disposable PostgreSQL only.
+
+**Phase 4 is closed. Phase 5 — New Lucia Studio — may now begin under the master architecture and its own implementation specification.**
