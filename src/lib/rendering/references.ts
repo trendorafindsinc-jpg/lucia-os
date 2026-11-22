@@ -85,6 +85,7 @@ export async function resolveRenderReferences(
   sections: readonly GraphNode[],
   mediaResolver?: MediaResolver,
   sharedDataResolver?: SharedDataResolver,
+  websiteId = graph.id,
 ): Promise<ReferenceResolution> {
   const media = new Map<string, ResolvedMediaAsset>();
   const sharedData = new Map<string, ResolvedSharedData>();
@@ -114,7 +115,7 @@ export async function resolveRenderReferences(
     if (entry.kind === "media") {
       if (!mediaResolver) return { ok: false, code: "MEDIA_NOT_FOUND", nodeId: entry.reference.id, message: "No authorized media resolver is configured." };
       let asset: ResolvedMediaAsset | null;
-      try { asset = await mediaResolver.resolve(entry.key, graph.id); }
+      try { asset = await mediaResolver.resolve(entry.key, websiteId); }
       catch { return { ok: false, code: "MEDIA_FORBIDDEN", nodeId: entry.reference.id, message: "Media access was denied or could not be verified." }; }
       if (!asset) return { ok: false, code: "MEDIA_NOT_FOUND", nodeId: entry.reference.id, message: "Referenced media asset is unavailable." };
       if (!safeMedia(asset, entry.key)) return { ok: false, code: "MEDIA_FORBIDDEN", nodeId: entry.reference.id, message: "Media resolver returned invalid or unsafe metadata." };
