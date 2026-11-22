@@ -242,7 +242,10 @@ describe.sequential("Graph Persistence Service (PostgreSQL)", () => {
     expect(saved.graphRevision).toBe(currentRevision);
     await expect(saveCanvasPosition(ids.orgA, ids.siteA, { nodeId: rootId, x: 101, y: 201 }))
       .rejects.toMatchObject({ code: "CONFLICT" });
-    await saveCanvasPosition(ids.orgA, ids.siteA, { nodeId: rootId, x: 101, y: 201, locked: false });
+    await expect(saveCanvasPosition(ids.orgA, ids.siteA, { nodeId: rootId, x: 101, y: 201, locked: false }))
+      .rejects.toMatchObject({ code: "CONFLICT" });
+    await saveCanvasPosition(ids.orgA, ids.siteA, { nodeId: rootId, x: 100, y: 200, locked: false });
+    await saveCanvasPosition(ids.orgA, ids.siteA, { nodeId: rootId, x: 101, y: 201 });
     const own = await getWebsiteGraph(ids.orgA, ids.siteA);
     expect(own?.document.revision).toBe(currentRevision);
     expect(own?.canvasPositions).toHaveLength(1);
