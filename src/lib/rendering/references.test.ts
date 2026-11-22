@@ -102,6 +102,11 @@ describe("secure render reference resolution", () => {
     });
     expect(traversal.ok).toBe(false);
     if (!traversal.ok) expect(traversal.code).toBe("MEDIA_FORBIDDEN");
+    const backslash = await resolveRenderReferences(graph, [section], {
+      resolve: async (assetId) => ({ assetId, url: "/media\\\\..\\\\private.webp", altText: "Asset", decorative: false }),
+    });
+    expect(backslash.ok).toBe(false);
+    if (!backslash.ok) expect(backslash.code).toBe("MEDIA_FORBIDDEN");
 
     let getterCalls = 0;
     const unsafe = Object.defineProperty({}, "displayName", {
