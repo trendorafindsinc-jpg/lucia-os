@@ -1,3 +1,5 @@
+import "server-only";
+
 import { createElement as h } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { graphDocumentSchema, type GraphDocument, type GraphNode } from "@/lib/graph/contracts";
