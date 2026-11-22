@@ -8,6 +8,7 @@ import {
 } from "@/lib/studio/auto-layout";
 import type { GraphDocument, GraphEdge, GraphNode } from "@/lib/graph/contracts";
 import { useWorkspaceTab } from "@/components/workspace/workspace-tab-shell";
+import { LuciaStudioNodeInspector } from "./node-inspector";
 import styles from "./node-canvas.module.css";
 
 type Position = { x: number; y: number; locked: boolean };
@@ -86,6 +87,8 @@ export function LuciaStudioNodeCanvas({
   const [document, setDocument] = useState<GraphDocument | null>(null);
   const [positions, setPositions] = useState<Record<string, Position>>({});
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [inspectorDirty, setInspectorDirty] = useState(false);
+  const inspectorDirtyRef = useRef(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState("");
@@ -199,6 +202,31 @@ export function LuciaStudioNodeCanvas({
     activeNodeIds.has(edge.sourceNodeId) && activeNodeIds.has(edge.targetNodeId),
   ) ?? [], [document, activeNodeIds]);
   const selectedNode = activeNodes.find((node) => node.id === selectedId) ?? null;
+  const onInspectorDirtyChange = useCallback((dirty: boolean) => {
+    inspectorDirtyRef.current = dirty;
+    setInspectorDirty(dirty);
+  }, []);
+  const requestSelectNode = (nodeId: string) => {
+    if (nodeId === selectedId) return;
+    if (inspectorDirtyRef.current && !window.confirm("You have unsaved inspector changes. Discard them and switch nodes?")) return;
+    inspectorDirtyRef.current = false;
+    setInspectorDirty(false);
+    setSelectedId(nodeId);
+  };
+  const acceptGraphUpdate = useCallback((next: GraphDocument) => setDocument(next), []);
+  const selectedRelationships = selectedNode ? activeEdges
+    .filter((edge) => edge.sourceNodeId === selectedNode.id || edge.targetNodeId === selectedNode.id)
+    .map((edge) => {
+      const otherNodeId = edge.sourceNodeId === selectedNode.id ? edge.targetNodeId : edge.sourceNodeId;
+      const other = activeNodes.find((candidate) => candidate.id === otherNodeId);
+      return {
+        edgeId: edge.id,
+        label: EDGE_LABELS[edge.type],
+        direction: edge.sourceNodeId === selectedNode.id ? "Outgoing" : "Incoming",
+        otherNodeId,
+        otherTitle: other ? nodeTitle(other) : "Unknown node",
+      };
+    }) : [];
 
   const canvasExtent = useMemo(() => {
     const values = Object.values(positions);
@@ -462,7 +490,7 @@ export function LuciaStudioNodeCanvas({
                   style={{ left: position.x, top: position.y } as CSSProperties}
                   aria-pressed={selected}
                   aria-label={`${NODE_LABELS[node.type]}: ${nodeTitle(node)}${position.locked ? ", position locked" : ""}`}
-                  onClick={() => setSelectedId(node.id)}
+                  onClick={() => requestSelectNode(node.id)}
                   onPointerDown={(event) => onNodePointerDown(event, node.id)}
                   onPointerMove={onNodePointerMove}
                   onPointerUp={onNodePointerUp}
@@ -484,30 +512,18 @@ export function LuciaStudioNodeCanvas({
             <div>{activeNodes.map((node) => <button key={node.id} type="button" aria-current={selectedId === node.id ? "true" : undefined} onClick={() => setSelectedId(node.id)}>{NODE_LABELS[node.type]} · {nodeTitle(node)}</button>)}</div>
           </div>
         </section>
-        <aside className={styles.inspector} aria-label="Node inspector">
-          {selectedNode ? <>
-            <div className={styles.inspectorHeader}><p className={styles.eyebrow}>CONTEXTUAL INSPECTOR</p><h2>{nodeTitle(selectedNode)}</h2><span>{NODE_LABELS[selectedNode.type]}</span></div>
-            <div className={styles.inspectorSection}><h3>Node identity</h3><dl><dt>Node ID</dt><dd>{selectedNode.id}</dd><dt>Graph revision</dt><dd>{document.revision}</dd><dt>Schema version</dt><dd>{selectedNode.schemaVersion}</dd><dt>Lifecycle</dt><dd>{selectedNode.lifecycleStatus}</dd></dl></div>
-            <div className={styles.inspectorSection}><h3>Relationships</h3>
-              {activeEdges.filter((edge) => edge.sourceNodeId === selectedNode.id || edge.targetNodeId === selectedNode.id).length
-                ? activeEdges.filter((edge) => edge.sourceNodeId === selectedNode.id || edge.targetNodeId === selectedNode.id).map((edge) => {
-                  const otherId = edge.sourceNodeId === selectedNode.id ? edge.targetNodeId : edge.sourceNodeId;
-                  const other = activeNodes.find((node) => node.id === otherId);
-                  return <button className={styles.relationship} key={edge.id} type="button" onClick={() => setSelectedId(otherId)}>
-                    <span>{EDGE_LABELS[edge.type]}</span><strong>{other ? nodeTitle(other) : "Unknown node"}</strong><small>{edge.sourceNodeId === selectedNode.id ? "Outgoing" : "Incoming"}</small>
-                  </button>;
-                }) : <p className={styles.empty}>No connected relationships.</p>}
-            </div>
-            <div className={styles.inspectorSection}><h3>Canvas position</h3>
-              <dl><dt>Horizontal</dt><dd>{Math.round(positions[selectedNode.id]?.x ?? 0)} px</dd><dt>Vertical</dt><dd>{Math.round(positions[selectedNode.id]?.y ?? 0)} px</dd></dl>
-              <button type="button" className={styles.lockButton} onClick={() => void toggleLock()} disabled={saving}>{positions[selectedNode.id]?.locked ? "Unlock position" : "Lock position"}</button>
-              <p className={styles.helper}>Canvas positions belong to your workspace and do not change the website content revision.</p>
-            </div>
-            <div className={styles.inspectorSection}><h3>Registered properties</h3>
-              <dl>{Object.entries(selectedNode.properties).map(([key, value]) => <div className={styles.property} key={key}><dt>{key}</dt><dd>{propertyText(value)}</dd></div>)}</dl>
-            </div>
-          </> : <p>Select a node to inspect it.</p>}
-        </aside>
+        <LuciaStudioNodeInspector
+          node={selectedNode}
+          document={document}
+          websiteId={websiteId}
+          headers={headers}
+          onDirtyChange={onInspectorDirtyChange}
+          onGraphUpdated={acceptGraphUpdate}
+          relationships={selectedRelationships}
+          position={positions[selectedNode.id]}
+          onToggleLock={() => void toggleLock()}
+          onSelectNode={requestSelectNode}
+        />
       </div>
     </main>
   );
