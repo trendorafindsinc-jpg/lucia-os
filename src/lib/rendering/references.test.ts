@@ -51,6 +51,17 @@ describe("secure render reference resolution", () => {
     }
   });
 
+  it("uses the explicit website identifier rather than the graph identifier for resolution", async () => {
+    const { graph, section } = graphWithReferences();
+    const websiteScope = "00000000-0000-4000-8000-000000000777";
+    const resolver = { resolve: vi.fn(async (assetId: string) => ({
+      assetId, url: "/_media/" + assetId, altText: "Owned image", decorative: false,
+    })) };
+    const result = await resolveRenderReferences(graph, [section], resolver, undefined, websiteScope);
+    expect(result.ok).toBe(true);
+    expect(resolver.resolve).toHaveBeenCalledWith("00000000-0000-4000-8000-000000000097", websiteScope);
+  });
+
   it("rejects unsafe resolver URLs and missing alternative text", async () => {
     const { graph, section } = graphWithReferences();
     const result = await resolveRenderReferences(graph, [section], {
