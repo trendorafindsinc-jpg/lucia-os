@@ -139,6 +139,22 @@ export const canvasPositionMutationSchema = z.object({
   locked: z.boolean().optional(),
 }).strict();
 
+export const canvasPositionBatchSchema = z.object({
+  positions: z.array(canvasPositionMutationSchema).min(1).max(2_000),
+}).strict().superRefine((value, context) => {
+  const seen = new Set<string>();
+  value.positions.forEach((position, index) => {
+    if (seen.has(position.nodeId)) {
+      context.addIssue({
+        code: "custom",
+        path: ["positions", index, "nodeId"],
+        message: "A canvas batch may contain each node only once.",
+      });
+    }
+    seen.add(position.nodeId);
+  });
+});
+
 export const graphMutationBatchSchema = z.object({
   websiteId: z.string().uuid(),
   expectedRevision: z.number().int().nonnegative(),
@@ -164,4 +180,5 @@ export type GraphDocument = z.infer<typeof graphDocumentSchema>;
 export type GraphOperation = z.infer<typeof graphOperationSchema>;
 export type GraphMutationBatch = z.infer<typeof graphMutationBatchSchema>;
 export type CanvasPositionMutation = z.infer<typeof canvasPositionMutationSchema>;
+export type CanvasPositionBatch = z.infer<typeof canvasPositionBatchSchema>;
 export type GraphDiagnostic = z.infer<typeof graphDiagnosticSchema>;
