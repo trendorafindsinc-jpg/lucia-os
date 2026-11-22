@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getWebsiteGraph, GraphServiceError } from "@/lib/graph/service";
 import { validateGraphDocument } from "@/lib/graph/validate";
 import { renderWebsiteElement } from "@/lib/rendering/render-core";
+import { createWebsiteMediaResolver } from "@/lib/media/render-resolver";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,7 +31,10 @@ export async function GET(request: Request, context: Context) {
     for (const page of pages) {
       const route = page.properties.path;
       if (typeof route !== "string") continue;
-      const rendered = await renderWebsiteElement({ graph, pageNodeId: page.id, route, viewport: "desktop" });
+      const rendered = await renderWebsiteElement({ graph, pageNodeId: page.id, route, viewport: "desktop" }, {
+        websiteId,
+        mediaResolver: createWebsiteMediaResolver(user.id),
+      });
       if (!rendered.ok) diagnostics.push(...rendered.diagnostics.map((item) => ({ ...item, source: "rendering" as const })));
     }
     const unique = new Map<string, typeof diagnostics[number]>();
