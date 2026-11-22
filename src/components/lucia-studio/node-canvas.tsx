@@ -276,7 +276,7 @@ export function LuciaStudioNodeCanvas({
     if (event.button !== 0) return;
     event.stopPropagation();
     event.currentTarget.setPointerCapture(event.pointerId);
-    setSelectedId(nodeId);
+    requestSelectNode(nodeId);
     const position = positionsRef.current[nodeId];
     if (!position || position.locked) return;
     dragRef.current = {
@@ -506,10 +506,10 @@ export function LuciaStudioNodeCanvas({
           </div>
           <div className={styles.nodeOutline}>
             <strong>Node outline</strong>
-            <div>{activeNodes.map((node) => <button key={node.id} type="button" aria-current={selectedId === node.id ? "true" : undefined} onClick={() => setSelectedId(node.id)}>{NODE_LABELS[node.type]} · {nodeTitle(node)}</button>)}</div>
+            <div>{activeNodes.map((node) => <button key={node.id} type="button" aria-current={selectedId === node.id ? "true" : undefined} onClick={() => requestSelectNode(node.id)}>{NODE_LABELS[node.type]} · {nodeTitle(node)}</button>)}</div>
           </div>
         </section>
-        <LuciaStudioNodeInspector
+        {selectedNode ? <LuciaStudioNodeInspector
           node={selectedNode}
           document={document}
           websiteId={websiteId}
@@ -520,7 +520,7 @@ export function LuciaStudioNodeCanvas({
           position={positions[selectedNode.id]}
           onToggleLock={() => void toggleLock()}
           onSelectNode={requestSelectNode}
-        />
+        /> : <aside className={styles.inspector}>Select a node to inspect it.</aside>}
       </div>
     </main>
   );
