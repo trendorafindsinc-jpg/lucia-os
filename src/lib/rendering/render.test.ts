@@ -104,6 +104,29 @@ describe("responsive semantic website renderer", () => {
     if (!result.ok) expect(result.diagnostics[0].code).toBe("RENDERER_NOT_REGISTERED");
   });
 
+  it("rejects unknown or malformed renderer content properties", async () => {
+    const document = graph();
+    const unknownField = {
+      ...document,
+      nodes: document.nodes.map((node) => node.type === "section" && node.properties.category === "introduction"
+        ? { ...node, properties: { ...node.properties, content: { heading: "Welcome", onClick: "run arbitrary code" } } }
+        : node),
+    };
+    const unknownResult = await renderWebsite({ graph: unknownField, pageNodeId: pageId, route: "/", viewport: "desktop" });
+    expect(unknownResult.ok).toBe(false);
+    if (!unknownResult.ok) expect(unknownResult.diagnostics[0].code).toBe("UNSUPPORTED_FEATURE");
+
+    const malformed = {
+      ...document,
+      nodes: document.nodes.map((node) => node.type === "section" && node.properties.category === "introduction"
+        ? { ...node, properties: { ...node.properties, content: { heading: "Welcome", description: { unsafe: true } } } }
+        : node),
+    };
+    const malformedResult = await renderWebsite({ graph: malformed, pageNodeId: pageId, route: "/", viewport: "desktop" });
+    expect(malformedResult.ok).toBe(false);
+    if (!malformedResult.ok) expect(malformedResult.diagnostics[0].code).toBe("UNSUPPORTED_FEATURE");
+  });
+
   it("fails closed for unsupported recipe versions and unresolved graph token references", async () => {
     const document = graph();
     const unsupported = {
