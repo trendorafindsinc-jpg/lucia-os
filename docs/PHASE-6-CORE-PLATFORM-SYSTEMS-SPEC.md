@@ -1,7 +1,7 @@
 # Phase 6 — Core Platform Systems
 
 **Target branch:** `development`  
-**Status:** In progress  
+**Status:** In progress — Media Library foundation implemented and verified  
 **Scope:** Lucia-owned Media Library, Blogging, Commerce, Subscriptions & Entitlements, and Domain Management.
 
 ## 1. Objective
@@ -106,6 +106,43 @@ The repository already contains meaningful foundations. Phase 6 must extend thes
 - Focused service, API, resolver, graph-reference and Studio UI tests.
 - Full unit suite, typecheck, lint, production build, routing/security checks and disposable PostgreSQL migration/RLS checks.
 - Live object-storage acceptance remains a separately gated manual workflow and is not part of ordinary CI or this approval.
+
+## 4.1 Media Library implementation and verification record
+
+The first Media Library implementation slice is committed and verified.
+
+### Completed
+
+- Audited and reused the existing tenant-scoped media tables, storage adapter, multipart upload service, quota accounting, list/upload/delete APIs and media delivery route. No parallel media table or storage provider was introduced.
+- Added a server-only website media resolver. It binds asset resolution to the authenticated user and the exact website ID; only ready image assets are returned to the current renderer.
+- Fixed renderer scope propagation: the renderer now passes the actual website ID to media resolution instead of the graph ID.
+- Wired the same authorized resolver into Studio preview and graph validation.
+- Graph Engine mutations now verify every active `media_reference` points to a ready media record owned by that exact website. Shared row locks are held through commit.
+- Media deletion now checks active graph references and immutable graph-version snapshots as well as existing page drafts, recovery versions, article bodies, featured images and article revisions.
+- Added a regression test proving a media asset cannot be deleted while referenced by the active graph or a restorable immutable graph snapshot; cross-website attachment is rejected.
+- Added the Lucia Studio Media Library panel. It reuses the existing safe upload/list/delete workflows and displays current storage usage, upload progress and reference protection.
+- The current section renderer displays attached media on hero sections. The Studio panel therefore permits graph attachment only to hero sections; it does not claim unsupported card/component rendering.
+- Video and PDF uploads remain supported by the existing media service and are visible in the Studio library, but graph rendering and blog insertion for those types are future increments.
+
+### Database and runtime access
+
+Additive migrations `0033_media_reference_runtime_reads.sql`, `0034_media_retention_runtime_lock_privileges.sql` and `0035_media_retention_domain_policy_reads.sql` provide the minimum runtime table privileges required by media-retention checks and the existing tenant-scoped article/domain RLS policies. A disposable-database assertion script, `scripts/test-media-retention-grants.sql`, verifies those privileges. RLS remains enabled; no customer rows are changed.
+
+### Acceptance evidence
+
+- Accepted implementation commit: `825b224f2b5cd4665437f52f1577d05cb6cbbde5`
+- Phase 6 verification: [run 45052508291](https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/45052508291) — completed successfully.
+- Studio regression tests: 3 files, 21 tests passed.
+- Media Library tests: 5 files, 48 tests passed.
+- Graph, Composition, Rendering and workspace tests: 22 files, 268 tests passed.
+- Full unit suite: 102 files, 1,261 tests passed.
+- TypeScript typecheck, lint, production build and compiled host-routing HTTP checks passed.
+- Database migration verification: [run 45052197349](https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/45052197349) — migrations, journal check, runtime privilege assertions and RLS checks passed.
+- No production database, live object storage, customer content, website publishing, payment provider or DNS provider was changed.
+
+### Remaining Media Library work
+
+The initial Studio surface is not the end of 6A. Remaining work includes searchable and filterable asset browsing, pagination/large-library behavior, safe metadata editing, article featured/inline media insertion, and video/PDF rendering or embedding in supported blog content. Existing upload caps and quotas have deliberately not been raised; plan-based quota policy belongs to Phase 6D entitlements.
 
 ## 5. Remaining Phase 6 systems
 
