@@ -122,6 +122,25 @@ export async function removeMedia(userId: string, websiteId: string, id: string)
     if (removed.length) await tx.execute(sql`update media_storage_budget set reserved_bytes=reserved_bytes-${row.bytes} where product='lucia-os'`);
   });
 }
+export async function getWebsiteMediaForRender(userId: string, websiteId: string, assetId: string) {
+  return withMediaWebsite(userId, websiteId, "website.read", async (tx) => {
+    const [row] = await tx.execute(sql`select id,kind,width,height,alt,status from website_media
+      where id=${assetId} and website_id=${websiteId} and status='ready' for share`);
+    const media = row as { id: string; kind: string; width: number; height: number; alt: string; status: string } | undefined;
+    // The current reviewed graph renderer supports image elements only. Videos and
+    // documents remain available to the library/blog workflow, not as <img> sources.
+    if (!media || media.kind !== "image") return null;
+    return {
+      assetId: media.id,
+      url: "/_media/" + media.id,
+      altText: media.alt,
+      decorative: false,
+      width: media.width,
+      height: media.height,
+    };
+  });
+}
+
 export async function findReadableMedia(id: string, userId: string | null) {
   if (userId) {
     for (const org of await getOrganizationMembershipsForUser(userId)) {
