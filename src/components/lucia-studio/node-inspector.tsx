@@ -21,6 +21,7 @@ type Draft = {
   actionHref?: string;
   items?: Array<{ heading: string; description: string }>;
 };
+type InspectorRelation = { edgeId: string; label: string; direction: string; otherNodeId: string; otherTitle: string };
 type Props = {
   node: GraphNode;
   document: GraphDocument;
@@ -28,6 +29,10 @@ type Props = {
   headers: Record<string, string>;
   onDirtyChange: (dirty: boolean) => void;
   onGraphUpdated: (document: GraphDocument) => void;
+  relationships: InspectorRelation[];
+  position?: { x: number; y: number; locked: boolean };
+  onToggleLock?: () => void;
+  onSelectNode: (nodeId: string) => void;
 };
 
 function initialDraft(node: GraphNode): Draft {
@@ -61,7 +66,7 @@ function initialDraft(node: GraphNode): Draft {
 }
 
 export function LuciaStudioNodeInspector({
-  node, document, websiteId, headers, onDirtyChange, onGraphUpdated,
+  node, document, websiteId, headers, onDirtyChange, onGraphUpdated, relationships, position, onToggleLock, onSelectNode,
 }: Props) {
   const [draft, setDraft] = useState<Draft>(() => initialDraft(node));
   const [dirty, setDirty] = useState(false);
@@ -69,17 +74,16 @@ export function LuciaStudioNodeInspector({
   const [error, setError] = useState("");
   const [conflictRevision, setConflictRevision] = useState<number | null>(null);
   const [fieldErrors, setFieldErrors] = useState<string[]>([]);
-  const [savedRevision, setSavedRevision] = useState<number | null>(null);
+  const [savedRevision, setSavedRevision] = useState<number | null>(null);\n  const preserveDraftRef = useMemo(() => ({ current: false }), []);
 
-  useEffect(() => {
-    setDraft(initialDraft(node));
+  useEffect(() => {\n    if (preserveDraftRef.current) { preserveDraftRef.current = false; return; }\n    setDraft(initialDraft(node));
     setDirty(false);
     setError("");
     setFieldErrors([]);
     setConflictRevision(null);
     setSavedRevision(null);
     onDirtyChange(false);
-  }, [node.id, node.properties, onDirtyChange]);
+  }, [node.id, node.properties, onDirtyChange, preserveDraftRef]);
 
   useEffect(() => {
     if (!dirty) return;
@@ -328,8 +332,18 @@ export function LuciaStudioNodeInspector({
       )}
       <div className={styles.inspectorSection}>
         <h3>Relationships</h3>
-        <p className={styles.helper}>Relationship editing will be added in a later Studio increment. Existing graph relationships are unchanged by these field edits.</p>
+        {relationships.length ? relationships.map((relation) => (
+          <button className={styles.relationship} key={relation.edgeId} type="button" onClick={() => onSelectNode(relation.otherNodeId)}>
+            <span>{relation.label}</span><strong>{relation.otherTitle}</strong><small>{relation.direction}</small>
+          </button>
+        )) : <p className={styles.helper}>No connected relationships.</p>}
       </div>
+      {position ? <div className={styles.inspectorSection}>
+        <h3>Canvas position</h3>
+        <dl><dt>Horizontal</dt><dd>{Math.round(position.x)} px</dd><dt>Vertical</dt><dd>{Math.round(position.y)} px</dd></dl>
+        <button type="button" className={styles.lockButton} onClick={onToggleLock} disabled={!onToggleLock || saving}>{position.locked ? "Unlock position" : "Lock position"}</button>
+        <p className={styles.helper}>Canvas positions remain personal workspace state and do not change the content revision.</p>
+      </div> : null}
     </aside>
   );
 }
