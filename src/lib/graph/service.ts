@@ -391,8 +391,7 @@ export async function saveCanvasPosition(organizationId: string, websiteId: stri
       eq(websiteCanvasPositions.nodeId, position.nodeId),
     )).for("update").limit(1);
     if (existingPosition?.locked &&
-        (existingPosition.x !== position.x || existingPosition.y !== position.y) &&
-        position.locked !== false) {
+        (existingPosition.x !== position.x || existingPosition.y !== position.y)) {
       throw new GraphServiceError("Unlock this canvas node before moving it.", "CONFLICT");
     }
 
@@ -441,8 +440,7 @@ export async function saveCanvasPositions(organizationId: string, websiteId: str
     for (const position of batch.positions) {
       const prior = existingByNode.get(position.nodeId);
       if (prior?.locked &&
-          (prior.x !== position.x || prior.y !== position.y) &&
-          position.locked !== false) {
+          (prior.x !== position.x || prior.y !== position.y)) {
         throw new GraphServiceError("Unlock every locked canvas node before moving it.", "CONFLICT");
       }
     }
