@@ -26,6 +26,7 @@ const ids = {
   orgB: "30000000-0000-4000-8000-000000000002",
   siteA: "50000000-0000-4000-8000-000000000001",
   siteB: "50000000-0000-4000-8000-000000000002",
+  siteOther: "50000000-0000-4000-8000-000000000003",
 };
 const ownerUrl = process.env.GRAPH_TEST_OWNER_DATABASE_URL;
 if (!ownerUrl) throw new Error("GRAPH_TEST_OWNER_DATABASE_URL is required for graph persistence integration tests.");
@@ -88,7 +89,8 @@ describe.sequential("Graph Persistence Service (PostgreSQL)", () => {
       ON CONFLICT (organization_id, user_id) DO NOTHING`;
     await owner`INSERT INTO websites (id, organization_id, name, slug, status) VALUES
       (${ids.siteA}, ${ids.orgA}, 'Graph Service Site A', 'graph-service-site-a', 'draft'),
-      (${ids.siteB}, ${ids.orgB}, 'Graph Service Site B', 'graph-service-site-b', 'draft')
+      (${ids.siteB}, ${ids.orgB}, 'Graph Service Site B', 'graph-service-site-b', 'draft'),
+      (${ids.siteOther}, ${ids.orgA}, 'Graph Service Site Other', 'graph-service-site-other', 'draft')
       ON CONFLICT (id) DO NOTHING`;
     await owner`INSERT INTO website_graphs (id, organization_id, website_id, schema_version, draft_revision)
       VALUES ('60000000-0000-4000-8000-000000000020', ${ids.orgB}, ${ids.siteB}, 1, 0)
@@ -115,7 +117,8 @@ describe.sequential("Graph Persistence Service (PostgreSQL)", () => {
   });
 
   afterAll(async () => {
-    await owner`DELETE FROM websites WHERE id IN (${ids.siteA}, ${ids.siteB})`;
+    await owner`DELETE FROM website_media WHERE website_id IN (${ids.siteA}, ${ids.siteOther})`;
+    await owner`DELETE FROM websites WHERE id IN (${ids.siteA}, ${ids.siteB}, ${ids.siteOther})`;
     await owner`DELETE FROM organizations WHERE id IN (${ids.orgA}, ${ids.orgB})`;
     await owner.end();
     await runtime.end();
@@ -226,6 +229,40 @@ describe.sequential("Graph Persistence Service (PostgreSQL)", () => {
     expect(history.map((row) => Number(row.revision))).toEqual([0, 1, 2, 3, 4]);
   });
 
+
+  it("attaches only ready media owned by the exact website", async () => {
+    auth.userId = ids.userA;
+    const assetId = "80000000-0000-4000-8000-000000000001";
+    const foreignWebsiteAssetId = "80000000-0000-4000-8000-000000000002";
+    const sectionId = "70000000-0000-4000-8000-000000000031";
+    const sectionEdgeId = "71000000-0000-4000-8000-000000000031";
+    const referenceNodeId = "70000000-0000-4000-8000-000000000032";
+    const referenceEdgeId = "71000000-0000-4000-8000-000000000032";
+    await owner`INSERT INTO website_media
+      (id, organization_id, website_id, created_by_user_id, object_key, kind, mime, bytes, width, height, alt, status)
+      VALUES
+      (${assetId}, ${ids.orgA}, ${ids.siteA}, ${ids.userA}, ${"os/"+ids.orgA+"/"+ids.siteA+"/"+assetId+".webp"},
+       'image', 'image/webp', 512, 32, 32, 'Graph-owned image', 'ready'),
+      (${foreignWebsiteAssetId}, ${ids.orgA}, ${ids.siteOther}, ${ids.userA}, ${"os/"+ids.orgA+"/"+ids.siteOther+"/"+foreignWebsiteAssetId+".webp"},
+       'image', 'image/webp', 512, 32, 32, 'Other website image', 'ready')`;
+    const committed = await mutateWebsiteGraph(ids.orgA, batch(currentRevision, "graph-service-media-attach-0001", [
+      { type: "CREATE_NODE", node: { id: sectionId, graphId, type: "section", schemaVersion: 1, properties: {}, lifecycleStatus: "active" } },
+      { type: "CONNECT_NODES", edge: { id: sectionEdgeId, graphId, sourceNodeId: pageId, targetNodeId: sectionId, type: "contains_section", schemaVersion: 1, order: 0, properties: {} } },
+      { type: "CREATE_NODE", node: { id: referenceNodeId, graphId, type: "media_reference", schemaVersion: 1, properties: { assetId }, lifecycleStatus: "active" } },
+      { type: "CONNECT_NODES", edge: { id: referenceEdgeId, graphId, sourceNodeId: sectionId, targetNodeId: referenceNodeId, type: "references_media", schemaVersion: 1, properties: {} } },
+    ]));
+    currentRevision = committed.revision;
+    const graph = await getWebsiteGraph(ids.orgA, ids.siteA);
+    expect(graph?.document.nodes.find((node) => node.id === referenceNodeId)?.properties.assetId).toBe(assetId);
+
+    await expect(mutateWebsiteGraph(ids.orgA, batch(currentRevision, "graph-service-media-cross-site-0001", [
+      { type: "CREATE_NODE", node: { id: "70000000-0000-4000-8000-000000000033", graphId, type: "media_reference", schemaVersion: 1, properties: { assetId: foreignWebsiteAssetId }, lifecycleStatus: "active" } },
+      { type: "CONNECT_NODES", edge: { id: "71000000-0000-4000-8000-000000000033", graphId, sourceNodeId: sectionId, targetNodeId: "70000000-0000-4000-8000-000000000033", type: "references_media", schemaVersion: 1, properties: {} } },
+    ]))).rejects.toMatchObject({ code: "VALIDATION" });
+    const unchanged = await getWebsiteGraph(ids.orgA, ids.siteA);
+    expect(unchanged?.document.revision).toBe(currentRevision);
+    expect(unchanged?.document.nodes.some((node) => node.id === "70000000-0000-4000-8000-000000000033")).toBe(false);
+  });
 
   it("only creates active nodes and reserves tombstones for DELETE_NODE", async () => {
     auth.userId = ids.userA;
