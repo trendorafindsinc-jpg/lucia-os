@@ -15,6 +15,7 @@ on:
       - "src/lib/graph/**"
       - "src/lib/rendering/**"
       - "src/lib/media/**"
+      - "scripts/test-media-retention-grants.sql"
       - "src/app/api/websites/**/media/**"
       - "src/components/editor/media-library.tsx"
       - "src/lib/composition/**"
