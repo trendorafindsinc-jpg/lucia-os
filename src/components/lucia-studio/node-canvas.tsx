@@ -12,6 +12,7 @@ import { LuciaStudioNodeInspector } from "./node-inspector";
 import { LuciaStudioWebsitePreview } from "./website-preview";
 import { LuciaStudioValidationPanel } from "./validation-panel";
 import { LuciaStudioHistoryPanel } from "./history-panel";
+import { LuciaStudioMediaPanel } from "./media-panel";
 import styles from "./node-canvas.module.css";
 
 type Position = { x: number; y: number; locked: boolean };
@@ -94,7 +95,7 @@ export function LuciaStudioNodeCanvas({
   const [document, setDocument] = useState<GraphDocument | null>(null);
   const [positions, setPositions] = useState<Record<string, Position>>({});
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [activePanel, setActivePanel] = useState<"canvas" | "preview" | "validation" | "history">("canvas");
+  const [activePanel, setActivePanel] = useState<"canvas" | "preview" | "validation" | "history" | "media">("canvas");
   const inspectorDirtyRef = useRef(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -224,7 +225,7 @@ export function LuciaStudioNodeCanvas({
     if (inspectorDirtyRef.current) discardInspectorDraft();
     setSelectedId(nodeId);
   };
-  const requestPanelChange = (panel: "canvas" | "preview" | "validation" | "history") => {
+  const requestPanelChange = (panel: "canvas" | "preview" | "validation" | "history" | "media") => {
     if (panel === activePanel) return;
     if (inspectorDirtyRef.current && !window.confirm("You have unsaved inspector changes. Discard them before opening another Studio panel?")) return;
     if (inspectorDirtyRef.current) discardInspectorDraft();
@@ -469,6 +470,7 @@ export function LuciaStudioNodeCanvas({
         <div className={styles.actions}>
           <span className={styles.saveState} role="status">{saving ? "Saving canvas…" : "Canvas synced"}</span>
           <button type="button" aria-pressed={activePanel === "canvas"} onClick={() => requestPanelChange("canvas")}>Canvas</button>
+          <button type="button" aria-pressed={activePanel === "media"} onClick={() => requestPanelChange("media")}>Media Library</button>
           <button type="button" aria-pressed={activePanel === "preview"} onClick={() => requestPanelChange("preview")}>Preview</button>
           <button type="button" aria-pressed={activePanel === "validation"} onClick={() => requestPanelChange("validation")}>Validation</button>
           <button type="button" aria-pressed={activePanel === "history"} onClick={() => requestPanelChange("history")}>History</button>
@@ -561,7 +563,7 @@ export function LuciaStudioNodeCanvas({
           onSelectNode={requestSelectNode}
           onRegisterActions={registerInspectorActions}
         /> : <aside className={styles.inspector}>Select a node to inspect it.</aside>}
-        </> : activePanel === "preview" ? <LuciaStudioWebsitePreview websiteId={websiteId} organizationId={organizationId} document={document} onSelectNode={(nodeId) => { requestSelectNode(nodeId); requestPanelChange("canvas"); }} /> : activePanel === "validation" ? <LuciaStudioValidationPanel websiteId={websiteId} document={document} headers={headers} onSelectNode={(nodeId) => { requestSelectNode(nodeId); requestPanelChange("canvas"); }} /> : <LuciaStudioHistoryPanel websiteId={websiteId} document={document} headers={headers} onRestored={loadGraph} />}
+        </> : activePanel === "media" ? <LuciaStudioMediaPanel websiteId={websiteId} accountId={accountId ?? ""} document={document} selectedNode={selectedNode} headers={headers} onReloadGraph={loadGraph} /> : activePanel === "preview" ? <LuciaStudioWebsitePreview websiteId={websiteId} organizationId={organizationId} document={document} onSelectNode={(nodeId) => { requestSelectNode(nodeId); requestPanelChange("canvas"); }} /> : activePanel === "validation" ? <LuciaStudioValidationPanel websiteId={websiteId} document={document} headers={headers} onSelectNode={(nodeId) => { requestSelectNode(nodeId); requestPanelChange("canvas"); }} /> : <LuciaStudioHistoryPanel websiteId={websiteId} document={document} headers={headers} onRestored={loadGraph} />}
       </div>
     </main>
   );
