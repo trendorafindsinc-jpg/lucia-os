@@ -102,6 +102,11 @@ describe("secure render reference resolution", () => {
     });
     expect(traversal.ok).toBe(false);
     if (!traversal.ok) expect(traversal.code).toBe("MEDIA_FORBIDDEN");
+    const doubleEncoded = await resolveRenderReferences(graph, [section], {
+      resolve: async (assetId) => ({ assetId, url: "/media/%252e%252e/private.webp", altText: "Asset", decorative: false }),
+    });
+    expect(doubleEncoded.ok).toBe(false);
+    if (!doubleEncoded.ok) expect(doubleEncoded.code).toBe("MEDIA_FORBIDDEN");
     const backslash = await resolveRenderReferences(graph, [section], {
       resolve: async (assetId) => ({ assetId, url: "/media\\\\..\\\\private.webp", altText: "Asset", decorative: false }),
     });
