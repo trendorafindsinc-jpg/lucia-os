@@ -235,7 +235,7 @@ Each increment must be small, committed to `development`, and verified before th
 
 ## 10. Phase status
 
-<badge>Completed — acceptance verified</badge>
+**Completed — acceptance verified**
 
 Phase 4 acceptance is closed. The implementation and all acceptance criteria were verified on:
 
