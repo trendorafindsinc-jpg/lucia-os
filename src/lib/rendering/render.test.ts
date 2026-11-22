@@ -159,6 +159,21 @@ describe("responsive semantic website renderer", () => {
     if (!tokenResult.ok) expect(tokenResult.diagnostics[0].code).toBe("TOKEN_NOT_FOUND");
   });
 
+  it("rejects multiply encoded traversal in page routes", async () => {
+    const document = graph();
+    const changed = {
+      ...document,
+      nodes: document.nodes.map((node) => node.type === "page"
+        ? { ...node, properties: { ...node.properties, path: "/%252e%252e/private" } }
+        : node),
+    };
+    const result = await renderWebsite({
+      graph: changed, pageNodeId: pageId, route: "/%252e%252e/private", viewport: "desktop",
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.diagnostics[0].code).toBe("PAGE_ROUTE_MISMATCH");
+  });
+
   it("rejects unsafe local navigation destinations in other pages", async () => {
     const document = graph();
     const unsafePageId = "00000000-0000-4000-8000-000000000099";
