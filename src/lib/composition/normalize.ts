@@ -17,7 +17,7 @@ export function normalizePagePath(input: string): string | null {
     path.includes("#") ||
     path.includes("\\") ||
     /[\u0000-\u001f\u007f]/.test(path) ||
-    /%(?:2f|5c)/i.test(path)
+    /%(?:2f|5c)/i.test(path) || /%25(?:25)*(?:2e|2f|5c)/i.test(path)
   ) return null;
 
   if (path === "/") return "/";
