@@ -9,6 +9,7 @@ import {
 import type { GraphDocument, GraphEdge, GraphNode } from "@/lib/graph/contracts";
 import { useWorkspaceAdapter, useWorkspaceTab } from "@/components/workspace/workspace-tab-shell";
 import { LuciaStudioNodeInspector } from "./node-inspector";
+import { LuciaStudioWebsitePreview } from "./website-preview";
 import styles from "./node-canvas.module.css";
 
 type Position = { x: number; y: number; locked: boolean };
@@ -91,6 +92,7 @@ export function LuciaStudioNodeCanvas({
   const [document, setDocument] = useState<GraphDocument | null>(null);
   const [positions, setPositions] = useState<Record<string, Position>>({});
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [activePanel, setActivePanel] = useState<"canvas" | "preview" | "validation" | "history">("canvas");
   const inspectorDirtyRef = useRef(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -440,7 +442,11 @@ export function LuciaStudioNodeCanvas({
         </div>
         <div className={styles.actions}>
           <span className={styles.saveState} role="status">{saving ? "Saving canvas…" : "Canvas synced"}</span>
-          <button type="button" onClick={() => void arrange()} disabled={saving}>Auto-organize</button>
+          <button type="button" aria-pressed={activePanel === "canvas"} onClick={() => setActivePanel("canvas")}>Canvas</button>
+          <button type="button" aria-pressed={activePanel === "preview"} onClick={() => setActivePanel("preview")}>Preview</button>
+          <button type="button" aria-pressed={activePanel === "validation"} onClick={() => setActivePanel("validation")}>Validation</button>
+          <button type="button" aria-pressed={activePanel === "history"} onClick={() => setActivePanel("history")}>History</button>
+          <button type="button" onClick={() => void arrange()} disabled={saving || activePanel !== "canvas"}>Auto-organize</button>
           <button type="button" onClick={fitView}>Fit to view</button>
           <a href="/workspace/websites">All websites</a>
         </div>
@@ -448,6 +454,7 @@ export function LuciaStudioNodeCanvas({
       {notice ? <p className={styles.notice} role="status">{notice}</p> : null}
       {error ? <p className={styles.error} role="alert">{error}</p> : null}
       <div className={styles.workspace}>
+        {activePanel === "canvas" ? <>
         <section className={styles.canvasPanel} aria-label="Website node canvas">
           <div className={styles.canvasToolbar}>
             <div><strong>{activeNodes.length} nodes</strong><span>{activeEdges.length} relationships</span></div>
@@ -527,6 +534,7 @@ export function LuciaStudioNodeCanvas({
           onSelectNode={requestSelectNode}
           onRegisterActions={registerInspectorActions}
         /> : <aside className={styles.inspector}>Select a node to inspect it.</aside>}
+        </> : activePanel === "preview" ? <LuciaStudioWebsitePreview websiteId={websiteId} document={document} headers={headers} onSelectNode={(nodeId) => { setSelectedId(nodeId); setActivePanel("canvas"); }} /> : <section className={styles.inspector}><h2>{activePanel === "validation" ? "Validation" : "Revision history"}</h2><p>This panel is being initialized.</p></section>}
       </div>
     </main>
   );
