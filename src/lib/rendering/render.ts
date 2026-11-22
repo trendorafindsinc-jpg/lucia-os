@@ -68,7 +68,7 @@ const heroRenderer: RendererDefinition = {
           if (!asset) return null;
           return asset.decorative
             ? h("img", { src: asset.url, alt: "", "aria-hidden": true, ...(asset.width ? { width: asset.width } : {}), ...(asset.height ? { height: asset.height } : {}) })
-            : h("img", { src: asset.url, alt: asset.altText, ...(asset.width ? { width: asset.width } : {}), ...(asset.height ? { height: asset.height } : {}) });
+            : h("img", { src: asset.url, alt: asset.altText ?? "", ...(asset.width ? { width: asset.width } : {}), ...(asset.height ? { height: asset.height } : {}) });
         }),
       ),
     );
