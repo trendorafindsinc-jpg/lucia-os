@@ -378,7 +378,7 @@ export async function saveCanvasPosition(organizationId: string, websiteId: stri
     if (!website) throw new GraphServiceError("Website not found.", "NOT_FOUND");
     const [graph] = await tx.select().from(websiteGraphs).where(and(
       eq(websiteGraphs.websiteId, websiteId), eq(websiteGraphs.organizationId, organizationId),
-    )).limit(1);
+    )).for("update").limit(1);
     if (!graph) throw new GraphServiceError("Website graph has not been created.", "NOT_FOUND");
     const [node] = await tx.select({ id: websiteNodes.id }).from(websiteNodes).where(and(
       eq(websiteNodes.id, position.nodeId), eq(websiteNodes.graphId, graph.id),
@@ -389,7 +389,7 @@ export async function saveCanvasPosition(organizationId: string, websiteId: stri
       eq(websiteCanvasPositions.graphId, graph.id),
       eq(websiteCanvasPositions.userId, access.user.id),
       eq(websiteCanvasPositions.nodeId, position.nodeId),
-    )).limit(1);
+    )).for("update").limit(1);
     if (existingPosition?.locked &&
         (existingPosition.x !== position.x || existingPosition.y !== position.y) &&
         position.locked !== false) {
@@ -436,7 +436,7 @@ export async function saveCanvasPositions(organizationId: string, websiteId: str
       eq(websiteCanvasPositions.graphId, graph.id),
       eq(websiteCanvasPositions.userId, access.user.id),
       inArray(websiteCanvasPositions.nodeId, nodeIds),
-    ));
+    )).for("update");
     const existingByNode = new Map(existing.map((position) => [position.nodeId, position]));
     for (const position of batch.positions) {
       const prior = existingByNode.get(position.nodeId);
