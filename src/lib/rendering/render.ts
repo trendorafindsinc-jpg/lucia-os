@@ -12,6 +12,8 @@ import {
   type RenderDiagnostic, type RenderResult, type RendererDefinition,
 } from "./contracts";
 import { createRendererRegistry, lookupRenderer, type RendererRegistry } from "./registry";
+import { resolveRequiredDesignTokens } from "./tokens";
+import { resolveRenderReferences } from "./references";
 
 const HERO = "lucia.design.section.hero";
 const FEATURES = "lucia.design.section.feature-grid";
@@ -205,15 +207,38 @@ export async function renderWebsite(input: unknown, options: RenderOptions = {})
     return fail([issue(websiteRecipe.recipe ? "RECIPE_NODE_TYPE_INCOMPATIBLE" : websiteRecipe.diagnostics[0].code, "Website industry recipe is unavailable or incompatible.", website.id)]);
   }
 
+  const sections = childSections(graph, page.id);
+  const requiredTokenPaths = [...websiteRecipe.recipe.requiredTokens];
+  for (const section of sections) {
+    const recipeId = textValue(section.properties.recipeId, 160);
+    const version = section.properties.recipeVersion;
+    if (recipeId && typeof version === "number") {
+      const recipe = lookupDesignRecipe(recipeId, version);
+      if (recipe.recipe) requiredTokenPaths.push(...recipe.recipe.requiredTokens);
+    }
+  }
+  const tokens = resolveRequiredDesignTokens(foundation, requiredTokenPaths);
+  if (!tokens.ok) return fail(tokens.missing.map((path) => issue("TOKEN_NOT_FOUND", "Required design token is unavailable or has an unsupported value: " + path)));
+  for (const edge of graph.edges.filter((item) => item.type === "uses_design_token" && sections.some((section) => section.id === item.sourceNodeId))) {
+    const tokenNode = graph.nodes.find((node) => node.id === edge.targetNodeId);
+    if (!tokenNode || tokenNode.type !== "design_token" ||
+        !resolveRequiredDesignTokens(foundation, [String(tokenNode.properties.namespace) + "." + String(tokenNode.properties.key)]).ok) {
+      return fail([issue("TOKEN_NOT_FOUND", "Design-token reference does not resolve against the exact foundation.", tokenNode?.id ?? edge.sourceNodeId)]);
+    }
+  }
+  const references = await resolveRenderReferences(graph, sections, options.mediaResolver, options.sharedDataResolver);
+  if (!references.ok) return fail([issue(references.code, references.message, references.nodeId)]);
   const context: RenderContext = {
     graph, websiteId: graph.id, pageNodeId: page.id, route,
     viewport: request.data.viewport, foundation,
-    mediaResolver: { resolve: async () => null },
-    sharedDataResolver: { resolve: async () => null },
+    mediaResolver: options.mediaResolver ?? { resolve: async () => null },
+    sharedDataResolver: options.sharedDataResolver ?? { resolve: async () => null },
+    resolvedMedia: references.media,
+    resolvedSharedData: references.sharedData,
   };
   const registry = options.registry ?? builtinRendererRegistry;
   const rendered: ReturnType<RendererDefinition["render"]>[] = [];
-  for (const section of childSections(graph, page.id)) {
+  for (const section of sections) {
     const recipeId = textValue(section.properties.recipeId, 160);
     const version = section.properties.recipeVersion;
     if (!recipeId || typeof version !== "number") return fail([issue("RECIPE_REFERENCE_INVALID", "Section requires an exact recipe reference.", section.id)]);
