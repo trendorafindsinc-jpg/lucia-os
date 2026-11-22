@@ -2,7 +2,7 @@
 
 > **Document ID:** LUCIA-PHASE-5-STUDIO-001  
 > **Version:** 0.1  
-> **Status:** Approved implementation boundary — implementation in progress  
+> **Status:** Completed — Phase 5 accepted  
 > **Date:** 2026-11-22  
 > **Branch:** `development`  
 > **Depends on:** Phase 1 architecture, Phase 2 Graph Engine, Phase 3 Design Intelligence, Phase 4 Composition & Rendering
@@ -285,7 +285,7 @@ Implemented on the `development` branch:
 
 ## 15. Phase status
 
-Phase 5 is in progress. The visual node-canvas and typed inspector editing increments are implemented and verified. Interactive website preview, validation navigation and revision history remain subsequent increments. Phase 5 remains open until all acceptance criteria and final full verification pass.
+Phase 5 is accepted. The visual node canvas, typed inspector, renderer-backed preview, validation navigation and immutable revision history are implemented. The exact final implementation commit passed the complete Phase 5 verification workflow. Phase 6 may begin as the next planned phase; the legacy editor remains in place until the later migration and replacement phase.
 
 
 ### Increment 3 — typed inspector editing and revision-safe saves
@@ -312,3 +312,49 @@ Implemented on the `development` branch:
 - Verification results: disposable PostgreSQL migrations passed; focused Studio tests passed (18 tests); focused Graph/Composition/Rendering/workspace tests passed (218 tests); full suite passed (100 test files, 1,252 tests); TypeScript typecheck, lint, production build and compiled host-routing/security checks all passed.
 
 The typed inspector editing increment is accepted. Interactive preview, validation navigation and revision history remain subsequent increments.
+
+
+### Increment 4 — interactive website preview
+
+Implemented on the `development` branch:
+
+- The renderer now exposes a reusable React-output core in `src/lib/rendering/render-core.ts`; the existing static HTML adapter remains in `src/lib/rendering/render.ts` for non-App-Router consumers and renderer regression tests.
+- Added the authenticated `/studio/preview` server-rendered page. It independently verifies the session, organization access, website graph and selected page before rendering.
+- Preview uses the exact Phase 4 rendering pipeline, design-token resolution, recipe validation and secure reference handling. It does not maintain a second website document model.
+- The preview runs in a sandboxed iframe without script execution, forms, popups or top-level navigation.
+- Navigation intercepts local links and switches only to pages present in the graph. Diagnostic links in preview error output can select the affected graph node.
+- Desktop, tablet and mobile viewport controls are available. The preview is explicitly labelled as the saved graph revision; unapplied inspector drafts are not silently represented as saved content.
+- Preview requests are read-only and do not publish, deploy or mutate graph content.
+
+### Increment 5 — validation and exact-node navigation
+
+Implemented on the `development` branch:
+
+- Added an authorized validation endpoint that aggregates Graph Engine structural diagnostics with per-page Phase 4 renderer preflight diagnostics.
+- Findings include stable codes, severity, source, message and node/edge/property context when available.
+- Added a dedicated validation panel with counts, manual re-run and actionable diagnostics.
+- Selecting a finding selects the affected node, returns to the canvas, centers the node in the viewport and moves keyboard focus to its node control.
+- Panel transitions and node navigation require explicit confirmation before discarding an unsaved inspector draft; confirmed discard calls the inspector's registered discard action and clears workspace dirty state.
+- Validation is deterministic and read-only.
+
+### Increment 6 — revision history, comparison and restore
+
+Implemented on the `development` branch:
+
+- Added authorized, tenant-scoped revision listing and immutable snapshot lookup through the Graph Engine service.
+- Added deterministic graph revision comparison for added, removed and changed nodes plus added/removed relationships.
+- The history panel shows before/after values for changed node properties, bounded for safe display.
+- Restore requires confirmation and submits the existing `RESTORE_VERSION` operation with the current expected revision and a fresh idempotency key.
+- Restore creates a new revision; prior snapshots and operation history remain immutable. Stale revisions fail through the Graph Engine conflict contract.
+- Canvas positions remain outside content history.
+
+### Final Phase 5 acceptance
+
+- **Accepted implementation commit:** `4bcc724ea704160300ea9d46200edb48bca9defa`
+- **Verification workflow:** [Phase 5 Lucia Studio verification — run 45049012525](https://github.com/trendorafindsinc-jpg/lucia-os/actions/runs/45049012525)
+- **Result:** completed successfully.
+- **Automated checks:** disposable PostgreSQL migrations; focused Studio tests; focused Graph, Composition, Rendering and workspace tests; full unit suite (**101 test files, 1,255 tests passed**); TypeScript typecheck; lint; production build; compiled host-routing HTTP checks; database/container teardown.
+- **No database migration was added for Phase 5.** No existing website content was deleted, migrated, backfilled, published or deployed. No production infrastructure or legacy editor route was changed or removed.
+- The preview and validation surfaces use the extracted renderer core so App Router pages and API routes do not import `react-dom/server`; the static HTML renderer remains isolated behind its server-only adapter.
+
+Phase 5 is closed. The legacy editor remains available until the later migration and replacement phase explicitly authorizes cutover and retirement.
