@@ -49,6 +49,32 @@ describe("deterministic website composition", () => {
     expect(first).toEqual(second);
   });
 
+  it("reports missing customer facts instead of composing invented primary content", () => {
+    const result = composeWebsite(request({
+      pages: [{
+        key: "home", title: "Home", path: "/",
+        sections: [{ key: "hero", category: "introduction", content: {} }],
+      }],
+    }), { idFactory: ids() });
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.graph).toBeNull();
+    expect(result.diagnostics[0].code).toBe("MISSING_CUSTOMER_FACT");
+    expect(result.diagnostics[0].sectionKey).toBe("hero");
+    expect(result.diagnostics[0].message).toContain("will not invent");
+  });
+
+  it("requires customer-provided items for feature and service lists", () => {
+    const result = composeWebsite(request({
+      pages: [{
+        key: "home", title: "Home", path: "/",
+        sections: [{ key: "features", category: "features", content: { heading: "What we do" } }],
+      }],
+    }), { idFactory: ids() });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.diagnostics[0].code).toBe("MISSING_CUSTOMER_FACT");
+  });
+
   it("preserves an explicit hero call-to-action without inventing its destination", () => {
     const result = composeWebsite(request({
       pages: [{
