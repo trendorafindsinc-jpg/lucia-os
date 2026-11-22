@@ -9,7 +9,13 @@ on:
       - "drizzle/**"
       - "src/lib/db/schema.ts"
       - "drizzle.config.ts"
+      - "src/lib/graph/service.integration.test.ts"
+      - "src/lib/media/**"
+      - "docs/PHASE-6-CORE-PLATFORM-SYSTEMS-SPEC.md"
       - "scripts/test-graph-rls.sql"
+      - "src/lib/graph/service.integration.test.ts"
+      - "src/lib/media/**"
+      - "docs/PHASE-6-CORE-PLATFORM-SYSTEMS-SPEC.md"
   pull_request:
     paths:
       - "drizzle/**"
