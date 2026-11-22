@@ -378,7 +378,7 @@ export async function saveCanvasPosition(organizationId: string, websiteId: stri
     if (!website) throw new GraphServiceError("Website not found.", "NOT_FOUND");
     const [graph] = await tx.select().from(websiteGraphs).where(and(
       eq(websiteGraphs.websiteId, websiteId), eq(websiteGraphs.organizationId, organizationId),
-    )).for("update").limit(1);
+    )).limit(1);
     if (!graph) throw new GraphServiceError("Website graph has not been created.", "NOT_FOUND");
     const [node] = await tx.select({ id: websiteNodes.id }).from(websiteNodes).where(and(
       eq(websiteNodes.id, position.nodeId), eq(websiteNodes.graphId, graph.id),
