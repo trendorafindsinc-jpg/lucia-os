@@ -2,6 +2,7 @@ import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getWebsiteGraph, GraphServiceError } from "@/lib/graph/service";
 import { renderWebsiteElement } from "@/lib/rendering/render-core";
+import { createWebsiteMediaResolver } from "@/lib/media/render-resolver";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Website preview", robots: { index: false, follow: false } };
@@ -46,6 +47,9 @@ export default async function LuciaStudioPreviewPage({ searchParams }: { searchP
     }
     const result = await renderWebsiteElement({
       graph: graph.document, pageNodeId: page.id, route: page.properties.path, viewport: parsed.data.viewport,
+    }, {
+      websiteId: parsed.data.websiteId,
+      mediaResolver: createWebsiteMediaResolver(user.id),
     });
     if (!result.ok) return <PreviewMessage title="Preview needs attention" message="The saved graph could not be rendered. Review the linked diagnostics in Lucia Studio." diagnostics={result.diagnostics} />;
     return <div className="lucia-studio-preview">
