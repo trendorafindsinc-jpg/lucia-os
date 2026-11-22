@@ -286,3 +286,25 @@ Implemented on the `development` branch:
 ## 15. Phase status
 
 Phase 5 is in progress. The visual node-canvas increment is implemented and awaiting the complete focused and full verification workflow. The inspector is currently an inspection surface; typed content editing, interactive website preview, validation navigation and revision history remain subsequent increments. Phase 5 remains open until all acceptance criteria and full verification pass.
+
+
+### Increment 3 — typed inspector editing and revision-safe saves
+
+Implemented on the `development` branch:
+
+- Added a dedicated contextual inspector component with typed editors for:
+  - Website display name.
+  - Page title and safe local route.
+  - Section recipe selection (hero, feature grid, services), heading, description and paired local call-to-action fields.
+  - Structured feature/service cards with bounded add/remove controls and per-card title/description editing.
+- Added Zod contracts for all editable fields, including route traversal/protocol-relative/encoded separator rejection, paired action fields, bounded card counts and required card headings.
+- Page route edits reject collisions with another active page after canonical trailing-slash comparison.
+- Saves submit a single `UPDATE_NODE` operation through the existing Graph Engine mutation endpoint, with the current expected revision and a fresh idempotency key.
+- Successful saves reload the authoritative graph and display the committed revision.
+- A stale-revision 409 loads the latest graph but preserves the user's local form draft. The editor requires an explicit choice to reapply against the latest revision or reload and discard the draft.
+- Unsaved edits trigger browser navigation protection and an explicit confirmation before selecting a different graph node.
+- Existing node relationship navigation and personal canvas lock controls remain available in the inspector.
+- Unsupported node types remain read-only; no arbitrary JSON, raw HTML, CSS, scripts or dynamic component selection are exposed.
+- Added focused contract tests for route safety, form bounds, CTA pairing and renderer-compatible section property construction.
+
+The implementation is committed but the Phase 5 verification workflow must pass on the exact final commit before this increment is accepted. Interactive preview, validation navigation and revision history remain subsequent increments.
