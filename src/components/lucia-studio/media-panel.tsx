@@ -21,16 +21,16 @@ export function LuciaStudioMediaPanel({ websiteId, accountId, document, selected
     .filter((node) => node.type === "media_reference" && node.lifecycleStatus === "active")
     .map((node) => node.properties.assetId)
     .filter((value): value is string => typeof value === "string"), [document]);
-  const canAttach = selectedNode?.type === "section" || selectedNode?.type === "component";
-  const onLibraryChange = useCallback((_items: { ref: string; label: string }[]) => {}, []);
+  const canAttach = selectedNode?.type === "section" && selectedNode.properties.recipeId === "lucia.design.section.hero";
+  const onLibraryChange = useCallback(() => {}, []);
 
   const attachAsset = useCallback(async (asset: MediaLibraryItem) => {
     if (asset.kind !== "image") {
       setNotice("Video and PDF uploads are stored safely and will be available to the blogging workflow. The current website section renderer accepts image attachments only.");
       return;
     }
-    if (!selectedNode || (selectedNode.type !== "section" && selectedNode.type !== "component")) {
-      setNotice("Select a section or component on the canvas before attaching an image.");
+    if (!selectedNode || selectedNode.type !== "section" || selectedNode.properties.recipeId !== "lucia.design.section.hero") {
+      setNotice("Select a hero section on the canvas before attaching an image.");
       return;
     }
     const existingReference = document.nodes.find((node) =>
@@ -109,11 +109,11 @@ export function LuciaStudioMediaPanel({ websiteId, accountId, document, selected
         <div>
           <p className={styles.eyebrow}>LUCIA OS · ASSET LIBRARY</p>
           <h2>Media Library</h2>
-          <p>Upload once, then reuse owned assets across this website's graph and blogging tools.</p>
+          <p>Upload once, then reuse owned assets across this website&apos;s graph and blogging tools.</p>
         </div>
         <div className={styles.selection}>
-          <strong>{canAttach ? "Ready to attach" : "Choose a section or component"}</strong>
-          <span>{canAttach ? String(selectedNode?.properties.heading ?? selectedNode?.properties.title ?? selectedNode?.type) : "Image attachment needs a section or component node."}</span>
+          <strong>{canAttach ? "Ready to attach" : "Choose a hero section"}</strong>
+          <span>{canAttach ? String(selectedNode?.properties.heading ?? selectedNode?.properties.title ?? selectedNode?.type) : "Only hero sections currently render attached images."}</span>
         </div>
       </header>
       {notice ? <p className={styles.notice} role="status" aria-live="polite">{notice}</p> : null}
@@ -129,7 +129,7 @@ export function LuciaStudioMediaPanel({ websiteId, accountId, document, selected
           defaultOpen
         />
       </div>
-      <p className={styles.footer}>Assets remain private until referenced by an authorized published page or article. Removing an asset is blocked while drafts, published content, graph history or article revisions still reference it.</p>
+      <p className={styles.footer}>Assets remain private until referenced by authorized published content. Hero images render from secure graph references; videos and PDFs are stored for the upcoming blogging integration. Deletion is blocked while drafts, published content, graph history or article revisions still reference an asset.</p>
     </section>
   );
 }
