@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type WheelEvent as ReactWheelEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type WheelEvent as ReactWheelEvent, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import {
   applyStudioAutoLayout,
   computeStudioAutoLayout,
@@ -228,7 +228,7 @@ export function LuciaStudioNodeCanvas({
   };
 
   const onCanvasPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (event.target !== event.currentTarget || event.button !== 0) return;
+    if (event.button !== 0 || (event.target instanceof Element && event.target.closest("button, a"))) return;
     event.currentTarget.setPointerCapture(event.pointerId);
     panRef.current = {
       pointerId: event.pointerId, startX: event.clientX, startY: event.clientY,
@@ -304,7 +304,7 @@ export function LuciaStudioNodeCanvas({
     }
   };
 
-  const keyboardMove = async (event: React.KeyboardEvent<HTMLButtonElement>, nodeId: string) => {
+  const keyboardMove = async (event: ReactKeyboardEvent<HTMLButtonElement>, nodeId: string) => {
     if (!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) return;
     event.preventDefault();
     const current = positionsRef.current[nodeId];
