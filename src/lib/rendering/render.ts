@@ -107,14 +107,16 @@ const builtins = createRendererRegistry([
 if (!builtins.ok) throw new Error("Built-in renderer registry invalid: " + builtins.issues.map((x) => x.message).join(" "));
 export const builtinRendererRegistry: RendererRegistry = builtins.registry;
 
-function cssFor(foundation: DesignFoundation): string {
-  const c = foundation.colors;
-  const s = foundation.spacing;
-  const r = foundation.radius;
-  const tablet = foundation.breakpoints.tablet;
-  const desktop = foundation.breakpoints.desktop;
+function cssFor(tokens: ReadonlyMap<string, import("./tokens").ResolvedDesignToken>): string {
+  const token = (path: string): string | number => {
+    const resolved = tokens.get(path);
+    if (!resolved) throw new Error("Unresolved CSS token: " + path);
+    return resolved.value;
+  };
+  const tablet = token("breakpoint.tablet");
+  const desktop = token("breakpoint.desktop");
   return `
-:root{color-scheme:light;--lucia-canvas:${c.canvas};--lucia-surface:${c.surface};--lucia-text:${c.text};--lucia-muted:${c.muted};--lucia-primary:${c.primary};--lucia-on-primary:${c.onPrimary};--lucia-border:${c.border};--lucia-focus:${c.focus};--lucia-space-sm:${s.sm}px;--lucia-space-md:${s.md}px;--lucia-space-lg:${s.lg}px;--lucia-space-xl:${s.xl}px;--lucia-radius-md:${r.md}px;--lucia-content-width:${foundation.contentWidth.standard}px}
+:root{color-scheme:light;--lucia-canvas:${token("color.canvas")};--lucia-surface:${token("color.surface")};--lucia-text:${token("color.text")};--lucia-muted:${token("color.muted")};--lucia-primary:${token("color.primary")};--lucia-on-primary:${token("color.onPrimary")};--lucia-border:${token("color.border")};--lucia-focus:${token("color.focus")};--lucia-space-sm:${token("spacing.sm")}px;--lucia-space-md:${token("spacing.md")}px;--lucia-space-lg:${token("spacing.lg")}px;--lucia-space-xl:${token("spacing.xl")}px;--lucia-radius-md:${token("radius.md")}px;--lucia-content-width:${token("contentWidth.standard")}px}
 *{box-sizing:border-box}html{scroll-behavior:smooth}
 body{margin:0;background:var(--lucia-canvas);color:var(--lucia-text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.5}
 a{color:var(--lucia-primary);text-underline-offset:.18em}a:focus-visible{outline:3px solid var(--lucia-focus);outline-offset:3px;border-radius:2px}
@@ -271,7 +273,7 @@ export async function renderWebsite(input: unknown, options: RenderOptions = {})
       h("meta", { name: "viewport", content: "width=device-width, initial-scale=1" }),
       h("meta", { name: "color-scheme", content: "light" }),
       h("title", null, (textValue(page.properties.title, 120) ?? "Page") + " | " + websiteName),
-      h("style", { "data-lucia-foundation": foundation.id + "@" + foundation.version }, cssFor(foundation)),
+      h("style", { "data-lucia-foundation": foundation.id + "@" + foundation.version }, cssFor(tokens.values)),
     ),
     h("body", null,
       h("a", { className: "lucia-skip-link", href: "#main-content" }, "Skip to main content"),
