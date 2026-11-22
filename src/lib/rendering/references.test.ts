@@ -42,7 +42,7 @@ describe("secure render reference resolution", () => {
     })) };
     const sharedDataResolver = { resolve: vi.fn(async (_referenceId: string, _scope: string) => ({ displayName: "Lucia" })) };
     const result = await resolveRenderReferences(graph, [section], mediaResolver, sharedDataResolver);
-    expect(result.ok).toBe(true);
+    expect(result.ok, JSON.stringify(result)).toBe(true);
     expect(mediaResolver.resolve).toHaveBeenCalledWith("00000000-0000-4000-8000-000000000097", websiteId);
     expect(sharedDataResolver.resolve).toHaveBeenCalledWith(sharedId, websiteId);
     if (result.ok) {
