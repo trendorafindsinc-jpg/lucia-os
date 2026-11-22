@@ -6,7 +6,7 @@ on:
       - development
     paths:
       - ".github/workflows/phase-6-media-verification.yml"
-      - "docs/PHASE-5-LUCIA-STUDIO-SPEC.md"
+      - "docs/PHASE-6-CORE-PLATFORM-SYSTEMS-SPEC.md"
       - "src/lib/studio/**"
       - "src/components/lucia-studio/**"
       - "src/app/studio/**"
@@ -19,12 +19,14 @@ on:
       - "src/components/editor/media-library.tsx"
       - "src/lib/composition/**"
       - "src/lib/workspace/**"
+      - "drizzle/**"
+      - "src/lib/db/schema.ts"
       - "package.json"
       - "tsconfig.json"
   pull_request:
     paths:
       - ".github/workflows/phase-6-media-verification.yml"
-      - "docs/PHASE-5-LUCIA-STUDIO-SPEC.md"
+      - "docs/PHASE-6-CORE-PLATFORM-SYSTEMS-SPEC.md"
       - "src/lib/studio/**"
       - "src/components/lucia-studio/**"
       - "src/app/studio/**"
