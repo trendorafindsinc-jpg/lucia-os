@@ -11,7 +11,7 @@ function stable(value: unknown): string {
   if (Array.isArray(value)) return "[" + value.map(stable).join(",") + "]";
   if (value && typeof value === "object") return "{" + Object.entries(value as Record<string, unknown>)
     .sort(([a], [b]) => a.localeCompare(b)).map(([key, child]) => JSON.stringify(key) + ":" + stable(child)).join(",") + "}";
-  return JSON.stringify(value);
+  return JSON.stringify(value) ?? "undefined";
 }
 export function compareGraphRevisions(current: GraphDocument, prior: GraphDocument): GraphRevisionDiff {
   const currentNodes = new Map(current.nodes.map((node) => [node.id, node]));
