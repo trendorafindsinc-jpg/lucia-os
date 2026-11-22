@@ -13,6 +13,7 @@ import {
   getWebsiteGraph,
   mutateWebsiteGraph,
   saveCanvasPosition,
+  saveCanvasPositions,
   listWebsiteGraphVersions,
 } from "./service";
 import { GraphServiceError } from "./service";
@@ -256,6 +257,29 @@ describe.sequential("Graph Persistence Service (PostgreSQL)", () => {
     expect(viewer?.canvasPositions).toHaveLength(1);
     expect(viewer?.canvasPositions[0]).toMatchObject({ x: -20, y: 30 });
   });
+  it("batch-persists canvas positions atomically without changing graph revisions", async () => {
+    auth.userId = ids.userA;
+    const saved = await saveCanvasPositions(ids.orgA, ids.siteA, {
+      positions: [
+        { nodeId: rootId, x: 120, y: 240, locked: true },
+        { nodeId: pageId, x: 480, y: 360, locked: false },
+      ],
+    });
+    expect(saved).toMatchObject({ saved: 2, graphRevision: currentRevision });
+    const own = await getWebsiteGraph(ids.orgA, ids.siteA);
+    expect(own?.document.revision).toBe(currentRevision);
+    expect(own?.canvasPositions).toHaveLength(2);
+    expect(own?.canvasPositions).toEqual(expect.arrayContaining([
+      expect.objectContaining({ nodeId: rootId, x: 120, y: 240, locked: true }),
+      expect.objectContaining({ nodeId: pageId, x: 480, y: 360, locked: false }),
+    ]));
+
+    auth.userId = ids.userB;
+    const other = await getWebsiteGraph(ids.orgA, ids.siteA);
+    expect(other?.document.revision).toBe(currentRevision);
+    expect(other?.canvasPositions).toHaveLength(0);
+  });
+
   it("rejects graph and canvas writes after a website is soft-deleted", async () => {
     auth.userId = ids.userA;
     await owner`UPDATE websites SET status = 'deleted' WHERE id = ${ids.siteA}`;
