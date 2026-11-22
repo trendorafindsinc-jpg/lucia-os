@@ -118,7 +118,9 @@ describe("secure render reference resolution", () => {
 
   it("distinguishes shared-data authorization failure from missing data", async () => {
     const { graph, section } = graphWithReferences();
-    const result = await resolveRenderReferences(graph, [section], undefined, {
+    const result = await resolveRenderReferences(graph, [section], {
+      resolve: async (assetId) => ({ assetId, url: "/media/team.webp", altText: "Team", decorative: false }),
+    }, {
       resolve: async () => { throw new Error("denied"); },
     });
     expect(result.ok).toBe(false);
