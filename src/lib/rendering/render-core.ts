@@ -201,7 +201,7 @@ type RenderElementResult =
 
 function fail(diagnostics: RenderDiagnostic[]): RenderElementResult { return { ok: false, body: null, css: null, title: null, diagnostics }; }
 
-export interface RenderOptions { foundation?: DesignFoundation; registry?: RendererRegistry; mediaResolver?: MediaResolver; sharedDataResolver?: SharedDataResolver; }
+export interface RenderOptions { websiteId?: string; foundation?: DesignFoundation; registry?: RendererRegistry; mediaResolver?: MediaResolver; sharedDataResolver?: SharedDataResolver; }
 
 export async function renderWebsiteElement(input: unknown, options: RenderOptions = {}): Promise<RenderElementResult> {
   if (!input || typeof input !== "object" || Array.isArray(input)) return fail([issue("GRAPH_INVALID", "Render input must be an object.")]);
@@ -281,10 +281,11 @@ export async function renderWebsiteElement(input: unknown, options: RenderOption
       return fail([issue("TOKEN_NOT_FOUND", "Design-token reference does not resolve against the exact foundation.", tokenNode?.id ?? edge.sourceNodeId)]);
     }
   }
-  const references = await resolveRenderReferences(graph, sections, options.mediaResolver, options.sharedDataResolver);
+  const renderWebsiteId = options.websiteId ?? graph.id;
+  const references = await resolveRenderReferences(graph, sections, options.mediaResolver, options.sharedDataResolver, renderWebsiteId);
   if (!references.ok) return fail([issue(references.code, references.message, references.nodeId)]);
   const context: RenderContext = {
-    graph, websiteId: graph.id, pageNodeId: page.id, route,
+    graph, websiteId: renderWebsiteId, pageNodeId: page.id, route,
     viewport: request.data.viewport, foundation,
     mediaResolver: options.mediaResolver ?? { resolve: async () => null },
     sharedDataResolver: options.sharedDataResolver ?? { resolve: async () => null },
