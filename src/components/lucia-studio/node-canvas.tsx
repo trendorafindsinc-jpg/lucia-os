@@ -213,11 +213,22 @@ export function LuciaStudioNodeCanvas({
     inspectorDirtyRef.current = dirty;
     setActiveTabDirty(dirty);
   }, [setActiveTabDirty]);
+  const discardInspectorDraft = () => {
+    studioActionsRef.current.discard();
+    inspectorDirtyRef.current = false;
+    setActiveTabDirty(false);
+  };
   const requestSelectNode = (nodeId: string) => {
     if (nodeId === selectedId) return;
     if (inspectorDirtyRef.current && !window.confirm("You have unsaved inspector changes. Discard them and switch nodes?")) return;
-    inspectorDirtyRef.current = false;
+    if (inspectorDirtyRef.current) discardInspectorDraft();
     setSelectedId(nodeId);
+  };
+  const requestPanelChange = (panel: "canvas" | "preview" | "validation" | "history") => {
+    if (panel === activePanel) return;
+    if (inspectorDirtyRef.current && !window.confirm("You have unsaved inspector changes. Discard them before opening another Studio panel?")) return;
+    if (inspectorDirtyRef.current) discardInspectorDraft();
+    setActivePanel(panel);
   };
   const acceptGraphUpdate = useCallback((next: GraphDocument) => setDocument(next), []);
   const selectedRelationships = selectedNode ? activeEdges
@@ -457,10 +468,10 @@ export function LuciaStudioNodeCanvas({
         </div>
         <div className={styles.actions}>
           <span className={styles.saveState} role="status">{saving ? "Saving canvas…" : "Canvas synced"}</span>
-          <button type="button" aria-pressed={activePanel === "canvas"} onClick={() => setActivePanel("canvas")}>Canvas</button>
-          <button type="button" aria-pressed={activePanel === "preview"} onClick={() => setActivePanel("preview")}>Preview</button>
-          <button type="button" aria-pressed={activePanel === "validation"} onClick={() => setActivePanel("validation")}>Validation</button>
-          <button type="button" aria-pressed={activePanel === "history"} onClick={() => setActivePanel("history")}>History</button>
+          <button type="button" aria-pressed={activePanel === "canvas"} onClick={() => requestPanelChange("canvas")}>Canvas</button>
+          <button type="button" aria-pressed={activePanel === "preview"} onClick={() => requestPanelChange("preview")}>Preview</button>
+          <button type="button" aria-pressed={activePanel === "validation"} onClick={() => requestPanelChange("validation")}>Validation</button>
+          <button type="button" aria-pressed={activePanel === "history"} onClick={() => requestPanelChange("history")}>History</button>
           <button type="button" onClick={() => void arrange()} disabled={saving || activePanel !== "canvas"}>Auto-organize</button>
           <button type="button" onClick={fitView}>Fit to view</button>
           <a href="/workspace/websites">All websites</a>
@@ -550,7 +561,7 @@ export function LuciaStudioNodeCanvas({
           onSelectNode={requestSelectNode}
           onRegisterActions={registerInspectorActions}
         /> : <aside className={styles.inspector}>Select a node to inspect it.</aside>}
-        </> : activePanel === "preview" ? <LuciaStudioWebsitePreview websiteId={websiteId} document={document} headers={headers} onSelectNode={(nodeId) => { requestSelectNode(nodeId); setActivePanel("canvas"); }} /> : activePanel === "validation" ? <LuciaStudioValidationPanel websiteId={websiteId} document={document} headers={headers} onSelectNode={(nodeId) => { requestSelectNode(nodeId); setActivePanel("canvas"); }} /> : <LuciaStudioHistoryPanel websiteId={websiteId} document={document} headers={headers} onRestored={loadGraph} />}
+        </> : activePanel === "preview" ? <LuciaStudioWebsitePreview websiteId={websiteId} document={document} headers={headers} onSelectNode={(nodeId) => { requestSelectNode(nodeId); requestPanelChange("canvas"); }} /> : activePanel === "validation" ? <LuciaStudioValidationPanel websiteId={websiteId} document={document} headers={headers} onSelectNode={(nodeId) => { requestSelectNode(nodeId); requestPanelChange("canvas"); }} /> : <LuciaStudioHistoryPanel websiteId={websiteId} document={document} headers={headers} onRestored={loadGraph} />}
       </div>
     </main>
   );
