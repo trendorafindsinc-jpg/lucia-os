@@ -70,7 +70,7 @@ export function LuciaStudioHistoryPanel({ websiteId, document, headers, onRestor
     {!versions.length && !loading ? <p className={styles.empty}>No saved revisions found.</p> : null}
     <label className={styles.historySelect}>Compare current revision with
       <select value={selectedId} onChange={(event) => setSelectedId(event.target.value)}>
-        {versions.map((version) => <option key={version.id} value={version.id}>Revision {version.revision} · {new Date(version.createdAt).toLocaleString()}</option>)}
+        {versions.map((version) => <option key={version.id} value={version.id}>Revision {version.revision} · {new Date(version.createdAt instanceof Date ? version.createdAt.getTime() : version.createdAt).toLocaleString()}</option>)}
       </select>
     </label>
     {selected && snapshot && diff ? <>
