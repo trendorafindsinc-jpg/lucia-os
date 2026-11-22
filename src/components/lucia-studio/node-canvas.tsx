@@ -10,6 +10,8 @@ import type { GraphDocument, GraphEdge, GraphNode } from "@/lib/graph/contracts"
 import { useWorkspaceAdapter, useWorkspaceTab } from "@/components/workspace/workspace-tab-shell";
 import { LuciaStudioNodeInspector } from "./node-inspector";
 import { LuciaStudioWebsitePreview } from "./website-preview";
+import { LuciaStudioValidationPanel } from "./validation-panel";
+import { LuciaStudioHistoryPanel } from "./history-panel";
 import styles from "./node-canvas.module.css";
 
 type Position = { x: number; y: number; locked: boolean };
@@ -534,7 +536,7 @@ export function LuciaStudioNodeCanvas({
           onSelectNode={requestSelectNode}
           onRegisterActions={registerInspectorActions}
         /> : <aside className={styles.inspector}>Select a node to inspect it.</aside>}
-        </> : activePanel === "preview" ? <LuciaStudioWebsitePreview websiteId={websiteId} document={document} headers={headers} onSelectNode={(nodeId) => { setSelectedId(nodeId); setActivePanel("canvas"); }} /> : <section className={styles.inspector}><h2>{activePanel === "validation" ? "Validation" : "Revision history"}</h2><p>This panel is being initialized.</p></section>}
+        </> : activePanel === "preview" ? <LuciaStudioWebsitePreview websiteId={websiteId} document={document} headers={headers} onSelectNode={(nodeId) => { setSelectedId(nodeId); setActivePanel("canvas"); }} /> : activePanel === "validation" ? <LuciaStudioValidationPanel websiteId={websiteId} document={document} headers={headers} onSelectNode={(nodeId) => { setSelectedId(nodeId); setActivePanel("canvas"); }} /> : <LuciaStudioHistoryPanel websiteId={websiteId} document={document} headers={headers} onRestored={loadGraph} />}
       </div>
     </main>
   );
