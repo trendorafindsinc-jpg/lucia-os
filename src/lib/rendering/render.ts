@@ -6,13 +6,12 @@ import {
   coreFoundation, lookupDesignRecipe, resolveGraphRecipeReferences,
 } from "@/lib/design-intelligence/registry";
 import type { DesignFoundation } from "@/lib/design-intelligence/contracts";
-import { resolveRequiredDesignTokens } from "./tokens";
 import {
   renderDiagnosticSchema, renderRequestSchema, type RenderContext,
+  type MediaResolver, type SharedDataResolver,
   type RenderDiagnostic, type RenderResult, type RendererDefinition,
 } from "./contracts";
 import { createRendererRegistry, lookupRenderer, type RendererRegistry } from "./registry";
-import { resolveRequiredDesignTokens } from "./tokens";
 import { resolveRenderReferences } from "./references";
 
 const HERO = "lucia.design.section.hero";
