@@ -124,6 +124,27 @@ describe("deterministic Studio canvas auto-layout", () => {
     expect(oversized.ok).toBe(false);
     if (!oversized.ok) expect(oversized.diagnostics[0].code).toBe("STUDIO_LAYOUT_LIMIT_EXCEEDED");
   });
+  it("routes unlocked nodes around locked-node collision zones", async () => {
+    const { applyStudioAutoLayout } = await import("./auto-layout");
+    const document = fixture();
+    const base = computeStudioAutoLayout(document);
+    expect(base.ok).toBe(true);
+    if (!base.ok) return;
+    const pageA = base.positions.find((position) => position.nodeId === id(3))!;
+    const pageB = base.positions.find((position) => position.nodeId === id(4))!;
+    const arranged = applyStudioAutoLayout(document, [
+      { ...pageA, x: pageB.x, y: pageB.y, locked: true },
+    ]);
+    expect(arranged.ok).toBe(true);
+    if (!arranged.ok) return;
+    const locked = arranged.positions.find((position) => position.nodeId === id(3));
+    const movable = arranged.positions.find((position) => position.nodeId === id(4));
+    expect(locked).toEqual({ nodeId: id(3), x: pageB.x, y: pageB.y });
+    expect(movable!.y).toBeGreaterThan(pageB.y);
+    expect(movable!.x + 232 <= pageB.x || movable!.x >= pageB.x + 232 ||
+      movable!.y + 104 <= pageB.y || movable!.y >= pageB.y + 104).toBe(true);
+  });
+
   it("preserves locked saved positions and recomputes unlocked positions", async () => {
     const { applyStudioAutoLayout } = await import("./auto-layout");
     const document = fixture();
