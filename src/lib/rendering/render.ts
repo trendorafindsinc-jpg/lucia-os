@@ -179,6 +179,9 @@ export async function renderWebsite(input: unknown, options: RenderOptions = {})
   const parsed = graphDocumentSchema.safeParse(raw.graph);
   if (!parsed.success) return fail([issue("GRAPH_INVALID", "Graph document does not match the supported schema.")]);
   const graph = parsed.data;
+  if (graph.nodes.length > 2000 || graph.edges.length > 4000) {
+    return fail([issue("RENDER_LIMIT_EXCEEDED", "Rendering is limited to 2,000 nodes and 4,000 edges per graph.")]);
+  }
   const graphIssues = validateGraphDocument(graph);
   if (graphIssues.length) return fail(graphIssues.map((item) => issue("GRAPH_INVALID", item.message, item.nodeId)));
   const recipeIssues = resolveGraphRecipeReferences(graph);
@@ -283,7 +286,7 @@ export async function renderWebsite(input: unknown, options: RenderOptions = {})
       h("a", { className: "lucia-skip-link", href: "#main-content" }, "Skip to main content"),
       h("header", { className: "lucia-header" },
         h("div", { className: "lucia-container lucia-header__inner" },
-          h("a", { className: "lucia-brand", href: "/" }, websiteName), nav,
+          h("a", { className: "lucia-brand", href: pages.find((item) => pathOf(item) === "/") ? "/" : route }, websiteName), nav,
         ),
       ),
       h("main", { id: "main-content", className: "lucia-main" },
