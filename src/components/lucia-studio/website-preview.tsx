@@ -73,6 +73,6 @@ export function LuciaStudioWebsitePreview({ websiteId, document, headers, onSele
     {payload?.ok && payload.html ? <div className={styles.frameStage}>
       <iframe ref={frameRef} title={`Website preview — ${String(page?.properties.title ?? "Page")}`} sandbox="allow-same-origin" srcDoc={payload.html} style={{ width: WIDTHS[viewport], maxWidth: "100%", height: "min(72vh, 900px)" }} />
     </div> : null}
-    <p className={styles.note}>Preview is read-only. Navigation stays inside the graph’s known local pages. Scripts, forms, popups and top-level navigation are disabled.</p>
+    <p className={styles.note}>Preview is read-only and reflects the saved graph revision shown above; unsaved inspector drafts are not included. Navigation stays inside known local pages. Scripts, forms, popups and top-level navigation are disabled.</p>
   </section>;
 }
