@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const localPathSchema = z.string().trim().min(1).max(240).refine((path) => {
   if (!path.startsWith("/") || path.startsWith("//") || path.includes("//") ||
-      /[?#\\\\\\u0000-\\u001f]/.test(path) || /%(?:2f|5c)/i.test(path)) return false;
+      /[?#\\\u0000-\u001f]/.test(path) || /%(?:2f|5c)/i.test(path)) return false;
   try {
     const decoded = decodeURIComponent(path);
     if (decoded.split("/").some((part) => part === "." || part === "..")) return false;
