@@ -37,10 +37,10 @@ function graphWithReferences() {
 describe("secure render reference resolution", () => {
   it("resolves media and shared data with the website security scope", async () => {
     const { graph, section } = graphWithReferences();
-    const mediaResolver = { resolve: vi.fn(async (assetId: string, scope: string) => ({
+    const mediaResolver = { resolve: vi.fn(async (assetId: string, _scope: string) => ({
       assetId, url: "https://cdn.example.test/asset.webp", altText: "Team at work", decorative: false, width: 640, height: 480,
     })) };
-    const sharedDataResolver = { resolve: vi.fn(async (referenceId: string, scope: string) => ({ displayName: "Lucia" })) };
+    const sharedDataResolver = { resolve: vi.fn(async (_referenceId: string, _scope: string) => ({ displayName: "Lucia" })) };
     const result = await resolveRenderReferences(graph, [section], mediaResolver, sharedDataResolver);
     expect(result.ok).toBe(true);
     expect(mediaResolver.resolve).toHaveBeenCalledWith("00000000-0000-4000-8000-000000000097", websiteId);
