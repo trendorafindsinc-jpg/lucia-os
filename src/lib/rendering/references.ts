@@ -8,10 +8,10 @@ export type ReferenceResolution =
 function safeMedia(value: ResolvedMediaAsset, assetId: string): boolean {
   if (!value || value.assetId !== assetId || typeof value.decorative !== "boolean") return false;
   if (value.decorative ? value.altText !== null : typeof value.altText !== "string" || !value.altText.trim() || value.altText.length > 500) return false;
-  if (typeof value.url !== "string" || value.url.length > 2048 || /[\\u0000-\\u0020\\u007f]/.test(value.url)) return false;
+  if (typeof value.url !== "string" || value.url.length > 2048 || /[\u0000-\u0020\u007f]/.test(value.url)) return false;
   try {
     if (value.url.startsWith("/") && !value.url.startsWith("//")) {
-      if (value.url.includes("\\\\") || /%(?:2f|5c)/i.test(value.url)) return false;
+      if (value.url.includes("\\") || /%(?:2f|5c)/i.test(value.url)) return false;
     } else {
       const url = new URL(value.url);
       if (url.protocol !== "https:" || url.username || url.password) return false;
