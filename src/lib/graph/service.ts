@@ -11,6 +11,7 @@ import {
   websiteGraphOperations,
   websiteGraphVersions,
   websiteNodes,
+  websiteMedia,
   websites,
 } from "@/lib/db/schema";
 import { canvasPositionBatchSchema, canvasPositionMutationSchema, graphMutationBatchSchema, graphDocumentSchema, GRAPH_SCHEMA_VERSION, type GraphDocument, type GraphMutationBatch, type GraphNode, type GraphOperation } from "./contracts";
@@ -224,6 +225,33 @@ async function persistDocument(tx: Transaction, organizationId: string, websiteI
   }
 }
 
+async function validateGraphMediaReferences(
+  tx: Transaction,
+  organizationId: string,
+  websiteId: string,
+  document: GraphDocument,
+) {
+  const assetIds = [...new Set(document.nodes
+    .filter((node) => node.type === "media_reference" && node.lifecycleStatus === "active")
+    .map((node) => node.properties.assetId)
+    .filter((value): value is string => typeof value === "string"))];
+  if (!assetIds.length) return;
+  // Hold shared row locks through graph commit. Media deletion takes an exclusive
+  // lock on the same asset before checking graph references, closing the attach/delete race.
+  const ready = await tx.select({ id: websiteMedia.id }).from(websiteMedia).where(and(
+    eq(websiteMedia.organizationId, organizationId),
+    eq(websiteMedia.websiteId, websiteId),
+    inArray(websiteMedia.id, assetIds),
+    eq(websiteMedia.status, "ready"),
+  )).for("share");
+  if (ready.length !== assetIds.length) {
+    throw new GraphServiceError(
+      "Every active media reference must point to a ready asset owned by this website.",
+      "VALIDATION",
+    );
+  }
+}
+
 export async function getWebsiteGraph(organizationId: string, websiteId: string) {
   const access = await getCurrentOrganizationAccess(organizationId, "website.read");
   if (!access) throw new GraphServiceError("Organization access denied.", "FORBIDDEN");
@@ -339,6 +367,8 @@ export async function mutateWebsiteGraph(organizationId: string, input: unknown)
     } else {
       current = applyOperations(current, batch.operations, graph.draftRevision + 1);
     }
+
+    await validateGraphMediaReferences(tx, organizationId, batch.websiteId, current);
 
     const diagnostics = validateGraphDocument(current);
     if (diagnostics.length) {
