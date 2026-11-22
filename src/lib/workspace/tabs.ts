@@ -24,6 +24,11 @@ export function describeWorkspaceRoute(pathname: string, search: string): Worksp
       /^\/templates\/preview\/lucia\.layout\.[a-z0-9]+(?:-[a-z0-9]+)*$/.test(pathname)) {
     return { appKey: "layouts", label: getWorkspaceApp("layouts")!.label, href: pathname + search, context: "catalogue" };
   }
+  if (pathname === "/studio") {
+    return websiteId
+      ? { appKey: "website-engine", label: "Lucia Studio", href: pathname + search, context: websiteContext }
+      : null;
+  }
   if (pathname === "/editor") {
     const context = websiteId ? `website:${websiteId}` : `template:${templateId || "new"}`;
     return { appKey: "website-engine", label: "Layout Studio editor", href: pathname + search, context };
