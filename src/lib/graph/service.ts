@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createHash, randomUUID } from "node:crypto";
-import { and, eq, ne, notInArray, sql } from "drizzle-orm";
+import { and, eq, inArray, ne, notInArray, sql } from "drizzle-orm";
 import { getCurrentOrganizationAccess } from "@/lib/access/guards";
 import { getDb } from "@/lib/db/client";
 import {
@@ -13,7 +13,7 @@ import {
   websiteNodes,
   websites,
 } from "@/lib/db/schema";
-import { canvasPositionMutationSchema, graphMutationBatchSchema, graphDocumentSchema, GRAPH_SCHEMA_VERSION, type GraphDocument, type GraphMutationBatch, type GraphNode, type GraphOperation } from "./contracts";
+import { canvasPositionBatchSchema, canvasPositionMutationSchema, graphMutationBatchSchema, graphDocumentSchema, GRAPH_SCHEMA_VERSION, type GraphDocument, type GraphMutationBatch, type GraphNode, type GraphOperation } from "./contracts";
 import { edgeRules } from "./registry";
 import { canonicalGraphStringify, validateGraphDocument } from "./validate";
 
@@ -404,6 +404,67 @@ export async function saveCanvasPosition(organizationId: string, websiteId: stri
       set: { x: position.x, y: position.y, locked: position.locked ?? existingPosition?.locked ?? false, updatedAt: new Date() },
     });
     return { saved: true, graphRevision: graph.draftRevision };
+  });
+}
+
+
+export async function saveCanvasPositions(organizationId: string, websiteId: string, input: unknown) {
+  const batch = canvasPositionBatchSchema.parse(input);
+  const access = await getCurrentOrganizationAccess(organizationId, "website.read");
+  if (!access) throw new GraphServiceError("Organization access denied.", "FORBIDDEN");
+
+  return inTenantTransaction(access.user.id, organizationId, async (tx) => {
+    const [website] = await tx.select({ id: websites.id }).from(websites)
+      .where(and(eq(websites.id, websiteId), eq(websites.organizationId, organizationId), ne(websites.status, "deleted"))).limit(1);
+    if (!website) throw new GraphServiceError("Website not found.", "NOT_FOUND");
+    const [graph] = await tx.select().from(websiteGraphs).where(and(
+      eq(websiteGraphs.websiteId, websiteId), eq(websiteGraphs.organizationId, organizationId),
+    )).limit(1);
+    if (!graph) throw new GraphServiceError("Website graph has not been created.", "NOT_FOUND");
+
+    const nodeIds = batch.positions.map((position) => position.nodeId);
+    const nodes = await tx.select({ id: websiteNodes.id }).from(websiteNodes).where(and(
+      eq(websiteNodes.graphId, graph.id),
+      eq(websiteNodes.lifecycleStatus, "active"),
+      inArray(websiteNodes.id, nodeIds),
+    ));
+    if (nodes.length !== nodeIds.length) {
+      throw new GraphServiceError("One or more canvas nodes are unavailable.", "NOT_FOUND");
+    }
+
+    const existing = await tx.select().from(websiteCanvasPositions).where(and(
+      eq(websiteCanvasPositions.graphId, graph.id),
+      eq(websiteCanvasPositions.userId, access.user.id),
+      inArray(websiteCanvasPositions.nodeId, nodeIds),
+    ));
+    const existingByNode = new Map(existing.map((position) => [position.nodeId, position]));
+    for (const position of batch.positions) {
+      const prior = existingByNode.get(position.nodeId);
+      if (prior?.locked &&
+          (prior.x !== position.x || prior.y !== position.y) &&
+          position.locked !== false) {
+        throw new GraphServiceError("Unlock every locked canvas node before moving it.", "CONFLICT");
+      }
+    }
+
+    const now = new Date();
+    await tx.insert(websiteCanvasPositions).values(batch.positions.map((position) => {
+      const prior = existingByNode.get(position.nodeId);
+      return {
+        organizationId, websiteId, graphId: graph.id, userId: access.user.id,
+        nodeId: position.nodeId, x: position.x, y: position.y,
+        locked: position.locked ?? prior?.locked ?? false,
+      };
+    })).onConflictDoUpdate({
+      target: [websiteCanvasPositions.graphId, websiteCanvasPositions.userId, websiteCanvasPositions.nodeId],
+      set: {
+        x: sql`excluded.x`,
+        y: sql`excluded.y`,
+        locked: sql`excluded.locked`,
+        updatedAt: now,
+      },
+    });
+    return { saved: batch.positions.length, graphRevision: graph.draftRevision };
   });
 }
 
