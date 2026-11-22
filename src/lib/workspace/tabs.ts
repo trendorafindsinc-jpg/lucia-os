@@ -25,7 +25,9 @@ export function describeWorkspaceRoute(pathname: string, search: string): Worksp
     return { appKey: "layouts", label: getWorkspaceApp("layouts")!.label, href: pathname + search, context: "catalogue" };
   }
   if (pathname === "/studio") {
-    return websiteId
+    const organizationId = params.get("organizationId") || "";
+    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return websiteId && uuid.test(websiteId) && uuid.test(organizationId)
       ? { appKey: "website-engine", label: "Lucia Studio", href: pathname + search, context: websiteContext }
       : null;
   }
