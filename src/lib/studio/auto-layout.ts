@@ -192,3 +192,27 @@ export function computeStudioAutoLayout(input: unknown): StudioAutoLayoutResult 
 
   return { ok: true, positions: result, diagnostics: [] };
 }
+
+
+export type SavedStudioCanvasPosition = StudioCanvasPosition & { locked: boolean };
+
+/**
+ * Auto-organize unlocked nodes while preserving every saved locked coordinate.
+ * Existing unlocked positions are intentionally replaced by the deterministic
+ * graph layout. This returns presentation state only; it never edits the graph.
+ */
+export function applyStudioAutoLayout(
+  input: unknown,
+  saved: SavedStudioCanvasPosition[],
+): StudioAutoLayoutResult {
+  const computed = computeStudioAutoLayout(input);
+  if (!computed.ok) return computed;
+  const savedById = new Map(saved.map((position) => [position.nodeId, position]));
+  const positions = computed.positions.map((position) => {
+    const existing = savedById.get(position.nodeId);
+    return existing?.locked
+      ? { nodeId: position.nodeId, x: existing.x, y: existing.y }
+      : position;
+  });
+  return { ok: true, positions, diagnostics: [] };
+}
