@@ -10,10 +10,14 @@ type Context = { params: Promise<{ organizationId: string }> };
 
 export async function GET(_request: Request, context: Context) {
   const { organizationId } = await context.params;
-  const access = await getCurrentOrganizationAccess(organizationId, "website.read");
+  const access = await getCurrentOrganizationAccess(organizationId, "billing.read");
   if (!access) return NextResponse.json({ error: "Organisation access denied." }, { status: 403, headers: { "Cache-Control": "no-store" } });
   const result = await getDb().transaction(async (tx) => {
     await tx.execute(sql`select set_config('app.current_organization_id', ${access.membership.organizationId}, true)`);
+    const plans = await tx.execute(sql`select p.plan_key,p.name,p.product_key,
+      coalesce(jsonb_agg(jsonb_build_object('key',pe.entitlement_key,'value',pe.value)) filter(where pe.id is not null),'[]'::jsonb) as entitlements
+      from subscription_plans p left join subscription_plan_entitlements pe on pe.plan_id=p.id
+      where p.active=true and p.product_key='lucia_os' group by p.id order by p.name limit 50`);
     const subscriptions = await tx.execute(sql`select s.id,s.status,s.cadence,s.starts_at,s.current_period_ends_at,s.trial_ends_at,s.cancel_at_period_end,p.plan_key,p.name as plan_name
       from organization_subscriptions s join subscription_plans p on p.id=s.plan_id
       where s.organization_id=${access.membership.organizationId}::uuid
@@ -29,7 +33,7 @@ export async function GET(_request: Request, context: Context) {
        ))) as effective
       from organization_entitlements e where e.organization_id=${access.membership.organizationId}::uuid
       order by e.entitlement_key limit 200`);
-    return { subscriptions, entitlements };
+    return { plans, subscriptions, entitlements };
   });
   return NextResponse.json(result, { headers: { "Cache-Control": "private, no-store" } });
 }
