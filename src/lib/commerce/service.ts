@@ -99,12 +99,12 @@ export async function createStoreOrder(site:{organizationId:string;websiteId:str
  });
  try {
   const checkout=await initializePaystackCheckout({email,amountMinor:created.attempt.amountMinor,currency:created.attempt.currency,reference:created.attempt.reference,callbackUrl,metadata:{order_id:created.order.id,order_number:created.order.orderNumber}});
-  await tenantTx(site.organizationId,tx=>tx.update(commercePaymentAttempts).set({checkoutUrl:checkout.authorization_url,status:"pending",updatedAt:new Date()}).where(eq(commercePaymentAttempts.id,created.attempt.id)));
+  await tenantTx(site.organizationId,tx=>tx.update(commercePaymentAttempts).set({checkoutUrl:checkout.authorization_url,status:"pending",updatedAt:new Date()}).where(and(eq(commercePaymentAttempts.id,created.attempt.id),sql`status IN ('initialized','pending')`)));
   return {orderNumber:created.order.orderNumber,checkoutUrl:checkout.authorization_url,reference:created.attempt.reference};
  } catch(error) {
   // A timeout can occur after Paystack created a live checkout session. Keep
   // the reservation and pending state until a verified provider event resolves it.
-  await tenantTx(site.organizationId,tx=>tx.update(commercePaymentAttempts).set({status:"pending",updatedAt:new Date()}).where(eq(commercePaymentAttempts.id,created.attempt.id)));
+  await tenantTx(site.organizationId,tx=>tx.update(commercePaymentAttempts).set({status:"pending",updatedAt:new Date()}).where(and(eq(commercePaymentAttempts.id,created.attempt.id),eq(commercePaymentAttempts.status,"initialized")))));
   throw error;
  }}
 export async function settlePaystackReference(reference:string) {
