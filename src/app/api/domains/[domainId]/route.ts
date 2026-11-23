@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getOrganizationMembershipsForUser } from "@/lib/access/guards";
 import { hasOrganizationPermission } from "@/lib/access/policy";
 import { getDb } from "@/lib/db/client";
-import { websiteDomains } from "@/lib/db/schema";
+import { websiteDomains, websites } from "@/lib/db/schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -40,15 +40,23 @@ export async function PATCH(request: Request, context: { params: Promise<{ domai
   const authorized = await getAuthorizedDomain(domainId);
   if ("response" in authorized) return authorized.response;
   const { db, organizationId, domain } = authorized;
-  if (domain.status !== "active") return error("Only an active domain can be set as primary. Complete its verification and activation first.", 409);
-
-  await db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     await tx.execute(sql`select set_config('app.current_organization_id', ${organizationId}, true)`);
+    // Serialize all primary-domain changes for this website on its parent row.
+    const [site] = await tx.select({ id: websites.id }).from(websites)
+      .where(and(eq(websites.id, domain.websiteId), eq(websites.organizationId, organizationId))).limit(1).for("update");
+    if (!site) return false;
+    const [current] = await tx.select({ status: websiteDomains.status }).from(websiteDomains)
+      .where(and(eq(websiteDomains.id, domain.id), eq(websiteDomains.organizationId, organizationId), eq(websiteDomains.websiteId, domain.websiteId)))
+      .limit(1).for("update");
+    if (!current || current.status !== "active") return false;
     await tx.update(websiteDomains).set({ isPrimary: false, updatedAt: new Date() })
       .where(and(eq(websiteDomains.organizationId, organizationId), eq(websiteDomains.websiteId, domain.websiteId)));
     await tx.update(websiteDomains).set({ isPrimary: true, updatedAt: new Date() })
       .where(and(eq(websiteDomains.id, domain.id), eq(websiteDomains.organizationId, organizationId), eq(websiteDomains.status, "active")));
+    return true;
   });
+  if (!result) return error("The domain is no longer active. Refresh and complete verification before selecting it.", 409);
   return NextResponse.json({ updated: true, domainId, isPrimary: true }, { headers: { "Cache-Control": "no-store" } });
 }
 
