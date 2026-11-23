@@ -14,6 +14,7 @@ on:
       - "docs/PHASE-6-CORE-PLATFORM-SYSTEMS-SPEC.md"
       - "scripts/test-graph-rls.sql"
       - "scripts/test-media-retention-grants.sql"
+      - "scripts/test-subscription-entitlements.sql"
       - "src/lib/graph/service.integration.test.ts"
       - "src/lib/media/**"
       - "docs/PHASE-6-CORE-PLATFORM-SYSTEMS-SPEC.md"
@@ -72,6 +73,10 @@ jobs:
         run: npm run db:check
       - name: Verify runtime media retention privileges
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f scripts/test-media-retention-grants.sql
+        env:
+          DATABASE_URL: postgres://postgres:lucia-migration-ci-only@localhost:5432/lucia_os_migrations
+      - name: Verify subscription entitlement RLS and runtime privileges
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f scripts/test-subscription-entitlements.sql
         env:
           DATABASE_URL: postgres://postgres:lucia-migration-ci-only@localhost:5432/lucia_os_migrations
       - name: Typecheck the updated Drizzle schema
