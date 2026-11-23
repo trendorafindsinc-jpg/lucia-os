@@ -21,6 +21,7 @@ export async function PATCH(request:Request,context:Context){
  if(!access)return json({error:"Not found or not authorized."},404);
  if(!access.enabled)return json({error:"Commerce entitlement is inactive."},403);
  try{const db=getDb();const [product]=await db.transaction(async tx=>{await tx.execute(sql`select set_config('app.current_user_id', ${access.user.id}, true),set_config('app.current_organization_id', ${organizationId}, true)`);
+  await assertCommerceAdminMembership(tx,access.user.id,organizationId,"website.edit");
   await assertCommerceEntitlement(tx,organizationId,websiteId);
   return tx.update(commerceProducts).set({...changes,updatedAt:new Date()}).where(and(eq(commerceProducts.id,productId),eq(commerceProducts.organizationId,organizationId),eq(commerceProducts.websiteId,websiteId))).returning();});
   return product?json({product}):json({error:"Product not found."},404);
