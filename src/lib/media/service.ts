@@ -58,7 +58,7 @@ export async function validateMediaOwnership(tx: MediaTransaction, organizationI
   }
   return altById;
 }
-export type MediaListFilters = { query?: string; kind?: "image" | "video" | "document"; status?: "ready" | "pending" | "failed" };
+export type MediaListFilters = { query?: string; kind?: "image" | "video" | "document"; status?: "ready" | "pending" | "deleting" };
 export async function listMedia(userId: string, websiteId: string, filters: MediaListFilters = {}) {
   const query = filters.query?.trim().slice(0, 120) ?? "";
   return withMediaWebsite(userId, websiteId, "website.read", async (tx) => {
