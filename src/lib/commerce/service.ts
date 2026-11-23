@@ -124,8 +124,11 @@ export async function settlePaystackReference(reference:string) {
   if(!order) throw new Error("Order not found");
   if(order.totalMinor!==result.amountMinor||order.currency!==result.currency) throw new Error("Order amount does not match verified payment");
   await tx.update(commercePaymentAttempts).set({status:"success",transactionId:result.transactionId,verifiedAt:new Date(),updatedAt:new Date()}).where(eq(commercePaymentAttempts.id,locked.id));
-  await tx.update(commerceOrders).set({paymentStatus:"paid",status:"processing",updatedAt:new Date()}).where(eq(commerceOrders.id,order.id));
-  return {paid:true,alreadySettled:false,orderNumber:order.orderNumber};
+  // A late success after a verified failure/cancellation must never re-enter
+  // fulfilment automatically; it requires a separate refund/review workflow.
+  const lateAfterCancellation=order.status==="cancelled";
+  await tx.update(commerceOrders).set({paymentStatus:"paid",status:lateAfterCancellation?"cancelled":"processing",updatedAt:new Date()}).where(eq(commerceOrders.id,order.id));
+  return {paid:true,alreadySettled:false,orderNumber:order.orderNumber,manualReview:lateAfterCancellation};
  });
 }
 export async function recordPaystackWebhook(rawBody:string,signature:string|null) {
