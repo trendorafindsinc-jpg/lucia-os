@@ -1,6 +1,6 @@
 import type { GraphDocument, GraphNode } from "@/lib/graph/contracts";
 export interface SavedStudioCanvasPosition { nodeId: string; x: number; y: number; locked: boolean }
-export interface StudioCanvasPosition extends SavedStudioCanvasPosition {}
+export type StudioCanvasPosition = SavedStudioCanvasPosition;
 export interface StudioAutoLayoutResult {
   ok: boolean;
   positions: StudioCanvasPosition[];
