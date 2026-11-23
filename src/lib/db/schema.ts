@@ -518,3 +518,54 @@ export const websitePostRevisions = pgTable("website_post_revisions", {
  foreignKey({ name: "website_post_revisions_website_org_fk", columns: [table.organizationId,table.websiteId], foreignColumns: [websites.organizationId,websites.id] }).onDelete("cascade"),
  uniqueIndex("website_post_revisions_unique").on(table.postId,table.revision),
 ]);
+
+/** Phase 16: Commerce catalogue, persistent carts, immutable order snapshots and Paystack lifecycle. */
+export const commerceProducts = pgTable("commerce_products", {
+ id: uuid("id").primaryKey().defaultRandom(), organizationId: uuid("organization_id").notNull(), websiteId: uuid("website_id").notNull(),
+ sku: text("sku").notNull(), slug: text("slug").notNull(), name: text("name").notNull(), description: text("description").notNull().default(""),
+ currency: text("currency").notNull().default("NGN"), unitAmountMinor: bigint("unit_amount_minor",{mode:"number"}).notNull(),
+ inventoryQuantity: integer("inventory_quantity"), status: text("status").notNull().default("draft"), createdAt: createdAt(), updatedAt: updatedAt(),
+}, t => [foreignKey({name:"commerce_products_website_org_fk",columns:[t.organizationId,t.websiteId],foreignColumns:[websites.organizationId,websites.id]}).onDelete("cascade"),
+ uniqueIndex("commerce_products_sku_uq").on(t.organizationId,t.websiteId,t.sku),uniqueIndex("commerce_products_slug_uq").on(t.organizationId,t.websiteId,t.slug),
+ uniqueIndex("commerce_products_id_uq").on(t.organizationId,t.websiteId,t.id),index("commerce_products_public_idx").on(t.websiteId,t.status)]);
+export const commerceCarts = pgTable("commerce_carts", {
+ id: uuid("id").primaryKey().defaultRandom(), organizationId: uuid("organization_id").notNull(), websiteId: uuid("website_id").notNull(),
+ customerKeyHash: text("customer_key_hash").notNull(), userId: uuid("user_id").references(()=>appUsers.id,{onDelete:"set null"}),
+ currency: text("currency").notNull().default("NGN"), status: text("status").notNull().default("active"), expiresAt: timestamp("expires_at",{withTimezone:true}), createdAt: createdAt(), updatedAt: updatedAt(),
+}, t => [foreignKey({name:"commerce_carts_website_org_fk",columns:[t.organizationId,t.websiteId],foreignColumns:[websites.organizationId,websites.id]}).onDelete("cascade"),
+ uniqueIndex("commerce_carts_active_uq").on(t.organizationId,t.websiteId,t.customerKeyHash).where(sql`status='active'`),
+ uniqueIndex("commerce_carts_id_uq").on(t.organizationId,t.websiteId,t.id)]);
+export const commerceCartItems = pgTable("commerce_cart_items", {
+ id: uuid("id").primaryKey().defaultRandom(), organizationId: uuid("organization_id").notNull(), websiteId: uuid("website_id").notNull(), cartId: uuid("cart_id").notNull(),
+ productId: uuid("product_id").notNull(), quantity: integer("quantity").notNull(), createdAt: createdAt(), updatedAt: updatedAt(),
+}, t => [foreignKey({name:"commerce_cart_items_cart_fk",columns:[t.organizationId,t.websiteId,t.cartId],foreignColumns:[commerceCarts.organizationId,commerceCarts.websiteId,commerceCarts.id]}).onDelete("cascade"),
+ foreignKey({name:"commerce_cart_items_product_fk",columns:[t.organizationId,t.websiteId,t.productId],foreignColumns:[commerceProducts.organizationId,commerceProducts.websiteId,commerceProducts.id]}).onDelete("restrict"),
+ uniqueIndex("commerce_cart_items_product_uq").on(t.cartId,t.productId)]);
+export const commerceOrders = pgTable("commerce_orders", {
+ id: uuid("id").primaryKey().defaultRandom(), organizationId: uuid("organization_id").notNull(), websiteId: uuid("website_id").notNull(), orderNumber: text("order_number").notNull(),
+ customerKeyHash: text("customer_key_hash").notNull(), customerEmail: text("customer_email").notNull(), currency: text("currency").notNull(),
+ subtotalMinor: bigint("subtotal_minor",{mode:"number"}).notNull(), shippingMinor: bigint("shipping_minor",{mode:"number"}).notNull().default(0),
+ taxMinor: bigint("tax_minor",{mode:"number"}).notNull().default(0), totalMinor: bigint("total_minor",{mode:"number"}).notNull(),
+ status: text("status").notNull().default("pending_payment"), paymentStatus: text("payment_status").notNull().default("unpaid"),
+ snapshotVersion: integer("snapshot_version").notNull().default(1), createdAt: createdAt(), updatedAt: updatedAt(),
+}, t => [foreignKey({name:"commerce_orders_website_org_fk",columns:[t.organizationId,t.websiteId],foreignColumns:[websites.organizationId,websites.id]}).onDelete("restrict"),
+ uniqueIndex("commerce_orders_number_uq").on(t.organizationId,t.orderNumber),uniqueIndex("commerce_orders_id_uq").on(t.organizationId,t.websiteId,t.id),
+ index("commerce_orders_site_created_idx").on(t.organizationId,t.websiteId,t.createdAt)]);
+export const commerceOrderItems = pgTable("commerce_order_items", {
+ id: uuid("id").primaryKey().defaultRandom(), organizationId: uuid("organization_id").notNull(), websiteId: uuid("website_id").notNull(), orderId: uuid("order_id").notNull(),
+ productId: uuid("product_id"), productName: text("product_name").notNull(), sku: text("sku").notNull(), quantity: integer("quantity").notNull(),
+ unitAmountMinor: bigint("unit_amount_minor",{mode:"number"}).notNull(), lineTotalMinor: bigint("line_total_minor",{mode:"number"}).notNull(),
+ currency: text("currency").notNull(), snapshot: jsonb("snapshot").notNull(), createdAt: createdAt(),
+}, t => [foreignKey({name:"commerce_order_items_order_fk",columns:[t.organizationId,t.websiteId,t.orderId],foreignColumns:[commerceOrders.organizationId,commerceOrders.websiteId,commerceOrders.id]}).onDelete("restrict"),
+ index("commerce_order_items_order_idx").on(t.orderId)]);
+export const commercePaymentAttempts = pgTable("commerce_payment_attempts", {
+ id: uuid("id").primaryKey().defaultRandom(), organizationId: uuid("organization_id").notNull(), websiteId: uuid("website_id").notNull(), orderId: uuid("order_id").notNull(),
+ provider: text("provider").notNull().default("paystack"), reference: text("reference").notNull(), transactionId: text("transaction_id"),
+ amountMinor: bigint("amount_minor",{mode:"number"}).notNull(), currency: text("currency").notNull(), status: text("status").notNull().default("initialized"),
+ checkoutUrl: text("checkout_url"), verifiedAt: timestamp("verified_at",{withTimezone:true}), createdAt: createdAt(), updatedAt: updatedAt(),
+}, t => [foreignKey({name:"commerce_payment_attempts_order_fk",columns:[t.organizationId,t.websiteId,t.orderId],foreignColumns:[commerceOrders.organizationId,commerceOrders.websiteId,commerceOrders.id]}).onDelete("restrict"),
+ uniqueIndex("commerce_payment_reference_uq").on(t.provider,t.reference),uniqueIndex("commerce_payment_transaction_uq").on(t.provider,t.transactionId).where(sql`transaction_id IS NOT NULL`)]);
+export const commerceWebhookEvents = pgTable("commerce_webhook_events", {
+ id: uuid("id").primaryKey().defaultRandom(), provider: text("provider").notNull(), eventKey: text("event_key").notNull(), reference: text("reference").notNull(),
+ payloadHash: text("payload_hash").notNull(), status: text("status").notNull().default("received"), receivedAt: createdAt(), processedAt: timestamp("processed_at",{withTimezone:true}),
+}, t => [uniqueIndex("commerce_webhook_event_uq").on(t.provider,t.eventKey),index("commerce_webhook_reference_idx").on(t.reference,t.receivedAt)]);
