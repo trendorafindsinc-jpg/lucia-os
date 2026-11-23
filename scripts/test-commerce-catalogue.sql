@@ -50,14 +50,6 @@ BEGIN
     END IF;
   END IF;
 
-  IF EXISTS (
-    SELECT 1 FROM pg_constraint
-    WHERE conrelid='public.commerce_products'::regclass
-      AND conname='commerce_products_currency_price_ck'
-  ) THEN
-    RAISE EXCEPTION 'Unexpected duplicate currency/price constraint name';
-  END IF;
-
   IF NOT EXISTS (
     SELECT 1 FROM subscription_plans p
     JOIN subscription_plan_entitlements e ON e.plan_id=p.id
