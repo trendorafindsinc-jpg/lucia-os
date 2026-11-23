@@ -94,3 +94,18 @@ DO $$ DECLARE t text; BEGIN
   EXECUTE format('CREATE POLICY %I ON %I USING (organization_id = NULLIF(current_setting(''app.current_organization_id'',true),'''')::uuid) WITH CHECK (organization_id = NULLIF(current_setting(''app.current_organization_id'',true),'''')::uuid)',t||'_tenant_isolation',t);
  END LOOP;
 END $$;
+
+--> statement-breakpoint
+CREATE TABLE commerce_entitlements (
+ id uuid PRIMARY KEY DEFAULT gen_random_uuid(), organization_id uuid NOT NULL, website_id uuid NOT NULL,
+ status text NOT NULL DEFAULT 'inactive' CHECK(status IN ('active','inactive','suspended')),
+ source text NOT NULL, expires_at timestamptz, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now(),
+ CONSTRAINT commerce_entitlements_website_org_fk FOREIGN KEY(organization_id,website_id) REFERENCES websites(organization_id,id) ON DELETE CASCADE,
+ CONSTRAINT commerce_entitlements_site_uq UNIQUE(organization_id,website_id)
+);
+--> statement-breakpoint
+ALTER TABLE commerce_entitlements ENABLE ROW LEVEL SECURITY;
+--> statement-breakpoint
+CREATE POLICY commerce_entitlements_tenant_isolation ON commerce_entitlements
+ USING (organization_id = NULLIF(current_setting('app.current_organization_id',true),'')::uuid)
+ WITH CHECK (organization_id = NULLIF(current_setting('app.current_organization_id',true),'')::uuid);
