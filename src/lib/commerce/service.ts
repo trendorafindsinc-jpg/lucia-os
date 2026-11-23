@@ -175,3 +175,12 @@ export async function updateOrderFulfillment(organizationId:string,websiteId:str
   return {id:orderId,status};
  });
 }
+
+export async function getTenantOrder(organizationId:string,websiteId:string,orderId:string) {
+ return tenantTx(organizationId,async tx=>{
+  const [order]=await tx.select().from(commerceOrders).where(and(eq(commerceOrders.id,orderId),eq(commerceOrders.organizationId,organizationId),eq(commerceOrders.websiteId,websiteId))).limit(1);
+  if(!order) return null;
+  const items=await tx.select().from(commerceOrderItems).where(and(eq(commerceOrderItems.orderId,orderId),eq(commerceOrderItems.organizationId,organizationId),eq(commerceOrderItems.websiteId,websiteId))).orderBy(asc(commerceOrderItems.createdAt));
+  return {order,items};
+ });
+}
