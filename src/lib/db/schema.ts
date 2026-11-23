@@ -569,3 +569,11 @@ export const commerceWebhookEvents = pgTable("commerce_webhook_events", {
  id: uuid("id").primaryKey().defaultRandom(), provider: text("provider").notNull(), eventKey: text("event_key").notNull(), reference: text("reference").notNull(),
  payloadHash: text("payload_hash").notNull(), status: text("status").notNull().default("received"), receivedAt: createdAt(), processedAt: timestamp("processed_at",{withTimezone:true}),
 }, t => [uniqueIndex("commerce_webhook_event_uq").on(t.provider,t.eventKey),index("commerce_webhook_reference_idx").on(t.reference,t.receivedAt)]);
+
+/** Explicit Commerce entitlement; provisioned only by the trusted subscription/billing workflow. */
+export const commerceEntitlements = pgTable("commerce_entitlements", {
+ id: uuid("id").primaryKey().defaultRandom(), organizationId: uuid("organization_id").notNull(), websiteId: uuid("website_id").notNull(),
+ status: text("status").notNull().default("inactive"), source: text("source").notNull(), expiresAt: timestamp("expires_at",{withTimezone:true}),
+ createdAt: createdAt(), updatedAt: updatedAt(),
+}, t => [foreignKey({name:"commerce_entitlements_website_org_fk",columns:[t.organizationId,t.websiteId],foreignColumns:[websites.organizationId,websites.id]}).onDelete("cascade"),
+ uniqueIndex("commerce_entitlements_site_uq").on(t.organizationId,t.websiteId)]);
