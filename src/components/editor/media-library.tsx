@@ -55,6 +55,18 @@ export function MediaLibrary({ websiteId, accountId, onChange, protectedIds, onS
       setNotice(error instanceof Error?error.message:"Media upload failed. Any uncertain reservation remains safely pending for reconciliation.");}
     finally{setBusy(false);}
   }
+  async function saveMetadata(event: React.FormEvent<HTMLFormElement>, item: MediaLibraryItem) {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    setBusy(true);
+    try {
+      const response = await fetch(endpoint, { method: "PATCH", headers: { "content-type": "application/json", "x-lucia-workspace-account": accountId }, body: JSON.stringify({ id: item.id, alt: String(data.get("alt") || ""), caption: String(data.get("caption") || "") || null }) });
+      const body = await response.json();
+      if (!response.ok) throw Error(body.error || "Metadata could not be saved.");
+      await load(); setNotice("Asset description and caption saved.");
+    } catch (error) { setNotice(error instanceof Error ? error.message : "Metadata could not be saved."); }
+    finally { setBusy(false); }
+  }
   async function remove(id: string) {
     setBusy(true);
     try { const response = await fetch(endpoint + "?id=" + id, { method: "DELETE", headers: { "x-lucia-workspace-account": accountId } }); const body = await response.json(); if (!response.ok) throw Error(body.error); await load(); setNotice("Unreferenced media asset removed."); }
@@ -84,7 +96,8 @@ export function MediaLibrary({ websiteId, accountId, onChange, protectedIds, onS
       {onSelect && item.status === "ready" && item.kind==="image" && <button type="button" aria-pressed={selectedRef === item.ref} disabled={busy} onClick={() => onSelect(item)}>{selectedRef === item.ref ? "Selected for article" : "Use as featured image"}</button>}
       {onInsert && item.status === "ready" && (item.kind!=="image" || Boolean(insertLabel)) && <button type="button" disabled={busy} onClick={()=>onInsert(item)}>{insertLabel || "Insert link in article"}</button>}
       {item.status==="ready"&&item.kind!=="image"&&<a href={"/_media/"+item.id} target="_blank" rel="noopener noreferrer">{item.kind==="video"?"Open video":"Download PDF"}</a>}
-      <span>{item.original_name||item.alt}{item.caption?" · "+item.caption:""} · {Math.ceil(item.bytes / 1000)} KB · {item.status}</span>
+      <span>{item.original_name||item.alt} · {Math.ceil(item.bytes / 1000)} KB · {item.status}</span>
+      {item.status === "ready" && <form onSubmit={(event) => void saveMetadata(event, item)} className="media-metadata-form"><label>Accessible description<input name="alt" defaultValue={item.alt} maxLength={200} required disabled={busy} /></label><label>Caption<input name="caption" defaultValue={item.caption || ""} maxLength={200} disabled={busy} /></label><button disabled={busy}>Save details</button></form>}
       {(item.status==="ready"||item.status==="deleting"||(item.status==="pending"&&Date.now()-new Date(item.created_at||0).getTime()>24*60*60*1000))?<button type="button" disabled={busy||protectedIds.includes(item.id)} onClick={()=>remove(item.id)}>Remove unused asset</button>:item.status==="pending"?<span>Upload pending. Abandoned uploads are reconciled automatically.</span>:<span>Awaiting storage reconciliation; reserved space remains counted.</span>}
     </li>)}</ul>
   </details>;
