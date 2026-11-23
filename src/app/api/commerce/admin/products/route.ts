@@ -2,7 +2,7 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { getDb } from "@/lib/db/client";
 import { commerceProducts } from "@/lib/db/schema";
-import { requireCommerceAdmin } from "@/lib/commerce/admin";
+import { assertCommerceAdminMembership, requireCommerceAdmin } from "@/lib/commerce/admin";
 import { assertCommerceEntitlement } from "@/lib/commerce/service";
 import { json } from "@/lib/commerce/http";
 import { websiteMutationAllowed } from "@/lib/websites/draft-revision";
@@ -16,6 +16,7 @@ export async function GET(request:Request) {
  if(!access.enabled) return json({error:"Commerce entitlement is inactive."},403);
  const db=getDb();
  const products=await db.transaction(async tx=>{await tx.execute(sql`select set_config('app.current_user_id', ${access.user.id}, true),set_config('app.current_organization_id', ${organizationId}, true)`);
+  await assertCommerceAdminMembership(tx,access.user.id,organizationId,"website.read");
   await assertCommerceEntitlement(tx,organizationId,websiteId);
   return tx.select().from(commerceProducts).where(and(eq(commerceProducts.organizationId,organizationId),eq(commerceProducts.websiteId,websiteId))).orderBy(desc(commerceProducts.createdAt));});
  return json({products});
