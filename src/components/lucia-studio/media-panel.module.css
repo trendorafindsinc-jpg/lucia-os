@@ -47,6 +47,9 @@
 .library :global(.studio-media-library) { display: block; }
 .library :global(.studio-media-library > summary) { color: #34445f; font-size: 13px; font-weight: 750; cursor: pointer; }
 .library :global(.studio-media-library > p) { color: #71809a; font-size: 11px; line-height: 1.65; }
+.library :global(.media-library-filters) { display: grid; grid-template-columns: minmax(220px, 2fr) repeat(2, minmax(130px, 1fr)); gap: 10px; margin: 14px 0; }
+.library :global(.media-library-filters label) { display: grid; gap: 5px; color: #586780; font-size: 11px; font-weight: 700; }
+.library :global(.media-library-filters input), .library :global(.media-library-filters select) { min-width: 0; width: 100%; border: 1px solid #dce3ef; border-radius: 8px; padding: 9px; background: #fff; color: #263753; font: inherit; }
 .library :global(.composition-controls) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-block: 12px; }
 .library :global(.composition-controls label) { display: grid; gap: 6px; color: #586780; font-size: 11px; font-weight: 700; }
 .library :global(.composition-controls input) { min-width: 0; max-width: 100%; border: 1px solid #dce3ef; border-radius: 8px; padding: 9px; color: #263753; font: inherit; }
@@ -64,5 +67,5 @@
   .panel { padding: 13px; }
   .header { flex-direction: column; }
   .selection { flex-basis: auto; width: 100%; }
-  .library :global(.composition-controls) { grid-template-columns: minmax(0, 1fr); }
+  .library :global(.composition-controls), .library :global(.media-library-filters) { grid-template-columns: minmax(0, 1fr); }
 }
