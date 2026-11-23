@@ -58,14 +58,25 @@ export async function validateMediaOwnership(tx: MediaTransaction, organizationI
   }
   return altById;
 }
-export type MediaListFilters = { query?: string; kind?: "image" | "video" | "document"; status?: "ready" | "pending" | "deleting" };
+export type MediaListFilters = { query?: string; kind?: "image" | "video" | "document"; status?: "ready" | "pending" | "deleting"; cursor?: string };
 export async function listMedia(userId: string, websiteId: string, filters: MediaListFilters = {}) {
   const query = filters.query?.trim().slice(0, 120) ?? "";
+  let cursor: { createdAt: Date; id: string } | null = null;
+  if (filters.cursor) {
+    try {
+      const value = JSON.parse(Buffer.from(filters.cursor, "base64url").toString("utf8")) as { createdAt?: unknown; id?: unknown };
+      if (typeof value.createdAt !== "string" || !Number.isFinite(Date.parse(value.createdAt)) || typeof value.id !== "string" || !/^[0-9a-f-]{36}$/i.test(value.id)) throw new Error("invalid");
+      cursor = { createdAt: new Date(value.createdAt), id: value.id };
+    } catch { throw new MediaError("Invalid media page cursor.", 400); }
+  }
   return withMediaWebsite(userId, websiteId, "website.read", async (tx) => {
-    const rows = await tx.execute(sql`select id,bytes,width,height,alt,status,kind,mime,original_name,checksum,etag,caption,duration_ms,created_at from website_media where website_id=${websiteId} and status <> 'deleted' and (${query}='' or position(lower(${query}) in lower(coalesce(original_name,''))) > 0 or position(lower(${query}) in lower(alt)) > 0 or position(lower(${query}) in lower(coalesce(caption,''))) > 0) and (${filters.kind ?? null}::text is null or kind=${filters.kind ?? null}) and (${filters.status ?? null}::text is null or status=${filters.status ?? null}) order by created_at desc,id desc limit 200`);
+    const rows = await tx.execute(sql`select id,bytes,width,height,alt,status,kind,mime,original_name,checksum,etag,caption,duration_ms,created_at from website_media where website_id=${websiteId} and status <> 'deleted' and (${query}='' or position(lower(${query}) in lower(coalesce(original_name,''))) > 0 or position(lower(${query}) in lower(alt)) > 0 or position(lower(${query}) in lower(coalesce(caption,''))) > 0) and (${filters.kind ?? null}::text is null or kind=${filters.kind ?? null}) and (${filters.status ?? null}::text is null or status=${filters.status ?? null}) and (${cursor?.createdAt ?? null}::timestamptz is null or (created_at,id) < (${cursor?.createdAt ?? null}::timestamptz,${cursor?.id ?? null}::uuid)) order by created_at desc,id desc limit 51`);
     const [usage] = await tx.execute(sql`select coalesce(sum(bytes),0)::bigint as used,count(*)::int as count,coalesce(sum(bytes) filter(where kind='image'),0)::bigint as image_used,coalesce(sum(bytes) filter(where kind='video'),0)::bigint as video_used,coalesce(sum(bytes) filter(where kind='document'),0)::bigint as document_used from website_media where website_id=${websiteId} and status <> 'deleted'`);
     const [limit] = await tx.execute(sql`select quota_bytes,video_quota_bytes,document_quota_bytes from website_media_limits where website_id=${websiteId}`);
-    return { enabled: uploadsEnabled(), items: rows.map((row) => ({ ...row, ref: "media:" + row.id })), usedBytes: Number(usage?.used ?? 0), quotaBytes: Number(limit?.quota_bytes ?? boundedQuota(process.env.MEDIA_WEBSITE_QUOTA_BYTES, 5_000_000)),imageUsedBytes:Number(usage?.image_used??0),videoUsedBytes:Number(usage?.video_used??0),documentUsedBytes:Number(usage?.document_used??0),videoQuotaBytes:Number(limit?.video_quota_bytes??boundedQuota(process.env.MEDIA_VIDEO_WEBSITE_QUOTA_BYTES,500_000_000)),documentQuotaBytes:Number(limit?.document_quota_bytes??boundedQuota(process.env.MEDIA_DOCUMENT_WEBSITE_QUOTA_BYTES,50_000_000)) };
+    const page = rows.slice(0, 50);
+    const last = page[page.length - 1] as { created_at?: Date | string; id?: string } | undefined;
+    const nextCursor = rows.length > 50 && last ? Buffer.from(JSON.stringify({ createdAt: new Date(last.created_at!).toISOString(), id: last.id })).toString("base64url") : null;
+    return { enabled: uploadsEnabled(), items: page.map((row) => ({ ...row, ref: "media:" + row.id })), nextCursor, usedBytes: Number(usage?.used ?? 0), quotaBytes: Number(limit?.quota_bytes ?? boundedQuota(process.env.MEDIA_WEBSITE_QUOTA_BYTES, 5_000_000)),imageUsedBytes:Number(usage?.image_used??0),videoUsedBytes:Number(usage?.video_used??0),documentUsedBytes:Number(usage?.document_used??0),videoQuotaBytes:Number(limit?.video_quota_bytes??boundedQuota(process.env.MEDIA_VIDEO_WEBSITE_QUOTA_BYTES,500_000_000)),documentQuotaBytes:Number(limit?.document_quota_bytes??boundedQuota(process.env.MEDIA_DOCUMENT_WEBSITE_QUOTA_BYTES,50_000_000)) };
   });
 }
 export async function uploadMedia(userId: string, websiteId: string, input: Buffer, mime: string, alt: string) {
@@ -82,7 +93,6 @@ export async function uploadMedia(userId: string, websiteId: string, input: Buff
     if (Number(rate?.count ?? 0) >= 10) throw new MediaError("Wait a minute before uploading more images.", 429);
     const [usage] = await tx.execute(sql`select coalesce(sum(bytes),0)::bigint as used,count(*)::int as count from website_media where website_id=${websiteId} and status <> 'deleted'`);
     const [limit] = await tx.execute(sql`select quota_bytes from website_media_limits where website_id=${websiteId}`);
-    if (Number(usage?.count ?? 0) >= 200) throw new MediaError("The image library has reached its 200-image limit.", 413);
     const quota = Number(limit?.quota_bytes ?? boundedQuota(process.env.MEDIA_WEBSITE_QUOTA_BYTES, 5_000_000));
     if (Number(usage?.used ?? 0) + optimized.bytes > quota) throw new MediaError("This website's image storage quota is full.", 413);
     const budget = boundedQuota(process.env.MEDIA_PRODUCT_BUDGET_BYTES, 2_000_000_000);
