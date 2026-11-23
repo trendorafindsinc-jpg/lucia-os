@@ -109,3 +109,18 @@ ALTER TABLE commerce_entitlements ENABLE ROW LEVEL SECURITY;
 CREATE POLICY commerce_entitlements_tenant_isolation ON commerce_entitlements
  USING (organization_id = NULLIF(current_setting('app.current_organization_id',true),'')::uuid)
  WITH CHECK (organization_id = NULLIF(current_setting('app.current_organization_id',true),'')::uuid);
+
+--> statement-breakpoint
+-- Paystack returns a reference before the tenant ID is known. This narrowly
+-- scoped SECURITY DEFINER lookup reveals only opaque IDs for a high-entropy reference;
+-- all payment/order reads and writes still run under tenant RLS.
+CREATE OR REPLACE FUNCTION commerce_lookup_payment_reference(p_reference text)
+RETURNS TABLE(organization_id uuid, payment_attempt_id uuid)
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+ SELECT p.organization_id, p.id
+ FROM commerce_payment_attempts p
+ WHERE p.provider = 'paystack' AND p.reference = p_reference
+ LIMIT 1
+$$;
