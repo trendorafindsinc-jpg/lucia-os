@@ -76,7 +76,7 @@ export async function createStoreOrder(site:{organizationId:string;websiteId:str
  const created=await tenantTx(site.organizationId,async tx=>{
   const [cart]=await tx.select().from(commerceCarts).where(and(eq(commerceCarts.organizationId,site.organizationId),eq(commerceCarts.websiteId,site.websiteId),eq(commerceCarts.customerKeyHash,customerHash),eq(commerceCarts.status,"active"))).limit(1).for("update");
   if(!cart) throw new Error("Cart is empty");
-  const rows=await tx.select({productId:commerceProducts.id,name:commerceProducts.name,sku:commerceProducts.sku,description:commerceProducts.description,currency:commerceProducts.currency,unitAmountMinor:commerceProducts.unitAmountMinor,quantity:commerceCartItems.quantity})
+  const rows=await tx.select({productId:commerceProducts.id,name:commerceProducts.name,sku:commerceProducts.sku,description:commerceProducts.description,currency:commerceProducts.currency,unitAmountMinor:commerceProducts.unitAmountMinor,inventoryQuantity:commerceProducts.inventoryQuantity,quantity:commerceCartItems.quantity})
    .from(commerceCartItems).innerJoin(commerceProducts,and(eq(commerceProducts.id,commerceCartItems.productId),eq(commerceProducts.organizationId,commerceCartItems.organizationId),eq(commerceProducts.websiteId,commerceCartItems.websiteId)))
    .where(and(eq(commerceCartItems.cartId,cart.id),eq(commerceProducts.status,"active"))).for("update");
   const totals=calculateCartTotals(rows);
