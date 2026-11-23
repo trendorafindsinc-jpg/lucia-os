@@ -5,15 +5,24 @@ export type MediaLibraryItem = { id: string; ref: string; bytes: number; width: 
 export function MediaLibrary({ websiteId, accountId, onChange, protectedIds, onSelect, onInsert, selectedRef, insertLabel, defaultOpen = false }: { websiteId: string; accountId: string; onChange: (items: { ref: string; label: string }[]) => void; protectedIds: string[]; onSelect?: (item: MediaLibraryItem) => void; onInsert?: (item:MediaLibraryItem)=>void; selectedRef?: string | null; insertLabel?: string; defaultOpen?: boolean }) {
   const [library, setLibrary] = useState<{ items: MediaLibraryItem[]; enabled: boolean; usedBytes: number; quotaBytes: number; imageUsedBytes:number;videoUsedBytes:number;videoQuotaBytes:number;documentUsedBytes:number;documentQuotaBytes:number } | null>(null);
   const [notice, setNotice] = useState("Loading your media library…"), [busy, setBusy] = useState(false);
+  const [search, setSearch] = useState("");
+  const [kindFilter, setKindFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const endpoint = `/api/websites/${websiteId}/media`;
   const load = useCallback(async () => {
-    const response = await fetch(endpoint, { cache: "no-store", headers: { "x-lucia-workspace-account": accountId } });
+    const params = new URLSearchParams();
+    if (search.trim()) params.set("q", search.trim());
+    if (kindFilter !== "all") params.set("kind", kindFilter);
+    if (statusFilter !== "all") params.set("status", statusFilter);
+    const response = await fetch(endpoint + (params.size ? "?" + params.toString() : ""), { cache: "no-store", headers: { "x-lucia-workspace-account": accountId } });
     const body = await response.json();
     if (!response.ok) throw Error(body.error || "Media library unavailable.");
     setLibrary(body);
-    onChange(body.items.filter((item: MediaLibraryItem) => item.status === "ready" && item.kind === "image").map((item: MediaLibraryItem) => ({ ref: item.ref, label: "Your image: " + item.alt })));
+    if (!search.trim() && kindFilter === "all" && statusFilter === "all") {
+      onChange(body.items.filter((item: MediaLibraryItem) => item.status === "ready" && item.kind === "image").map((item: MediaLibraryItem) => ({ ref: item.ref, label: "Your image: " + item.alt })));
+    }
     return body;
-  }, [endpoint, accountId, onChange]);
+  }, [endpoint, accountId, onChange, search, kindFilter, statusFilter]);
   useEffect(() => { let active = true; load().then(() => { if (active) setNotice(""); }).catch((error) => { if (active) setNotice(error.message); }); return () => { active = false; }; }, [load]);
   async function upload(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault(); const form = event.currentTarget;
@@ -56,6 +65,11 @@ export function MediaLibrary({ websiteId, accountId, onChange, protectedIds, onS
     <p role="status" aria-live="polite">{notice}</p>
     {library && <p>Images: {(library.imageUsedBytes/1_000_000).toFixed(1)} / {(library.quotaBytes/1_000_000).toFixed(0)} MB · Videos: {(library.videoUsedBytes/1_000_000).toFixed(1)} / {(library.videoQuotaBytes/1_000_000).toFixed(0)} MB · PDFs: {(library.documentUsedBytes/1_000_000).toFixed(1)} / {(library.documentQuotaBytes/1_000_000).toFixed(0)} MB. Total reserved: {(library.usedBytes/1_000_000).toFixed(1)} MB. Images are compressed; original image files are not retained.</p>}
     {!library?.enabled && <p>Customer uploads are not enabled yet. You can continue with built-in artwork.</p>}
+    <div className="media-library-filters" role="search" aria-label="Filter media library">
+      <label>Search assets<input type="search" value={search} maxLength={120} placeholder="Filename, description or caption" onChange={(event) => setSearch(event.target.value)} /></label>
+      <label>Type<select value={kindFilter} onChange={(event) => setKindFilter(event.target.value)}><option value="all">All types</option><option value="image">Images</option><option value="video">Videos</option><option value="document">PDF documents</option></select></label>
+      <label>Status<select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option value="all">All statuses</option><option value="ready">Ready</option><option value="pending">Pending</option><option value="failed">Failed</option></select></label>
+    </div>
     <form onSubmit={upload} className="composition-controls">
       <label>Customer image (JPEG, PNG or WebP, up to 4 MB)<input name="file" type="file" accept="image/jpeg,image/png,image/webp" required disabled={busy || !library?.enabled} /></label>
       <label>Describe the image<input name="alt" maxLength={200} required disabled={busy || !library?.enabled} /></label>
