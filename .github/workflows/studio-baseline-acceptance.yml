@@ -1,0 +1,28 @@
+name: Studio baseline recovery
+on:
+  pull_request:
+    paths:
+      - "src/lib/graph/**"
+      - "src/lib/studio/**"
+      - "src/lib/layout-blueprint/premium-layouts/catalogue-document.test.ts"
+      - "docs/layouts-48-premium-catalogue.md"
+      - ".github/workflows/studio-baseline-acceptance.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: studio-baseline-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  studio-baseline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - name: Lint restored Studio and catalogue files
+        run: npx eslint src/lib/graph src/lib/studio src/lib/layout-blueprint/premium-layouts/catalogue-document.test.ts
+      - name: Run graph contract, layout and catalogue documentation regressions
+        run: npx vitest run src/lib/graph/contracts.test.ts src/lib/layout-blueprint/premium-layouts/catalogue-document.test.ts
