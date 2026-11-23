@@ -68,7 +68,7 @@ export function MediaLibrary({ websiteId, accountId, onChange, protectedIds, onS
     <div className="media-library-filters" role="search" aria-label="Filter media library">
       <label>Search assets<input type="search" value={search} maxLength={120} placeholder="Filename, description or caption" onChange={(event) => setSearch(event.target.value)} /></label>
       <label>Type<select value={kindFilter} onChange={(event) => setKindFilter(event.target.value)}><option value="all">All types</option><option value="image">Images</option><option value="video">Videos</option><option value="document">PDF documents</option></select></label>
-      <label>Status<select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option value="all">All statuses</option><option value="ready">Ready</option><option value="pending">Pending</option><option value="failed">Failed</option></select></label>
+      <label>Status<select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option value="all">All statuses</option><option value="ready">Ready</option><option value="pending">Pending</option><option value="deleting">Being removed</option></select></label>
     </div>
     <form onSubmit={upload} className="composition-controls">
       <label>Customer image (JPEG, PNG or WebP, up to 4 MB)<input name="file" type="file" accept="image/jpeg,image/png,image/webp" required disabled={busy || !library?.enabled} /></label>
