@@ -260,6 +260,13 @@
       "when": 1795411200000,
       "tag": "0036_subscription_entitlements",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1795411260000,
+      "tag": "0037_starter_trial_plan",
+      "breakpoints": true
     }
   ]
 }
