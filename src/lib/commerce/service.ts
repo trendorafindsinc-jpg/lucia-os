@@ -93,8 +93,15 @@ export async function createStoreOrder(site:{organizationId:string;websiteId:str
   await tenantTx(site.organizationId,tx=>tx.update(commercePaymentAttempts).set({checkoutUrl:checkout.authorization_url,status:"pending",updatedAt:new Date()}).where(eq(commercePaymentAttempts.id,created.attempt.id)));
   return {orderNumber:created.order.orderNumber,checkoutUrl:checkout.authorization_url,reference:created.attempt.reference};
  } catch(error) {
-  await tenantTx(site.organizationId,tx=>tx.update(commercePaymentAttempts).set({status:"failed",updatedAt:new Date()}).where(eq(commercePaymentAttempts.id,created.attempt.id)));
-  await tenantTx(site.organizationId,tx=>tx.update(commerceOrders).set({paymentStatus:"failed",updatedAt:new Date()}).where(eq(commerceOrders.id,created.order.id)));
+  await tenantTx(site.organizationId,async tx=>{
+   const [locked]=await tx.select().from(commerceOrders).where(eq(commerceOrders.id,created.order.id)).limit(1).for("update");
+   if(locked && locked.paymentStatus!=="paid" && locked.status!=="cancelled") {
+    const lines=await tx.select({productId:commerceOrderItems.productId,quantity:commerceOrderItems.quantity}).from(commerceOrderItems).where(eq(commerceOrderItems.orderId,locked.id));
+    for(const line of lines) if(line.productId) await tx.update(commerceProducts).set({inventoryQuantity:sql`CASE WHEN inventory_quantity IS NULL THEN NULL ELSE inventory_quantity + ${line.quantity} END`,updatedAt:new Date()}).where(eq(commerceProducts.id,line.productId));
+    await tx.update(commerceOrders).set({status:"cancelled",paymentStatus:"failed",updatedAt:new Date()}).where(eq(commerceOrders.id,locked.id));
+   }
+   await tx.update(commercePaymentAttempts).set({status:"failed",updatedAt:new Date()}).where(eq(commercePaymentAttempts.id,created.attempt.id));
+  });
   throw error;
  }
 }
@@ -122,14 +129,31 @@ export async function recordPaystackWebhook(rawBody:string,signature:string|null
  const secret=process.env.PAYSTACK_SECRET_KEY;
  if(!secret||!verifyPaystackWebhookSignature(rawBody,signature,secret)) throw new Error("Invalid webhook signature");
  const payload=JSON.parse(rawBody) as {event?:string;data?:{reference?:string}};
- if(payload.event!=="charge.success"||typeof payload.data?.reference!=="string") return {ignored:true};
+ if((payload.event!=="charge.success"&&payload.event!=="charge.failed")||typeof payload.data?.reference!=="string") return {ignored:true};
  const reference=payload.data.reference, eventKey=hashCommerceKey(rawBody);
  const db=getDb();
  const [existing]=await db.select().from(commerceWebhookEvents).where(and(eq(commerceWebhookEvents.provider,"paystack"),eq(commerceWebhookEvents.eventKey,eventKey))).limit(1);
  if(existing?.status==="processed") return {duplicate:true};
  if(!existing) await db.insert(commerceWebhookEvents).values({provider:"paystack",eventKey,reference,payloadHash:eventKey,status:"received"}).onConflictDoNothing();
  try {
-  const settled=await settlePaystackReference(reference);
+  let settled:any;
+  if(payload.event==="charge.success") settled=await settlePaystackReference(reference);
+  else {
+   const actual=await verifyPaystackCheckout(reference);
+   if(actual.status.trim().toLowerCase()!=="failed") throw new Error("Paystack failure event did not verify as failed");
+   const [attempt]=await db.select().from(commercePaymentAttempts).where(and(eq(commercePaymentAttempts.provider,"paystack"),eq(commercePaymentAttempts.reference,reference))).limit(1);
+   if(!attempt) throw new Error("Payment reference not found");
+   settled=await tenantTx(attempt.organizationId,async tx=>{
+    const [order]=await tx.select().from(commerceOrders).where(eq(commerceOrders.id,attempt.orderId)).limit(1).for("update");
+    if(order && order.paymentStatus!=="paid" && order.status!=="cancelled") {
+     const lines=await tx.select({productId:commerceOrderItems.productId,quantity:commerceOrderItems.quantity}).from(commerceOrderItems).where(eq(commerceOrderItems.orderId,order.id));
+     for(const line of lines) if(line.productId) await tx.update(commerceProducts).set({inventoryQuantity:sql`CASE WHEN inventory_quantity IS NULL THEN NULL ELSE inventory_quantity + ${line.quantity} END`,updatedAt:new Date()}).where(eq(commerceProducts.id,line.productId));
+     await tx.update(commerceOrders).set({status:"cancelled",paymentStatus:"failed",updatedAt:new Date()}).where(eq(commerceOrders.id,order.id));
+    }
+    await tx.update(commercePaymentAttempts).set({status:"failed",updatedAt:new Date()}).where(eq(commercePaymentAttempts.id,attempt.id));
+    return {failed:true};
+   });
+  }
   await db.update(commerceWebhookEvents).set({status:"processed",processedAt:new Date()}).where(and(eq(commerceWebhookEvents.provider,"paystack"),eq(commerceWebhookEvents.eventKey,eventKey)));
   return settled;
  } catch(error) {
