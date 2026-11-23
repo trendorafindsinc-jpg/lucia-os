@@ -7,6 +7,7 @@ import { hasOrganizationPermission } from "@/lib/access/policy";
 import { getDb } from "@/lib/db/client";
 import { customDomainSchema } from "@/lib/publishing/publishing";
 import { websiteDomains, websites } from "@/lib/db/schema";
+import { hasOrganizationEntitlement } from "@/lib/subscriptions/entitlements";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,6 +43,7 @@ export async function POST(request: Request) {
         const [website] = await tx.select({ id: websites.id, name: websites.name, slug: websites.slug, status: websites.status })
           .from(websites).where(and(eq(websites.id, input.websiteId as string), eq(websites.organizationId, org.id), ne(websites.status, "deleted"))).limit(1);
         if (!website) return null;
+        if (!(await hasOrganizationEntitlement(tx, org.id, "custom_domains"))) throw new Error("DOMAIN_ENTITLEMENT_REQUIRED");
         const [existing] = await tx.select({ id: websiteDomains.id }).from(websiteDomains).where(eq(websiteDomains.hostname, hostname)).limit(1);
         if (existing) throw new Error("DOMAIN_ALREADY_REGISTERED");
         const token = randomBytes(32).toString("hex");
@@ -55,6 +57,7 @@ export async function POST(request: Request) {
       return NextResponse.json(result, { status: 201, headers: { "Cache-Control": "no-store" } });
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : "";
+      if (message === "DOMAIN_ENTITLEMENT_REQUIRED") return error("An active custom-domain entitlement is required before registering a custom domain.", 403);
       if (message === "DOMAIN_ALREADY_REGISTERED" || /website_domains_hostname_uq|duplicate key|unique constraint/i.test(message)) return error("That hostname is already registered. Every domain can belong to only one website.", 409);
       return error("We couldn't register this domain. No existing website or domain was changed.", 503);
     }
