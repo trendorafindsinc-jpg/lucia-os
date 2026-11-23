@@ -3,21 +3,22 @@ import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 export type MediaLibraryItem = { id: string; ref: string; bytes: number; width: number; height: number; alt: string; status: string; kind:"image"|"video"|"document";mime:string;original_name?:string|null;caption?:string|null;created_at?:string };
 export function MediaLibrary({ websiteId, accountId, onChange, protectedIds, onSelect, onInsert, selectedRef, insertLabel, defaultOpen = false }: { websiteId: string; accountId: string; onChange: (items: { ref: string; label: string }[]) => void; protectedIds: string[]; onSelect?: (item: MediaLibraryItem) => void; onInsert?: (item:MediaLibraryItem)=>void; selectedRef?: string | null; insertLabel?: string; defaultOpen?: boolean }) {
-  const [library, setLibrary] = useState<{ items: MediaLibraryItem[]; enabled: boolean; usedBytes: number; quotaBytes: number; imageUsedBytes:number;videoUsedBytes:number;videoQuotaBytes:number;documentUsedBytes:number;documentQuotaBytes:number } | null>(null);
+  const [library, setLibrary] = useState<{ items: MediaLibraryItem[]; nextCursor?: string | null; enabled: boolean; usedBytes: number; quotaBytes: number; imageUsedBytes:number;videoUsedBytes:number;videoQuotaBytes:number;documentUsedBytes:number;documentQuotaBytes:number } | null>(null);
   const [notice, setNotice] = useState("Loading your media library…"), [busy, setBusy] = useState(false);
   const [search, setSearch] = useState("");
   const [kindFilter, setKindFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const endpoint = `/api/websites/${websiteId}/media`;
-  const load = useCallback(async () => {
+  const load = useCallback(async (cursor?: string, append = false) => {
     const params = new URLSearchParams();
     if (search.trim()) params.set("q", search.trim());
     if (kindFilter !== "all") params.set("kind", kindFilter);
     if (statusFilter !== "all") params.set("status", statusFilter);
+    if (cursor) params.set("cursor", cursor);
     const response = await fetch(endpoint + (params.size ? "?" + params.toString() : ""), { cache: "no-store", headers: { "x-lucia-workspace-account": accountId } });
     const body = await response.json();
     if (!response.ok) throw Error(body.error || "Media library unavailable.");
-    setLibrary(body);
+    setLibrary((previous) => append && previous ? { ...body, items: [...previous.items, ...body.items] } : body);
     if (!search.trim() && kindFilter === "all" && statusFilter === "all") {
       onChange(body.items.filter((item: MediaLibraryItem) => item.status === "ready" && item.kind === "image").map((item: MediaLibraryItem) => ({ ref: item.ref, label: "Your image: " + item.alt })));
     }
@@ -100,5 +101,6 @@ export function MediaLibrary({ websiteId, accountId, onChange, protectedIds, onS
       {item.status === "ready" && <form onSubmit={(event) => void saveMetadata(event, item)} className="media-metadata-form"><label>Accessible description<input name="alt" defaultValue={item.alt} maxLength={200} required disabled={busy} /></label><label>Caption<input name="caption" defaultValue={item.caption || ""} maxLength={200} disabled={busy} /></label><button disabled={busy}>Save details</button></form>}
       {(item.status==="ready"||item.status==="deleting"||(item.status==="pending"&&Date.now()-new Date(item.created_at||0).getTime()>24*60*60*1000))?<button type="button" disabled={busy||protectedIds.includes(item.id)} onClick={()=>remove(item.id)}>Remove unused asset</button>:item.status==="pending"?<span>Upload pending. Abandoned uploads are reconciled automatically.</span>:<span>Awaiting storage reconciliation; reserved space remains counted.</span>}
     </li>)}</ul>
+    {library?.nextCursor && <button type="button" disabled={busy} onClick={() => { load(library.nextCursor || undefined, true).then(() => setNotice("More assets loaded.")).catch((error) => setNotice(error.message)); }}>Load more assets</button>}
   </details>;
 }
