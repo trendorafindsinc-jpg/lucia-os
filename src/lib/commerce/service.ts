@@ -8,16 +8,18 @@ import { initializePaystackCheckout, verifyPaystackCheckout } from "./paystack-g
 import { verifyProviderTransaction } from "@/lib/billing/verify-transaction";
 import { normalizeHostname } from "@/lib/domains/hostname";
 
+type CommerceTx = Parameters<Parameters<ReturnType<typeof getDb>["transaction"]>[0]>[0];
+
 export const hashCommerceKey = (value:string) => createHash("sha256").update(value).digest("hex");
 export function createCommerceCustomerKey() { return randomBytes(32).toString("base64url"); }
-async function tenantTx<T>(organizationId:string, fn:(tx:any)=>Promise<T>):Promise<T> {
+async function tenantTx<T>(organizationId:string, fn:(tx:CommerceTx)=>Promise<T>):Promise<T> {
  const db=getDb();
  return db.transaction(async tx=>{
   await tx.execute(sql`select set_config('app.current_organization_id', ${organizationId}, true)`);
   return fn(tx);
  });
 }
-export async function assertCommerceEntitlement(tx:any,organizationId:string,websiteId:string) {
+export async function assertCommerceEntitlement(tx:CommerceTx,organizationId:string,websiteId:string) {
  const [row]=await tx.select({id:commerceEntitlements.id}).from(commerceEntitlements)
   .where(and(eq(commerceEntitlements.organizationId,organizationId),eq(commerceEntitlements.websiteId,websiteId),eq(commerceEntitlements.status,"active"),sql`(expires_at IS NULL OR expires_at > now())`)).limit(1);
  if(!row) throw new Error("Commerce entitlement is inactive");
@@ -41,7 +43,7 @@ export async function listStoreProducts(site:{organizationId:string;websiteId:st
    .from(commerceProducts).where(and(eq(commerceProducts.organizationId,site.organizationId),eq(commerceProducts.websiteId,site.websiteId),eq(commerceProducts.status,"active"))).orderBy(desc(commerceProducts.createdAt));
  });
 }
-async function loadCart(tx:any, site:{organizationId:string;websiteId:string}, customerHash:string) {
+async function loadCart(tx:CommerceTx, site:{organizationId:string;websiteId:string}, customerHash:string) {
  let [cart]=await tx.select().from(commerceCarts).where(and(eq(commerceCarts.organizationId,site.organizationId),eq(commerceCarts.websiteId,site.websiteId),eq(commerceCarts.customerKeyHash,customerHash),eq(commerceCarts.status,"active"))).limit(1);
  if(!cart) {
   [cart]=await tx.insert(commerceCarts).values({organizationId:site.organizationId,websiteId:site.websiteId,customerKeyHash:customerHash}).onConflictDoNothing().returning();
@@ -92,7 +94,7 @@ export async function createStoreOrder(site:{organizationId:string;websiteId:str
   const totals=calculateCartTotals(rows);
   if(totals.subtotalMinor<=0) throw new Error("Order total must be greater than zero");
   for (const line of totals.lines) {
-   const product=rows.find((row:any)=>row.productId===line.productId);
+   const product=rows.find((row)=>row.productId===line.productId);
    if(product?.inventoryQuantity!==null && product?.inventoryQuantity!==undefined && product.inventoryQuantity<line.quantity) throw new Error("Insufficient stock for "+line.name);
    if(product?.inventoryQuantity!==null && product?.inventoryQuantity!==undefined) {
     const changed=await tx.update(commerceProducts).set({inventoryQuantity:sql`inventory_quantity - ${line.quantity}`,updatedAt:new Date()}).where(and(eq(commerceProducts.id,line.productId),eq(commerceProducts.organizationId,site.organizationId),eq(commerceProducts.websiteId,site.websiteId),sql`inventory_quantity >= ${line.quantity}`)).returning({id:commerceProducts.id});
@@ -101,7 +103,7 @@ export async function createStoreOrder(site:{organizationId:string;websiteId:str
   }
   const orderNumber=`LUC-${Date.now().toString(36).toUpperCase()}-${randomBytes(4).toString("hex").toUpperCase()}`;
   const [order]=await tx.insert(commerceOrders).values({organizationId:site.organizationId,websiteId:site.websiteId,orderNumber,customerKeyHash:customerHash,customerEmail:email,currency:totals.currency,subtotalMinor:totals.subtotalMinor,totalMinor:totals.subtotalMinor,status:"pending_payment",paymentStatus:"pending"}).returning();
-  await tx.insert(commerceOrderItems).values(totals.lines.map(line=>({organizationId:site.organizationId,websiteId:site.websiteId,orderId:order.id,productId:line.productId,productName:line.name,sku:line.sku,quantity:line.quantity,unitAmountMinor:line.unitAmountMinor,lineTotalMinor:line.lineTotalMinor,currency:line.currency,snapshot:{name:line.name,sku:line.sku,description:rows.find((r:any)=>r.productId===line.productId)?.description??"",unitAmountMinor:line.unitAmountMinor,quantity:line.quantity,currency:line.currency}})));
+  await tx.insert(commerceOrderItems).values(totals.lines.map(line=>({organizationId:site.organizationId,websiteId:site.websiteId,orderId:order.id,productId:line.productId,productName:line.name,sku:line.sku,quantity:line.quantity,unitAmountMinor:line.unitAmountMinor,lineTotalMinor:line.lineTotalMinor,currency:line.currency,snapshot:{name:line.name,sku:line.sku,description:rows.find((r)=>r.productId===line.productId)?.description??"",unitAmountMinor:line.unitAmountMinor,quantity:line.quantity,currency:line.currency}})));
   const reference=`lucia_${randomBytes(18).toString("hex")}`;
   const [attempt]=await tx.insert(commercePaymentAttempts).values({organizationId:site.organizationId,websiteId:site.websiteId,orderId:order.id,reference,amountMinor:totals.subtotalMinor,currency:totals.currency,status:"initialized"}).returning();
   await tx.update(commerceCarts).set({status:"converted",updatedAt:new Date()}).where(eq(commerceCarts.id,cart.id));
@@ -154,7 +156,7 @@ export async function recordPaystackWebhook(rawBody:string,signature:string|null
  if(existing?.status==="processed") return {duplicate:true};
  if(!existing) await db.insert(commerceWebhookEvents).values({provider:"paystack",eventKey,reference,payloadHash:eventKey,status:"received"}).onConflictDoNothing();
  try {
-  let settled:any;
+  let settled: { paid?:boolean; alreadySettled?:boolean; orderNumber?:string; manualReview?:boolean; failed?:boolean; ignored?:boolean; duplicate?:boolean } | undefined;
   if(payload.event==="charge.success") settled=await settlePaystackReference(reference);
   else {
    const actual=await verifyPaystackCheckout(reference);
