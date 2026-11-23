@@ -10,7 +10,7 @@ export async function GET(request:Request){
  const access=await requireCommerceAdmin(organizationId,websiteId,"website.read");
  if(!access)return json({error:"Not found or not authorized."},404);
  if(!access.enabled)return json({error:"Commerce entitlement is inactive."},403);
- return json({orders:await listTenantOrders(organizationId,websiteId)});
+ return json({orders:await listTenantOrders(organizationId,websiteId,access.user.id)});
 }
 export async function PATCH(request:Request){
  if(!websiteMutationAllowed(request))return json({error:"Request origin denied."},403);
@@ -21,6 +21,6 @@ export async function PATCH(request:Request){
  const access=await requireCommerceAdmin(organizationId,websiteId,"website.edit");
  if(!access)return json({error:"Not found or not authorized."},404);
  if(!access.enabled)return json({error:"Commerce entitlement is inactive."},403);
- try{return json(await updateOrderFulfillment(organizationId,websiteId,orderId,status));}
+ try{return json(await updateOrderFulfillment(organizationId,websiteId,orderId,access.user.id,status));}
  catch(error){return json({error:error instanceof Error?error.message:"Order update failed."},422);}
 }
