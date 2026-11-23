@@ -1,8 +1,9 @@
 import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 import { and, asc, desc, eq, sql } from "drizzle-orm";
+import { hasOrganizationPermission } from "@/lib/access/policy";
 import { getDb } from "@/lib/db/client";
-import { commerceCartItems, commerceCarts, commerceEntitlements, commerceOrderItems, commerceOrders, commercePaymentAttempts, commerceProducts, commerceWebhookEvents, websiteDomains, websites } from "@/lib/db/schema";
+import { commerceCartItems, commerceCarts, commerceEntitlements, commerceOrderItems, commerceOrders, commercePaymentAttempts, commerceProducts, commerceWebhookEvents, memberships, websiteDomains, websites } from "@/lib/db/schema";
 import { calculateCartTotals } from "./totals";
 import { initializePaystackCheckout, verifyPaystackCheckout } from "./paystack-gateway";
 import { verifyProviderTransaction } from "@/lib/billing/verify-transaction";
@@ -12,12 +13,18 @@ type CommerceTx = Parameters<Parameters<ReturnType<typeof getDb>["transaction"]>
 
 export const hashCommerceKey = (value:string) => createHash("sha256").update(value).digest("hex");
 export function createCommerceCustomerKey() { return randomBytes(32).toString("base64url"); }
-async function tenantTx<T>(organizationId:string, fn:(tx:CommerceTx)=>Promise<T>):Promise<T> {
+async function tenantTx<T>(organizationId:string, fn:(tx:CommerceTx)=>Promise<T>, userId?:string):Promise<T> {
  const db=getDb();
  return db.transaction(async tx=>{
   await tx.execute(sql`select set_config('app.current_organization_id', ${organizationId}, true)`);
+  if(userId) await tx.execute(sql`select set_config('app.current_user_id', ${userId}, true)`);
   return fn(tx);
  });
+}
+async function assertCommerceMembership(tx:CommerceTx,userId:string,organizationId:string,permission:"website.read"|"website.edit") {
+ const [membership]=await tx.select({role:memberships.role,status:memberships.status}).from(memberships)
+  .where(and(eq(memberships.organizationId,organizationId),eq(memberships.userId,userId),eq(memberships.status,"active"))).limit(1);
+ if(!hasOrganizationPermission(membership,permission)) throw new Error("Organization access changed; refresh and try again.");
 }
 export async function assertCommerceEntitlement(tx:CommerceTx,organizationId:string,websiteId:string) {
  const [row]=await tx.select({id:commerceEntitlements.id}).from(commerceEntitlements)
@@ -186,14 +193,17 @@ export async function recordPaystackWebhook(rawBody:string,signature:string|null
   throw error;
  }
 }
-export async function listTenantOrders(organizationId:string,websiteId:string) {
+export async function listTenantOrders(organizationId:string,websiteId:string,userId:string) {
  return tenantTx(organizationId,async tx=>{
+  await assertCommerceMembership(tx,userId,organizationId,"website.read");
   await assertCommerceEntitlement(tx,organizationId,websiteId);
   return tx.select().from(commerceOrders).where(and(eq(commerceOrders.organizationId,organizationId),eq(commerceOrders.websiteId,websiteId))).orderBy(desc(commerceOrders.createdAt)).limit(100);
- });
+ },userId);
 }
-export async function updateOrderFulfillment(organizationId:string,websiteId:string,orderId:string,status:"processing"|"fulfilled"|"cancelled") {
+export async function updateOrderFulfillment(organizationId:string,websiteId:string,orderId:string,userId:string,status:"processing"|"fulfilled"|"cancelled") {
  return tenantTx(organizationId,async tx=>{
+  await assertCommerceMembership(tx,userId,organizationId,"website.edit");
+  await assertCommerceMembership(tx,userId,organizationId,"website.read");
   await assertCommerceEntitlement(tx,organizationId,websiteId);
   const [order]=await tx.select().from(commerceOrders).where(and(eq(commerceOrders.id,orderId),eq(commerceOrders.organizationId,organizationId),eq(commerceOrders.websiteId,websiteId))).limit(1).for("update");
   if(!order) throw new Error("Order not found");
@@ -202,14 +212,14 @@ export async function updateOrderFulfillment(organizationId:string,websiteId:str
   if(order.status==="cancelled") throw new Error("Order is already cancelled");
   await tx.update(commerceOrders).set({status,updatedAt:new Date()}).where(eq(commerceOrders.id,orderId));
   return {id:orderId,status};
- });
+ },userId);
 }
-export async function getTenantOrder(organizationId:string,websiteId:string,orderId:string) {
+export async function getTenantOrder(organizationId:string,websiteId:string,orderId:string,userId:string) {
  return tenantTx(organizationId,async tx=>{
   await assertCommerceEntitlement(tx,organizationId,websiteId);
   const [order]=await tx.select().from(commerceOrders).where(and(eq(commerceOrders.id,orderId),eq(commerceOrders.organizationId,organizationId),eq(commerceOrders.websiteId,websiteId))).limit(1);
   if(!order) return null;
   const items=await tx.select().from(commerceOrderItems).where(and(eq(commerceOrderItems.orderId,orderId),eq(commerceOrderItems.organizationId,organizationId),eq(commerceOrderItems.websiteId,websiteId))).orderBy(asc(commerceOrderItems.createdAt));
   return {order,items};
- });
+ },userId);
 }
