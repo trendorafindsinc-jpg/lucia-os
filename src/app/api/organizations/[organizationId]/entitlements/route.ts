@@ -50,7 +50,8 @@ export async function POST(request: Request, context: Context) {
   if (!parsed.success) return NextResponse.json({ error: "Choose a valid plan and billing cadence." }, { status: 422 });
   const result = await getDb().transaction(async (tx) => {
     await tx.execute(sql`select set_config('app.current_organization_id', ${access.membership.organizationId}, true)`);
-    const [organization] = await tx.execute(sql`select id from organizations where id=${access.membership.organizationId}::uuid and status='active' for update`);
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${access.membership.organizationId}::text, 0))`);
+    const [organization] = await tx.execute(sql`select id from organizations where id=${access.membership.organizationId}::uuid and status='active' limit 1`);
     if (!organization) return { kind: "missing" as const };
     const [previousTrial] = await tx.execute(sql`select id from organization_subscriptions where organization_id=${access.membership.organizationId}::uuid and trial_ends_at is not null limit 1`);
     if (previousTrial) return { kind: "trial_used" as const };
