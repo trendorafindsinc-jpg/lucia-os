@@ -2,7 +2,7 @@ import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
-import { commerceCartItems, commerceCarts, commerceEntitlements, commerceOrderItems, commerceOrders, commercePaymentAttempts, commerceProducts, commerceWebhookEvents, memberships, websiteDomains, websites } from "@/lib/db/schema";
+import { commerceCartItems, commerceCarts, commerceEntitlements, commerceOrderItems, commerceOrders, commercePaymentAttempts, commerceProducts, commerceWebhookEvents, websiteDomains, websites } from "@/lib/db/schema";
 import { calculateCartTotals } from "./totals";
 import { initializePaystackCheckout, verifyPaystackCheckout } from "./paystack-gateway";
 import { verifyProviderTransaction } from "@/lib/billing/verify-transaction";
@@ -80,6 +80,7 @@ export async function createStoreOrder(site:{organizationId:string;websiteId:str
    .from(commerceCartItems).innerJoin(commerceProducts,and(eq(commerceProducts.id,commerceCartItems.productId),eq(commerceProducts.organizationId,commerceCartItems.organizationId),eq(commerceProducts.websiteId,commerceCartItems.websiteId)))
    .where(and(eq(commerceCartItems.cartId,cart.id),eq(commerceProducts.status,"active"))).for("update");
   const totals=calculateCartTotals(rows);
+  if(totals.subtotalMinor<=0) throw new Error("Order total must be greater than zero");
   for (const line of totals.lines) {
    const product=rows.find((row:any)=>row.productId===line.productId);
    if(product?.inventoryQuantity!==null && product?.inventoryQuantity!==undefined && product.inventoryQuantity<line.quantity) throw new Error("Insufficient stock for "+line.name);
