@@ -36,7 +36,7 @@ permissions:
 
 concurrency:
   group: database-migrations-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   migrate-from-empty-database:
