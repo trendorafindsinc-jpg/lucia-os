@@ -267,6 +267,13 @@
       "when": 1795411260000,
       "tag": "0037_starter_trial_plan",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1795420000000,
+      "tag": "0038_commerce_catalogue",
+      "breakpoints": true
     }
   ]
 }
