@@ -29,6 +29,7 @@ export async function POST(request:Request) {
  if(!access) return json({error:"Not found or not authorized."},404);
  if(!access.enabled)return json({error:"Commerce entitlement is inactive."},403);
  try{const db=getDb();const [created]=await db.transaction(async tx=>{await tx.execute(sql`select set_config('app.current_user_id', ${access.user.id}, true),set_config('app.current_organization_id', ${organizationId}, true)`);
+  await assertCommerceEntitlement(tx,organizationId,websiteId);
   return tx.insert(commerceProducts).values({organizationId,websiteId,...product}).returning();});
   return json({product:created},201);
  }catch{return json({error:"SKU or slug already exists, or product could not be saved."},409);}
