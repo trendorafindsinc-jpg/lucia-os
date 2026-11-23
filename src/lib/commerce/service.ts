@@ -101,18 +101,11 @@ export async function createStoreOrder(site:{organizationId:string;websiteId:str
   await tenantTx(site.organizationId,tx=>tx.update(commercePaymentAttempts).set({checkoutUrl:checkout.authorization_url,status:"pending",updatedAt:new Date()}).where(eq(commercePaymentAttempts.id,created.attempt.id)));
   return {orderNumber:created.order.orderNumber,checkoutUrl:checkout.authorization_url,reference:created.attempt.reference};
  } catch(error) {
-  await tenantTx(site.organizationId,async tx=>{
-   const [locked]=await tx.select().from(commerceOrders).where(eq(commerceOrders.id,created.order.id)).limit(1).for("update");
-   if(locked && locked.paymentStatus!=="paid" && locked.status!=="cancelled") {
-    const lines=await tx.select({productId:commerceOrderItems.productId,quantity:commerceOrderItems.quantity}).from(commerceOrderItems).where(eq(commerceOrderItems.orderId,locked.id));
-    for(const line of lines) if(line.productId) await tx.update(commerceProducts).set({inventoryQuantity:sql`CASE WHEN inventory_quantity IS NULL THEN NULL ELSE inventory_quantity + ${line.quantity} END`,updatedAt:new Date()}).where(eq(commerceProducts.id,line.productId));
-    await tx.update(commerceOrders).set({status:"cancelled",paymentStatus:"failed",updatedAt:new Date()}).where(eq(commerceOrders.id,locked.id));
-   }
-   await tx.update(commercePaymentAttempts).set({status:"failed",updatedAt:new Date()}).where(eq(commercePaymentAttempts.id,created.attempt.id));
-  });
+  // A timeout can occur after Paystack created a live checkout session. Keep
+  // the reservation and pending state until a verified provider event resolves it.
+  await tenantTx(site.organizationId,tx=>tx.update(commercePaymentAttempts).set({status:"pending",updatedAt:new Date()}).where(eq(commercePaymentAttempts.id,created.attempt.id)));
   throw error;
- }
-}
+ }}
 export async function settlePaystackReference(reference:string) {
  const db=getDb();
  const [attempt]=await db.select().from(commercePaymentAttempts).where(and(eq(commercePaymentAttempts.provider,"paystack"),eq(commercePaymentAttempts.reference,reference))).limit(1);
