@@ -17,6 +17,11 @@ async function tenantTx<T>(organizationId:string, fn:(tx:any)=>Promise<T>):Promi
   return fn(tx);
  });
 }
+export async function assertCommerceEntitlement(tx:any,organizationId:string,websiteId:string) {
+ const [row]=await tx.select({id:commerceEntitlements.id}).from(commerceEntitlements)
+  .where(and(eq(commerceEntitlements.organizationId,organizationId),eq(commerceEntitlements.websiteId,websiteId),eq(commerceEntitlements.status,"active"),sql`(expires_at IS NULL OR expires_at > now())`)).limit(1);
+ if(!row) throw new Error("Commerce entitlement is inactive");
+}
 export async function resolveStorefront(host:string) {
  let hostname:string;
  try { hostname=normalizeHostname(new URL(`http://${host}`).hostname); } catch { return null; }
@@ -30,7 +35,7 @@ export async function resolveStorefront(host:string) {
  return enabled.length ? site : null;
 }
 export async function listStoreProducts(site:{organizationId:string;websiteId:string}) {
- return tenantTx(site.organizationId,tx=>tx.select({id:commerceProducts.id,slug:commerceProducts.slug,name:commerceProducts.name,description:commerceProducts.description,sku:commerceProducts.sku,currency:commerceProducts.currency,unitAmountMinor:commerceProducts.unitAmountMinor})
+ return tenantTx(site.organizationId,async tx=>{await assertCommerceEntitlement(tx,site.organizationId,site.websiteId);return tx.select({id:commerceProducts.id,slug:commerceProducts.slug,name:commerceProducts.name,description:commerceProducts.description,sku:commerceProducts.sku,currency:commerceProducts.currency,unitAmountMinor:commerceProducts.unitAmountMinor})
   .from(commerceProducts).where(and(eq(commerceProducts.organizationId,site.organizationId),eq(commerceProducts.websiteId,site.websiteId),eq(commerceProducts.status,"active"))).orderBy(desc(commerceProducts.createdAt)));
 }
 async function loadCart(tx:any, site:{organizationId:string;websiteId:string}, customerHash:string) {
@@ -175,7 +180,7 @@ export async function recordPaystackWebhook(rawBody:string,signature:string|null
  }
 }
 export async function listTenantOrders(organizationId:string,websiteId:string) {
- return tenantTx(organizationId,async tx=>tx.select().from(commerceOrders).where(and(eq(commerceOrders.organizationId,organizationId),eq(commerceOrders.websiteId,websiteId))).orderBy(desc(commerceOrders.createdAt)).limit(100));
+ return tenantTx(organizationId,async tx=>{await assertCommerceEntitlement(tx,organizationId,websiteId);return tx.select().from(commerceOrders).where(and(eq(commerceOrders.organizationId,organizationId),eq(commerceOrders.websiteId,websiteId))).orderBy(desc(commerceOrders.createdAt)).limit(100));
 }
 export async function updateOrderFulfillment(organizationId:string,websiteId:string,orderId:string,status:"processing"|"fulfilled"|"cancelled") {
  return tenantTx(organizationId,async tx=>{
