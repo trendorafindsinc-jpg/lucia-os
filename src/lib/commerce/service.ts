@@ -148,12 +148,13 @@ export async function recordPaystackWebhook(rawBody:string,signature:string|null
   if(payload.event==="charge.success") settled=await settlePaystackReference(reference);
   else {
    const actual=await verifyPaystackCheckout(reference);
-   if(actual.status.trim().toLowerCase()!=="failed") throw new Error("Paystack failure event did not verify as failed");
+   if(actual.status.trim().toLowerCase()!=="failed" || actual.reference!==reference) throw new Error("Paystack failure event did not verify as failed");
    const lookup=await db.execute(sql`select organization_id, payment_attempt_id from commerce_lookup_payment_reference(${reference})`);
    const located=(lookup as unknown as Array<{organization_id:string;payment_attempt_id:string}>)[0];
    if(!located) throw new Error("Payment reference not found");
    const [attempt]=await tenantTx(located.organization_id,tx=>tx.select().from(commercePaymentAttempts).where(and(eq(commercePaymentAttempts.id,located.payment_attempt_id),eq(commercePaymentAttempts.provider,"paystack"),eq(commercePaymentAttempts.reference,reference))).limit(1));
    if(!attempt) throw new Error("Payment reference not found");
+   if(actual.amountMinor!==attempt.amountMinor || actual.currency.trim().toUpperCase()!==attempt.currency.trim().toUpperCase()) throw new Error("Failed transaction amount/currency mismatch");
    settled=await tenantTx(attempt.organizationId,async tx=>{
     const [order]=await tx.select().from(commerceOrders).where(eq(commerceOrders.id,attempt.orderId)).limit(1).for("update");
     if(order && order.paymentStatus!=="paid" && order.status!=="cancelled") {
