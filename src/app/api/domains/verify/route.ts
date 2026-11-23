@@ -7,6 +7,7 @@ import { getOrganizationMembershipsForUser } from "@/lib/access/guards";
 import { hasOrganizationPermission } from "@/lib/access/policy";
 import { getDb } from "@/lib/db/client";
 import { websiteDomains } from "@/lib/db/schema";
+import { hasOrganizationEntitlement } from "@/lib/subscriptions/entitlements";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -34,10 +35,12 @@ export async function POST(request: Request) {
         id: websiteDomains.id, hostname: websiteDomains.hostname, status: websiteDomains.status,
         domainType: websiteDomains.domainType, verificationTokenHash: websiteDomains.verificationTokenHash,
       }).from(websiteDomains).where(and(eq(websiteDomains.id, domainId), eq(websiteDomains.organizationId, org.id))).limit(1);
-      return domain ?? null;
+      if (!domain) return null;
+      return { ...domain, hasCustomDomainEntitlement: await hasOrganizationEntitlement(tx, org.id, "custom_domains") };
     });
     if (!record) continue;
     if (record.domainType !== "custom") return error("Only custom domains need DNS ownership verification.", 422);
+    if (!record.hasCustomDomainEntitlement) return error("An active custom-domain entitlement is required before verification.", 403);
     if (record.status === "verified" || record.status === "active") return NextResponse.json({ verified: true, status: record.status }, { headers: { "Cache-Control": "no-store" } });
     if (!record.verificationTokenHash) return error("This domain has no verification token. Register it again or contact support.", 409);
     let values: string[];
@@ -51,12 +54,20 @@ export async function POST(request: Request) {
       return digest.length === expected.length && timingSafeEqual(digest, expected);
     });
     if (!matches) return error("The TXT record exists, but its value does not match this domain's LUCIA verification token.", 409);
-    await db.transaction(async (tx) => {
+    const transition = await db.transaction(async (tx) => {
       await tx.execute(sql`select set_config('app.current_organization_id', ${org.id}, true)`);
+      const [current] = await tx.select({ status: websiteDomains.status, verificationTokenHash: websiteDomains.verificationTokenHash })
+        .from(websiteDomains).where(and(eq(websiteDomains.id, record.id), eq(websiteDomains.organizationId, org.id))).limit(1).for("update");
+      if (!current) return "missing" as const;
+      if (current.status === "verified" || current.status === "active") return current.status;
+      if (current.status !== "pending" || current.verificationTokenHash !== record.verificationTokenHash) return "changed" as const;
       await tx.update(websiteDomains).set({ status: "verified", verifiedAt: new Date(), updatedAt: new Date() })
         .where(and(eq(websiteDomains.id, record.id), eq(websiteDomains.organizationId, org.id), eq(websiteDomains.status, "pending")));
+      return "verified" as const;
     });
-    return NextResponse.json({ verified: true, status: "verified", activationRequired: true }, { headers: { "Cache-Control": "no-store" } });
+    if (transition === "missing") return error("This domain was removed while verification was running.", 409);
+    if (transition === "changed") return error("The domain changed during verification. Reload and try again.", 409);
+    return NextResponse.json({ verified: true, status: transition, activationRequired: transition === "verified" }, { headers: { "Cache-Control": "no-store" } });
   }
   return error("No registered domain was found for an organisation you can manage.", 404);
 }
