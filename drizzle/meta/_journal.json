@@ -253,6 +253,13 @@
       "when": 1794504180000,
       "tag": "0035_media_retention_domain_policy_reads",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1795411200000,
+      "tag": "0036_subscription_entitlements",
+      "breakpoints": true
     }
   ]
 }
