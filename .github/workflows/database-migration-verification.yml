@@ -9,6 +9,8 @@ on:
       - "drizzle/**"
       - "src/lib/db/schema.ts"
       - "src/lib/subscriptions/**"
+      - "src/lib/commerce/**"
+      - "src/app/api/websites/**/commerce/**"
       - "src/app/api/organizations/**/entitlements/**"
       - "src/app/api/domains/**"
       - "drizzle.config.ts"
