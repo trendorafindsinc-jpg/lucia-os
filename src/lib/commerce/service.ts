@@ -80,6 +80,14 @@ export async function createStoreOrder(site:{organizationId:string;websiteId:str
    .from(commerceCartItems).innerJoin(commerceProducts,and(eq(commerceProducts.id,commerceCartItems.productId),eq(commerceProducts.organizationId,commerceCartItems.organizationId),eq(commerceProducts.websiteId,commerceCartItems.websiteId)))
    .where(and(eq(commerceCartItems.cartId,cart.id),eq(commerceProducts.status,"active"))).for("update");
   const totals=calculateCartTotals(rows);
+  for (const line of totals.lines) {
+   const product=rows.find((row:any)=>row.productId===line.productId);
+   if(product?.inventoryQuantity!==null && product?.inventoryQuantity!==undefined && product.inventoryQuantity<line.quantity) throw new Error("Insufficient stock for "+line.name);
+   if(product?.inventoryQuantity!==null && product?.inventoryQuantity!==undefined) {
+    const changed=await tx.update(commerceProducts).set({inventoryQuantity:sql`inventory_quantity - ${line.quantity}`,updatedAt:new Date()}).where(and(eq(commerceProducts.id,line.productId),eq(commerceProducts.organizationId,site.organizationId),eq(commerceProducts.websiteId,site.websiteId),sql`inventory_quantity >= ${line.quantity}`)).returning({id:commerceProducts.id});
+    if(!changed.length) throw new Error("Insufficient stock for "+line.name);
+   }
+  }
   const orderNumber=`LUC-${Date.now().toString(36).toUpperCase()}-${randomBytes(4).toString("hex").toUpperCase()}`;
   const [order]=await tx.insert(commerceOrders).values({organizationId:site.organizationId,websiteId:site.websiteId,orderNumber,customerKeyHash:customerHash,customerEmail:email,currency:totals.currency,subtotalMinor:totals.subtotalMinor,totalMinor:totals.subtotalMinor,status:"pending_payment",paymentStatus:"pending"}).returning();
   await tx.insert(commerceOrderItems).values(totals.lines.map(line=>({organizationId:site.organizationId,websiteId:site.websiteId,orderId:order.id,productId:line.productId,productName:line.name,sku:line.sku,quantity:line.quantity,unitAmountMinor:line.unitAmountMinor,lineTotalMinor:line.lineTotalMinor,currency:line.currency,snapshot:{name:line.name,sku:line.sku,description:rows.find((r:any)=>r.productId===line.productId)?.description??"",unitAmountMinor:line.unitAmountMinor,quantity:line.quantity,currency:line.currency}})));
