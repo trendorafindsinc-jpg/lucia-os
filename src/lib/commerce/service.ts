@@ -104,7 +104,7 @@ export async function createStoreOrder(site:{organizationId:string;websiteId:str
  } catch(error) {
   // A timeout can occur after Paystack created a live checkout session. Keep
   // the reservation and pending state until a verified provider event resolves it.
-  await tenantTx(site.organizationId,tx=>tx.update(commercePaymentAttempts).set({status:"pending",updatedAt:new Date()}).where(and(eq(commercePaymentAttempts.id,created.attempt.id),eq(commercePaymentAttempts.status,"initialized")))));
+  await tenantTx(site.organizationId,tx=>tx.update(commercePaymentAttempts).set({status:"pending",updatedAt:new Date()}).where(and(eq(commercePaymentAttempts.id,created.attempt.id),eq(commercePaymentAttempts.status,"initialized"))));
   throw error;
  }}
 export async function settlePaystackReference(reference:string) {
