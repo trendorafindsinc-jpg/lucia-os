@@ -16,7 +16,15 @@ async function handle(request: Request, context: Context, method: string) {
   const { websiteId } = await context.params;
   if (!z.uuid().safeParse(websiteId).success) return json({ error: "Invalid website." }, 400);
   try {
-    if (method === "GET") return json(await listMedia(user.id, websiteId));
+    if (method === "GET") {
+      const params = new URL(request.url).searchParams;
+      const rawKind = params.get("kind");
+      const rawStatus = params.get("status");
+      const kind = rawKind && ["image", "video", "document"].includes(rawKind) ? rawKind as "image" | "video" | "document" : undefined;
+      const status = rawStatus && ["ready", "pending", "failed"].includes(rawStatus) ? rawStatus as "ready" | "pending" | "failed" : undefined;
+      if ((rawKind && !kind) || (rawStatus && !status)) return json({ error: "Invalid media filter." }, 400);
+      return json(await listMedia(user.id, websiteId, { query: params.get("q")?.slice(0, 120) ?? "", kind, status }));
+    }
     if (method === "DELETE") {
       const id = new URL(request.url).searchParams.get("id");
       if (!z.uuid().safeParse(id).success) return json({ error: "Invalid image." }, 400);
