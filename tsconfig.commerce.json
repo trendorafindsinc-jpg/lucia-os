@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "incremental": false,
+  },
+  "include": [
+    "next-env.d.ts",
+    "src/lib/commerce/**/*.ts",
+    "src/app/api/commerce/**/*.ts",
+    "src/app/checkout/**/*.tsx",
+    "src/components/commerce/**/*.tsx",
+    "src/middleware.ts"
+  ],
+  "exclude": ["node_modules", ".next"]
+}

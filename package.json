@@ -15,7 +15,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:check": "drizzle-kit check",
     "test:routing:http": "node scripts/check-routing-http.mjs",
-    "test:settings:http": "node scripts/check-settings-http.mjs"
+    "test:settings:http": "node scripts/check-settings-http.mjs",
+    "typecheck:commerce": "tsc --noEmit -p tsconfig.commerce.json"
   },
   "dependencies": {
     "drizzle-orm": "^0.44.5",

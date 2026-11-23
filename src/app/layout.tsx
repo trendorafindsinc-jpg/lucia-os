@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
+import "./commerce.css";
 import "@/styles/phase-3-blue-glass.css";
 import "./layout-renderer.css";
 import "./premium-meridian.css";

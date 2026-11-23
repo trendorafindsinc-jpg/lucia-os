@@ -19,6 +19,10 @@ function notFound() {
   });
 }
 
+function isPublicCommerceApi(pathname: string): boolean {
+  return pathname === "/api/commerce/store" || pathname === "/api/commerce/cart" || pathname === "/api/commerce/checkout" || pathname === "/api/commerce/checkout/return";
+}
+
 function isPrivatePath(pathname: string): boolean {
   return pathname.startsWith("/api/") ||
     pathname.startsWith("/site/") ||
@@ -49,7 +53,8 @@ export function middleware(request: NextRequest) {
   if (isUnderSiteDomain(hostname, configuredSiteDomain)) {
     const slug = resolveLuciaSubdomain(hostname, configuredSiteDomain);
     // Reserved or malformed LUCIA subdomains must not fall through as custom domains.
-    if (!slug || isPrivatePath(pathname)) return notFound();
+    if (!slug || (isPrivatePath(pathname) && !isPublicCommerceApi(pathname))) return notFound();
+    if (isPublicCommerceApi(pathname)) return NextResponse.next();
 
     const destination = request.nextUrl.clone();
     destination.pathname = `/site/${slug}${pathname === "/" ? "" : pathname}`;
@@ -57,7 +62,8 @@ export function middleware(request: NextRequest) {
   }
 
   // Customer custom domains cannot reach product APIs or internal rewrite routes.
-  if (isPrivatePath(pathname)) return notFound();
+  if (isPrivatePath(pathname) && !isPublicCommerceApi(pathname)) return notFound();
+  if (isPublicCommerceApi(pathname)) return NextResponse.next();
 
   const destination = request.nextUrl.clone();
   destination.pathname = pathname === "/" ? "/tenant-site-internal" : `/tenant-site-internal${pathname}`;
