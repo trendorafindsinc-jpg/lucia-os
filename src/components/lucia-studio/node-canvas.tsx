@@ -552,7 +552,7 @@ export function LuciaStudioNodeCanvas({
           onSelectNode={requestSelectNode}
           onRegisterActions={registerInspectorActions}
         /> : <aside className={styles.inspector}>Select a node to inspect it.</aside>}
-        </> : activePanel === "preview" ? <LuciaStudioWebsitePreview websiteId={websiteId} document={document} headers={headers} onSelectNode={(nodeId) => { requestSelectNode(nodeId); setActivePanel("canvas"); }} /> : activePanel === "validation" ? <LuciaStudioValidationPanel websiteId={websiteId} document={document} headers={headers} onSelectNode={(nodeId) => { requestSelectNode(nodeId); setActivePanel("canvas"); }} /> : <LuciaStudioHistoryPanel websiteId={websiteId} document={document} headers={headers} onRestored={loadGraph} />}
+        </> : activePanel === "preview" ? <LuciaStudioWebsitePreview websiteId={websiteId} document={document} headers={headers} onSelectNode={(nodeId: string) => { requestSelectNode(nodeId); setActivePanel("canvas"); }} /> : activePanel === "validation" ? <LuciaStudioValidationPanel websiteId={websiteId} document={document} headers={headers} onSelectNode={(nodeId) => { requestSelectNode(nodeId); setActivePanel("canvas"); }} /> : <LuciaStudioHistoryPanel websiteId={websiteId} document={document} headers={headers} onRestored={loadGraph} />}
       </div>
     </main>
   );
