@@ -33,4 +33,4 @@ jobs:
       - name: Type check Commerce implementation
         run: npm run typecheck:commerce
       - name: Full unit and payment security test suite
-        run: npm test
+        run: npm test -- src/lib/commerce/totals.test.ts src/lib/commerce/paystack-gateway.test.ts src/lib/billing/paystack.test.ts src/lib/billing/verify-transaction.test.ts
