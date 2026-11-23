@@ -203,7 +203,6 @@ export async function listTenantOrders(organizationId:string,websiteId:string,us
 export async function updateOrderFulfillment(organizationId:string,websiteId:string,orderId:string,userId:string,status:"processing"|"fulfilled"|"cancelled") {
  return tenantTx(organizationId,async tx=>{
   await assertCommerceMembership(tx,userId,organizationId,"website.edit");
-  await assertCommerceMembership(tx,userId,organizationId,"website.read");
   await assertCommerceEntitlement(tx,organizationId,websiteId);
   const [order]=await tx.select().from(commerceOrders).where(and(eq(commerceOrders.id,orderId),eq(commerceOrders.organizationId,organizationId),eq(commerceOrders.websiteId,websiteId))).limit(1).for("update");
   if(!order) throw new Error("Order not found");
@@ -216,6 +215,7 @@ export async function updateOrderFulfillment(organizationId:string,websiteId:str
 }
 export async function getTenantOrder(organizationId:string,websiteId:string,orderId:string,userId:string) {
  return tenantTx(organizationId,async tx=>{
+  await assertCommerceMembership(tx,userId,organizationId,"website.read");
   await assertCommerceEntitlement(tx,organizationId,websiteId);
   const [order]=await tx.select().from(commerceOrders).where(and(eq(commerceOrders.id,orderId),eq(commerceOrders.organizationId,organizationId),eq(commerceOrders.websiteId,websiteId))).limit(1);
   if(!order) return null;
