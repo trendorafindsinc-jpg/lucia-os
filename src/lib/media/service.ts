@@ -58,9 +58,13 @@ export async function validateMediaOwnership(tx: MediaTransaction, organizationI
   }
   return altById;
 }
-export async function listMedia(userId: string, websiteId: string) {
+export type MediaListFilters = { query?: string; kind?: "image" | "video" | "document"; status?: "ready" | "pending" | "failed" };
+function escapeLike(value: string) { return value.replace(/[\\\\%_]/g, (character) => "\\\\" + character); }
+export async function listMedia(userId: string, websiteId: string, filters: MediaListFilters = {}) {
+  const query = filters.query?.trim().slice(0, 120) ?? "";
+  const pattern = "%" + escapeLike(query) + "%";
   return withMediaWebsite(userId, websiteId, "website.read", async (tx) => {
-    const rows = await tx.execute(sql`select id,bytes,width,height,alt,status,kind,mime,original_name,checksum,etag,caption,duration_ms,created_at from website_media where website_id=${websiteId} and status <> 'deleted' order by created_at desc limit 200`);
+    const rows = await tx.execute(sql`select id,bytes,width,height,alt,status,kind,mime,original_name,checksum,etag,caption,duration_ms,created_at from website_media where website_id=${websiteId} and status <> 'deleted' and (${query}='' or coalesce(original_name,'') ilike ${pattern} escape '\\\\' or alt ilike ${pattern} escape '\\\\' or coalesce(caption,'') ilike ${pattern} escape '\\\\') and (${filters.kind ?? null}::text is null or kind=${filters.kind ?? null}) and (${filters.status ?? null}::text is null or status=${filters.status ?? null}) order by created_at desc,id desc limit 200`);
     const [usage] = await tx.execute(sql`select coalesce(sum(bytes),0)::bigint as used,count(*)::int as count,coalesce(sum(bytes) filter(where kind='image'),0)::bigint as image_used,coalesce(sum(bytes) filter(where kind='video'),0)::bigint as video_used,coalesce(sum(bytes) filter(where kind='document'),0)::bigint as document_used from website_media where website_id=${websiteId} and status <> 'deleted'`);
     const [limit] = await tx.execute(sql`select quota_bytes,video_quota_bytes,document_quota_bytes from website_media_limits where website_id=${websiteId}`);
     return { enabled: uploadsEnabled(), items: rows.map((row) => ({ ...row, ref: "media:" + row.id })), usedBytes: Number(usage?.used ?? 0), quotaBytes: Number(limit?.quota_bytes ?? boundedQuota(process.env.MEDIA_WEBSITE_QUOTA_BYTES, 5_000_000)),imageUsedBytes:Number(usage?.image_used??0),videoUsedBytes:Number(usage?.video_used??0),documentUsedBytes:Number(usage?.document_used??0),videoQuotaBytes:Number(limit?.video_quota_bytes??boundedQuota(process.env.MEDIA_VIDEO_WEBSITE_QUOTA_BYTES,500_000_000)),documentQuotaBytes:Number(limit?.document_quota_bytes??boundedQuota(process.env.MEDIA_DOCUMENT_WEBSITE_QUOTA_BYTES,50_000_000)) };
