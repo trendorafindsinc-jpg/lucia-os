@@ -753,6 +753,7 @@ export const organizationEntitlements = pgTable("organization_entitlements", {
     columns: [table.organizationId, table.subscriptionId],
     foreignColumns: [organizationSubscriptions.organizationId, organizationSubscriptions.id],
   }).onDelete("restrict"),
-  uniqueIndex("organization_entitlements_org_key_subscription_uq").on(table.organizationId, table.entitlementKey, table.subscriptionId),
+  uniqueIndex("organization_entitlements_org_key_subscription_uq").on(table.organizationId, table.entitlementKey, table.subscriptionId).where(sql`subscription_id IS NOT NULL`),
+  uniqueIndex("organization_entitlements_org_key_manual_uq").on(table.organizationId, table.entitlementKey).where(sql`subscription_id IS NULL`),
   index("organization_entitlements_org_key_status_idx").on(table.organizationId, table.entitlementKey, table.status),
 ]);
