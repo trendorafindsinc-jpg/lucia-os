@@ -21,7 +21,7 @@ async function handle(request: Request, context: Context, method: string) {
       const rawKind = params.get("kind");
       const rawStatus = params.get("status");
       const kind = rawKind && ["image", "video", "document"].includes(rawKind) ? rawKind as "image" | "video" | "document" : undefined;
-      const status = rawStatus && ["ready", "pending", "failed"].includes(rawStatus) ? rawStatus as "ready" | "pending" | "failed" : undefined;
+      const status = rawStatus && ["ready", "pending", "deleting"].includes(rawStatus) ? rawStatus as "ready" | "pending" | "deleting" : undefined;
       if ((rawKind && !kind) || (rawStatus && !status)) return json({ error: "Invalid media filter." }, 400);
       return json(await listMedia(user.id, websiteId, { query: params.get("q")?.slice(0, 120) ?? "", kind, status }));
     }
