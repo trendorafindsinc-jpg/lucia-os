@@ -1,6 +1,6 @@
 import { getCurrentUser } from "@/lib/auth/session";
 import { websiteMutationAllowed } from "@/lib/websites/draft-revision";
-import { listMedia, uploadMedia, removeMedia, MediaError } from "@/lib/media/service";
+import { listMedia, uploadMedia, removeMedia, updateMediaMetadata, MediaError } from "@/lib/media/service";
 import { MAX_UPLOAD_BYTES } from "@/lib/media/image";
 import { z } from "zod";
 export const runtime = "nodejs";
@@ -25,6 +25,16 @@ async function handle(request: Request, context: Context, method: string) {
       if ((rawKind && !kind) || (rawStatus && !status)) return json({ error: "Invalid media filter." }, 400);
       return json(await listMedia(user.id, websiteId, { query: params.get("q")?.slice(0, 120) ?? "", kind, status }));
     }
+    if (method === "PATCH") {
+      const raw = await request.text();
+      if (raw.length > 2048) return json({ error: "Metadata request too large." }, 413);
+      let body: unknown;
+      try { body = JSON.parse(raw); } catch { return json({ error: "Invalid metadata request." }, 400); }
+      const parsed = z.object({ id: z.uuid(), alt: z.string().trim().min(1).max(200), caption: z.string().trim().max(200).nullable() }).safeParse(body);
+      if (!parsed.success) return json({ error: "Provide a valid asset ID, description and optional caption." }, 422);
+      const asset = await updateMediaMetadata(user.id, websiteId, parsed.data.id, { alt: parsed.data.alt, caption: parsed.data.caption || null });
+      return json({ asset });
+    }
     if (method === "DELETE") {
       const id = new URL(request.url).searchParams.get("id");
       if (!z.uuid().safeParse(id).success) return json({ error: "Invalid image." }, 400);
@@ -48,3 +58,4 @@ async function handle(request: Request, context: Context, method: string) {
 export const GET = (request: Request, context: Context) => handle(request, context, "GET");
 export const POST = (request: Request, context: Context) => handle(request, context, "POST");
 export const DELETE = (request: Request, context: Context) => handle(request, context, "DELETE");
+export const PATCH = (request: Request, context: Context) => handle(request, context, "PATCH");
