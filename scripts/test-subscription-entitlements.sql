@@ -25,6 +25,12 @@ BEGIN
       RAISE EXCEPTION 'Missing subscription entitlement policy %', required_policy;
     END IF;
   END LOOP;
+  IF NOT EXISTS (SELECT 1 FROM subscription_plans WHERE product_key='lucia_os' AND plan_key='starter_trial' AND active=true) THEN
+    RAISE EXCEPTION 'Starter trial plan was not seeded';
+  END IF;
+  IF (SELECT count(*) FROM subscription_plan_entitlements pe JOIN subscription_plans p ON p.id=pe.plan_id WHERE p.product_key='lucia_os' AND p.plan_key='starter_trial') <> 3 THEN
+    RAISE EXCEPTION 'Starter trial plan must define blogging, custom-domain and commerce entitlements';
+  END IF;
   IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname='lucia_os_runtime') THEN
     IF NOT has_table_privilege('lucia_os_runtime','public.organization_subscriptions','SELECT,INSERT,UPDATE')
       OR NOT has_table_privilege('lucia_os_runtime','public.organization_entitlements','SELECT,INSERT,UPDATE')
