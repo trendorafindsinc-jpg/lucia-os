@@ -83,6 +83,7 @@ export async function mutateCart(site:{organizationId:string;websiteId:string}, 
 export async function createStoreOrder(site:{organizationId:string;websiteId:string}, customerHash:string, email:string, callbackUrl:string) {
  if(!/^\S+@\S+\.\S+$/.test(email)) throw new Error("Enter a valid email address");
  const created=await tenantTx(site.organizationId,async tx=>{
+  await assertCommerceEntitlement(tx,site.organizationId,site.websiteId);
   const [cart]=await tx.select().from(commerceCarts).where(and(eq(commerceCarts.organizationId,site.organizationId),eq(commerceCarts.websiteId,site.websiteId),eq(commerceCarts.customerKeyHash,customerHash),eq(commerceCarts.status,"active"))).limit(1).for("update");
   if(!cart) throw new Error("Cart is empty");
   const rows=await tx.select({productId:commerceProducts.id,name:commerceProducts.name,sku:commerceProducts.sku,description:commerceProducts.description,currency:commerceProducts.currency,unitAmountMinor:commerceProducts.unitAmountMinor,inventoryQuantity:commerceProducts.inventoryQuantity,quantity:commerceCartItems.quantity})
