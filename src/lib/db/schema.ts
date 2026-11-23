@@ -757,3 +757,93 @@ export const organizationEntitlements = pgTable("organization_entitlements", {
   uniqueIndex("organization_entitlements_org_key_manual_uq").on(table.organizationId, table.entitlementKey).where(sql`subscription_id IS NULL`),
   index("organization_entitlements_org_key_status_idx").on(table.organizationId, table.entitlementKey, table.status),
 ]);
+
+
+/** Phase 6 Commerce: tenant- and website-scoped catalogue records. Prices use integer minor units. */
+export const commerceProducts = pgTable("commerce_products", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
+  websiteId: uuid("website_id").notNull(),
+  createdByUserId: uuid("created_by_user_id").notNull().references(() => appUsers.id, { onDelete: "restrict" }),
+  name: text("name").notNull(),
+  slug: text("slug").notNull(),
+  description: text("description").notNull().default(""),
+  status: text("status").notNull().default("draft"),
+  currency: text("currency").notNull(),
+  priceMinor: bigint("price_minor", { mode: "number" }).notNull(),
+  compareAtPriceMinor: bigint("compare_at_price_minor", { mode: "number" }),
+  featuredMediaId: uuid("featured_media_id"),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+}, (table) => [
+  foreignKey({ name: "commerce_products_website_org_fk", columns: [table.organizationId, table.websiteId], foreignColumns: [websites.organizationId, websites.id] }).onDelete("cascade"),
+  foreignKey({ name: "commerce_products_featured_media_fk", columns: [table.organizationId, table.websiteId, table.featuredMediaId], foreignColumns: [websiteMedia.organizationId, websiteMedia.websiteId, websiteMedia.id] }).onDelete("restrict"),
+  uniqueIndex("commerce_products_org_site_id_uq").on(table.organizationId, table.websiteId, table.id),
+  uniqueIndex("commerce_products_site_slug_uq").on(table.organizationId, table.websiteId, table.slug),
+  index("commerce_products_site_status_updated_idx").on(table.organizationId, table.websiteId, table.status, table.updatedAt),
+]);
+
+export const commerceProductVariants = pgTable("commerce_product_variants", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull(),
+  websiteId: uuid("website_id").notNull(),
+  productId: uuid("product_id").notNull(),
+  sku: text("sku"),
+  options: jsonb("options").$type<Record<string, string>>().notNull().default({}),
+  priceMinor: bigint("price_minor", { mode: "number" }),
+  compareAtPriceMinor: bigint("compare_at_price_minor", { mode: "number" }),
+  trackInventory: boolean("track_inventory").notNull().default(false),
+  inventoryQuantity: integer("inventory_quantity").notNull().default(0),
+  status: text("status").notNull().default("active"),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+}, (table) => [
+  foreignKey({ name: "commerce_product_variants_product_scope_fk", columns: [table.organizationId, table.websiteId, table.productId], foreignColumns: [commerceProducts.organizationId, commerceProducts.websiteId, commerceProducts.id] }).onDelete("cascade"),
+  uniqueIndex("commerce_product_variants_org_site_id_uq").on(table.organizationId, table.websiteId, table.id),
+  uniqueIndex("commerce_product_variants_product_sku_uq").on(table.productId, table.sku).where(sql`sku IS NOT NULL`),
+  index("commerce_product_variants_product_status_idx").on(table.organizationId, table.websiteId, table.productId, table.status),
+]);
+
+export const commerceCategories = pgTable("commerce_categories", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull(),
+  websiteId: uuid("website_id").notNull(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull(),
+  description: text("description").notNull().default(""),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+}, (table) => [
+  foreignKey({ name: "commerce_categories_website_org_fk", columns: [table.organizationId, table.websiteId], foreignColumns: [websites.organizationId, websites.id] }).onDelete("cascade"),
+  uniqueIndex("commerce_categories_org_site_id_uq").on(table.organizationId, table.websiteId, table.id),
+  uniqueIndex("commerce_categories_site_slug_uq").on(table.organizationId, table.websiteId, table.slug),
+]);
+
+export const commerceProductCategories = pgTable("commerce_product_categories", {
+  organizationId: uuid("organization_id").notNull(),
+  websiteId: uuid("website_id").notNull(),
+  productId: uuid("product_id").notNull(),
+  categoryId: uuid("category_id").notNull(),
+  createdAt: createdAt(),
+}, (table) => [
+  primaryKey({ name: "commerce_product_categories_pk", columns: [table.productId, table.categoryId] }),
+  foreignKey({ name: "commerce_product_categories_product_scope_fk", columns: [table.organizationId, table.websiteId, table.productId], foreignColumns: [commerceProducts.organizationId, commerceProducts.websiteId, commerceProducts.id] }).onDelete("cascade"),
+  foreignKey({ name: "commerce_product_categories_category_scope_fk", columns: [table.organizationId, table.websiteId, table.categoryId], foreignColumns: [commerceCategories.organizationId, commerceCategories.websiteId, commerceCategories.id] }).onDelete("cascade"),
+  index("commerce_product_categories_category_idx").on(table.organizationId, table.websiteId, table.categoryId),
+]);
+
+export const commerceProductMedia = pgTable("commerce_product_media", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull(),
+  websiteId: uuid("website_id").notNull(),
+  productId: uuid("product_id").notNull(),
+  mediaId: uuid("media_id").notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  alt: text("alt").notNull().default(""),
+  createdAt: createdAt(),
+}, (table) => [
+  foreignKey({ name: "commerce_product_media_product_scope_fk", columns: [table.organizationId, table.websiteId, table.productId], foreignColumns: [commerceProducts.organizationId, commerceProducts.websiteId, commerceProducts.id] }).onDelete("cascade"),
+  foreignKey({ name: "commerce_product_media_asset_scope_fk", columns: [table.organizationId, table.websiteId, table.mediaId], foreignColumns: [websiteMedia.organizationId, websiteMedia.websiteId, websiteMedia.id] }).onDelete("restrict"),
+  uniqueIndex("commerce_product_media_product_asset_uq").on(table.productId, table.mediaId),
+  index("commerce_product_media_product_order_idx").on(table.productId, table.sortOrder),
+]);
