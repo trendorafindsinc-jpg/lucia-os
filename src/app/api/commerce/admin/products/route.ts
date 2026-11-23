@@ -22,7 +22,7 @@ export async function GET(request:Request) {
 }
 export async function POST(request:Request) {
  if(!websiteMutationAllowed(request)) return json({error:"Request origin denied."},403);
- let raw:any;try{raw=await request.json();}catch{return json({error:"Invalid JSON."},400);}
+ let raw:unknown;try{raw=await request.json();}catch{return json({error:"Invalid JSON."},400);}
  const parsed=schema.safeParse(raw);if(!parsed.success)return json({error:"Invalid product fields.",issues:parsed.error.flatten()},422);
  const {organizationId,websiteId,...product}=parsed.data;
  const access=await requireCommerceAdmin(organizationId,websiteId,"website.edit");
