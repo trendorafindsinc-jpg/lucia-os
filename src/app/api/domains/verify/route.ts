@@ -59,6 +59,7 @@ export async function POST(request: Request) {
       const [current] = await tx.select({ status: websiteDomains.status, verificationTokenHash: websiteDomains.verificationTokenHash })
         .from(websiteDomains).where(and(eq(websiteDomains.id, record.id), eq(websiteDomains.organizationId, org.id))).limit(1).for("update");
       if (!current) return "missing" as const;
+      if (!(await hasOrganizationEntitlement(tx, org.id, "custom_domains"))) return "not_entitled" as const;
       if (current.status === "verified" || current.status === "active") return current.status;
       if (current.status !== "pending" || current.verificationTokenHash !== record.verificationTokenHash) return "changed" as const;
       await tx.update(websiteDomains).set({ status: "verified", verifiedAt: new Date(), updatedAt: new Date() })
@@ -67,6 +68,7 @@ export async function POST(request: Request) {
     });
     if (transition === "missing") return error("This domain was removed while verification was running.", 409);
     if (transition === "changed") return error("The domain changed during verification. Reload and try again.", 409);
+    if (transition === "not_entitled") return error("The custom-domain entitlement expired or was revoked during verification.", 403);
     return NextResponse.json({ verified: true, status: transition, activationRequired: transition === "verified" }, { headers: { "Cache-Control": "no-store" } });
   }
   return error("No registered domain was found for an organisation you can manage.", 404);
