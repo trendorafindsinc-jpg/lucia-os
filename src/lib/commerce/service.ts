@@ -157,6 +157,7 @@ export async function recordPaystackWebhook(rawBody:string,signature:string|null
    if(actual.amountMinor!==attempt.amountMinor || actual.currency.trim().toUpperCase()!==attempt.currency.trim().toUpperCase()) throw new Error("Failed transaction amount/currency mismatch");
    settled=await tenantTx(attempt.organizationId,async tx=>{
     const [order]=await tx.select().from(commerceOrders).where(eq(commerceOrders.id,attempt.orderId)).limit(1).for("update");
+    if(order?.paymentStatus==="paid" || attempt.status==="success") return {ignored:true,alreadyPaid:true};
     if(order && order.paymentStatus!=="paid" && order.status!=="cancelled") {
      const lines=await tx.select({productId:commerceOrderItems.productId,quantity:commerceOrderItems.quantity}).from(commerceOrderItems).where(eq(commerceOrderItems.orderId,order.id));
      for(const line of lines) if(line.productId) await tx.update(commerceProducts).set({inventoryQuantity:sql`CASE WHEN inventory_quantity IS NULL THEN NULL ELSE inventory_quantity + ${line.quantity} END`,updatedAt:new Date()}).where(eq(commerceProducts.id,line.productId));
