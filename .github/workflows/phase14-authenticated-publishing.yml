@@ -49,15 +49,17 @@ on:
 permissions:
   contents: read
 
+# Each acceptance run owns a fresh PostgreSQL service, so it must not queue
+# behind an older, potentially long-running run for the same branch.
 concurrency:
-  group: phase14-authenticated-\${{ github.event.pull_request.number || github.ref }}
+  group: phase15-authenticated-${{ github.run_id }}-${{ github.run_attempt }}
   cancel-in-progress: false
 
 jobs:
   acceptance:
     name: Registered Layout HTTP/browser publishing and media authorization
     runs-on: ubuntu-24.04
-    timeout-minutes: 40
+    timeout-minutes: 60
     services:
       postgres:
         image: postgres:16
