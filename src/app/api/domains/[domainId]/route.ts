@@ -5,6 +5,7 @@ import { getOrganizationMembershipsForUser } from "@/lib/access/guards";
 import { hasOrganizationPermission } from "@/lib/access/policy";
 import { getDb } from "@/lib/db/client";
 import { websiteDomains, websites } from "@/lib/db/schema";
+import { hasOrganizationEntitlement } from "@/lib/subscriptions/entitlements";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -49,14 +50,16 @@ export async function PATCH(request: Request, context: { params: Promise<{ domai
     const [current] = await tx.select({ status: websiteDomains.status }).from(websiteDomains)
       .where(and(eq(websiteDomains.id, domain.id), eq(websiteDomains.organizationId, organizationId), eq(websiteDomains.websiteId, domain.websiteId)))
       .limit(1).for("update");
-    if (!current || current.status !== "active") return false;
+    if (!current || current.status !== "active") return "inactive" as const;
+    if (domain.domainType === "custom" && !(await hasOrganizationEntitlement(tx, organizationId, "custom_domains"))) return "entitlement" as const;
     await tx.update(websiteDomains).set({ isPrimary: false, updatedAt: new Date() })
       .where(and(eq(websiteDomains.organizationId, organizationId), eq(websiteDomains.websiteId, domain.websiteId)));
     await tx.update(websiteDomains).set({ isPrimary: true, updatedAt: new Date() })
       .where(and(eq(websiteDomains.id, domain.id), eq(websiteDomains.organizationId, organizationId), eq(websiteDomains.status, "active")));
     return true;
   });
-  if (!result) return error("The domain is no longer active. Refresh and complete verification before selecting it.", 409);
+  if (result === "entitlement") return error("An active custom-domain entitlement is required to manage this domain.", 403);
+  if (result !== true) return error("The domain is no longer active. Refresh and complete verification before selecting it.", 409);
   return NextResponse.json({ updated: true, domainId, isPrimary: true }, { headers: { "Cache-Control": "no-store" } });
 }
 
