@@ -4,6 +4,6 @@
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'lucia_os_runtime') THEN
-    GRANT SELECT ON website_pages, website_versions TO lucia_os_runtime;
+    GRANT SELECT ON website_pages, website_versions, website_domains TO lucia_os_runtime;
   END IF;
 END $$;
