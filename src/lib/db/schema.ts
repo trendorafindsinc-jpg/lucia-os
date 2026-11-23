@@ -9,6 +9,7 @@ import {
   foreignKey,
   index,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
