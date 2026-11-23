@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { customerCartIdentity, json, validJsonSize } from "@/lib/commerce/http";
+import { customerCartIdentity, json, validJsonSize } from "@/lib/commerce/http";\nimport { websiteMutationAllowed } from "@/lib/websites/draft-revision";
 import { mutateCart, readCart, resolveStorefront } from "@/lib/commerce/service";
 export const runtime="nodejs"; export const dynamic="force-dynamic";
 async function context(request:Request) {
