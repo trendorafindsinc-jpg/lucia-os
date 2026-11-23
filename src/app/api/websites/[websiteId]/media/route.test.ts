@@ -15,6 +15,19 @@ describe("customer media request guards", () => {
     expect((await GET(new Request("https://os.lucia.name.ng/api/media", { headers: { "x-lucia-workspace-account": "customer-b" } }), context)).status).toBe(409);
     expect(mocks.list).not.toHaveBeenCalled();
   });
+  it("passes bounded search and supported filters to the tenant-scoped service", async () => {
+    mocks.list.mockResolvedValue({ items: [] });
+    const response = await GET(new Request("https://os.lucia.name.ng/api/media?q=summer%20banner&kind=image&status=ready"), context);
+    expect(response.status).toBe(200);
+    expect(mocks.list).toHaveBeenCalledWith("customer-a", "a660ce01-079a-4409-a9e0-c5eb30c699b9", {
+      query: "summer banner", kind: "image", status: "ready",
+    });
+  });
+  it("rejects unsupported media filters", async () => {
+    const response = await GET(new Request("https://os.lucia.name.ng/api/media?kind=executable"), context);
+    expect(response.status).toBe(400);
+    expect(mocks.list).not.toHaveBeenCalled();
+  });
   it("rejects cross-origin uploads before consuming their body", async () => {
     expect((await POST(new Request("https://os.lucia.name.ng/api/media", { method: "POST", headers: { origin: "https://evil.test" }, body: "bad" }), context)).status).toBe(403);
     expect(mocks.upload).not.toHaveBeenCalled();
