@@ -23,7 +23,9 @@ async function handle(request: Request, context: Context, method: string) {
       const kind = rawKind && ["image", "video", "document"].includes(rawKind) ? rawKind as "image" | "video" | "document" : undefined;
       const status = rawStatus && ["ready", "pending", "deleting"].includes(rawStatus) ? rawStatus as "ready" | "pending" | "deleting" : undefined;
       if ((rawKind && !kind) || (rawStatus && !status)) return json({ error: "Invalid media filter." }, 400);
-      return json(await listMedia(user.id, websiteId, { query: params.get("q")?.slice(0, 120) ?? "", kind, status }));
+      const cursor = params.get("cursor") ?? undefined;
+      if (cursor && cursor.length > 512) return json({ error: "Invalid media page cursor." }, 400);
+      return json(await listMedia(user.id, websiteId, { query: params.get("q")?.slice(0, 120) ?? "", kind, status, ...(cursor ? { cursor } : {}) }));
     }
     if (method === "PATCH") {
       const raw = await request.text();
