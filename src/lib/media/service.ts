@@ -158,3 +158,11 @@ export async function findReadableMedia(id: string, userId: string | null) {
   const [published] = await getDb().execute(sql`select * from lucia_public_media(${id}::uuid)`);
   return published ? { ...(published as MediaRow), public: true } : null;
 }
+
+export async function updateMediaMetadata(userId: string, websiteId: string, id: string, input: { alt: string; caption: string | null }) {
+  return withMediaWebsite(userId, websiteId, "website.edit", async (tx) => {
+    const [row] = await tx.execute(sql`update website_media set alt=${input.alt},caption=${input.caption},updated_at=now() where id=${id} and website_id=${websiteId} and status='ready' returning id,alt,caption`);
+    if (!row) throw new MediaError("Ready media asset not found.", 404);
+    return row;
+  });
+}
