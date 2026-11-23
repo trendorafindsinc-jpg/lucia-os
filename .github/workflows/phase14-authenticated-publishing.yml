@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - upgrade/phase-15-content-media
+      - development
   workflow_dispatch:
     inputs:
       layouts:
@@ -15,6 +16,9 @@ on:
       - 'src/lib/layout-blueprint/**'
       - 'src/components/publishing/**'
       - 'src/lib/media/**'
+      - 'src/lib/subscriptions/**'
+      - 'src/app/api/organizations/**/entitlements/**'
+      - 'src/app/api/domains/**'
       - 'src/app/api/websites/manage/**'
       - 'src/app/api/websites/[websiteId]/route.ts'
       - 'src/app/workspace/settings/**'
