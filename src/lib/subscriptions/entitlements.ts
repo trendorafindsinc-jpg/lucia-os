@@ -1,11 +1,11 @@
-import { sql } from "drizzle-orm";
+import { sql, type SQL } from "drizzle-orm";
 
 /** Resolve persisted entitlements inside an organization-scoped transaction.
  * Subscription-linked grants require a live trial/period; manual grants are
  * permitted for verified one-time purchases and platform-issued exceptions.
  */
 export async function hasOrganizationEntitlement(
-  tx: { execute: (query: ReturnType<typeof sql>) => Promise<unknown> },
+  tx: { execute: (query: SQL) => Promise<unknown> },
   organizationId: string,
   entitlementKey: string,
 ): Promise<boolean> {
