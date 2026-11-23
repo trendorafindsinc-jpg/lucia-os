@@ -30,5 +30,7 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Lint Commerce implementation
         run: npx eslint src/lib/commerce src/app/api/commerce src/components/commerce src/app/checkout src/middleware.ts
-      - name: Commerce unit and payment security tests
-        run: npm test -- src/lib/commerce/totals.test.ts src/lib/commerce/paystack-gateway.test.ts src/lib/billing/paystack.test.ts src/lib/billing/verify-transaction.test.ts
+      - name: Type check Commerce implementation
+        run: npm run typecheck:commerce
+      - name: Full unit and payment security test suite
+        run: npm test
