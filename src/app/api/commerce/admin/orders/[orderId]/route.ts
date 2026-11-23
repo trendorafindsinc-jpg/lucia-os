@@ -11,6 +11,6 @@ export async function GET(request:Request,context:Context){
  const access=await requireCommerceAdmin(organizationId,websiteId,"website.read");
  if(!access)return json({error:"Not found or not authorized."},404);
  if(!access.enabled)return json({error:"Commerce entitlement is inactive."},403);
- const result=await getTenantOrder(organizationId,websiteId,orderId);
+ const result=await getTenantOrder(organizationId,websiteId,orderId,access.user.id);
  return result?json(result):json({error:"Order not found."},404);
 }
