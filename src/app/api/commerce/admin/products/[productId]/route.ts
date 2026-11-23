@@ -2,7 +2,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { getDb } from "@/lib/db/client";
 import { commerceProducts } from "@/lib/db/schema";
-import { requireCommerceAdmin } from "@/lib/commerce/admin";
+import { assertCommerceAdminMembership, requireCommerceAdmin } from "@/lib/commerce/admin";
 import { assertCommerceEntitlement } from "@/lib/commerce/service";
 import { json } from "@/lib/commerce/http";
 import { websiteMutationAllowed } from "@/lib/websites/draft-revision";
