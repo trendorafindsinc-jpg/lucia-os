@@ -26,3 +26,5 @@ jobs:
         run: npx eslint src/lib/graph src/lib/studio src/lib/layout-blueprint/premium-layouts/catalogue-document.test.ts
       - name: Run graph contract, layout and catalogue documentation regressions
         run: npx vitest run src/lib/graph/contracts.test.ts src/lib/layout-blueprint/premium-layouts/catalogue-document.test.ts
+      - name: Run complete repository unit test suite independently of typecheck
+        run: npm test
