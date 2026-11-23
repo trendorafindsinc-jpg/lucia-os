@@ -35,8 +35,11 @@ export async function resolveStorefront(host:string) {
  return enabled.length ? site : null;
 }
 export async function listStoreProducts(site:{organizationId:string;websiteId:string}) {
- return tenantTx(site.organizationId,async tx=>{await assertCommerceEntitlement(tx,site.organizationId,site.websiteId);return tx.select({id:commerceProducts.id,slug:commerceProducts.slug,name:commerceProducts.name,description:commerceProducts.description,sku:commerceProducts.sku,currency:commerceProducts.currency,unitAmountMinor:commerceProducts.unitAmountMinor})
-  .from(commerceProducts).where(and(eq(commerceProducts.organizationId,site.organizationId),eq(commerceProducts.websiteId,site.websiteId),eq(commerceProducts.status,"active"))).orderBy(desc(commerceProducts.createdAt)));
+ return tenantTx(site.organizationId,async tx=>{
+  await assertCommerceEntitlement(tx,site.organizationId,site.websiteId);
+  return tx.select({id:commerceProducts.id,slug:commerceProducts.slug,name:commerceProducts.name,description:commerceProducts.description,sku:commerceProducts.sku,currency:commerceProducts.currency,unitAmountMinor:commerceProducts.unitAmountMinor})
+   .from(commerceProducts).where(and(eq(commerceProducts.organizationId,site.organizationId),eq(commerceProducts.websiteId,site.websiteId),eq(commerceProducts.status,"active"))).orderBy(desc(commerceProducts.createdAt));
+ });
 }
 async function loadCart(tx:any, site:{organizationId:string;websiteId:string}, customerHash:string) {
  let [cart]=await tx.select().from(commerceCarts).where(and(eq(commerceCarts.organizationId,site.organizationId),eq(commerceCarts.websiteId,site.websiteId),eq(commerceCarts.customerKeyHash,customerHash),eq(commerceCarts.status,"active"))).limit(1);
@@ -49,19 +52,20 @@ async function loadCart(tx:any, site:{organizationId:string;websiteId:string}, c
 }
 export async function readCart(site:{organizationId:string;websiteId:string}, customerHash:string) {
  return tenantTx(site.organizationId,async tx=>{
+  await assertCommerceEntitlement(tx,site.organizationId,site.websiteId);
   const cart=await loadCart(tx,site,customerHash);
   const rows=await tx.select({productId:commerceProducts.id,name:commerceProducts.name,sku:commerceProducts.sku,currency:commerceProducts.currency,unitAmountMinor:commerceProducts.unitAmountMinor,quantity:commerceCartItems.quantity})
    .from(commerceCartItems).innerJoin(commerceProducts,and(eq(commerceProducts.id,commerceCartItems.productId),eq(commerceProducts.organizationId,commerceCartItems.organizationId),eq(commerceProducts.websiteId,commerceCartItems.websiteId)))
    .where(and(eq(commerceCartItems.cartId,cart.id),eq(commerceProducts.status,"active")));
   if(!rows.length) return {cartId:cart.id,items:[],currency:cart.currency,subtotalMinor:0,itemCount:0};
-  const totals=calculateCartTotals(rows);
-  return {cartId:cart.id,...totals};
+  return {cartId:cart.id,...calculateCartTotals(rows)};
  });
 }
 export async function mutateCart(site:{organizationId:string;websiteId:string}, customerHash:string, input:{productId:string;quantity:number|null}) {
  if(!/^[0-9a-f-]{36}$/i.test(input.productId)) throw new Error("Invalid product");
  if(input.quantity!==null && (!Number.isInteger(input.quantity)||input.quantity<1||input.quantity>99)) throw new Error("Quantity must be between 1 and 99");
  return tenantTx(site.organizationId,async tx=>{
+  await assertCommerceEntitlement(tx,site.organizationId,site.websiteId);
   const cart=await loadCart(tx,site,customerHash);
   const [product]=await tx.select({id:commerceProducts.id,currency:commerceProducts.currency}).from(commerceProducts)
    .where(and(eq(commerceProducts.id,input.productId),eq(commerceProducts.organizationId,site.organizationId),eq(commerceProducts.websiteId,site.websiteId),eq(commerceProducts.status,"active"))).limit(1);
@@ -180,21 +184,26 @@ export async function recordPaystackWebhook(rawBody:string,signature:string|null
  }
 }
 export async function listTenantOrders(organizationId:string,websiteId:string) {
- return tenantTx(organizationId,async tx=>{await assertCommerceEntitlement(tx,organizationId,websiteId);return tx.select().from(commerceOrders).where(and(eq(commerceOrders.organizationId,organizationId),eq(commerceOrders.websiteId,websiteId))).orderBy(desc(commerceOrders.createdAt)).limit(100));
+ return tenantTx(organizationId,async tx=>{
+  await assertCommerceEntitlement(tx,organizationId,websiteId);
+  return tx.select().from(commerceOrders).where(and(eq(commerceOrders.organizationId,organizationId),eq(commerceOrders.websiteId,websiteId))).orderBy(desc(commerceOrders.createdAt)).limit(100);
+ });
 }
 export async function updateOrderFulfillment(organizationId:string,websiteId:string,orderId:string,status:"processing"|"fulfilled"|"cancelled") {
  return tenantTx(organizationId,async tx=>{
+  await assertCommerceEntitlement(tx,organizationId,websiteId);
   const [order]=await tx.select().from(commerceOrders).where(and(eq(commerceOrders.id,orderId),eq(commerceOrders.organizationId,organizationId),eq(commerceOrders.websiteId,websiteId))).limit(1).for("update");
   if(!order) throw new Error("Order not found");
   if(order.paymentStatus!=="paid" && status!=="cancelled") throw new Error("Only paid orders can be fulfilled");
-  if(order.paymentStatus==="paid" && status==="cancelled") throw new Error("Paid orders cannot be cancelled here; issue a refund through the payment workflow");
+  if(status==="cancelled" && order.paymentStatus!=="failed") throw new Error("Orders can only be cancelled after a verified failed payment");
+  if(order.status==="cancelled") throw new Error("Order is already cancelled");
   await tx.update(commerceOrders).set({status,updatedAt:new Date()}).where(eq(commerceOrders.id,orderId));
   return {id:orderId,status};
  });
 }
-
 export async function getTenantOrder(organizationId:string,websiteId:string,orderId:string) {
  return tenantTx(organizationId,async tx=>{
+  await assertCommerceEntitlement(tx,organizationId,websiteId);
   const [order]=await tx.select().from(commerceOrders).where(and(eq(commerceOrders.id,orderId),eq(commerceOrders.organizationId,organizationId),eq(commerceOrders.websiteId,websiteId))).limit(1);
   if(!order) return null;
   const items=await tx.select().from(commerceOrderItems).where(and(eq(commerceOrderItems.orderId,orderId),eq(commerceOrderItems.organizationId,organizationId),eq(commerceOrderItems.websiteId,websiteId))).orderBy(asc(commerceOrderItems.createdAt));
