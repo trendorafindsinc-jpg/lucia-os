@@ -690,3 +690,69 @@ export const websiteCanvasPositions = pgTable("website_canvas_positions", {
   index("website_canvas_positions_graph_user_idx").on(table.graphId, table.userId),
   check("website_canvas_positions_bounds_check", sql`${table.x} BETWEEN -1000000 AND 1000000 AND ${table.y} BETWEEN -1000000 AND 1000000`),
 ]);
+
+
+/** Persisted platform plans and organization-scoped feature entitlements. */
+export const subscriptionPlans = pgTable("subscription_plans", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  planKey: text("plan_key").notNull(),
+  productKey: text("product_key").notNull().default("lucia_os"),
+  name: text("name").notNull(),
+  active: boolean("active").notNull().default(true),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+}, (table) => [
+  uniqueIndex("subscription_plans_product_key_uq").on(table.productKey, table.planKey),
+]);
+
+export const subscriptionPlanEntitlements = pgTable("subscription_plan_entitlements", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  planId: uuid("plan_id").notNull().references(() => subscriptionPlans.id, { onDelete: "cascade" }),
+  entitlementKey: text("entitlement_key").notNull(),
+  value: jsonb("value").$type<Record<string, unknown>>().notNull().default({ enabled: true }),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+}, (table) => [
+  uniqueIndex("subscription_plan_entitlements_plan_key_uq").on(table.planId, table.entitlementKey),
+]);
+
+export const organizationSubscriptions = pgTable("organization_subscriptions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
+  planId: uuid("plan_id").notNull().references(() => subscriptionPlans.id, { onDelete: "restrict" }),
+  status: text("status").notNull().default("trialing"),
+  cadence: text("cadence").notNull().default("monthly"),
+  startsAt: timestamp("starts_at", { withTimezone: true }).notNull().defaultNow(),
+  currentPeriodEndsAt: timestamp("current_period_ends_at", { withTimezone: true }),
+  trialEndsAt: timestamp("trial_ends_at", { withTimezone: true }),
+  cancelAtPeriodEnd: boolean("cancel_at_period_end").notNull().default(false),
+  provider: text("provider"),
+  providerReference: text("provider_reference"),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+}, (table) => [
+  uniqueIndex("organization_subscriptions_org_id_id_uq").on(table.organizationId, table.id),
+  uniqueIndex("organization_subscriptions_provider_reference_uq").on(table.provider, table.providerReference).where(sql`provider_reference IS NOT NULL`),
+  index("organization_subscriptions_org_status_idx").on(table.organizationId, table.status),
+]);
+
+export const organizationEntitlements = pgTable("organization_entitlements", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "restrict" }),
+  subscriptionId: uuid("subscription_id"),
+  entitlementKey: text("entitlement_key").notNull(),
+  value: jsonb("value").$type<Record<string, unknown>>().notNull().default({ enabled: true }),
+  status: text("status").notNull().default("active"),
+  effectiveAt: timestamp("effective_at", { withTimezone: true }).notNull().defaultNow(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+}, (table) => [
+  foreignKey({
+    name: "organization_entitlements_subscription_org_fk",
+    columns: [table.organizationId, table.subscriptionId],
+    foreignColumns: [organizationSubscriptions.organizationId, organizationSubscriptions.id],
+  }).onDelete("restrict"),
+  uniqueIndex("organization_entitlements_org_key_subscription_uq").on(table.organizationId, table.entitlementKey, table.subscriptionId),
+  index("organization_entitlements_org_key_status_idx").on(table.organizationId, table.entitlementKey, table.status),
+]);
