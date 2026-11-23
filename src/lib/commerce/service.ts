@@ -1,6 +1,6 @@
 import "server-only";
 import { createHash, randomBytes } from "node:crypto";
-import { and, asc, desc, eq, gt, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { commerceCartItems, commerceCarts, commerceEntitlements, commerceOrderItems, commerceOrders, commercePaymentAttempts, commerceProducts, commerceWebhookEvents, memberships, websiteDomains, websites } from "@/lib/db/schema";
 import { calculateCartTotals } from "./totals";
@@ -108,7 +108,10 @@ export async function createStoreOrder(site:{organizationId:string;websiteId:str
  }}
 export async function settlePaystackReference(reference:string) {
  const db=getDb();
- const [attempt]=await db.select().from(commercePaymentAttempts).where(and(eq(commercePaymentAttempts.provider,"paystack"),eq(commercePaymentAttempts.reference,reference))).limit(1);
+ const lookup=await db.execute(sql`select organization_id, payment_attempt_id from commerce_lookup_payment_reference(${reference})`);
+ const located=(lookup as unknown as Array<{organization_id:string;payment_attempt_id:string}>)[0];
+ if(!located) throw new Error("Payment reference not found");
+ const [attempt]=await tenantTx(located.organization_id,tx=>tx.select().from(commercePaymentAttempts).where(and(eq(commercePaymentAttempts.id,located.payment_attempt_id),eq(commercePaymentAttempts.provider,"paystack"),eq(commercePaymentAttempts.reference,reference))).limit(1));
  if(!attempt) throw new Error("Payment reference not found");
  const actual=await verifyPaystackCheckout(reference);
  const result=verifyProviderTransaction({reference:attempt.reference,amountMinor:attempt.amountMinor,currency:attempt.currency},actual);
@@ -142,7 +145,10 @@ export async function recordPaystackWebhook(rawBody:string,signature:string|null
   else {
    const actual=await verifyPaystackCheckout(reference);
    if(actual.status.trim().toLowerCase()!=="failed") throw new Error("Paystack failure event did not verify as failed");
-   const [attempt]=await db.select().from(commercePaymentAttempts).where(and(eq(commercePaymentAttempts.provider,"paystack"),eq(commercePaymentAttempts.reference,reference))).limit(1);
+   const lookup=await db.execute(sql`select organization_id, payment_attempt_id from commerce_lookup_payment_reference(${reference})`);
+   const located=(lookup as unknown as Array<{organization_id:string;payment_attempt_id:string}>)[0];
+   if(!located) throw new Error("Payment reference not found");
+   const [attempt]=await tenantTx(located.organization_id,tx=>tx.select().from(commercePaymentAttempts).where(and(eq(commercePaymentAttempts.id,located.payment_attempt_id),eq(commercePaymentAttempts.provider,"paystack"),eq(commercePaymentAttempts.reference,reference))).limit(1));
    if(!attempt) throw new Error("Payment reference not found");
    settled=await tenantTx(attempt.organizationId,async tx=>{
     const [order]=await tx.select().from(commerceOrders).where(eq(commerceOrders.id,attempt.orderId)).limit(1).for("update");
